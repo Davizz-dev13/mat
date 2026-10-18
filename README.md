@@ -2,13 +2,7 @@
 
 Enciclopedia de material militar: aviones, helicópteros, carros de combate, blindados, buques, submarinos, logística y armamento, por país y época, con fichas técnicas y fotos.
 
-Web estática. Para verla en local:
-
-```
-python3 -m http.server 8000
-```
-
-y abrir http://localhost:8000 (no funciona abriendo `index.html` directamente, por las cargas `.json.gz`).
+Web estática.
 
 Datos y fotografías: Wikipedia y Wikimedia Commons (cada ficha enlaza su fuente).
 
