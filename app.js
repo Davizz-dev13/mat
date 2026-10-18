@@ -85,18 +85,38 @@ function row(a){
   var o=CUR&&a.ops[CUR], lab='';
   if(o){ lab=o.l+(o.s?' · '+o.s:''); if(o.l!=='Fabricación propia'&&CUR!=='multi') lab='<span class="org">'+(a.orig&&a.orig.length?a.orig.filter(function(k){return k!==CUR;}).slice(0,2):[a.pais]).map(function(k){return flag(k,'mini');}).join('')+'</span>'+esc(lab); else lab=esc(lab);} else lab=esc(a.estado_pais?a.estado_pais:pname(a));
   var vt=(CURT&&(CURT==='cisterna'||CURT==='awacs'||CURT==='l_cisterna')&&a.tipo!==CURT&&a.alt&&a.alt.indexOf(CURT)>=0)?' <span class="cnt">· versión '+(CURT==='awacs'?'AEW':'cisterna')+'</span>':'';
-  return '<a class="row" href="#/a/'+a.id+'"><div class="th">'+thumb(a)+'</div><div class="m"><div class="nm">'+esc(a.n)+vt+'</div><div class="ds">'+(a.anio||'—')+' · '+lab+((a.gen||a.dev)?' · <span class="gtag">'+(a.gen?'Gen. '+a.gen.replace('.',','):'')+(a.dev?(a.gen?' · ':'')+'En desarrollo':'')+'</span>':'')+'</div></div><div class="rt">'+((a.cat==='buques'||a.cat==='submarinos')?(a.desp?fmt(a.desp)+' t':'')+(a.kn?'<br>'+String(a.kn).replace('.',',')+' kn':''):(a.cat==='tanques'||a.cat==='blindados')?(a.cal?String(a.cal).replace('.',',')+' mm':'')+(a.peso?'<br>'+String(a.peso).replace('.',',')+' t':''):a.cat==='logistica'?(a.peso?String(a.peso).replace('.',',')+' t':'')+(a.vel?'<br>'+fmt(a.vel)+' km/h':''):a.cat==='armamento'?(a.walc?fmt(a.walc)+' km':'')+(a.wkg?'<br>'+fmt(a.wkg)+' kg':''):(a.vel?fmt(a.vel)+' km/h':(a.mach?'Mach '+String(a.mach).replace('.',','):'')))+'</div></a>';
+  return '<a class="row" href="#/a/'+a.id+'"><div class="th">'+thumb(a)+'</div><div class="m"><div class="nm">'+esc(a.n)+(isFav(a)?' <span class="favs" aria-label="favorito">★</span>':'')+vt+'</div><div class="ds">'+(a.anio||'—')+' · '+lab+((a.gen||a.dev)?' · <span class="gtag">'+(a.gen?'Gen. '+a.gen.replace('.',','):'')+(a.dev?(a.gen?' · ':'')+'En desarrollo':'')+'</span>':'')+'</div></div><div class="rt">'+((a.cat==='buques'||a.cat==='submarinos')?(a.desp?fmt(a.desp)+' t':'')+(a.kn?'<br>'+String(a.kn).replace('.',',')+' kn':''):(a.cat==='tanques'||a.cat==='blindados')?(a.cal?String(a.cal).replace('.',',')+' mm':'')+(a.peso?'<br>'+String(a.peso).replace('.',',')+' t':''):a.cat==='logistica'?(a.peso?String(a.peso).replace('.',',')+' t':'')+(a.vel?'<br>'+fmt(a.vel)+' km/h':''):a.cat==='armamento'?(a.walc?fmt(a.walc)+' km':'')+(a.wkg?'<br>'+fmt(a.wkg)+' kg':''):(a.vel?fmt(a.vel)+' km/h':(a.mach?'Mach '+String(a.mach).replace('.',','):'')))+'</div></a>';
 }
-function set(h,title){app.innerHTML=h;document.title=title?title+' · M.A.T':'M.A.T';window.scrollTo(0,0);}
+function set(h,title){app.innerHTML=h;document.title=title?title+' · M.A.T':'M.A.T';window.scrollTo(0,0);try{deco();}catch(e){}}
+// Favoritos (localStorage 'mat_fav': [{id,c,t}]) + enlaces de variantes con ficha propia
+function favGet(){try{var v=JSON.parse(localStorage.getItem('mat_fav')||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}}
+function favKey(a){return (a.cat||'')+':'+a.id;}
+function isFav(a){var k=favKey(a);return favGet().some(function(f){return f.c+':'+f.id===k;});}
+function favToggle(a){var L=favGet(),k=favKey(a),i=-1;L.forEach(function(f,j){if(f.c+':'+f.id===k)i=j;});if(i>=0)L.splice(i,1);else L.unshift({id:a.id,c:a.cat,t:Date.now()});try{localStorage.setItem('mat_fav',JSON.stringify(L));}catch(e){}return i<0;}
+var VCH=null;function vch(id){if(!VCH){VCH={};I.forEach(function(x){if(x.vde){(VCH[x.vde]=VCH[x.vde]||[]).push(x);}});}return VCH[id]||[];}
+function deco(){var m=location.hash.match(/^#\/a\/([^?\/]+)/);if(!m)return;var id=decodeURIComponent(m[1]);var a=BY[id]||(D.alias&&D.alias[id]?BY[D.alias[id]]:null);if(!a)return;var tg=app.querySelector('.tags');if(!tg||tg.querySelector('.favb'))return;
+  var b=document.createElement('button');b.type='button';b.className='tag favb';
+  var paint=function(){var on=isFav(a);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');b.innerHTML='<span class="st" aria-hidden="true">'+(on?'★':'☆')+'</span><span>'+(on?'En favoritos':'Añadir a favoritos')+'</span>';};
+  paint();b.onclick=function(){favToggle(a);paint();};tg.insertBefore(b,tg.firstChild);
+  var x='';var rl=a.rol||(a.F&&a.F.tipo);if(rl&&a.vde)x+='<div class="vrol"><span class="lbl">Función</span> <span class="tag on">'+esc(rl)+'</span></div>';
+  var p=a.vde&&BY[a.vde];if(p)x+='<div class="vrol"><span class="lbl">'+(a.vdk==='d'?'Derivado de:':'Variante de:')+'</span> <a class="tag" href="#/a/'+p.id+'">'+esc(p.n)+' ›</a></div>';
+  var ch=vch(a.id);if(ch.length)x+='<div class="vrol vfp"><span class="lbl">Variantes con ficha propia</span><div class="tags">'+ch.map(function(c){return '<a class="tag" href="#/a/'+c.id+'">'+esc(c.n)+(c.rol?' · <span>'+esc(c.rol)+'</span>':'')+'</a>';}).join('')+'</div></div>';
+  if(x)tg.insertAdjacentHTML('afterend','<div class="vlinks">'+x+'</div>');}
+function favPage(){var L=favGet(),G={},n=0;L.forEach(function(f){var a=BY[f.id];if(!a||a.cat!==f.c)return;var tc=(tipoOf(a.tipo)||{}).c||a.cat;(G[tc]=G[tc]||[]).push(a);n++;});
+  var h=crumbs([['Inicio','#/'],['Favoritos']])+'<h1>Favoritos</h1>';
+  if(!n){h+='<div class="favempty"><p class="st" aria-hidden="true">☆</p><p>Aún no tienes favoritos.</p><p class="sub">Abre cualquier ficha (un avión, un tanque, un buque…) y toca «Añadir a favoritos». Aparecerá aquí, ordenada por categoría.</p><p class="sub">Se guardan en este dispositivo.</p><p><a class="tag on" href="#/buscar">Buscar un modelo ›</a></p></div>';return set(h,'Favoritos');}
+  h+='<p class="sub">'+n+' <span>'+(n===1?'ficha guardada en este dispositivo':'fichas guardadas en este dispositivo')+'</span></p>';
+  Object.keys(CN).forEach(function(c){var g=G[c];if(!g||!g.length)return;h+='<h2><span>'+CN[c]+'</span> <span class="cnt">'+g.length+'</span></h2><div class="list">'+g.map(row).join('')+'</div>';});
+  set(h,'Favoritos');}
 function catCount(c){return I.filter(function(a){return a.cat===c;}).length;}
 function pick(c,id){return BY[id]||I.filter(function(a){return a.cat===c&&a.img;})[0];}
 function home(){
   var tiles=[['aviones','lockheed-martin-f-22-raptor','cazas, bombarderos, transporte, cisternas, entrenamiento y más'],['helicopteros','boeing-ah-64-apache','ataque, transporte, navales y ligeros']];
-  var h='<section class="hero"><p class="mark">M.A.T</p><p>Enciclopedia de material militar: fichas técnicas, historia y fotografía de cada modelo, ordenado por país y época.</p></section>'+(window.MAT_MAPA?'<a class="maptile" href="#/mapa"><svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="19" fill="none" stroke="#8f9a6a" stroke-width="1.6"/><ellipse cx="24" cy="24" rx="8" ry="19" fill="none" stroke="#8f9a6a" stroke-width="1.2"/><path d="M5 24h38M8 14h32M8 34h32" stroke="#8f9a6a" stroke-width="1.1" fill="none"/></svg><div><div class="t">Mapa del mundo</div><div class="d">Globo 3D: toca un país y ve su arsenal; toca dos y se comparan</div></div><div class="ch" style="margin-left:auto;color:var(--dim);font-size:20px">›</div></a>':'')+'<div class="cats">';
+  var h='<section class="hero"><p class="mark">M.A.T</p><p>Enciclopedia de material militar: fichas técnicas, historia y fotografía de cada modelo, ordenado por país y época.</p></section>'+(window.MAT_MAPA?'<a class="maptile" href="#/mapa"><svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="19" fill="none" stroke="#8f9a6a" stroke-width="1.6"/><ellipse cx="24" cy="24" rx="8" ry="19" fill="none" stroke="#8f9a6a" stroke-width="1.2"/><path d="M5 24h38M8 14h32M8 34h32" stroke="#8f9a6a" stroke-width="1.1" fill="none"/></svg><div><div class="t">Mapa del mundo</div><div class="d">Globo 3D: toca un país y ve su arsenal; toca dos y se comparan</div></div><div class="ch" style="margin-left:auto;color:var(--dim);font-size:20px">›</div></a>':'')+(window.MAT_NOTICIAS?'<a class="newstile" href="#/noticias"><svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect x="7" y="9" width="30" height="32" rx="2" fill="none" stroke="#b3bd8c" stroke-width="1.6"/><path d="M37 17h4v20a4 4 0 0 1-4 4" fill="none" stroke="#b3bd8c" stroke-width="1.6"/><path d="M12 16h20M12 22h20M12 28h14M12 34h10" stroke="#8f9a6a" stroke-width="1.4"/></svg><div><div class="t">Geopolítica hoy</div><div class="d">Las 5 noticias de geopolítica más importantes del mundo, cada día</div></div><div class="ch" style="margin-left:auto;color:var(--dim);font-size:20px">›</div></a>':'')+'<div class="cats">';
   tiles.forEach(function(t,i){var f=pick(t[0],t[1]); var n=catCount(t[0]); h+='<a class="cat'+(i===0?' big':'')+'" href="#/'+t[0]+'">'+(f&&f.img?'<img src="'+f.img.src+'" alt="">':'')+'<div class="in"><div class="t">'+CN[t[0]]+'</div><div class="d">'+n+' modelos · '+t[2]+'</div></div></a>';});
   var TP={tanques:['t-leopard-2e','de la Primera Guerra Mundial a hoy'],blindados:['b-dragon-vehiculo-blindado','VCI, 8x8, reconocimiento, artillería y lanzacohetes'],buques:['s-spanish-ship-juan-carlos-i','portaaviones, destructores, fragatas…'],submarinos:['s-s-80-plus-class-submarine','convencionales y nucleares'],logistica:['l-uro-vamtac','camiones, cisternas, portacarros y recuperación'],armamento:['w-meteor-missile','misiles, bombas y armas nucleares']};
   h+='<div class="soongrid">'+['tanques','blindados','buques','submarinos','logistica','armamento'].map(function(c){var n=catCount(c); if(n){var f=pick(c,TP[c][0]); return '<a class="cat" href="#/'+c+'">'+(f&&f.img?'<img src="'+f.img.th+'" alt="">':'')+'<div class="in"><div class="t">'+CN[c]+'</div><div class="d">'+n+' modelos'+(TP[c][1]?' · '+TP[c][1]:'')+'</div></div></a>';} return '<div class="cat soon" aria-disabled="true"><span class="badge">Próximamente</span><div class="in"><div class="t">'+CN[c]+'</div></div></div>';}).join('')+'</div></div>';
-  h+='<h2>Accesos</h2><div class="list"><a class="row" href="#/buscar"><div class="m"><div class="nm">Buscar por nombre</div><div class="ds">Todo el archivo</div></div><div class="ch">›</div></a><a class="row" href="#/comparar"><div class="m"><div class="nm">Comparar</div><div class="ds">Ficha técnica lado a lado</div></div><div class="ch">›</div></a>'+(window.MAT_DUELO?'<a class="row" href="#/duelo"><div class="m"><div class="nm">Duelo</div><div class="ds">Simulación lúdica entre dos modelos</div></div><div class="ch">›</div></a>':'')+(window.MAT_MAPA?'<a class="row" href="#/mapa"><div class="m"><div class="nm">Mapa del mundo</div><div class="ds">Globo 3D con países y facciones</div></div><div class="ch">›</div></a>':'')+(window.MAT_FUERZAS?'<a class="row" href="#/fuerzas"><div class="m"><div class="nm">Países y facciones</div><div class="ds">España vs Francia, OTAN vs Rusia… unidades en servicio y modelos</div></div><div class="ch">›</div></a>':'')+'</div>';
+  h+='<h2>Accesos</h2><div class="list"><a class="row" href="#/favoritos"><div class="m"><div class="nm"><span class="favs">★</span> <span>Favoritos</span></div><div class="ds">'+(function(){var k=favGet().filter(function(f){return BY[f.id];}).length;return k?k+' <span>'+(k===1?'ficha guardada':'fichas guardadas')+'</span>':'Guarda las fichas que más te gusten';})()+'</div></div><div class="ch">›</div></a><a class="row" href="#/buscar"><div class="m"><div class="nm">Buscar por nombre</div><div class="ds">Todo el archivo</div></div><div class="ch">›</div></a><a class="row" href="#/comparar"><div class="m"><div class="nm">Comparar</div><div class="ds">Ficha técnica lado a lado</div></div><div class="ch">›</div></a>'+(window.MAT_DUELO?'<a class="row" href="#/duelo"><div class="m"><div class="nm">Duelo</div><div class="ds">Simulación lúdica entre dos modelos</div></div><div class="ch">›</div></a>':'')+(window.MAT_MAPA?'<a class="row" href="#/mapa"><div class="m"><div class="nm">Mapa del mundo</div><div class="ds">Globo 3D con países y facciones</div></div><div class="ch">›</div></a>':'')+(window.MAT_FUERZAS?'<a class="row" href="#/fuerzas"><div class="m"><div class="nm">Países y facciones</div><div class="ds">España vs Francia, OTAN vs Rusia… unidades en servicio y modelos</div></div><div class="ch">›</div></a>':'')+'</div>';
   set(h);
 }
 function catPage(c){
@@ -140,9 +160,10 @@ function listaTodos(t){
 }
 var GENS=[['1','1.ª'],['2','2.ª'],['3','3.ª'],['4','4.ª'],['4.5','4.5'],['5','5.ª'],['6','6.ª'],['dev','En desarrollo']];
 function genLbl(a){return a.gen?(a.gen==='4.5'?'Generación 4.5':(a.gen+'.ª generación'))+(a.dev?' · En desarrollo':''):(a.dev?'En desarrollo':'');}
+function inEra(a,x){return a.era===x||(!!a.eras&&a.eras.indexOf(x)>=0);}
 function genOk(a){return !st.gen||(st.gen==='dev'?a.dev:a.gen===st.gen);}
 function controls(all){
-  var eras=ERAS.filter(function(e){return all.some(function(a){return a.era===e[0];});});
+  var eras=ERAS.filter(function(e){return all.some(function(a){return inEra(a,e[0]);});});
   var gens=GENS.filter(function(g){return all.some(function(a){return g[0]==='dev'?a.dev:a.gen===g[0];});});
   return '<div class="ctrl"><input class="inp" id="q" type="search" placeholder="Filtrar por nombre" value="'+esc(st.q)+'" autocomplete="off"><select class="sel" id="sort" aria-label="Ordenar"><option value="crono">Orden cronológico</option><option value="vel">Más rápidos primero</option><option value="new">Más recientes primero</option><option value="uni">Más fabricados primero</option></select></div><div class="chips" role="group" aria-label="Época"><button class="chip" data-era="" aria-pressed="'+(!st.era)+'">Todas</button>'+eras.map(function(e){return '<button class="chip" data-era="'+e[0]+'" aria-pressed="'+(st.era===e[0])+'">'+e[1]+'</button>';}).join('')+'</div>'+(gens.length?'<div class="chips" role="group" aria-label="Generación" style="margin-top:6px"><button class="chip gchip" data-g="" aria-pressed="'+(!st.gen)+'">Todas las generaciones</button>'+gens.map(function(g){return '<button class="chip gchip" data-g="'+g[0]+'" aria-pressed="'+(st.gen===g[0])+'">'+(g[0]==='dev'?g[1]:'Gen. '+g[1])+'</button>';}).join('')+'</div><p class="note" style="margin:4px 0 0">Generación solo cuando la fuente la indica expresamente.</p>':'');
 }
@@ -151,14 +172,14 @@ function bindControls(all,group){
   so.value=st.sort;
   function draw(){
     var s=st.q.trim().toLowerCase().replace(/[-\s]/g,'');
-    var L=all.filter(function(a){return (!st.era||a.era===st.era)&&genOk(a)&&(!st.orig||!CUR||(NAT(a.ops[CUR].l)===(st.orig==='p')))&&(!s||a.n.toLowerCase().replace(/[-\s]/g,'').indexOf(s)>=0);});
+    var L=all.filter(function(a){return (!st.era||inEra(a,st.era))&&genOk(a)&&(!st.orig||!CUR||(NAT(a.ops[CUR].l)===(st.orig==='p')))&&(!s||[a.n].concat(a.k||[]).some(function(x){return String(x).toLowerCase().replace(/[-\s]/g,'').indexOf(s)>=0;}));});
     if(st.sort==='vel') L.sort(function(a,b){return sortSpeed(b)-sortSpeed(a);});
     else if(st.sort==='new') L.sort(function(a,b){return (b.anio||0)-(a.anio||0);});
     else if(st.sort==='uni') L.sort(function(a,b){return (b.uni_n||0)-(a.uni_n||0);});
     else L.sort(function(a,b){return (a.anio||9999)-(b.anio||9999);});
     if(!L.length){res.innerHTML='<p class="empty">Sin resultados.</p>';return;}
     var h='';
-    if(group&&st.sort==='crono'){ERAS.concat([[null,'Sin fecha en la fuente']]).forEach(function(e){var g=L.filter(function(a){return e[0]?a.era===e[0]:!a.era;}); if(!g.length) return; h+='<h2>'+e[1]+' <span class="cnt">· '+g.length+'</span></h2><div class="list">'+g.map(row).join('')+'</div>';});}
+    if(group&&st.sort==='crono'){ERAS.concat([[null,'Sin fecha en la fuente']]).forEach(function(e){var g=L.filter(function(a){return e[0]?(st.era?e[0]===st.era:a.era===e[0]):(!st.era&&!a.era);}); if(!g.length) return; h+='<h2>'+e[1]+' <span class="cnt">· '+g.length+'</span></h2><div class="list">'+g.map(row).join('')+'</div>';});}
     else h='<div class="list" style="margin-top:12px">'+L.map(row).join('')+'</div>';
     res.innerHTML=h;
   }
@@ -180,7 +201,7 @@ function detalle(id){
   var a=BY[id]||(D.alias&&D.alias[id]?BY[D.alias[id]]:null); if(!a) return notfound(); CUR=''; if(a.lz&&!a._full){app.innerHTML='<p class="sub" style="padding:24px 0">Cargando ficha…</p>'; return ensure([a],function(){if(location.hash.indexOf(id)>=0) detalle(id);});} if(GROUND[a.cat]) return detalleT(a); if(a.cat==='armamento') return detalleW(a); if(a.cat==='buques'||a.cat==='submarinos') return detalleS(a);
   var tc=(tipoOf(a.tipo)||{}).c||a.cat; var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a></div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
   else h+='<figure class="dhero nofig"><div class="nofoto big">Sin fotografía libre</div></figure><div class="credit">No hay una fotografía con licencia libre de este modelo en Wikimedia Commons.</div>';
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
@@ -196,7 +217,7 @@ function detalle(id){
    sp('Peso máximo al despegue',a.mtow?fmt(a.mtow)+' kg':null)+sp('Planta motriz',esc(a.motor||''))+(a.tw?sp('Relación empuje/peso',String(a.tw).replace('.',',')):'')+'</div>';
   var opk=ORDER_ALL.filter(function(k){return a.ops[k]&&k!=='multi';});
   var oph=opk.length?'<div class="list">'+opk.map(function(k){var o=a.ops[k];return '<a class="row" style="min-height:48px" href="#/'+tc+'/'+a.tipo+'/'+k+'">'+flag(k)+'<div class="m"><div class="nm" style="font-size:15px">'+esc(P[k].n)+(o.s?' <span class="cnt">('+esc(o.s)+')</span>':'')+'</div><div class="ds">'+esc(o.l)+'</div></div><div class="ch">›</div></a>';}).join('')+'</div>':'';
-  var MS=[['avi','Radar'],['rad','Alcance de detección del radar'],['cap','Capacidad'],['pay','Carga útil'],['fuel','Combustible'],['to','Carrera de despegue'],['ld','Carrera de aterrizaje'],['end','Autonomía']], mi=a.mision||{};
+  var MS=[['avi','Radar'],['rad','Alcance de detección del radar'],['cap','Capacidad'],['pay','Carga útil'],['fuel','Combustible'],['to','Carrera de despegue'],['ld','Carrera de aterrizaje'],['end','Autonomía'],['sen','Sensores y sistemas de misión']], mi=a.mision||{};
   if(Object.keys(mi).length) h+='<h2>Datos de misión</h2><div class="specs">'+MS.filter(function(m){return mi[m[0]];}).map(function(m){return sp(m[1],esc(mi[m[0]]));}).join('')+'</div><p class="note" style="margin-top:6px">Tal como figuran en la ficha técnica de la fuente (unidades originales y métricas).</p>';
   if(a.cist){var CI=[['comb','Capacidad de combustible'],['trans','Combustible transferible / descarga'],['sis','Sistema de reabastecimiento'],['alc','Alcance'],['var','Versión cisterna']];
     h+='<h2>Datos de cisterna</h2><div class="specs">'+CI.filter(function(m){return a.cist[m[0]]||m[0]!=='var';}).map(function(m){return sp(m[1],esc(a.cist[m[0]]||'—'));}).join('')+'</div><p class="note" style="margin-top:6px">Cifras del artículo de Wikipedia enlazado y de su «List of tanker aircraft». Litros: conversión directa desde galones; desde masa, con densidad Jet A de 0,8 kg/L (aprox.).</p>';}
@@ -215,7 +236,7 @@ function detalleS(a){
   var F=a.F||{}, tc=a.cat;
   var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a></div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>'+(a.en&&a.en!==a.n?'<div class="cnt">'+esc(a.en)+'</div>':'');
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.tags?a.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join(''):'')+'<span class="tag">'+(a.serv?'En servicio':'Fuera de servicio')+'</span></div>';
@@ -243,7 +264,7 @@ function detalleT(a){
   var F=a.F||{}, tc=a.cat, LG=tc==='logistica';
   var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a></div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
   else h+='<figure class="dhero nofig"><div class="nofoto big">Sin fotografía libre</div></figure><div class="credit">No hay una fotografía con licencia libre de este modelo en Wikimedia Commons.</div>';
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
@@ -272,7 +293,7 @@ function detalleW(a){
   var F=a.F||{}, tc='armamento';
   var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a></div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
   else h+='<figure class="dhero nofig"><div class="nofoto big">Sin fotografía libre</div></figure><div class="credit">No hay una fotografía con licencia libre de este modelo en Wikimedia Commons.</div>';
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
@@ -376,7 +397,7 @@ function comparar(){
 function cover(){
   var f=BY['t-leopard-2e']||pick('tanques'); 
   var ov=document.createElement('div'); ov.className='cover'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-label','M.A.T');
-  ov.innerHTML=(f&&f.img?'<img class="cvbg" src="'+f.img.src+'" alt="">':'')+'<div class="cvsh"></div><div class="cvin"><div class="cvmark">M.A.T</div><div class="cvsub">Enciclopedia de material militar</div><button class="cvbtn" id="cvgo">QUE EMPIECE LA GUERRA</button><div class="cvfoot">Aviones · Helicópteros · Tanques · Blindados · Buques · Submarinos · Logística · Armamento</div></div>';
+  ov.innerHTML=(f&&f.img?'<img class="cvbg" src="'+f.img.src+'" alt="">':'')+'<div class="cvsh"></div><div class="cvin"><div class="cvmark">M.A.T</div><div class="cvsub">Enciclopedia de material militar</div><button class="cvbtn" id="cvgo">M.A.T</button><div class="cvfoot">Aviones · Helicópteros · Tanques · Blindados · Buques · Submarinos · Logística · Armamento</div></div>';
   document.body.appendChild(ov); document.body.style.overflow='hidden';
   home();
   var b=ov.querySelector('#cvgo'); setTimeout(function(){try{b.focus({preventScroll:true});}catch(e){}},50);
@@ -393,9 +414,11 @@ function route(){
   if(p[0]==='aviones'&&p[1]==='helicoptero'){location.replace('#/helicopteros'+(p[2]?'/h_transporte/'+p[2]:''));return;}
   if(CN[p[0]]){ if(p.length===1) return catPage(p[0]); if(p.length===2){st.era='';st.q='';st.gen='';return paises(p[1]);} return lista(p[1],p[2]);}
   if(p[0]==='a') return detalle(p[1]);
+  if(p[0]==='favoritos') return favPage();
   if(p[0]==='buscar'){st.era='';return buscar();}
   if(p[0]==='comparar') return comparar();
   if(p[0]==='fuerzas'&&window.MAT_FUERZAS) return window.MAT_FUERZAS(app,{I:I,BY:BY,P:P,set:set,crumbs:crumbs,qs:qs,esc:esc,flag:flag,norm:norm,hashFor:hashFor,ensure:ensure,TIPOS:TIPOS,CN:CN});
+  if(p[0]==='noticias'&&window.MAT_NOTICIAS) return window.MAT_NOTICIAS(app,{P:P,set:set,crumbs:crumbs,qs:qs,esc:esc,flag:flag});
   if(p[0]==='mapa'&&window.MAT_MAPA) return window.MAT_MAPA(app,{I:I,BY:BY,P:P,set:set,crumbs:crumbs,qs:qs,esc:esc,flag:flag});
   if(p[0]==='duelo'&&window.MAT_DUELO) return window.MAT_DUELO(app,{I:I,BY:BY,P:P,set:set,crumbs:crumbs,options:options,qs:qs,esc:esc,fmt:fmt,EN:EN,openPicker:openPicker,pickBtn:pickBtn,hashFor:hashFor,ensure:ensure});
   notfound();

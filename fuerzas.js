@@ -17,7 +17,21 @@ function fzInv(m){ var tot={}, rows={}, nod=[], noq={}, has=0;
     m.forEach(function(k){ var R=DATA&&DATA.inv[k]; if(!R||!R.length){nod.push(k);return;} has++;
       R.forEach(function(r){ var c=r[2]; rows[c]=rows[c]||[]; rows[c].push({n:r[0],id:r[1],q:r[3],qt:r[4],src:r[5],nota:r[6],p:k}); if(r[3]!=null) tot[c]=(tot[c]||0)+r[3]; else noq[c]=(noq[c]||0)+1;});});
     return {tot:tot,rows:rows,nod:nod,noq:noq,has:has};}
-window.MAT_FZ={load:load,data:function(){return DATA;},IC:IC,ICN:ICN,custom:custom,nf:nf,bar:fzBar,inv:fzInv};
+
+function chgHTML(k,cls){ var EN=window.MAT_LANG==='en', C=DATA&&DATA.cambios&&DATA.cambios[k], R=DATA&&DATA.revisado;
+  function e(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function q(v,t){return v==null?(t?'«'+e(t)+'»':(EN?'no figure':'sin cifra')):nf(v);}
+  var h='<div class="chgbox" data-noi18n><h3 class="'+(cls||'mph3')+'">'+(EN?'Latest changes':'Últimos cambios')+'</h3>';
+  if(!C||!C.length){ return R?h+'<p class="chgnone">'+(EN?'No changes in the Wikipedia tables since the last check':'Sin cambios en las tablas de Wikipedia desde la última revisión')+' ('+e(R)+').</p></div>':''; }
+  C.slice(0,8).forEach(function(c){ var f=DATA.fuentes[c[1]]||['','',''], u=c[2]?'https://en.wikipedia.org/w/index.php?diff='+c[3]+'&oldid='+c[2]:'https://en.wikipedia.org/w/index.php?oldid='+c[3];
+    h+='<div class="chgi"><div class="chgh"><b>'+e(c[0])+'</b> · <a href="'+u+'" target="_blank" rel="noopener">'+(EN?'according to Wikipedia':'según Wikipedia')+' (rev '+e(c[3])+')</a> · <span>'+e(f[0])+'</span></div><ul>';
+    c[4].slice(0,12).forEach(function(x){ var t=x[0];
+      h+='<li class="chg'+(t==='+'?'add':t==='-'?'del':'q')+'">'+(t==='+'?(EN?'New: ':'Nuevo: ')+'<b>'+e(x[1])+'</b> ('+q(x[3],x[5])+')':t==='-'?(EN?'No longer listed: ':'Ya no figura: ')+'<b>'+e(x[1])+'</b> ('+(EN?'was ':'eran ')+q(x[2],x[4])+')':'<b>'+e(x[1])+'</b>: '+q(x[2],x[4])+' → '+q(x[3],x[5]))+'</li>'; });
+    if(c[4].length>12) h+='<li>+'+(c[4].length-12)+'</li>';
+    h+='</ul></div>'; });
+  return h+'<p class="chgnote">'+(EN?'Only what the tables say: a row that disappears may be retired, lost or just moved in the article.':'Solo lo que dicen las tablas: una fila que desaparece puede ser una baja, una retirada o un simple cambio en el artículo.')+'</p></div>'; }
+function sfaHTML(k){ var EN=window.MAT_LANG==='en', s=DATA&&DATA.sfa&&DATA.sfa[k], nt=!s&&!(DATA&&DATA.inv&&DATA.inv[k])&&DATA&&DATA.nt&&DATA.nt[k]; if(nt) s=nt; if(!s) return ''; var t=Array.isArray(s)?(EN?s[1]:s[0]):(EN?s.en:s.es), src=!Array.isArray(s)&&s.src; function e(x){return String(x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});} return '<div class="sfa" data-noi18n><b>'+(nt?(EN?'No equipment table on Wikipedia':'Sin tabla de equipo en Wikipedia'):(EN?'No armed forces':'Sin fuerzas armadas'))+'</b><p>'+e(t)+'</p>'+(src?'<p class="sfasrc">'+(EN?'Source':'Fuente')+': <a href="'+e(src[1])+'" target="_blank" rel="noopener">Wikipedia: '+e(src[0])+'</a></p>':'')+'</div>'; }
+window.MAT_FZ={chg:chgHTML,sfa:sfaHTML,load:load,data:function(){return DATA;},IC:IC,ICN:ICN,custom:custom,nf:nf,bar:fzBar,inv:fzInv};
 window.MAT_FUERZAS=function(app,X){
   var P=X.P, I=X.I, BY=X.BY, esc=X.esc;
   if(!DATA){app.innerHTML='<p class="sub" style="padding:24px 0">Cargando países y facciones…</p>'; load().then(function(){window.MAT_FUERZAS(app,X);}).catch(function(){app.innerHTML='<p class="sub" style="padding:24px 0">No se pudieron cargar los datos. Comprueba la conexión.</p>';}); return;}
@@ -57,8 +71,10 @@ window.MAT_FUERZAS=function(app,X){
     var na=IA.noq[k]||0, nb=IB.noq[k]||0, sub=(na||nb)?(na?na+' fila'+(na>1?'s':'')+' sin cifra en '+esc(A.n):'')+(na&&nb?' · ':'')+(nb?nb+' fila'+(nb>1?'s':'')+' sin cifra en '+esc(B.n):''):'';
     h+=bar(va,vb,c[1],sub); });
   if(!anyI) h+='<p class="empty">Ninguno de los dos lados tiene tablas de equipamiento cargadas todavía.</p>';
+  [A,B].forEach(function(z){ if(z.m.length===1){ var sh=sfaHTML(z.m[0]); if(sh) h+='<div class="fzchgn">'+X.flag(z.m[0],'mini')+esc(z.n)+'</div>'+sh; } });
   [[A,IA],[B,IB]].forEach(function(z){ if(z[1].nod.length) h+='<p class="note">'+esc(z[0].n)+': sin tabla de equipamiento cargada para '+z[1].nod.map(function(k){return esc(P[k].n);}).join(', ')+' (se muestra «—», nunca una estimación).</p>';});
   h+='<p class="note">Cifras tal como aparecen en las tablas «In service / Quantity» de los artículos de equipamiento de cada país en Wikipedia; en las facciones son la suma de sus miembros. Toca un modelo para ver la fuente. Las filas sin cifra (pedidos, «100/348», reservas) no suman.</p>';
+  [A,B].forEach(function(z){ if(z.m.length===1&&z.m[0]!==(A===z?'':A.m[0])&&(DATA.inv[z.m[0]]||(DATA.cambios&&DATA.cambios[z.m[0]]))){ var c=chgHTML(z.m[0],'fzchg'); if(c) h+='<div class="fzchgw"><div class="fzchgn">'+X.flag(z.m[0],'mini')+esc(z.n)+'</div>'+c+'</div>'; } });
   // ---- per-category model rows
   h+='<h2>Por modelo</h2>';
   IC.forEach(function(c){ var k=c[0], ra=IA.rows[k]||[], rb=IB.rows[k]||[]; if(!ra.length&&!rb.length) return;
@@ -121,7 +137,7 @@ window.MAT_FUERZAS=function(app,X){
     var PK=Object.keys(P).filter(function(k){return k!=='multi';}).sort(function(x,y){var dx=DATA.inv[x]?0:1, dy=DATA.inv[y]?0:1; return dx-dy||P[x].n.localeCompare(P[y].n,'es');});
     function row(s,label,sub,fl){return '<button class="row pkrow" data-s="'+esc(s)+'"><div class="m"><div class="nm">'+fl+esc(label)+'</div><div class="ds">'+sub+'</div></div></button>';}
     function draw(){ var s=X.norm(qi.value), h2='';
-      if(tab==='p'||s){ var L=PK.filter(function(k){return !s||X.norm(P[k].n).indexOf(s)>=0;}); h2+=(s?'<h2>Países</h2>':'')+'<div class="list">'+L.map(function(k){return row('p:'+k,P[k].n,DATA.inv[k]?'Con unidades en servicio':'Solo modelos (sin tabla de unidades)',X.flag(k,'mini'));}).join('')+'</div>'; }
+      if(tab==='p'||s){ var L=PK.filter(function(k){return !s||X.norm(P[k].n).indexOf(s)>=0;}); h2+=(s?'<h2>Países</h2>':'')+'<div class="list">'+L.map(function(k){return row('p:'+k,P[k].n,DATA.inv[k]?'Con unidades en servicio':(DATA.sfa&&DATA.sfa[k]?'Sin fuerzas armadas':'Solo modelos (sin tabla de unidades)'),X.flag(k,'mini'));}).join('')+'</div>'; }
       if(tab==='f'||s){ var F=DATA.fac.filter(function(f){return !s||X.norm(f.n).indexOf(s)>=0;});
         [[0,'Actuales'],[1,'Históricas']].forEach(function(g){var l=F.filter(function(f){return (f.h?1:0)===g[0];}); if(l.length) h2+='<h2>'+(s?'Facciones · ':'')+g[1]+'</h2><div class="list">'+l.map(function(f){return row('f:'+f.id,f.n,f.m.length+' países',f.m.slice(0,5).map(function(k){return X.flag(k,'mini');}).join(''));}).join('')+'</div>';}); }
       if(tab==='c'&&!s){ var C=custom(); h2+='<div class="list">'+C.map(function(c){return '<div class="fzcrow">'+row('c:'+c.id,c.n,c.m.length+' países',c.m.slice(0,5).map(function(k){return X.flag(k,'mini');}).join(''))+'<button class="btn fzdel" data-id="'+esc(c.id)+'" aria-label="Borrar '+esc(c.n)+'">Borrar</button></div>';}).join('')+'</div>'+(C.length?'':'<p class="empty">Aún no has creado ninguna facción.</p>')+'<button class="btn pri" id="fznew" style="margin-top:10px">Crear facción</button>'; }

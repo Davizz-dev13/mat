@@ -4,16 +4,22 @@
 // ======================= M.A.T · MAPA DEL MUNDO (globo 3D) =======================
 var COL={a:'#d4ae4c',b:'#6fa3d6',ab:'#b58ad6'};
 var HIST={urss:['ru','ua','by','kz','uz','tm','kg','tj','ge','am','az','md','ee','lv','lt'],checoslovaquia:['cz','sk'],yugoslavia:['si','hr','ba','rs','me','mk','xk'],imperio_ruso:['ru'],rodesia:['zw']};
-var WORLD=null, WP=null, CUR=null, T3P=null;
+var WORLD=null, WP=null, CUR=null, T3P=null, BD=null, BDP=null;
+function loadBases(){ if(BDP) return BDP; BDP=window.MAT_GET('bases.json.gz').then(function(d){ var c=d.cols.split(','), L=d.b.map(function(r,i){ var o={i:i}; c.forEach(function(k,j){o[k]=r[j];}); return o; });
+  var ord=L.slice().sort(function(a,b){return b.r-a.r;}); ord.forEach(function(b,j){ b.rk=j/Math.max(1,ord.length-1); });
+  var byH={}, byF={}; L.forEach(function(b){ (byH[b.h]=byH[b.h]||[]).push(b); if(b.f) b.f.forEach(function(k){ (byF[k]=byF[k]||[]).push(b); }); });
+  d.L=L; d.byH=byH; d.byF=byF; delete d.b; BD=d; return d; }).catch(function(e){ BDP=null; throw e; }); return BDP; }
 function loadWorld(){ if(WP) return WP; WP=window.MAT_GET('world.json.gz').then(function(w){prep(w);WORLD=w;return w;}); return WP; }
 function prep(w){ w.byIso={}; w.byKey={};
   w.c.forEach(function(c,ix){ c.ix=ix; var x0=999,y0=999,x1=-999,y1=-999;
     c.R=c.r.map(function(a){ var o=new Float32Array(a.length), x=0,y=0; for(var i=0;i<a.length;i+=2){x+=a[i];y+=a[i+1];o[i]=x/100;o[i+1]=y/100; if(o[i]<x0)x0=o[i]; if(o[i]>x1)x1=o[i]; if(o[i+1]<y0)y0=o[i+1]; if(o[i+1]>y1)y1=o[i+1];} return o;});
-    c.bb=[x0,y0,x1,y1]; delete c.r; w.byIso[c.i]=c; if(c.k) w.byKey[c.k]=c; });
+    c.bb=[x0,y0,x1,y1]; delete c.r; w.byIso[c.i]=c; if(c.k){ (w.byKey[c.k]=w.byKey[c.k]||[]).push(c); } });
+  w.pk=w.c.filter(function(c){return c.e;}).concat(w.c.filter(function(c){return !c.e;}));
 }
-function isosOf(k){ if(HIST[k]) return HIST[k]; var c=WORLD.byKey[k]; return c?[c.i]:[]; }
+function isosOf(k){ if(HIST[k]) return HIST[k]; return (WORLD.byKey[k]||[]).map(function(c){return c.i;}); }
 function inRings(c,x,y){ var ins=false; for(var r=0;r<c.R.length;r++){ var a=c.R[r], n=a.length; for(var i=0,j=n-2;i<n;j=i,i+=2){ var yi=a[i+1], yj=a[j+1]; if((yi>y)!==(yj>y)){ var xi=a[i], xj=a[j]; if(x<(xj-xi)*(y-yi)/(yj-yi)+xi) ins=!ins; } } } return ins; }
-function pickLL(lon,lat,tol){ var C=WORLD.c, best=null, bd=1e9, cl=Math.cos(lat*Math.PI/180);
+function pickLL(lon,lat,tol){ var C=WORLD.pk||WORLD.c, best=null, bd=1e9, cl=Math.cos(lat*Math.PI/180);
+  var mr=Math.min(tol*.5,.1); for(var q0=0;q0<C.length;q0++){ var cm=C[q0]; if(!cm.m) continue; for(var q1=0;q1<cm.m.length;q1++){ var mx=(cm.m[q1][0]-lon)*cl, my=cm.m[q1][1]-lat; if(mx*mx+my*my<mr*mr) return cm; } }
   for(var i=0;i<C.length;i++){ var c=C[i], b=c.bb; if(lon<b[0]-tol/Math.max(cl,.2)||lon>b[2]+tol/Math.max(cl,.2)||lat<b[1]-tol||lat>b[3]+tol) continue;
     if(lon>=b[0]&&lon<=b[2]&&lat>=b[1]&&lat<=b[3]&&inRings(c,lon,lat)) return c; }
   for(i=0;i<C.length;i++){ c=C[i]; b=c.bb; if(lon<b[0]-tol*3||lon>b[2]+tol*3||lat<b[1]-tol||lat>b[3]+tol) continue;
@@ -53,9 +59,10 @@ window.MAT_MAPA=function(app,X){
     +FZ.custom().map(function(c){return '<button class="chip mpchip" data-s="c:'+esc(c.id)+'" aria-pressed="false">'+esc(c.n)+' <span class="mph">tuya</span></button>';}).join('')
     +'<a class="chip mpchip mpnew" href="#/fuerzas">+ Crear facción</a>';
   var h=X.crumbs([['Inicio','#/'],['Mapa del mundo']])+'<div class="mptop"><h1>Mapa del mundo</h1><p class="sub">Toca un país para ver su arsenal. Toca otro y se comparan. Arrastra para girar, pellizca para acercar.</p></div>'
-    +'<div class="mpbar"><div class="mpsearch"><input id="mpq" type="search" placeholder="Buscar país" autocomplete="off" aria-label="Buscar país"><div id="mpres" class="mpres" hidden></div></div><button class="btn mpreset" id="mpreset" hidden>Reiniciar</button></div>'
+    +'<div class="mpbar"><div class="mpsearch"><input id="mpq" type="search" placeholder="Buscar país" autocomplete="off" aria-label="Buscar país"><div id="mpres" class="mpres" hidden></div></div><button class="btn mpbtog" id="mpbt" aria-pressed="false" data-noi18n><i></i><span></span></button><button class="btn mpreset" id="mpreset" hidden>Reiniciar</button></div>'
+    +'<div class="mpbrow" id="mpbrow" hidden data-noi18n></div>'
     +'<div class="mpchips" role="group" aria-label="Facciones"><span class="mpcl">Facciones</span>'+facChips+'</div>'
-    +'<div class="mpwrap"><div class="mpglobe" id="mpg"><canvas id="mpc" aria-label="Globo terráqueo interactivo"></canvas><div class="mptip" id="mptip" hidden></div><div class="mplab" id="mplab0" hidden></div><div class="mplab b" id="mplab1" hidden></div><div class="mphint" id="mphint">Toca un país · toca dos para compararlos</div><div class="mpleg" id="mpleg"></div><div class="mpload" id="mpload">Cargando globo 3D…</div></div>'
+    +'<div class="mpwrap"><div class="mpglobe" id="mpg"><canvas id="mpc" aria-label="Globo terráqueo interactivo"></canvas><div class="mptip" id="mptip" hidden></div><div class="mpbcard" id="mpbcard" hidden data-noi18n></div><div class="mplab" id="mplab0" hidden></div><div class="mplab b" id="mplab1" hidden></div><div class="mphint" id="mphint">Toca un país · toca dos para compararlos</div><div class="mpleg" id="mpleg"></div><div class="mpload" id="mpload">Cargando globo 3D…</div></div>'
     +'<aside class="mppanel" id="mpp" aria-live="polite"></aside></div>'
     +'<p class="note">Mapa: Natural Earth 1:50m (dominio público), simplificado. Intensidad del color = unidades en servicio con cifra en las tablas de equipamiento de Wikipedia ('+esc(DATA.fecha)+'); gris = sin tabla cargada todavía. Las fronteras son ilustrativas.</p>';
   X.set(h);
@@ -63,6 +70,71 @@ window.MAT_MAPA=function(app,X){
   var qEl=app.querySelector('#mpq'), resEl=app.querySelector('#mpres'), rsBtn=app.querySelector('#mpreset');
   var dead=false, R=null, sheetOpen=false, IS3D=false;
   var isPhone=function(){return window.innerWidth<900;};
+  // ---- capa BASES MILITARES (Wikidata; carga perezosa al activarla)
+  var EN=window.MAT_LANG==='en'; function LG(es,en){return EN?en:es;}
+  var BCOL={a:'#5aa9f0',n:'#2fc2b4',t:'#9bc45a',o:'#aab2b8'}, BTN={a:['Aérea','Air'],n:['Naval','Naval'],t:['Terrestre','Land'],o:['Otra / sin clasificar','Other / unclassified']}, BTP={a:['Aéreas','Air'],n:['Navales','Naval'],t:['Terrestres','Land'],o:['Otras','Other']};
+  var B={on:false,cl:false,cur:null,more:{}}, BR=null;
+  try{ B.on=o.capa==='bases'||(o.capa==null&&localStorage.getItem('mat_bases')==='1'); }catch(e){ B.on=o.capa==='bases'; }
+  var btEl=app.querySelector('#mpbt'), brEl=app.querySelector('#mpbrow'), bcEl=app.querySelector('#mpbcard');
+  function bvf(b){ return B.cl||b.st!==2; }
+  function bname(b){ return EN?(b.ne||b.n):b.n; }
+  function cname(k){ if(!k) return '—'; if(k.charAt(0)==='#'){ var hh=BD&&BD.H[k]; return hh?(EN?hh[1]:hh[0]):k.slice(1).toUpperCase(); } var n=P[k]?P[k].n.split(' (')[0]:k; return EN&&window.MAT_T?window.MAT_T(n):n; }
+  function bwiki(b){ var es=b.es===1?b.n:b.es, en=b.en===1?(b.ne||b.n):b.en;
+    if(EN&&en) return ['https://en.wikipedia.org/wiki/'+encodeURIComponent(en.replace(/ /g,'_')),'Wikipedia'];
+    if(!EN&&es) return ['https://es.wikipedia.org/wiki/'+encodeURIComponent(es.replace(/ /g,'_')),'Wikipedia'];
+    if(en) return ['https://en.wikipedia.org/wiki/'+encodeURIComponent(en.replace(/ /g,'_')),EN?'Wikipedia':'Wikipedia (inglés)'];
+    if(es) return ['https://es.wikipedia.org/wiki/'+encodeURIComponent(es.replace(/ /g,'_')),EN?'Wikipedia (Spanish)':'Wikipedia'];
+    return ['https://www.wikidata.org/wiki/Q'+b.q,'Wikidata']; }
+  function bstat(b){ return b.st===2?LG('Cerrada','Closed')+(b.y?' · '+b.y:''):b.st===1?LG('En uso','In use'):'—'; }
+  function bHiKeys(){ var H={}; sel.map(sideOf).filter(Boolean).forEach(function(sd){ sd.m.forEach(function(k){H[k]=1;}); }); if(ndC) H['#'+ndC.i]=1; return H; }
+  function bRow(){ if(!B.on){ brEl.hidden=true; return; } brEl.hidden=false;
+    if(!BD){ brEl.innerHTML='<span class="mpsrc">'+LG('Cargando bases militares…','Loading military bases…')+'</span>'; return; }
+    var cnt={a:0,n:0,t:0,o:0}, nf0=0, ncl=0; BD.L.forEach(function(b){ if(b.st===2) ncl++; if(!bvf(b)) return; cnt[b.t]++; if(b.f) nf0++; });
+    brEl.innerHTML='<div class="mpbleg">'+['a','n','t','o'].map(function(t){ return '<span><i style="background:'+BCOL[t]+'"></i>'+(EN?BTP[t][1]:BTP[t][0])+' <em>'+nf(cnt[t])+'</em></span>'; }).join('')
+      +'<span><i class="fr"></i>'+LG('Extranjera','Foreign')+' <em>'+nf(nf0)+'</em></span></div>'
+      +'<button class="chip mpbcl" id="mpbcl" aria-pressed="'+B.cl+'">'+LG('Mostrar cerradas','Show closed')+' ('+nf(ncl)+')</button>'
+      +'<p class="mpsrc mpbsrc">'+LG('Fuente','Source')+': <a href="https://www.wikidata.org/" target="_blank" rel="noopener">Wikidata</a> · '+esc(BD.fecha)+'<span class="mpbx">. '+LG('Extranjera = operada por otro país según Wikidata o','Foreign = run by another country per Wikidata or')+' <a href="'+esc(BD.src.wp[0][1])+'" target="_blank" rel="noopener">Wikipedia</a>. '+LG('Alejado se ven las más conocidas; acerca para ver todas.','Zoomed out, only the best-known show; zoom in for all.')+'</span></p>'; }
+  function bBtn(){ btEl.setAttribute('aria-pressed',B.on); btEl.querySelector('span').textContent=LG('Bases militares','Military bases'); }
+  function bSet(on){ B.on=on; try{localStorage.setItem('mat_bases',on?'1':'0');}catch(e){} if(!on) bHide(); bBtn(); bRow();
+    if(on&&!BD) bLoad0();
+    update(false); }
+  btEl.addEventListener('click',function(){ bSet(!B.on); });
+  brEl.addEventListener('click',function(e){ if(e.target.closest('#mpbcl')){ B.cl=!B.cl; bRow(); if(B.cur!=null&&!bvf(BD.L[B.cur])) bHide(); if(BR) BR.refresh(); renderPanel(); } });
+  function bHide(){ B.cur=null; bcEl.hidden=true; if(BR) BR.refresh(); }
+  function bShow(i){ var b=BD&&BD.L[i]; if(!b) return; B.cur=i; var w=bwiki(b);
+    var ops=(b.o||[]).map(function(j){ var x=BD.O[j]; return EN?(x[1]||x[0]):x[0]; });
+    var h='<button class="mpx" data-bc="x" aria-label="'+LG('Cerrar','Close')+'">×</button>'
+      +'<div class="bct"><i style="background:'+BCOL[b.t]+'"></i>'+esc(EN?BTN[b.t][1]:BTN[b.t][0])+' · '+esc(bstat(b))+'</div>'
+      +'<b class="bcn">'+esc(bname(b))+'</b>'
+      +'<div class="bcr">'+LG('País','Country')+': '+(P[b.h]?'<button class="bclk" data-bs="'+esc(b.h)+'">'+flagImg(b.h)+esc(cname(b.h))+'</button>':esc(cname(b.h)))+'</div>'
+      +(b.f?'<div class="bcr bcf"><span class="btag f">'+LG('Extranjera','Foreign')+'</span> '+LG('Presencia de','Presence of')+' '+b.f.map(function(k){ return (P[k]?flagImg(k):'')+esc(cname(k)); }).join(', ')+(b.fw?' <span class="bcop">('+LG('según','per')+' <a href="'+esc(BD.src.wp[0][1])+'" target="_blank" rel="noopener">Wikipedia</a>)</span>':'')+'</div>'+(ops.length?'<div class="bcr"><span class="bcop">'+LG('Operador en Wikidata','Operator on Wikidata')+': '+esc(ops.join(', '))+'</span></div>':''):'')
+      +'<div class="bcl"><a href="'+esc(w[0])+'" target="_blank" rel="noopener">'+esc(w[1])+' ›</a>'+(w[1]!=='Wikidata'?' <a class="bwd" href="https://www.wikidata.org/wiki/Q'+b.q+'" target="_blank" rel="noopener">Wikidata</a>':'')+'</div>';
+    bcEl.innerHTML=h; bcEl.hidden=false; if(BR) BR.refresh(); }
+  bcEl.addEventListener('click',function(e){ var t=e.target.closest('button'); if(!t) return; if(t.dataset.bc){ bHide(); return; } if(t.dataset.bs){ bHide(); choose('p:'+t.dataset.bs); } });
+  function bLi(b,showHost){ var w=bwiki(b);
+    return '<li><i class="bd" style="background:'+BCOL[b.t]+'"'+(b.f&&!showHost?' data-f="1"':'')+'></i><div class="bli"><button class="bnm" data-bq="'+b.i+'">'+esc(bname(b))+'</button>'
+      +'<span class="bmeta">'+esc(EN?BTN[b.t][1]:BTN[b.t][0])+(showHost?' · '+esc(cname(b.h)):'')+(b.st===2?' · '+esc(bstat(b)):'')+'</span>'
+      +(b.f&&!showHost?' <span class="btag f">'+esc(b.f.map(cname).join(', '))+'</span>':'')+'</div><a class="bwk" href="'+esc(w[0])+'" target="_blank" rel="noopener" aria-label="'+esc(w[1])+'">'+(w[1]==='Wikidata'?'WD':'W')+'</a></li>'; }
+  function bList(key,L,showHost){ var lim=B.more[key]?L.length:15;
+    return '<ul class="mpbl">'+L.slice(0,lim).map(function(b){return bLi(b,showHost);}).join('')+'</ul>'+(L.length>lim?'<button class="btn mpbmore" data-bmore="'+esc(key)+'">'+LG('Ver las ','Show all ')+nf(L.length)+'</button>':''); }
+  function bSec(keys){ if(!B.on) return ''; var h='<div class="mpbsec" data-noi18n>';
+    if(!BD) return h+'<h3 class="mph3">'+LG('Bases militares','Military bases')+'</h3><p class="mpsrc">'+LG('Cargando…','Loading…')+'</p></div>';
+    var TO={a:0,n:1,t:2,o:3}, srt=function(a,b){ return (b.f?1:0)-(a.f?1:0)||TO[a.t]-TO[b.t]||(a.st===2)-(b.st===2)||b.r-a.r||a.n.localeCompare(b.n); };
+    var L=[], A=[]; keys.forEach(function(k){ (BD.byH[k]||[]).forEach(function(b){ if(bvf(b)) L.push(b); }); (BD.byF[k]||[]).forEach(function(b){ if(bvf(b)&&keys.indexOf(b.h)<0&&A.indexOf(b)<0) A.push(b); }); });
+    L.sort(srt); A.sort(function(a,b){ return cname(a.h).localeCompare(cname(b.h))||b.r-a.r; });
+    var cnt={a:0,n:0,t:0,o:0}, nfor=0; L.forEach(function(b){ cnt[b.t]++; if(b.f) nfor++; });
+    h+='<h3 class="mph3">'+LG('Bases','Bases')+' ('+nf(L.length)+')</h3>';
+    if(!L.length) h+='<p class="mpempty">— '+LG('Wikidata no tiene bases con coordenadas aquí.','Wikidata has no bases with coordinates here.')+'</p>';
+    else { h+='<div class="mpbcnt">'+['a','n','t','o'].filter(function(t){return cnt[t];}).map(function(t){ return '<span><i style="background:'+BCOL[t]+'"></i>'+(EN?BTP[t][1]:BTP[t][0])+' <b>'+nf(cnt[t])+'</b></span>'; }).join('')+(nfor?'<span><i class="fr"></i>'+LG('Extranjeras','Foreign')+' <b>'+nf(nfor)+'</b></span>':'')+'</div>'+bList('h:'+keys.join(','),L,false); }
+    if(A.length) h+='<h3 class="mph3">'+LG('Bases en el extranjero','Bases abroad')+' ('+nf(A.length)+')</h3>'+bList('f:'+keys.join(','),A,true);
+    h+='<p class="mpsrc">'+LG('Fuente: Wikidata','Source: Wikidata')+(A.length||nfor?LG(' y Wikipedia',' and Wikipedia'):'')+' · '+esc(BD.fecha)+(B.cl?'':' · '+LG('sin las cerradas','closed ones hidden'))+'</p>';
+    return h+'</div>'; }
+  pEl.addEventListener('click',function(e){ var t=e.target.closest('[data-bq],[data-bmore]'); if(!t) return;
+    if(t.dataset.bmore){ B.more[t.dataset.bmore]=1; renderPanel(); return; }
+    var b=BD&&BD.L[+t.dataset.bq]; if(!b) return; if(isPhone()){ sheetOpen=false; pEl.classList.remove('big'); } bShow(b.i); if(R&&R.focusLL) R.focusLL(b.lon,b.lat,1.75); if(isPhone()) phoneScroll(); });
+  bBtn(); bRow(); if(B.on) bLoad0();
+  function bLoad0(){ loadBases().then(function(){ if(dead) return; bRow(); if(BR) BR.refresh(); renderPanel(); }).catch(function(){ if(!dead) brEl.innerHTML='<span class="mpsrc">'+LG('No se pudieron cargar las bases. Comprueba la conexión.','Could not load the bases. Check your connection.')+'</span>'; }); }
+
   // ---- texture (equirectangular) shared by 3D and 2D
   var TW=(Math.min(screen.width,screen.height)<700?2048:4096), TH=TW/2;
   var tcv=document.createElement('canvas'); tcv.width=TW; tcv.height=TH; var tctx=tcv.getContext('2d');
@@ -86,13 +158,17 @@ window.MAT_MAPA=function(app,X){
     h+='<div class="mphd"><span class="mpdot" style="background:'+COL[slot]+'"></span><div class="mphn">'+(sd.k?flagImg(sd.k):'')+'<b>'+esc(sd.n)+'</b><span class="mpk">'+esc(sd.kind)+(sd.m.length>1?' · '+sd.m.length+' países':'')+'</span></div><button class="mpx" aria-label="Quitar" data-x="'+esc(sd.s)+'">×</button></div>';
     if(sd.k){ var F=facsOf(sd.k); if(F.length) h+='<div class="mptags">'+F.map(function(f){return '<button class="mptag'+(f.h?' h':'')+'" data-s="f:'+f.id+'">'+esc(f.n.replace(/ \(.*\)$/,''))+'</button>';}).join('')+'</div>'; }
     else { h+='<div class="mpflags">'+sd.m.slice(0,40).map(flagImg).join('')+(sd.m.length>40?' +'+(sd.m.length-40):'')+'</div>'; if(sd.fac) h+='<p class="mpsrc">Miembros según <a href="'+esc(sd.fac.src.url)+'" target="_blank" rel="noopener">Wikipedia: '+esc(sd.fac.src.t)+'</a> ('+esc(sd.fac.src.fecha)+')'+(sd.fac.nota?'. '+esc(sd.fac.nota):'')+'</p>'; }
+    if(B.on&&BD&&sd.m.length===1) h+=bSec(sd.m);
     h+='<h3 class="mph3">Unidades en servicio</h3><p class="mpsrc">Según Wikipedia · '+esc(DATA.fecha)+(sd.m.length>1?' · suma de sus miembros':'')+'</p>'+(sd.fac&&sd.fac.h?'<p class="mpsrc">Facción histórica: son las unidades de hoy de esos países, no las de su época.</p>':'');
-    if(!I.has){ h+='<p class="mpempty">— Sin tabla de equipamiento cargada todavía para '+(sd.m.length>1?'ningún miembro':esc(sd.n))+'. Se mostrará cuando esté verificada, nunca una estimación.</p>'; }
+    if(sd.m.length===1&&window.MAT_FZ.sfa(sd.m[0])) h+=window.MAT_FZ.sfa(sd.m[0]);
+    if(!I.has&&sd.m.length===1&&window.MAT_FZ.sfa(sd.m[0])){ } else if(!I.has){ h+='<p class="mpempty">— Sin tabla de equipamiento cargada todavía para '+(sd.m.length>1?'ningún miembro':esc(sd.n))+'. Se mostrará cuando esté verificada, nunca una estimación.</p>'; }
     else { h+='<div class="mpgrid">'+IC.map(function(c){ var t=I.tot[c[0]], nq=I.noq[c[0]]||0; if(t==null&&!nq) return ''; return '<div class="mpc"><span>'+c[1]+'</span><b>'+nf(t)+'</b>'+(nq?'<i>+'+nq+' sin cifra</i>':'')+'</div>'; }).join('')+'</div>';
       if(sd.k){ var best=invRowsTop(sd.k), keys=['aviones_combate','helicopteros','tanques','blindados','artilleria','antiaereos','buques_portaaviones','buques_destructores','buques_fragatas','submarinos'].filter(function(c){return best[c];});
         if(keys.length) h+='<h3 class="mph3">Lo más numeroso por categoría</h3><div class="mptop5">'+keys.map(function(c){var r=best[c], nm=r[1]&&X.BY[r[1]]?X.BY[r[1]].n:r[0]; return '<div class="mpt"><span class="mptc">'+ICN[c]+'</span>'+(r[1]&&X.BY[r[1]]?'<a href="#/a/'+r[1]+'">'+esc(nm)+'</a>':'<span>'+esc(nm)+'</span>')+'<b>'+nf(r[3])+'</b></div>';}).join('')+'</div>'; }
       if(I.nod.length&&sd.m.length>1) h+='<p class="mpsrc">Sin tabla cargada: '+I.nod.map(function(k){return esc(P[k].n.split(' (')[0]);}).join(', ')+' (no suman).</p>';
       var SL=srcList(sd.m); if(SL.length) h+='<details class="mpsrcs"><summary>Fuentes ('+SL.length+')</summary><div>'+SL.join('<br>')+'</div></details>'; }
+    if(sd.m.length===1) h+=window.MAT_FZ.chg(sd.m[0],'mph3');
+    if(!B.on||!BD||sd.m.length>1) h+=bSec(sd.m);
     var other=sd.s==='p:espana'?'p:francia':'p:espana';
     h+='<div class="btns mpbtns"><a class="btn pri" href="'+fzLink(sd.s,other)+'">Ver arsenal completo</a><button class="btn" id="mpcmp">Comparar</button></div>';
     return h; }
@@ -105,8 +181,8 @@ window.MAT_MAPA=function(app,X){
     [[A,IA],[B,IB]].forEach(function(z){ if(z[1].nod.length) h+='<p class="mpsrc">'+esc(z[0].n)+': sin tabla cargada para '+(z[0].m.length>1?z[1].nod.map(function(k){return esc(P[k].n.split(' (')[0]);}).join(', '):'este país')+' («—», nunca una estimación).</p>'; });
     h+='<div class="btns mpbtns"><a class="btn pri" href="'+fzLink(A.s,B.s)+'">Comparación completa ›</a><button class="btn" id="mpreset2">Reiniciar</button></div><p class="mpsrc">La comparación completa incluye cada modelo con su fuente, los modelos que operan, los sistemas punteros y la Batalla de facciones.</p>';
     return h; }
-  function nodata(c){ return '<div class="mphd"><span class="mpdot" style="background:#555"></span><div class="mphn"><b>'+esc(c.n)+'</b><span class="mpk">País</span></div><button class="mpx" aria-label="Cerrar" data-x="__nd">×</button></div><p class="mpempty">Todavía no hay fichas ni tabla de equipamiento de este país en M.A.T.</p>'; }
-  function defaultPanel(){ var withInv=Object.keys(DATA.inv).length, withKey=WORLD.c.filter(function(c){return c.k;}).length;
+  function nodata(c){ return '<div class="mphd"><span class="mpdot" style="background:#555"></span><div class="mphn"><b>'+esc(c.n)+'</b><span class="mpk">País</span></div><button class="mpx" aria-label="Cerrar" data-x="__nd">×</button></div><p class="mpempty">Todavía no hay fichas ni tabla de equipamiento de este país en M.A.T.</p>'+bSec(['#'+c.i]); }
+  function defaultPanel(){ var withInv=Object.keys(DATA.inv).length, withKey=WORLD.c.filter(function(c){return c.k&&!c.t;}).length;
     return '<h3 class="mph3" style="margin-top:0">Cómo funciona</h3><p class="mpsrc" style="font-size:13px">Toca un país para ver sus unidades en servicio, sus facciones y lo más numeroso de su arsenal. Toca un segundo país, o una facción, y aparece la comparación con un arco entre los dos.</p><p class="mpsrc" style="font-size:13px">'+withInv+' países con tabla de equipamiento cargada · '+withKey+' con fichas en M.A.T.</p><div class="mpgrad"><span>Menos</span><i></i><span>Más unidades</span></div>'; }
   var ndC=null;
   function renderPanel(){ var h='';
@@ -141,17 +217,19 @@ window.MAT_MAPA=function(app,X){
   document.addEventListener('click',function oc(e){ if(dead){document.removeEventListener('click',oc);return;} if(!e.target.closest('.mpsearch')) resEl.hidden=true; });
   function tapCountry(c,focus){ if(!c) return; if(!c.k){ if(sel.length){ toast('Sin datos de '+c.n+' en M.A.T todavía'); return; } ndC=c; update(); phoneScroll(); if(focus&&R) R.focusLL(c.l[0],c.l[1]); return; } choose('p:'+c.k); }
   var toastEl=null; function toast(t){ if(!toastEl){toastEl=document.createElement('div'); toastEl.className='mptoast'; gEl.appendChild(toastEl);} toastEl.textContent=t; flash(toastEl); }
-  function center(sd){ var v=[0,0,0], n=0; sd.m.forEach(function(k){ isosOf(k).forEach(function(iso){ var c=WORLD.byIso[iso]; if(!c) return; var la=c.l[1]*Math.PI/180, lo=c.l[0]*Math.PI/180; v[0]+=Math.cos(la)*Math.cos(lo); v[1]+=Math.cos(la)*Math.sin(lo); v[2]+=Math.sin(la); n++; }); });
+  function center(sd){ var v=[0,0,0], n=0; sd.m.forEach(function(k){ isosOf(k).forEach(function(iso){ var c=WORLD.byIso[iso]; if(!c||c.t) return; var la=c.l[1]*Math.PI/180, lo=c.l[0]*Math.PI/180; v[0]+=Math.cos(la)*Math.cos(lo); v[1]+=Math.cos(la)*Math.sin(lo); v[2]+=Math.sin(la); n++; }); });
     if(!n) return null; var L=Math.hypot(v[0],v[1],v[2]); if(L<1e-3){ var c0=WORLD.byIso[isosOf(sd.m[0])[0]]; return c0?c0.l:null; } return [Math.atan2(v[1],v[0])*180/Math.PI, Math.asin(v[2]/L)*180/Math.PI]; }
-  function update(focus){ drawTex(); if(R) R.refresh(focus); renderPanel();
-    var q=sel.length?'?'+sel.map(function(s,i){return (i?'b':'a')+'='+encodeURIComponent(s);}).join('&'):''; try{history.replaceState(null,'','#/mapa'+q+(force2d?(q?'&':'?')+'v=2d':''));}catch(e){} }
+  function update(focus){ drawTex(); if(R) R.refresh(focus); if(BR) BR.refresh(); renderPanel();
+    var qa=sel.map(function(s,i){return (i?'b':'a')+'='+encodeURIComponent(s);}); if(force2d) qa.push('v=2d'); if(B.on) qa.push('capa=bases'); var q=qa.length?'?'+qa.join('&'):''; try{history.replaceState(null,'','#/mapa'+q);}catch(e){} }
   // ---- renderers
   function start2d(why){ ld.hidden=true; gEl.classList.add('flat'); var ctx=cv.getContext('2d'); var vw=0,vh=0;
-    R={is2d:true, refresh:function(){draw();}, focusLL:function(){}, dispose:function(){ window.removeEventListener('resize',draw); }};
+    R={is2d:true, refresh:function(){draw();}, focusLL:function(){}, dispose:function(){ window.removeEventListener('resize',draw); BR=null; }};
     function draw(){ var w=gEl.clientWidth, hh=Math.round(w/2), dpr=Math.min(window.devicePixelRatio||1,2); cv.style.height=hh+'px'; cv.width=w*dpr; cv.height=hh*dpr; vw=w; vh=hh; ctx.drawImage(tcv,0,0,cv.width,cv.height);
-      var S=memberSets(); ctx.save(); ctx.scale(cv.width/TW,cv.height/TH); ctx.lineWidth=2.5*TW/cv.width; WORLD.c.forEach(function(c){ if(S[0][c.i]||S[1][c.i]){ ctx.strokeStyle='#fff'; ctx.stroke(c.P2);} }); ctx.restore(); }
+      var S=memberSets(); ctx.save(); ctx.scale(cv.width/TW,cv.height/TH); ctx.lineWidth=2.5*TW/cv.width; WORLD.c.forEach(function(c){ if(S[0][c.i]||S[1][c.i]){ ctx.strokeStyle='#fff'; ctx.stroke(c.P2);} }); ctx.restore(); WORLD.c.forEach(function(c){ if(c.m&&(S[0][c.i]||S[1][c.i])) c.m.forEach(function(p){ ctx.beginPath(); ctx.arc((p[0]+180)/360*cv.width,(90-p[1])/180*cv.height,2.6*dpr,0,7); ctx.fillStyle=S[0][c.i]?COL.a:COL.b; ctx.fill(); ctx.lineWidth=1*dpr; ctx.strokeStyle='#fff'; ctx.stroke(); }); }); 
+      if(B.on&&BD){ var HK=bHiKeys(); BD.L.forEach(function(b){ if(!bvf(b)) return; var x=(b.lon+180)/360*cv.width, y=(90-b.lat)/180*cv.height, hi=HK[b.h]||b.i===B.cur; ctx.beginPath(); ctx.arc(x,y,(b.i===B.cur?4.5:hi?2.2:1.15)*dpr,0,7); ctx.globalAlpha=b.st===2?.5:1; ctx.fillStyle=BCOL[b.t]; ctx.fill(); if(b.f||hi){ ctx.lineWidth=1.1*dpr; ctx.strokeStyle=b.i===B.cur?'#fff':b.f?'#ee484d':'#f2f2f2'; ctx.stroke(); } ctx.globalAlpha=1; }); } }
     drawTex(); draw(); window.addEventListener('resize',draw);
-    cv.addEventListener('click',function(e){ var r=cv.getBoundingClientRect(); var lon=(e.clientX-r.left)/r.width*360-180, lat=90-(e.clientY-r.top)/r.height*180; tapCountry(pickLL(lon,lat,360/r.width*14)); });
+    cv.addEventListener('click',function(e){ var r=cv.getBoundingClientRect(); if(B.on&&BD){ var best=-1, bd=144; BD.L.forEach(function(b){ if(!bvf(b)) return; var x=r.left+(b.lon+180)/360*r.width, y=r.top+(90-b.lat)/180*r.height, d=(x-e.clientX)*(x-e.clientX)+(y-e.clientY)*(y-e.clientY); if(d<bd){bd=d;best=b.i;} }); if(best>=0){ bShow(best); return; } if(B.cur!=null) bHide(); } var lon=(e.clientX-r.left)/r.width*360-180, lat=90-(e.clientY-r.top)/r.height*180; tapCountry(pickLL(lon,lat,360/r.width*14)); });
+    BR={refresh:draw};
     if(why) leg.insertAdjacentHTML('beforebegin','');
     var n=document.createElement('p'); n.className='mpsrc mp2dnote'; n.textContent=why||'Vista plana.'; gEl.appendChild(n);
   }
@@ -193,6 +271,30 @@ window.MAT_MAPA=function(app,X){
     var sp=[], sc=[]; for(var i=0;i<2600;i++){ var u=Math.random()*2-1, th=Math.random()*Math.PI*2, r=60+Math.random()*30, s=Math.sqrt(1-u*u); sp.push(r*s*Math.cos(th),r*u,r*s*Math.sin(th)); var b=.35+Math.pow(Math.random(),3)*.65; sc.push(b,b,b*1.08); }
     var sg=new T.BufferGeometry(); sg.setAttribute('position',new T.Float32BufferAttribute(sp,3)); sg.setAttribute('color',new T.Float32BufferAttribute(sc,3));
     var stars=new T.Points(sg,new T.PointsMaterial({size:1.6,sizeAttenuation:false,vertexColors:true,transparent:true,opacity:.85,depthWrite:false})); scene.add(stars);
+    // bases layer (points, shader)
+    var bObj=null, bSel=null, bMat=null, bCutV=1;
+    function bGeo(arr,col,fl){ var g=new T.BufferGeometry(); g.setAttribute('position',new T.Float32BufferAttribute(arr,3)); g.setAttribute('aC',new T.Float32BufferAttribute(col,3)); g.setAttribute('aF',new T.Float32BufferAttribute(fl,4)); return g; }
+    function bClear(){ [bObj,bSel].forEach(function(x){ if(x){ globe.remove(x); x.geometry.dispose(); } }); bObj=bSel=null; }
+    var BCV={}; Object.keys(BCOL).forEach(function(k){ var c=new T.Color(BCOL[k]); BCV[k]=[c.r,c.g,c.b]; });
+    function bBuild(){ bClear(); if(!B.on||!BD) return;
+      if(!bMat) bMat=new T.ShaderMaterial({uniforms:{uS:{value:1},uCut:{value:1}},transparent:true,depthTest:false,depthWrite:false,
+        vertexShader:'attribute vec3 aC;attribute vec4 aF;uniform float uS;uniform float uCut;varying vec3 vC;varying vec4 vF;void main(){vC=aC;vF=aF;vec4 mv=modelViewMatrix*vec4(position,1.0);vec3 n=normalize(normalMatrix*position);float fc=dot(n,normalize(-mv.xyz));gl_Position=projectionMatrix*mv;float s=aF.y>1.5?17.0:(aF.y>0.5?9.5:(aF.x>0.5?8.0:5.5));if(aF.w>0.5)s*=0.8;bool sh=fc>0.06&&(aF.z<=uCut||aF.y>0.5||aF.x>0.5);gl_PointSize=sh?s*uS:0.0;if(!sh)gl_Position=vec4(2.0,2.0,2.0,1.0);}',
+        fragmentShader:'varying vec3 vC;varying vec4 vF;void main(){vec2 p=gl_PointCoord*2.0-1.0;float d=length(p);if(d>1.0)discard;vec3 c=vC;float a=1.0;if(vF.y>1.5){if(d<0.62)discard;gl_FragColor=vec4(1.0,1.0,1.0,0.95);return;}if(vF.x>0.5){if(d>0.74)c=vec3(0.93,0.28,0.30);else if(d>0.56)c=vec3(0.02);}else if(d>0.74){c=vF.y>0.5?vec3(0.96):vec3(0.02);}if(vF.w>0.5)a=0.5;gl_FragColor=vec4(c,a);}'});
+      var HK=bHiKeys(), pos=[], col=[], fl=[], idx=[];
+      BD.L.forEach(function(b){ if(!bvf(b)) return; var hi=HK[b.h]?1:0, v=ll2v(T,b.lon,b.lat,hi?1.036:1.004); pos.push(v.x,v.y,v.z); var c=BCV[b.t]; col.push(c[0],c[1],c[2]); fl.push(b.f?1:0,hi,b.rk,b.st===2?1:0); idx.push(b.i); });
+      bObj=new T.Points(bGeo(pos,col,fl),bMat); bObj.renderOrder=7; bObj.frustumCulled=false; bObj.userData={pos:pos,fl:fl,idx:idx}; globe.add(bObj);
+      if(B.cur!=null&&BD.L[B.cur]){ var b=BD.L[B.cur], v=ll2v(T,b.lon,b.lat,HK[b.h]?1.036:1.004); bSel=new T.Points(bGeo([v.x,v.y,v.z],[1,1,1],[0,2,0,0]),bMat); bSel.renderOrder=8; bSel.frustumCulled=false; globe.add(bSel); } }
+    function bCut(){ var f=resize.fd||3, t=Math.max(0,Math.min(1,(dist-1.7)/Math.max(.1,f-1.7))); return 1-0.55*t; }
+    var _bv=new T.Vector3();
+    function bPick(x,y,rad){ if(!bObj) return -1; var r=cv.getBoundingClientRect(), U=bObj.userData, P3=U.pos, F=U.fl, best=-1, bd=rad*rad, cut=bCut(), cp=cam.position; globe.updateMatrixWorld();
+      var far=dist>2.35&&!sel.length&&!ndC;
+      for(var i=0;i<U.idx.length;i++){ if(!(F[i*4+2]<=cut||F[i*4+1]>0.5||F[i*4]>0.5)) continue; if(far&&F[i*4+1]<0.5) continue; if(sel.length&&dist>2.35&&F[i*4+1]<0.5) continue; _bv.set(P3[i*3],P3[i*3+1],P3[i*3+2]).applyMatrix4(globe.matrixWorld);
+        var L=_bv.length(), dx=cp.x-_bv.x, dy=cp.y-_bv.y, dz=cp.z-_bv.z, dl=Math.hypot(dx,dy,dz); if((_bv.x*dx+_bv.y*dy+_bv.z*dz)/(L*dl)<0.06) continue;
+        _bv.project(cam); var sx=r.left+(_bv.x+1)/2*r.width, sy=r.top+(1-_bv.y)/2*r.height, d2=(sx-x)*(sx-x)+(sy-y)*(sy-y); if(d2<bd){ bd=d2; best=U.idx[i]; } }
+      return best; }
+    BR={refresh:bBuild};
+    bBuild();
+
     // overlays
     var ov=new T.Group(); globe.add(ov); var anim=[];
     function clearOv(){ while(ov.children.length){ var c=ov.children.pop(); c.geometry&&c.geometry.dispose(); c.material&&c.material.dispose(); } anim=[]; }
@@ -214,11 +316,12 @@ window.MAT_MAPA=function(app,X){
     var labs=[app.querySelector('#mplab0'),app.querySelector('#mplab1')], labV=[null,null];
     function build(){ clearOv(); var sds=sel.map(sideOf).filter(Boolean), cen=[]; labV=[null,null]; labs.forEach(function(l,i){ var sd=sds[i]; l.hidden=!sd; if(sd) l.textContent=(window.MAT_T||String)(sd.n); });
       sds.forEach(function(sd,si){ var col=new T.Color(si?COL.b:COL.a), cs=[]; sd.m.forEach(function(k){ isosOf(k).forEach(function(iso){ var c=WORLD.byIso[iso]; if(c&&cs.indexOf(c)<0) cs.push(c); }); });
-        var lift=sd.m.length===1&&cs.length===1;
+        var lift=sd.m.length===1;
         cs.forEach(function(c){
-          if(lift){ var LR=1.03; var cap=new T.Mesh(capGeom(c,LR),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.62,side:T.DoubleSide,depthWrite:false})); cap.renderOrder=3; var w=wall(c,1.0,LR,col); var ol=outline(c,LR+0.0008,0xffffff,.9); ol.renderOrder=4;
+          if(lift&&!c.t){ var LR=1.03; var cap=new T.Mesh(capGeom(c,LR),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.62,side:T.DoubleSide,depthWrite:false})); cap.renderOrder=3; var w=wall(c,1.0,LR,col); var ol=outline(c,LR+0.0008,0xffffff,.9); ol.renderOrder=4;
             [cap,w,ol].forEach(function(m){ m.scale.setScalar(.97); ov.add(m); anim.push({m:m,t0:performance.now(),k:'lift'}); }); }
           else { var ol2=outline(c,1.004,col,.95); ov.add(ol2); }
+          if(c.m) c.m.forEach(function(p){ [[0.0062,0xffffff,.55],[0.0042,col,1]].forEach(function(s){ var dm=new T.Mesh(new T.SphereGeometry(s[0],10,8),new T.MeshBasicMaterial({color:s[1],transparent:true,opacity:s[2],depthWrite:false})); dm.position.copy(ll2v(T,p[0],p[1],1.006)); dm.renderOrder=6; ov.add(dm); }); });
         });
         var ce=center(sd); if(ce){ cen.push(ce); labV[si]=ll2v(T,ce[0],ce[1],1.04); } });
       if(cen.length===2){ var a=ll2v(T,cen[0][0],cen[0][1],1).normalize(), b=ll2v(T,cen[1][0],cen[1][1],1).normalize(), ang=a.angleTo(b), pts=[];
@@ -247,8 +350,8 @@ window.MAT_MAPA=function(app,X){
     var ray=new T.Raycaster(), ndc=new T.Vector2();
     function llAt(x,y){ var r=cv.getBoundingClientRect(); ndc.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1); ray.setFromCamera(ndc,cam); var hit=ray.intersectObject(sph,false)[0]; if(!hit) return null; var lp=globe.worldToLocal(hit.point.clone()); return v2ll(lp); }
     function tolDeg(){ var r=cv.getBoundingClientRect(), vf=cam.fov*Math.PI/180, rpx=(r.height/2)/Math.tan(vf/2)/Math.sqrt(Math.max(.01,dist*dist-1)); return Math.min(6,16*57.3/Math.max(rpx,1)); }
-    function tap(x,y){ var ll=llAt(x,y); if(!ll) return; var c=pickLL(ll[0],ll[1],tolDeg()); if(c) tapCountry(c,false); }
-    var hvT=0; function hover(e){ var now=performance.now(); if(now-hvT<60) return; hvT=now; var ll=llAt(e.clientX,e.clientY), c=ll&&pickLL(ll[0],ll[1],tolDeg()*.6); if(!c){tip.hidden=true; cv.style.cursor='grab'; return;} var r=gEl.getBoundingClientRect(); tip.textContent=c.n+(c.k&&TOT[c.k]!=null?' · '+nf(TOT[c.k])+' unidades':(c.k?' · sin tabla':' · sin datos')); tip.style.left=(e.clientX-r.left+14)+'px'; tip.style.top=(e.clientY-r.top+10)+'px'; tip.hidden=false; cv.style.cursor='pointer'; }
+    function tap(x,y){ if(B.on){ var bi=bPick(x,y,isPhone()?12:9); if(bi>=0){ bShow(bi); return; } if(B.cur!=null) bHide(); } var ll=llAt(x,y); if(!ll) return; var c=pickLL(ll[0],ll[1],tolDeg()); if(c) tapCountry(c,false); }
+    var hvT=0; function hover(e){ var now=performance.now(); if(now-hvT<60) return; hvT=now; if(B.on){ var bi=bPick(e.clientX,e.clientY,9); if(bi>=0){ var bb=BD.L[bi], rr=gEl.getBoundingClientRect(); tip.textContent=bname(bb)+' · '+(EN?BTN[bb.t][1]:BTN[bb.t][0])+(bb.f?' · '+LG('extranjera','foreign'):''); tip.style.left=(e.clientX-rr.left+14)+'px'; tip.style.top=(e.clientY-rr.top+10)+'px'; tip.hidden=false; cv.style.cursor='pointer'; return; } } var ll=llAt(e.clientX,e.clientY), c=ll&&pickLL(ll[0],ll[1],tolDeg()*.6); if(!c){tip.hidden=true; cv.style.cursor='grab'; return;} var r=gEl.getBoundingClientRect(); tip.textContent=c.n+(c.k&&TOT[c.k]!=null?' · '+nf(TOT[c.k])+' unidades':(c.k?' · sin tabla':' · sin datos')); tip.style.left=(e.clientX-r.left+14)+'px'; tip.style.top=(e.clientY-r.top+10)+'px'; tip.hidden=false; cv.style.cursor='pointer'; }
     function onWheel(e){ e.preventDefault(); tdist=Math.max(1.28,Math.min(resize.fd*1.6,tdist*Math.exp(e.deltaY*0.0012))); lastAct=performance.now(); }
     cv.addEventListener('pointerdown',onDown); cv.addEventListener('pointermove',onMove); cv.addEventListener('pointerup',onUp); cv.addEventListener('pointercancel',onUp); cv.addEventListener('pointerleave',function(){tip.hidden=true;}); cv.addEventListener('wheel',onWheel,{passive:false});
     var offY=0;
@@ -267,15 +370,16 @@ window.MAT_MAPA=function(app,X){
         else if(A.k==='ping'){ var z=((et%1.6)+1.6)%1.6/1.6; A.m.scale.setScalar(1+z*2.2); A.m.material.opacity=et<0?0:1-z; } }
       var vo=viewOff(); offY+=(vo-offY)*Math.min(1,dt*8); if(Math.abs(offY)>0.5){ var cw=renderer.domElement.clientWidth, chh=renderer.domElement.clientHeight; cam.setViewOffset(cw,chh,0,offY,cw,chh); } else if(cam.view&&cam.view.enabled){ cam.clearViewOffset(); }
       for(var li=0;li<2;li++){ var lv=labV[li], le=labs[li]; if(!lv){ le.hidden=true; continue; } globe.updateMatrixWorld(); var wv=globe.localToWorld(lv.clone()), vis=wv.clone().normalize().dot(cam.position.clone().sub(wv).normalize())>0.05; if(!vis){ le.hidden=true; continue; } var pr=wv.clone().project(cam); le.hidden=false; le.style.transform='translate('+((pr.x+1)/2*cv.clientWidth).toFixed(1)+'px,'+((1-pr.y)/2*cv.clientHeight).toFixed(1)+'px) translate(-50%,-140%)'; }
+      if(bObj){ bMat.uniforms.uS.value=renderer.getPixelRatio()*Math.max(.85,Math.min(2.0,2.9/dist)); bMat.uniforms.uCut.value=bCut(); }
       renderer.render(scene,cam);
       frames++; if(now-fpsT>2000){ frames=0; fpsT=now; }
     }
     raf=requestAnimationFrame(loop);
     ld.hidden=true;
-    window.MAT_MAPA_DBG={xy:function(lo,la){ globe.updateMatrixWorld(); var v=globe.localToWorld(ll2v(T,lo,la,1)); var w=v.clone().project(cam); var r=cv.getBoundingClientRect(); var front=v.clone().sub(cam.position).dot(v)<0; return {x:r.left+(w.x+1)/2*r.width,y:r.top+(1-w.y)/2*r.height,front:front}; }, busy:function(){return !!tw;}};
-    R={is2d:false, focusLL:function(lo,la){focusLL(lo,la);},
+    window.MAT_MAPA_DBG={xy:function(lo,la){ globe.updateMatrixWorld(); var v=globe.localToWorld(ll2v(T,lo,la,1)); var w=v.clone().project(cam); var r=cv.getBoundingClientRect(); var front=v.clone().sub(cam.position).dot(v)<0; return {x:r.left+(w.x+1)/2*r.width,y:r.top+(1-w.y)/2*r.height,front:front}; }, busy:function(){return !!tw;}, focus:function(lo,la,d){ focusLL(lo,la,d); }};
+    R={is2d:false, focusLL:function(lo,la,d){focusLL(lo,la,d);},
       refresh:function(focus){ tex.needsUpdate=true; var cen=build(); if(focus!==false){ if(cen.length===2){ var a=ll2v(T,cen[0][0],cen[0][1],1).normalize(), b=ll2v(T,cen[1][0],cen[1][1],1).normalize(), m=a.clone().add(b); var ang=a.angleTo(b); if(m.length()<1e-3) m=a; var ll=v2ll(m.normalize()); focusLL(ll[0],ll[1], Math.max(resize.fd*(ang>1.2?1.15:ang>0.6?1.0:0.85),1.6)); } else if(cen.length===1){ var sd=sideOf(sel[0]); focusLL(cen[0][0],cen[0][1], sd&&sd.m.length>1?resize.fd:Math.max(1.75,resize.fd*.8)); } } },
-      dispose:function(){ cancelAnimationFrame(raf); ro.disconnect(); clearOv(); try{ renderer.dispose(); renderer.forceContextLoss(); }catch(e){} }};
+      dispose:function(){ cancelAnimationFrame(raf); ro.disconnect(); clearOv(); bClear(); BR=null; try{ renderer.dispose(); renderer.forceContextLoss(); }catch(e){} }};
     R.refresh(sel.length?true:false); if(sel.length) setTimeout(phoneScroll,400);
   }
 };
