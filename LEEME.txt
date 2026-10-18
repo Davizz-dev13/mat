@@ -1,6 +1,3 @@
 M.A.T - codigo fuente (18 oct 2026)
-Web estatica: abre index.html con un servidor local, p.ej.:
-  cd MAT && python3 -m http.server 8000
-  y entra en http://localhost:8000
-(no funciona abriendo el archivo directamente por las cargas .json.gz)
+Web estatica. Para los datos .json.gz, utiliza un servidor HTTP local.
 Archivos: index.html, app.js, loader.js, duelo.js, duelo3d.js, fuerzas.js, styles.css, datos en *.json.gz (ingles en en_*.json.gz). Fotos enlazadas desde Wikimedia Commons.
