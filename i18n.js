@@ -25,7 +25,7 @@ function switcher(){ var t=document.querySelector('.topnav'); if(t&&!t.querySele
 var mo=new MutationObserver(function(ms){ switcher(); if(!E) return; for(var i=0;i<ms.length;i++){ var r=ms[i]; if(r.type==='characterData') node(r.target); else if(r.type==='attributes') walk(r.target); else for(var j=0;j<r.addedNodes.length;j++) walk(r.addedNodes[j]); } });
 function start(){ mo.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:ATTR}); switcher(); if(E) walk(document.body); }
 if(L==='en'){
-  window.MAT_I18N=fetch('i18n_en.json?v='+(document.currentScript&&document.currentScript.getAttribute('data-v')||'1')).then(function(r){return r.json();}).then(function(d){ window.MAT_EN_OV=d.__ov||[]; delete d.__ov; E=d; var ks=Object.keys(d).filter(function(k){return k.length>=4&&/[A-Za-zÀ-ÿ]{3}/.test(k);}).sort(function(a,b){return b.length-a.length;}); RX=new RegExp(ks.map(esc).join('|'),'g'); document.title='M.A.T'; if(document.body) walk(document.body); }).catch(function(){});
+  window.MAT_I18N=fetch('i18n_en.json?v='+(document.currentScript&&document.currentScript.getAttribute('data-v')||'1')).then(function(r){return r.json();}).then(function(d){ window.MAT_EN_OV=d.__ov||[]; delete d.__ov; E=d; var ks=Object.keys(d).filter(function(k){return k.length>=4&&/[A-Za-zÀ-ÿ]{3}/.test(k);}).sort(function(a,b){return b.length-a.length;}); RX=new RegExp(ks.map(esc).join('|'),'g'); if(document.body) walk(document.body); }).catch(function(){});
 } else window.MAT_I18N=Promise.resolve();
 if(document.body) start(); else document.addEventListener('DOMContentLoaded',start);
 })();
