@@ -82,6 +82,7 @@ window.MAT_FUERZAS=function(app,X){
   [[A,IA],[B,IB]].forEach(function(z){ if(z[1].nod.length){ var TT=function(s){return window.MAT_T?window.MAT_T(s):s;}, EN=window.MAT_LANG==='en'; h+='<p class="note">'+esc(TT(z[0].n))+(EN?': no equipment table loaded for ':': sin tabla de equipamiento cargada para ')+z[1].nod.map(function(k){return esc(TT(P[k].n));}).join(', ')+(EN?' (shown as “—”, never an estimate).':' (se muestra «—», nunca una estimación).')+'</p>'; }});
   h+='<p class="note">Cifras tal como aparecen en las tablas «In service / Quantity» de los artículos de equipamiento de cada país en Wikipedia; en las facciones son la suma de sus miembros. Toca un modelo para ver la fuente. Las filas sin cifra (pedidos, «100/348», reservas) no suman.</p>';
   [A,B].forEach(function(z){ if(z.m.length===1&&z.m[0]!==(A===z?'':A.m[0])&&(DATA.inv[z.m[0]]||(DATA.cambios&&DATA.cambios[z.m[0]]))){ var c=chgHTML(z.m[0],'fzchg'); if(c) h+='<div class="fzchgw"><div class="fzchgn">'+X.flag(z.m[0],'mini')+esc(z.n)+'</div>'+c+'</div>'; } });
+  if(window.MAT_GASTO) h+=window.MAT_GASTO.cmp(A,B);
   // ---- per-category model rows
   h+='<h2>Por modelo</h2>';
   IC.forEach(function(c){ var k=c[0], ra=IA.rows[k]||[], rb=IB.rows[k]||[]; if(!ra.length&&!rb.length) return;

@@ -167,6 +167,7 @@ window.MAT_MAPA=function(app,X){
         if(keys.length) h+='<h3 class="mph3">Lo más numeroso por categoría</h3><div class="mptop5">'+keys.map(function(c){var r=best[c], nm=r[1]&&X.BY[r[1]]?X.BY[r[1]].n:r[0]; return '<div class="mpt"><span class="mptc">'+ICN[c]+'</span>'+(r[1]&&X.BY[r[1]]?'<a href="#/a/'+r[1]+'">'+esc(nm)+'</a>':'<span>'+esc(nm)+'</span>')+'<b>'+nf(r[3])+'</b></div>';}).join('')+'</div>'; }
       if(I.nod.length&&sd.m.length>1) h+='<p class="mpsrc">Sin tabla cargada: '+I.nod.map(function(k){return esc(P[k].n.split(' (')[0]);}).join(', ')+' (no suman).</p>';
       var SL=srcList(sd.m); if(SL.length) h+='<details class="mpsrcs"><summary>Fuentes ('+SL.length+')</summary><div>'+SL.join('<br>')+'</div></details>'; }
+    if(sd.m.length===1&&window.MAT_GASTO) h+=window.MAT_GASTO.block(sd.m[0],'mph3');
     if(sd.m.length===1) h+=window.MAT_FZ.chg(sd.m[0],'mph3');
     if(!B.on||!BD||sd.m.length>1) h+=bSec(sd.m);
     var other=sd.s==='p:espana'?'p:francia':'p:espana';
