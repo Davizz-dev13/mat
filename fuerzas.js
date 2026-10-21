@@ -50,6 +50,61 @@ window.MAT_FUERZAS=function(app,X){
     if(t==='c:'){var c=custom().filter(function(x){return x.id===k;})[0]; if(c) return {s:s,n:c.n,m:c.m.filter(function(x){return P[x];}),custom:c,kind:'Facción propia'};}
     return {s:'p:espana',n:P.espana.n,m:['espana'],flag:'espana',kind:'País'};}
   var A=side(sa), B=side(sb);
+  // ---- Jose (21-10-2026): abrir un país muestra SOLO ese país; comparar solo cuando el usuario elige el segundo lado ----
+  var CMP=!!o.b||o.cmp==='1'||o.bat==='1';
+  if(!CMP){ if(o.a&&o.a.length>2) return solo(side(o.a)); return landing(); }
+  if(!o.a||!o.b) return pickOnly(o.a?side(o.a):null,o.b?side(o.b):null);
+  function L1(){return window.MAT_LANG==='en';}
+  function TT1(s){return window.MAT_T?window.MAT_T(s):s;}
+  function landing(){ var EN=L1();
+    var PK=Object.keys(P).filter(function(k){return k!=='multi'&&DATA.inv[k];}).sort(function(x,y){return TT1(P[x].n).localeCompare(TT1(P[y].n),EN?'en':'es');});
+    var h=X.crumbs([['Inicio','#/'],['Países y facciones']])+'<h1>Países y facciones</h1><p class="sub" data-noi18n>'+(EN?'Open a country or a bloc to see only its own forces. To put two side by side, use “Compare”.':'Abre un país o un bloque para ver solo sus fuerzas. Para poner dos frente a frente, usa «Comparar».')+'</p>';
+    h+='<div class="btns" data-noi18n style="margin-top:8px"><button class="btn" id="fzpick1">'+(EN?'Find a country or faction':'Buscar país o facción')+'</button><a class="btn pri" href="#/fuerzas?cmp=1">'+(EN?'Compare two countries or factions':'Comparar dos países o facciones')+'</a></div>';
+    h+='<h2>Facciones</h2><div class="list">'+DATA.fac.filter(function(f){return !f.h;}).map(function(f){return '<a class="row" href="#/fuerzas?a=f:'+esc(f.id)+'"><div class="m"><div class="nm">'+f.m.slice(0,4).map(function(k){return X.flag(k,'mini');}).join('')+' '+esc(f.n)+'</div><div class="ds">'+f.m.length+' países</div></div><div class="ch">›</div></a>';}).join('')+'</div>';
+    h+='<h2>Países</h2><div class="list">'+PK.map(function(k){return '<a class="row" href="#/fuerzas?a=p:'+k+'"><div class="m"><div class="nm">'+X.flag(k,'mini')+esc(P[k].n)+'</div></div><div class="ch">›</div></a>';}).join('')+'</div>';
+    X.set(h,'Países y facciones');
+    var b=document.getElementById('fzpick1'); if(b) b.addEventListener('click',function(){picker(function(s){location.hash='#/fuerzas?a='+encodeURIComponent(s);});});
+  }
+  function pickOnly(SA,SB){ var EN=L1();
+    function emp(k){return '<div class="pick fzpick"><button class="btn fzbtn" data-k="'+k+'"><span class="fzn">'+(EN?'Choose country or faction':'Elegir país o facción')+'</span></button><div class="note" style="margin:4px 2px 0">'+(k==='a'?(EN?'Side A':'Lado A'):(EN?'Side B':'Lado B'))+'</div></div>';}
+    var h=X.crumbs([['Inicio','#/'],['Países y facciones','#/fuerzas'],['Comparar']])+'<h1>Comparar países y facciones</h1><p class="sub" data-noi18n>'+(EN?'Choose the two sides you want to compare.':'Elige los dos lados que quieres comparar.')+'</p>';
+    h+='<div class="cmp fzsel" data-noi18n>'+(SA?sideBtn('a',SA):emp('a'))+'<div class="fzvs">VS</div>'+(SB?sideBtn('b',SB):emp('b'))+'</div>';
+    h+='<p class="empty" data-noi18n>'+(EN?'Nothing is compared until you pick both sides.':'No se compara nada hasta que elijas los dos lados.')+'</p>';
+    X.set(h,'Países y facciones');
+    Array.prototype.forEach.call(document.querySelectorAll('.fzbtn'),function(b){b.addEventListener('click',function(){var k=b.getAttribute('data-k'); picker(function(s){var oo={a:SA?SA.s:'',b:SB?SB.s:'',cmp:'1',bat:o.bat==='1'?'1':''}; oo[k]=s; location.hash=X.hashFor('#/fuerzas',oo);});});});
+  }
+  function solo(S){ var EN=L1(); var I1=invSum(S), M1=opsOf(S);
+    function bar1(v,mx,lab,sub){ return '<div class="fzrow"><div class="fzl">'+lab+(sub?'<span class="fzs">'+sub+'</span>':'')+'</div><div class="fzb fzb1"><div class="fzv a w"><span>'+nf(v)+'</span><i style="width:'+((v||0)/(mx||1)*100).toFixed(1)+'%"></i></div></div></div>'; }
+    var h=X.crumbs([['Inicio','#/'],['Países y facciones','#/fuerzas'],[S.n]])+'<h1>'+flags(S,4)+' '+esc(S.n)+'</h1><p class="sub">'+esc(S.kind)+(S.m.length>1?' · '+S.m.length+' países':'')+'</p>';
+    h+='<div class="btns" style="margin-top:8px" data-noi18n><button class="btn" id="fzchg1">'+(EN?'Change':'Cambiar')+'</button><button class="btn" id="fzcmp1">'+(EN?'Compare with…':'Comparar con…')+'</button><a class="btn" href="#/mapa?a='+encodeURIComponent(S.s)+'">'+(EN?'See on the map':'Ver en el mapa')+'</a></div>';
+    if(S.fac){ var f=S.fac; h+='<p class="note" style="margin:6px 0 0">'+esc(TT1(f.n))+': '+S.m.map(function(k){return esc(TT1(P[k].n));}).join(', ')+'. '+(f.nota?esc(TT1(f.nota))+' ':'')+(EN?'Members per ':'Miembros según ')+'<a href="'+esc(f.src.url)+'" target="_blank" rel="noopener">Wikipedia: '+esc(f.src.t)+'</a> ('+esc(f.src.fecha)+').</p>'; }
+    h+='<h2>Unidades en servicio (según Wikipedia, '+esc(DATA.fecha)+')</h2>';
+    var mx=1; IC.forEach(function(c){ mx=Math.max(mx,I1.tot[c[0]]||0); }); var any=false;
+    IC.forEach(function(c){ var k=c[0], v=I1.tot[k]; if(v==null&&!I1.rows[k]) return; any=true; var n=I1.noq[k]||0; h+=bar1(v,mx,c[1],n?(EN?n+' row'+(n>1?'s':'')+' with no figure':n+' fila'+(n>1?'s':'')+' sin cifra'):''); });
+    if(!any) h+='<p class="empty">'+(EN?'No equipment table loaded yet.':'Sin tabla de equipamiento cargada todavía.')+'</p>';
+    if(S.m.length===1){ var sh=sfaHTML(S.m[0]); if(sh) h+=sh; }
+    if(I1.nod.length&&S.m.length>1) h+='<p class="note">'+esc(TT1(S.n))+(EN?': no equipment table loaded for ':': sin tabla de equipamiento cargada para ')+I1.nod.map(function(k){return esc(TT1(P[k].n));}).join(', ')+(EN?' (shown as “—”, never an estimate).':' (se muestra «—», nunca una estimación).')+'</p>';
+    h+='<p class="note">Cifras tal como aparecen en las tablas «In service / Quantity» de los artículos de equipamiento de cada país en Wikipedia; en las facciones son la suma de sus miembros. Toca un modelo para ver la fuente. Las filas sin cifra (pedidos, «100/348», reservas) no suman.</p>';
+    if(S.m.length===1&&(DATA.inv[S.m[0]]||(DATA.cambios&&DATA.cambios[S.m[0]]))){ var cg=chgHTML(S.m[0],'fzchg'); if(cg) h+='<div class="fzchgw">'+cg+'</div>'; }
+    if(window.MAT_GASTO){ if(S.m.length===1) h+=window.MAT_GASTO.block(S.m[0],'mph3'); else if(window.MAT_GASTO.solo) h+=window.MAT_GASTO.solo(S); }
+    h+='<h2>Por modelo</h2>';
+    IC.forEach(function(c){ var k=c[0], ra=I1.rows[k]||[]; if(!ra.length) return;
+      var m={}, L=[]; ra.forEach(function(r){var key=r.id||r.n; if(!m[key]){m[key]={n:r.id&&BY[r.id]?BY[r.id].n:r.n,id:r.id&&BY[r.id]?r.id:null,q:null,parts:[]}; L.push(m[key]);} var e=m[key]; if(r.q!=null) e.q=(e.q||0)+r.q; e.parts.push(r);}); L.sort(function(x,y){return (y.q||-1)-(x.q||-1)||x.n.localeCompare(y.n);});
+      h+='<details class="fzcat"><summary><span>'+c[1]+'</span><span class="cnt">'+nf(I1.tot[k])+'</span></summary><div class="fzcols fzcols1"><div class="fzcol">'+L.map(function(e){ return '<details class="fzm"><summary><span class="fmn">'+esc(e.n)+'</span><span class="fmq">'+(e.q!=null?nf(e.q):'—')+'</span></summary><div class="fzdet">'+e.parts.map(function(r){var f=DATA.fuentes[r.src]||['','',''];return '<div>'+(S.m.length>1?X.flag(r.p,'mini')+esc(P[r.p].n)+': ':'')+'<b>'+(r.q!=null?nf(r.q):(r.qt?'«'+esc(r.qt)+'»':'sin cifra'))+'</b>'+(r.nota?' · '+esc(NT(r.nota)):'')+' · <a href="'+esc(f[1])+'" target="_blank" rel="noopener">'+esc(f[0])+'</a> ('+esc(f[2])+')</div>';}).join('')+(e.id?'<div><a href="#/a/'+e.id+'">Abrir ficha en M.A.T ›</a></div>':'')+'</div></details>';}).join('')+'</div></div></details>'; });
+    h+='<h2>Modelos que operan (fichas de M.A.T)</h2><div class="chips" role="group" aria-label="Estado"><button class="chip fzh" data-h="0" aria-pressed="'+(!modeH)+'">En servicio</button><button class="chip fzh" data-h="1" aria-pressed="'+modeH+'">Histórico</button></div>';
+    var cnt=MC.map(function(c){return [c,M1.filter(function(a){return a.cat===c[0];}).length];}), mx2=1; cnt.forEach(function(z){mx2=Math.max(mx2,z[1]);});
+    cnt.forEach(function(z){ if(z[1]) h+=bar1(z[1],mx2,z[0][1]); });
+    var ts=[]; (X.TIPOS||[]).forEach(function(t){ if(t.id==='t_todos'||t.id==='t_proto') return; var v=M1.filter(function(a){return a.tipo===t.id||(a.alt||[]).indexOf(t.id)>=0;}).length; if(v) ts.push([t,v]); });
+    if(ts.length){ var mx3=1; ts.forEach(function(z){mx3=Math.max(mx3,z[1]);}); h+='<details class="fzcat"><summary><span>Por tipo</span><span class="cnt">ver</span></summary>'+ts.map(function(z){return bar1(z[1],mx3,(X.CN[z[0].c]||'')+' · '+z[0].n);}).join('')+'</details>'; }
+    h+='<p class="note">Número de modelos distintos, no de unidades: cuenta cada modelo cuya ficha cita al país como usuario'+(modeH?' en el pasado':' actual')+'.</p>';
+    var H1=hl(M1);
+    h+='<h2>Sistemas destacados</h2><div class="fzhl fzhl1">'+H1.map(function(r){return '<div class="fzhlr"><div class="fzhlt">'+r[0]+'</div><div class="fzhla">'+r[1]+'</div></div>';}).join('')+'</div>';
+    h+='<p class="note">«Armas nucleares en las fichas» indica si el país aparece como usuario en la ficha de algún arma nuclear de Armamento (incluye programas de compartición), según Wikipedia.</p>';
+    X.set(h,S.n);
+    document.getElementById('fzchg1').addEventListener('click',function(){picker(function(s){location.hash=X.hashFor('#/fuerzas',{a:s,h:modeH?'1':''});});});
+    document.getElementById('fzcmp1').addEventListener('click',function(){picker(function(s){location.hash=X.hashFor('#/fuerzas',{a:S.s,b:s,h:modeH?'1':''});});});
+    Array.prototype.forEach.call(document.querySelectorAll('.fzh'),function(b){b.addEventListener('click',function(){location.hash=X.hashFor('#/fuerzas',{a:S.s,h:b.getAttribute('data-h')==='1'?'1':''});});});
+  }
   function flags(sd,max){max=max||8; return sd.m.slice(0,max).map(function(k){return X.flag(k,'mini');}).join('')+(sd.m.length>max?'<span class="cnt"> +'+(sd.m.length-max)+'</span>':'');}
   function sideBtn(k,sd){return '<div class="pick fzpick"><button class="btn fzbtn" data-k="'+k+'"><span class="fzf">'+flags(sd,6)+'</span><span class="fzn">'+esc(sd.n)+'</span><span class="cnt" style="margin-left:6px">cambiar</span></button><div class="note" style="margin:4px 2px 0">'+esc(sd.kind)+(sd.m.length>1?' · '+sd.m.length+' países':'')+'</div></div>';}
   // ---------- inventory (units) ----------
@@ -66,7 +121,7 @@ window.MAT_FUERZAS=function(app,X){
   function bar(va,vb,lab,sub){ var mx=Math.max(va||0,vb||0,1), pa=(va||0)/mx*100, pb=(vb||0)/mx*100;
     return '<div class="fzrow"><div class="fzl">'+lab+(sub?'<span class="fzs">'+sub+'</span>':'')+'</div><div class="fzb"><div class="fzv a'+((va||0)>(vb||0)?' w':'')+'"><span>'+nf(va)+'</span><i style="width:'+pa.toFixed(1)+'%"></i></div><div class="fzv b'+((vb||0)>(va||0)?' w':'')+'"><i style="width:'+pb.toFixed(1)+'%"></i><span>'+nf(vb)+'</span></div></div></div>';}
   function head(){return '<div class="fzhd"><div class="a">'+flags(A,4)+' '+esc(A.n)+'</div><div class="b">'+esc(B.n)+' '+flags(B,4)+'</div></div>';}
-  var h=X.crumbs([['Inicio','#/'],['Países y facciones']])+'<h1>Países y facciones</h1><p class="sub">Compara dos países, dos bloques o tus propias facciones: unidades en servicio según las tablas de Wikipedia y modelos que operan según las fichas de M.A.T.</p>';
+  var h=X.crumbs([['Inicio','#/'],['Países y facciones','#/fuerzas'],['Comparar']])+'<h1>Comparar países y facciones</h1><p class="sub">Compara dos países, dos bloques o tus propias facciones: unidades en servicio según las tablas de Wikipedia y modelos que operan según las fichas de M.A.T.</p>';
   h+='<div class="cmp fzsel">'+sideBtn('a',A)+'<div class="fzvs">VS</div>'+sideBtn('b',B)+'</div>';
   h+='<div class="btns" style="margin-top:8px"><button class="btn" id="fzswap">Intercambiar</button><button class="btn" id="fzbat">Batalla de facciones</button><a class="btn" href="#/mapa?a='+encodeURIComponent(A.s)+'&b='+encodeURIComponent(B.s)+'">Ver en el mapa</a></div>';
   // facts about membership
@@ -180,7 +235,7 @@ window.MAT_FUERZAS=function(app,X){
       pairs.forEach(function(p){ var mm=p.m[0];
         if(!p.a||!p.b){ rows+='<tr><th>'+p.m[1]+'</th><td>'+(p.a?esc(p.a.n):'— sin unidad')+'</td><td>'+(p.b?esc(p.b.n):'— sin unidad')+'</td><td>'+(p.a&&!p.b?esc(A.n)+' (sin rival)':p.b&&!p.a?esc(B.n)+' (sin rival)':'—')+'</td></tr>'; if(p.a&&!p.b) wa++; if(p.b&&!p.a) wb++; return;}
         var r=D.run(mm,p.a,p.b,400), pa=Math.round(r.pa*100), win=pa>=50?0:1; if(win===0) wa++; else wb++;
-        rows+='<tr><th>'+p.m[1]+'</th><td class="'+(win===0?'w':'')+'"><a href="#/a/'+p.a.id+'">'+esc(p.a.n)+'</a></td><td class="'+(win===1?'w':'')+'"><a href="#/a/'+p.b.id+'">'+esc(p.b.n)+'</a></td><td>'+(win===0?esc(A.n)+' '+pa:esc(B.n)+' '+(100-pa))+' %<br><a href="#/duelo?m='+mm+'&a='+p.a.id+'&b='+p.b.id+'&go=1">Ver duelo ›</a></td></tr>';});
+        rows+='<tr><th>'+p.m[1]+'</th><td class="'+(win===0?'w':'')+'"><a href="#/a/'+p.a.id+'">'+esc(p.a.n)+'</a></td><td class="'+(win===1?'w':'')+'"><a href="#/a/'+p.b.id+'">'+esc(p.b.n)+'</a></td><td>'+(win===0?esc(A.n)+' '+pa:esc(B.n)+' '+(100-pa))+' %<br><a href="#/duelo?m='+mm+'&a='+p.a.id+'&b='+p.b.id+'&go=1">'+(window.MAT_LANG==='en'?'See duel ›':'Ver duelo ›')+'</a></td></tr>';});
       var res=wa===wb?'Empate '+wa+'–'+wb:(wa>wb?esc(A.n):esc(B.n))+' gana '+Math.max(wa,wb)+'–'+Math.min(wa,wb);
       out.innerHTML='<h2>Batalla de facciones</h2><div class="result"><div class="kicker">Juego, no predicción</div><h2 style="margin-top:4px;border:0;font-size:22px;letter-spacing:0;text-transform:none;color:var(--tx)">'+res+'</h2><p class="sub">Cada lado envía su mejor unidad en servicio por terreno: se prefieren los modelos con unidades en las tablas de Wikipedia, y entre ellos el más moderno y mejor valorado por el Duelo (carros principales en tierra, destructores y fragatas en mar, nucleares de ataque bajo el mar). Se simulan 400 duelos por terreno con su primera arma.</p><table class="ctab fzbt"><tbody><tr><th>Terreno</th><th>'+esc(A.n)+'</th><th>'+esc(B.n)+'</th><th>Gana (de 400)</th></tr>'+rows+'</tbody></table><p class="note">Reglas de juego del Duelo: precisión y daño son valores de simulación; las cifras salen de las fichas. No predice una guerra real: no cuenta número de unidades, logística, doctrina ni alianzas.</p></div>';
     });

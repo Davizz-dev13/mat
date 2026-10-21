@@ -43,6 +43,8 @@ window.MAT_MAPA=function(app,X){
   var FAC={}; DATA.fac.forEach(function(f){FAC[f.id]=f;});
   var o=X.qs(), sel=[];
   [o.a,o.b].forEach(function(s){ if(s&&sideOf(s)) sel.push(s); });
+  // Jose 21-10-2026: tocar un país muestra solo ese país; la comparación solo tras pulsar «Comparar»
+  var cmpMode=sel.length===2;
   var force2d=o.v==='2d';
   // ---- data helpers
   var TOT={}, MAXT=1;
@@ -58,11 +60,11 @@ window.MAT_MAPA=function(app,X){
   var facChips=DATA.fac.filter(function(f){return !f.h;}).concat(DATA.fac.filter(function(f){return f.h;})).map(function(f){return '<button class="chip mpchip" data-s="f:'+f.id+'" aria-pressed="false">'+esc(f.n.replace(/ \(.*\)$/,''))+(f.h?' <span class="mph">hist.</span>':'')+'</button>';}).join('')
     +FZ.custom().map(function(c){return '<button class="chip mpchip" data-s="c:'+esc(c.id)+'" aria-pressed="false">'+esc(c.n)+' <span class="mph">tuya</span></button>';}).join('')
     +'<a class="chip mpchip mpnew" href="#/fuerzas">+ Crear facción</a>';
-  var h=X.crumbs([['Inicio','#/'],['Mapa del mundo']])+'<div class="mptop"><h1>Mapa del mundo</h1><p class="sub">Toca un país para ver su arsenal. Toca otro y se comparan. Arrastra para girar, pellizca para acercar.</p></div>'
+  var h=X.crumbs([['Inicio','#/'],['Mapa del mundo']])+'<div class="mptop"><h1>Mapa del mundo</h1><p class="sub">Toca un país para ver su arsenal. Para comparar dos, pulsa «Comparar» en su panel. Arrastra para girar, pellizca para acercar.</p></div>'
     +'<div class="mpbar"><div class="mpsearch"><input id="mpq" type="search" placeholder="Buscar país" autocomplete="off" aria-label="Buscar país"><div id="mpres" class="mpres" hidden></div></div><button class="btn mpbtog" id="mpbt" aria-pressed="false" data-noi18n><i></i><span></span></button><button class="btn mpreset" id="mpreset" hidden>Reiniciar</button></div>'
     +'<div class="mpbrow" id="mpbrow" hidden data-noi18n></div>'
     +'<div class="mpchips" role="group" aria-label="Facciones"><span class="mpcl">Facciones</span>'+facChips+'</div>'
-    +'<div class="mpwrap"><div class="mpglobe" id="mpg"><canvas id="mpc" aria-label="Globo terráqueo interactivo"></canvas><div class="mptip" id="mptip" hidden></div><div class="mpbcard" id="mpbcard" hidden data-noi18n></div><div class="mplab" id="mplab0" hidden></div><div class="mplab b" id="mplab1" hidden></div><div class="mphint" id="mphint">Toca un país · toca dos para compararlos</div><div class="mpleg" id="mpleg"></div><div class="mpload" id="mpload">Cargando globo 3D…</div></div>'
+    +'<div class="mpwrap"><div class="mpglobe" id="mpg"><canvas id="mpc" aria-label="Globo terráqueo interactivo"></canvas><div class="mptip" id="mptip" hidden></div><div class="mpbcard" id="mpbcard" hidden data-noi18n></div><div class="mplab" id="mplab0" hidden></div><div class="mplab b" id="mplab1" hidden></div><div class="mphint" id="mphint">Toca un país para ver su arsenal</div><div class="mpleg" id="mpleg"></div><div class="mpload" id="mpload">Cargando globo 3D…</div></div>'
     +'<aside class="mppanel" id="mpp" aria-live="polite"></aside></div>'
     +'<p class="note">Mapa: Natural Earth 1:50m (dominio público), simplificado. Intensidad del color = unidades en servicio con cifra en las tablas de equipamiento de Wikipedia ('+esc(DATA.fecha)+'); gris = sin tabla cargada todavía. Las fronteras son ilustrativas.</p>';
   X.set(h);
@@ -170,8 +172,7 @@ window.MAT_MAPA=function(app,X){
     if(sd.m.length===1&&window.MAT_GASTO) h+=window.MAT_GASTO.block(sd.m[0],'mph3');
     if(sd.m.length===1) h+=window.MAT_FZ.chg(sd.m[0],'mph3');
     if(!B.on||!BD||sd.m.length>1) h+=bSec(sd.m);
-    var other=sd.s==='p:espana'?'p:francia':'p:espana';
-    h+='<div class="btns mpbtns"><a class="btn pri" href="'+fzLink(sd.s,other)+'">Ver arsenal completo</a><button class="btn" id="mpcmp">Comparar</button></div>';
+    h+='<div class="btns mpbtns"><a class="btn pri" href="#/fuerzas?a='+encodeURIComponent(sd.s)+'">Ver arsenal completo</a><button class="btn" id="mpcmp">Comparar</button></div>';
     return h; }
   function twoSides(A,B){ var IA=FZ.inv(A.m), IB=FZ.inv(B.m), h='';
     h+='<div class="mpvs"><div class="mpvsa"><span class="mpdot" style="background:'+COL.a+'"></span>'+(A.k?flagImg(A.k):'')+'<b>'+esc(A.n)+'</b><button class="mpx" aria-label="Quitar" data-x="'+esc(A.s)+'">×</button></div><div class="mpvsv">VS</div><div class="mpvsb"><button class="mpx" aria-label="Quitar" data-x="'+esc(B.s)+'">×</button><b>'+esc(B.n)+'</b>'+(B.k?flagImg(B.k):'')+'<span class="mpdot" style="background:'+COL.b+'"></span></div></div>';
@@ -184,14 +185,14 @@ window.MAT_MAPA=function(app,X){
     return h; }
   function nodata(c){ return '<div class="mphd"><span class="mpdot" style="background:#555"></span><div class="mphn"><b>'+esc(c.n)+'</b><span class="mpk">País</span></div><button class="mpx" aria-label="Cerrar" data-x="__nd">×</button></div><p class="mpempty">Todavía no hay fichas ni tabla de equipamiento de este país en M.A.T.</p>'+bSec(['#'+c.i]); }
   function defaultPanel(){ var withInv=Object.keys(DATA.inv).length, withKey=WORLD.c.filter(function(c){return c.k&&!c.t;}).length;
-    return '<h3 class="mph3" style="margin-top:0">Cómo funciona</h3><p class="mpsrc" style="font-size:13px">Toca un país para ver sus unidades en servicio, sus facciones y lo más numeroso de su arsenal. Toca un segundo país, o una facción, y aparece la comparación con un arco entre los dos.</p><p class="mpsrc" style="font-size:13px">'+withInv+' países con tabla de equipamiento cargada · '+withKey+' con fichas en M.A.T.</p><div class="mpgrad"><span>Menos</span><i></i><span>Más unidades</span></div>'; }
+    return '<h3 class="mph3" style="margin-top:0">Cómo funciona</h3><p class="mpsrc" style="font-size:13px">Toca un país para ver sus unidades en servicio, sus facciones y lo más numeroso de su arsenal. Para comparar, pulsa «Comparar» en el panel del país y toca el segundo: aparece la comparación con un arco entre los dos.</p><p class="mpsrc" style="font-size:13px">'+withInv+' países con tabla de equipamiento cargada · '+withKey+' con fichas en M.A.T.</p><div class="mpgrad"><span>Menos</span><i></i><span>Más unidades</span></div>'; }
   var ndC=null;
   function renderPanel(){ var h='';
     var sds=sel.map(sideOf).filter(Boolean);
     if(sds.length===2) h=twoSides(sds[0],sds[1]); else if(sds.length===1) h=oneSide(sds[0],'a'); else if(ndC) h=nodata(ndC); else h=isPhone()?'':defaultPanel();
     pEl.innerHTML=(isPhone()&&h?'<button class="mpgrab" aria-label="Ampliar o reducir"><i></i></button>':'')+h;
     pEl.classList.toggle('on',!!h); pEl.classList.toggle('big',sheetOpen);
-    hint.hidden=sel.length>0||!!ndC; if(sel.length===1&&!ndC){hint.hidden=false; hint.textContent='Toca otro país o una facción para comparar';} else hint.textContent='Toca un país · toca dos para compararlos';
+    hint.hidden=sel.length>0||!!ndC; if(sel.length===1&&!ndC&&cmpMode){hint.hidden=false; hint.textContent='Toca otro país o una facción para comparar';} else hint.textContent='Toca un país para ver su arsenal';
     rsBtn.hidden=!sel.length&&!ndC;
     app.querySelectorAll('.mpchip[data-s]').forEach(function(b){ var i=sel.indexOf(b.getAttribute('data-s')); b.setAttribute('aria-pressed',i>=0); b.style.borderColor=i===0?COL.a:i===1?COL.b:''; });
     leg.innerHTML=sds.length?sds.map(function(sd,i){return '<span><i style="background:'+(i?COL.b:COL.a)+'"></i>'+esc(sd.n)+'</span>';}).join('')+(sds.length===2&&overlap()?'<span><i style="background:'+COL.ab+'"></i>Ambos</span>':''):'<span class="mpg2"><em>Menos</em><b></b><em>Más unidades</em></span><span><i style="background:#22272b"></i>Sin tabla</span>';
@@ -199,15 +200,15 @@ window.MAT_MAPA=function(app,X){
   function overlap(){ var S=memberSets(); for(var k in S[0]) if(S[1][k]) return true; return false; }
   pEl.addEventListener('click',function(e){ var t=e.target.closest('button,a'); if(!t) return;
     if(t.classList.contains('mpgrab')){ sheetOpen=!sheetOpen; pEl.classList.toggle('big',sheetOpen); return; }
-    if(t.dataset.x){ if(t.dataset.x==='__nd'){ndC=null;} else { sel=sel.filter(function(s){return s!==t.dataset.x;}); } update(); return; }
+    if(t.dataset.x){ if(t.dataset.x==='__nd'){ndC=null;} else { sel=sel.filter(function(s){return s!==t.dataset.x;}); if(sel.length<2) cmpMode=false; } update(); return; }
     if(t.dataset.s){ choose(t.dataset.s); return; }
-    if(t.id==='mpcmp'){ sheetOpen=false; hint.hidden=false; hint.textContent='Toca otro país o una facción para comparar'; pEl.classList.remove('big'); if(isPhone()) gEl.scrollIntoView({behavior:'smooth',block:'start'}); flash(hint); return; }
+    if(t.id==='mpcmp'){ cmpMode=true; sheetOpen=false; hint.hidden=false; hint.textContent='Toca otro país o una facción para comparar'; pEl.classList.remove('big'); if(isPhone()) gEl.scrollIntoView({behavior:'smooth',block:'start'}); flash(hint); return; }
     if(t.id==='mpreset2'){ reset(); return; }
   });
   function flash(el){ el.classList.remove('fl'); void el.offsetWidth; el.classList.add('fl'); }
-  function choose(s){ ndC=null; var i=sel.indexOf(s); if(i>=0) sel.splice(i,1); else if(sel.length<2) sel.push(s); else sel[1]=s; update(true); phoneScroll(); }
+  function choose(s){ ndC=null; var i=sel.indexOf(s); if(i>=0){ sel.splice(i,1); if(sel.length<2) cmpMode=false; } else if(cmpMode&&sel.length===1) sel.push(s); else if(cmpMode&&sel.length===2) sel[1]=s; else { sel=[s]; cmpMode=false; } update(true); phoneScroll(); }
   function phoneScroll(){ if(!isPhone()||!sel.length) return; var hd=document.querySelector('.top'), hh=hd?hd.getBoundingClientRect().height:0, r=gEl.getBoundingClientRect(); if(Math.abs(r.top-hh)>4) window.scrollTo({top:Math.max(0,r.top+window.scrollY-hh),behavior:'smooth'}); }
-  function reset(){ sel=[]; ndC=null; sheetOpen=false; update(); }
+  function reset(){ sel=[]; ndC=null; cmpMode=false; sheetOpen=false; update(); }
   rsBtn.addEventListener('click',reset);
   app.querySelectorAll('.mpchip[data-s]').forEach(function(b){ b.addEventListener('click',function(){ choose(b.getAttribute('data-s')); }); });
   // ---- search

@@ -570,3 +570,9 @@ h2.sanh{color:var(--tx)}
 .exfin{padding:0 12px 6px} .exfin p{font-size:13px;color:var(--mu);margin:8px 0}
 .extile .t{color:var(--tx)}
 @media (max-width:420px){.exeq{grid-template-columns:repeat(3,minmax(0,1fr))}.exbig b{font-size:24px}}
+
+/* fix9: vista de un solo país (sin comparación) */
+.fzb1{grid-template-columns:1fr}
+.fzb1 .fzv.a i{left:0;right:auto}
+.fzcols1{grid-template-columns:1fr}
+.fzhl1 .fzhlr{grid-template-columns:1fr}
