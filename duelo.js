@@ -390,7 +390,7 @@ window.MAT_DUELO=function(app,X){
       function finish(){ if(!anim) return; anim=null;
         var win=sim.win, Wn=win===0?A:B, Ls=win===0?B:A, pct=Math.round((win===0?wins:N-wins)/N*100);
         var dec=sim.dead?Wn.n+' deja fuera de combate a '+Ls.n+' con '+(win===0?wa:wb).n+'.':'Ninguno queda destruido; '+Wn.n+' termina con más integridad ('+Math.round(sim.hp[win]*100)+' % frente a '+Math.round(sim.hp[1-win]*100)+' %).';
-        var th=function(a,wn){return '<div class="rv'+(wn?' win':'')+'">'+(a.img?'<img src="'+a.img.th+'" alt="">':'<div class="nofoto">Sin foto</div>')+'<div class="rvn">'+X.esc(a.n)+'</div><div class="rvh">'+(wn?'VENCEDOR':'Integridad '+Math.max(0,Math.round(sim.hp[a===A?0:1]*100))+' %')+'</div></div>';};
+        var th=function(a,wn){return '<div class="rv'+(wn?' win':'')+'">'+(a.img?'<img src="'+a.img.th+'" alt="">':window.MAT_PH(a))+'<div class="rvn">'+X.esc(a.n)+'</div><div class="rvh">'+(wn?'VENCEDOR':'Integridad '+Math.max(0,Math.round(sim.hp[a===A?0:1]*100))+' %')+'</div></div>';};
         var r='<div class="result"><div class="kicker">Resultado de esta simulación</div><div class="rvs">'+th(A,win===0)+'<div class="rvx">VS</div>'+th(B,win===1)+'</div><h2 style="margin-top:4px">Gana '+X.esc(Wn.n)+'</h2><p class="lead" style="margin:6px 0">'+X.esc(dec)+'</p>';
         var ex=explain(MODE,A,B,wa,wb,sim); r+='<h3 class="whyh">Por qué gana</h3><ul class="bul why">'+ex.map(function(s){return '<li>'+X.esc(s)+'</li>';}).join('')+'</ul>';
         r+='<p class="sub">En '+N+' combates simulados con las mismas armas, '+X.esc(Wn.n)+' gana el '+pct+' %. Cambia de munición o de arma y vuelve a combatir para ver cómo cambia.</p>';

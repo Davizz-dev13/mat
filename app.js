@@ -94,7 +94,7 @@ function NAT(l){return l==='Fabricación propia'||l==='Fabricado bajo licencia';
 function pname(a){if(a.orig&&a.orig.length>1&&a.pais!=='multi')return a.orig.map(function(k){return P[k]?P[k].n:k;}).join(' / ');return P[a.pais]?P[a.pais].n:a.pais;}
 function stateLbl(a){return a.estado_pais||pname(a);}
 function svcL(a){if(a.serv)return 'En servicio';if(a.proto)return 'No entró en servicio';if(a.dev)return 'En desarrollo';if(a.ret&&a.ret!=='—')return 'Retirado';if(a.anio&&a.anio>=new Date().getFullYear()-1)return 'En desarrollo';return 'Fuera de servicio';}
-function thumb(a){return a.img?'<img src="'+a.img.th+'" data-fb="'+a.img.src+'" alt="" loading="lazy" decoding="async">':'<div class="nofoto">Sin fotografía libre</div>';}
+function thumb(a){return a.img?'<img src="'+a.img.th+'" data-fb="'+a.img.src+'" alt="" loading="lazy" decoding="async">':window.MAT_PH(a);}
 function row(a){
   var o=CUR&&a.ops[CUR], lab='';
   if(o){ lab=o.l+(o.s?' · '+o.s:''); if(o.l!=='Fabricación propia'&&CUR!=='multi') lab='<span class="org">'+(a.orig&&a.orig.length?a.orig.filter(function(k){return k!==CUR;}).slice(0,2):[a.pais]).map(function(k){return flag(k,'mini');}).join('')+'</span>'+esc(lab); else lab=esc(lab);} else lab=esc(a.estado_pais?a.estado_pais:pname(a));
@@ -233,8 +233,8 @@ function detalle(id){
   var a=BY[id]||(D.alias&&D.alias[id]?BY[D.alias[id]]:null); if(!a) return notfound(); CUR=''; if(a.lz&&!a._full){app.innerHTML='<p class="sub" style="padding:24px 0">Cargando ficha…</p>'; return ensure([a],function(){if(location.hash.indexOf(id)>=0) detalle(id);});} if(GROUND[a.cat]) return detalleT(a); if(a.cat==='armamento') return detalleW(a); if(a.cat==='espacio') return detalleE(a); if(a.cat==='buques'||a.cat==='submarinos') return detalleS(a);
   var tc=(tipoOf(a.tipo)||{}).c||a.cat; var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+='<figure class="dhero nofig"><div class="nofoto big">Sin fotografía libre</div></figure><div class="credit">No hay una fotografía con licencia libre de este modelo en Wikimedia Commons.</div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
+  else h+=window.MAT_PHBIG(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.tags?a.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join(''):'')+'<span class="tag">'+svcL(a)+'</span></div>';
@@ -268,8 +268,8 @@ function detalleS(a){
   var F=a.F||{}, tc=a.cat, tcc=(tipoOf(a.tipo)||{}).c||tc;
   var h=crumbs([['Inicio','#/'],[CN[tcc],'#/'+tcc]].concat(isSanT(a.tipo)?[['Sanidad','#/logistica/sanidad']]:[]).concat([[TN[a.tipo],'#/'+tcc+'/'+a.tipo],[a.n]]));
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+='<figure class="dhero nofig"><div class="nofoto big">Sin fotografía libre</div></figure><div class="credit">No hay una fotografía con licencia libre de este modelo en Wikimedia Commons.</div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
+  else h+=window.MAT_PHBIG(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>'+(a.en&&a.en!==a.n?'<div class="cnt">'+esc(a.en)+'</div>':'');
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.tags?a.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join(''):'')+'<span class="tag">'+svcL(a)+'</span></div>';
@@ -299,8 +299,8 @@ function detalleT(a){
   var F=a.F||{}, tc=a.cat, LG=tc==='logistica'||isSanT(a.tipo), tcc=(tipoOf(a.tipo)||{}).c||tc;
   var h=crumbs([['Inicio','#/'],[CN[tcc],'#/'+tcc]].concat(isSanT(a.tipo)?[['Sanidad','#/logistica/sanidad']]:[]).concat([[TN[a.tipo],'#/'+tcc+'/'+a.tipo],[a.n]]));
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+='<figure class="dhero nofig"><div class="nofoto big">Sin fotografía libre</div></figure><div class="credit">No hay una fotografía con licencia libre de este modelo en Wikimedia Commons.</div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
+  else h+=window.MAT_PHBIG(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.ptag?'<span class="tag on">'+esc(a.ptag)+'</span>':'')+'<span class="tag">'+svcL(a)+'</span></div>';
@@ -329,8 +329,8 @@ function detalleW(a){
   var F=a.F||{}, tc='armamento';
   var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+='<figure class="dhero nofig"><div class="nofoto big">Sin fotografía libre</div></figure><div class="credit">No hay una fotografía con licencia libre de este modelo en Wikimedia Commons.</div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
+  else h+=window.MAT_PHBIG(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.ptag?'<span class="tag on">'+esc(a.ptag)+'</span>':'')+'<span class="tag">'+svcL(a)+'</span></div>';
@@ -357,8 +357,8 @@ function detalleE(a){
   var tc='espacio', S=a.sp||[], AL={e_lanz:'Primer vuelo',e_nave:'Primer lanzamiento',e_sat:'Lanzamiento',e_ag:'Fundación',e_emp:'Fundación',e_mil:'Año',e_astro:'Nacimiento'};
   var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
-  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons / Wikipedia — autor y licencia</a>'+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+='<figure class="dhero nofig"><div class="nofoto big">Sin fotografía libre</div></figure><div class="credit">No hay una fotografía con licencia libre en Wikimedia Commons.</div>';
+  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
+  else h+=window.MAT_PHBIG(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>'+(a.sub?'<p class="sub">'+esc(a.sub)+'</p>':'');
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(estE(a)?'<span class="tag">'+esc(estE(a))+'</span>':'')+'</div>';

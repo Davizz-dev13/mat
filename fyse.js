@@ -30,7 +30,7 @@ window.MAT_FYSE=function(app,X){
   var TITLE=L('Policía Nacional y Guardia Civil','National Police & Civil Guard');
   var path=(location.hash.split('?')[0]||'').replace(/^#\/?/,'').split('/'), id=path[1]?decodeURIComponent(path[1]):'';
   function isSvg(u){return /\.svg/i.test(u||'');}
-  function thumb(x){ return x.img?'<img'+(isSvg(x.img.src)?' class="fysvg"':'')+' src="'+esc(x.img.th)+'" data-fb="'+esc(x.img.src)+'" alt="" loading="lazy" decoding="async">':'<div class="nofoto">'+L('Sin fotografía libre','No free photo')+'</div>'; }
+  function thumb(x){ return x.img?'<img'+(isSvg(x.img.src)?' class="fysvg"':'')+' src="'+esc(x.img.th)+'" data-fb="'+esc(x.img.src)+'" alt="" loading="lazy" decoding="async">':window.MAT_PH(x,(x.k==='veh'?({heli:'heli',barco:'ship',avion:'plane'}[x.g]||'truck'):'emb')); }
   function stl(x){ return '<span class="fyst '+x.st+'">'+T(ST[x.st]||ST.act)+'</span>'; }
   function row(x){ var ds=(x.sig&&x.sig!==x.n?'<b>'+esc(x.sig)+'</b> · ':'')+(x.y&&x.y!=='—'?esc(EN?x.y.replace(/hoy/g,'today').replace(/previsto/,'planned').replace(/años (\d0)–(\d0)/,'$1s–$2s'):x.y)+' · ':'')+stl(x);
     return '<a class="row fyrow" href="#/fyse/'+encodeURIComponent(x.id)+'"><div class="th">'+thumb(x)+'</div><div class="m"><div class="nm">'+esc(x.n)+'</div><div class="ds">'+ds+'</div></div><div class="ch">›</div></a>'; }
@@ -41,7 +41,7 @@ window.MAT_FYSE=function(app,X){
     var h=X.crumbs([[L('Inicio','Home'),'#/'],[TITLE,'#/fyse'],[T(BN[x.b]),'#/fyse?t='+x.b+'&s='+bt],[x.sig||x.n]]);
     h+='<div data-noi18n class="dwrap"><div>';
     if(x.img) h+='<figure class="dhero fyhero" style="margin-bottom:0"><img'+(isSvg(x.img.src)?' class="fysvg"':'')+' src="'+esc(x.img.src)+'" alt="'+esc(x.n)+'"></figure><div class="credit"><span class="fycap">'+esc(EN?x.img.cen:x.img.ces)+'</span> · '+L('Foto','Photo')+': <a href="'+esc(x.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons'+(x.img.lic?' ('+esc(x.img.lic)+')':'')+' — '+L('autor y licencia','author and licence')+'</a></div>';
-    else h+='<figure class="dhero nofig"><div class="nofoto big">'+L('Sin fotografía libre','No free photo')+'</div></figure><div class="credit">'+L('No hay una fotografía con licencia libre localizada en Wikimedia Commons.','No freely licensed photo was found on Wikimedia Commons.')+'</div>';
+    else h+=window.MAT_PHBIG(x,(x.k==='veh'?({heli:'heli',barco:'ship',avion:'plane'}[x.g]||'truck'):'emb'));
     h+='</div><div><div class="kicker">'+T(BN[x.b])+' · '+T(x.k==='unit'?(GU[x.g]||KN.unit):x.k==='veh'?(GV[x.g]||KN.veh):KN.hist)+'</div><h1>'+esc(x.n)+'</h1>';
     h+='<div class="tags"><span class="tag on"><img class="flag" src="flags/es.png" alt="">'+T(BN[x.b])+'</span>'+(x.sig?'<span class="tag">'+esc(x.sig)+'</span>':'')+'<span class="tag">'+T(ST[x.st]||ST.act)+'</span></div>';
     h+='<p class="lead">'+esc(EN?x.en:x.es)+'</p></div></div>';

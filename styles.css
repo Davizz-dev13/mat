@@ -576,3 +576,11 @@ h2.sanh{color:var(--tx)}
 .fzb1 .fzv.a i{left:0;right:auto}
 .fzcols1{grid-template-columns:1fr}
 .fzhl1 .fzhlr{grid-template-columns:1fr}
+
+/* silueta sin foto libre (15:00 run) */
+.nofoto.ph{flex-direction:column;gap:3px;background:#0b0c0d;border:1px solid #1f2326}
+.nofoto.ph .phsv{width:72%;max-width:120px;height:auto;fill:#4a5056}
+.nofoto.ph span{font-size:9px;letter-spacing:.08em;color:#6b7278}
+.nofoto.big.ph .phsv{width:46%;max-width:300px}
+.nofoto.big.ph span{font-size:11px;letter-spacing:.14em}
+.phref{white-space:nowrap}
