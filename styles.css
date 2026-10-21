@@ -743,3 +743,39 @@ body.r-home .hero .mark{font-size:34px}
 .rt-credit{font-size:11px;color:var(--dim);margin:14px 2px 0;line-height:1.45}
 .rt-credit a{color:var(--mu)}
 /* fin M.A.T reto === */
+/* === M.A.T inteligencia (#/inteligencia) === */
+.ig-bar{margin:12px 0 6px}
+.ig-bar .inp{width:100%}
+.ig-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ig-chip{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--s1);color:var(--mu);font:inherit;font-size:13px;cursor:pointer}
+.ig-chip.on{background:#2a3120;border-color:#4f5a2c;color:var(--tx)}
+.ig-c{border:1px solid var(--line);border-radius:10px;background:var(--s1);margin:10px 0;overflow:hidden}
+.ig-c>summary{display:flex;align-items:center;gap:10px;padding:12px;cursor:pointer;min-height:48px;list-style:none}
+.ig-c>summary::-webkit-details-marker{display:none}
+.ig-c>summary img.flag{width:28px;height:19px;object-fit:cover;border-radius:2px;flex:0 0 28px}
+.ig-cn{font-weight:650;font-size:16px;flex:1;min-width:0}
+.ig-cnt{font-size:12px;color:var(--mu)}
+.ig-cards{display:grid;grid-template-columns:1fr;gap:10px;padding:0 10px 12px}
+@media(min-width:760px){.ig-cards{grid-template-columns:1fr 1fr}}
+.ig-card{background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.ig-hd{display:flex;gap:12px;align-items:flex-start}
+.ig-lg{flex:0 0 56px;height:56px;display:flex;align-items:center;justify-content:center;background:#0f1113;border-radius:8px;overflow:hidden}
+.ig-lg img{width:52px;height:52px;object-fit:contain}
+.ig-tt{min-width:0;flex:1}
+.ig-acr{font-weight:700;font-size:17px;line-height:1.2}
+.ig-ty{display:inline-block;vertical-align:2px;margin-left:4px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;padding:2px 6px;background:#2a2e32;color:var(--mu)}
+.ig-ty.ig-civil{background:#22303a;color:#9cc3dc}.ig-ty.ig-interior{background:#3a2c22;color:#e0b48a}.ig-ty.ig-militar{background:#2a3120;color:#b3bd8c}.ig-ty.ig-senales{background:#2f2540;color:#c3a8e8}.ig-ty.ig-coord{background:#33302a;color:#d6c79a}
+.ig-nm{font-size:14px;margin-top:2px;overflow-wrap:anywhere}
+.ig-or{font-size:12px;color:var(--dim);font-style:italic;overflow-wrap:anywhere}
+.ig-d{font-size:14px;color:#cfd2cc;margin:10px 0 8px;line-height:1.5}
+.ig-dl{display:grid;grid-template-columns:1fr;gap:4px;margin:0 0 8px;font-size:13px}
+.ig-dl div{display:flex;gap:8px}
+.ig-dl dt{color:var(--dim);flex:0 0 92px}
+.ig-dl dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.ig-src{font-size:11px;color:var(--dim);line-height:1.6;overflow-wrap:anywhere}
+.ig-src a{color:var(--mu)}
+.ig-note{font-size:12px;color:var(--mu);margin:8px 2px;line-height:1.5}
+.ig-rev{font-size:11px;color:var(--dim)}
+.ig-all{color:var(--ac2);text-decoration:none;font-size:14px}
+.ig-link{margin-top:14px}
+/* fin M.A.T inteligencia === */
