@@ -1,3 +1,0 @@
-M.A.T - codigo fuente (18 oct 2026)
-Web estatica. Para los datos .json.gz, utiliza un servidor HTTP local.
-Archivos: index.html, app.js, loader.js, duelo.js, duelo3d.js, fuerzas.js, styles.css, datos en *.json.gz (ingles en en_*.json.gz). Fotos enlazadas desde Wikimedia Commons.

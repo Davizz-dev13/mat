@@ -2,9 +2,9 @@
 (function(){
 "use strict";
 // ======================= M.A.T · PAÍSES Y FACCIONES =======================
-var IC=[['aviones_combate','Aviones de combate'],['aviones_otros','Otros aviones y drones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['artilleria','Artillería'],['antiaereos','Defensa antiaérea'],['buques_portaaviones','Portaaviones'],['buques_destructores','Destructores'],['buques_cruceros','Cruceros'],['buques_fragatas','Fragatas'],['buques_corbetas','Corbetas'],['buques_anfibios','Anfibios'],['buques_patrulleros','Patrulleros'],['buques_minas','Guerra de minas'],['submarinos','Submarinos'],['buques_auxiliares','Auxiliares'],['buques_menores','Embarcaciones menores y de puerto']];
+var IC=[['aviones_combate','Aviones de combate'],['aviones_otros','Otros aviones y drones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['artilleria','Artillería'],['antiaereos','Defensa antiaérea'],['armamento','Armamento aéreo'],['buques_portaaviones','Portaaviones'],['buques_destructores','Destructores'],['buques_cruceros','Cruceros'],['buques_fragatas','Fragatas'],['buques_corbetas','Corbetas'],['buques_anfibios','Anfibios'],['buques_patrulleros','Patrulleros'],['buques_minas','Guerra de minas'],['submarinos','Submarinos'],['buques_auxiliares','Auxiliares'],['buques_menores','Embarcaciones menores y de puerto']];
 var ICN={}; IC.forEach(function(c){ICN[c[0]]=c[1];});
-var MC=[['aviones','Aviones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['buques','Buques'],['submarinos','Submarinos'],['logistica','Logística'],['armamento','Armamento']];
+var MC=[['aviones','Aviones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['buques','Buques'],['submarinos','Submarinos'],['logistica','Logística y Sanidad'],['armamento','Armamento'],['espacio','Carrera espacial']];
 var DATA=null, DP=null;
 function load(){ if(DP) return DP; DP=window.MAT_GET('fuerzas.json.gz').then(function(d){DATA=d;return d;}); return DP; }
 function custom(){try{return JSON.parse(localStorage.getItem('mat_fac')||'[]');}catch(e){return [];}}
@@ -18,6 +18,13 @@ function fzInv(m){ var tot={}, rows={}, nod=[], noq={}, has=0;
       R.forEach(function(r){ var c=r[2]; rows[c]=rows[c]||[]; rows[c].push({n:r[0],id:r[1],q:r[3],qt:r[4],src:r[5],nota:r[6],p:k}); if(r[3]!=null) tot[c]=(tot[c]||0)+r[3]; else noq[c]=(noq[c]||0)+1;});});
     return {tot:tot,rows:rows,nod:nod,noq:noq,has:has};}
 
+function NT(s){ if(!s||window.MAT_LANG!=='en') return s; var M={'Ejército':'Army','Ejérc':'Army','Fuerza Aérea':'Air Force','Armada':'Navy','Infantería de Marina':'Marines','en reserva':'in reserve','Guardia Costera':'Coast Guard','Guardacostas':'Coast Guard','Gendarmería/Guardia Nacional':'Gendarmerie/National Guard','uso limitado':'limited use','Defensa Aérea':'Air Defence','cifra a revisar':'figure to be checked','extinción de incendios':'firefighting','lista de 2016 del artículo':"the article's 2016 list"};
+  return String(s).split(' · ').map(function(t){ var m; if(M[t]) return M[t];
+    if((m=t.match(/^(\d+) buques en la lista$/))) return m[1]+(m[1]==='1'?' ship':' ships')+' on the list';
+    if((m=t.match(/^\(cifra conjunta con (.+)\)$/))) return '(combined figure with '+m[1]+')';
+    if((m=t.match(/^(\d+) en servicio activo según la tabla$/))) return m[1]+' in active service per the table';
+    if((m=t.match(/^la tabla indica (\d+) en servicio$/))) return 'the table lists '+m[1]+' in service';
+    return t; }).join(' · '); }
 function chgHTML(k,cls){ var EN=window.MAT_LANG==='en', C=DATA&&DATA.cambios&&DATA.cambios[k], R=DATA&&DATA.revisado;
   function e(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function q(v,t){return v==null?(t?'«'+e(t)+'»':(EN?'no figure':'sin cifra')):nf(v);}
@@ -63,7 +70,7 @@ window.MAT_FUERZAS=function(app,X){
   h+='<div class="cmp fzsel">'+sideBtn('a',A)+'<div class="fzvs">VS</div>'+sideBtn('b',B)+'</div>';
   h+='<div class="btns" style="margin-top:8px"><button class="btn" id="fzswap">Intercambiar</button><button class="btn" id="fzbat">Batalla de facciones</button><a class="btn" href="#/mapa?a='+encodeURIComponent(A.s)+'&b='+encodeURIComponent(B.s)+'">Ver en el mapa</a></div>';
   // facts about membership
-  [A,B].forEach(function(sd){ if(sd.fac){ var f=sd.fac; h+='<p class="note" style="margin:6px 0 0">'+esc(f.n)+': '+sd.m.map(function(k){return esc(P[k].n);}).join(', ')+'. '+(f.nota?esc(f.nota)+' ':'')+'Miembros según <a href="'+esc(f.src.url)+'" target="_blank" rel="noopener">Wikipedia: '+esc(f.src.t)+'</a> ('+esc(f.src.fecha)+').</p>'; } });
+  [A,B].forEach(function(sd){ if(sd.fac){ var f=sd.fac; var TT=function(s){return window.MAT_T?window.MAT_T(s):s;}; h+='<p class="note" style="margin:6px 0 0">'+esc(TT(f.n))+': '+sd.m.map(function(k){return esc(TT(P[k].n));}).join(', ')+'. '+(f.nota?esc(TT(f.nota))+' ':'')+(window.MAT_LANG==='en'?'Members per ':'Miembros según ')+'<a href="'+esc(f.src.url)+'" target="_blank" rel="noopener">Wikipedia: '+esc(f.src.t)+'</a> ('+esc(f.src.fecha)+').</p>'; } });
   // ---- section 1: units in service
   h+='<h2>Unidades en servicio (según Wikipedia, '+esc(DATA.fecha)+')</h2>'+head();
   var anyI=false;
@@ -72,7 +79,7 @@ window.MAT_FUERZAS=function(app,X){
     h+=bar(va,vb,c[1],sub); });
   if(!anyI) h+='<p class="empty">Ninguno de los dos lados tiene tablas de equipamiento cargadas todavía.</p>';
   [A,B].forEach(function(z){ if(z.m.length===1){ var sh=sfaHTML(z.m[0]); if(sh) h+='<div class="fzchgn">'+X.flag(z.m[0],'mini')+esc(z.n)+'</div>'+sh; } });
-  [[A,IA],[B,IB]].forEach(function(z){ if(z[1].nod.length) h+='<p class="note">'+esc(z[0].n)+': sin tabla de equipamiento cargada para '+z[1].nod.map(function(k){return esc(P[k].n);}).join(', ')+' (se muestra «—», nunca una estimación).</p>';});
+  [[A,IA],[B,IB]].forEach(function(z){ if(z[1].nod.length){ var TT=function(s){return window.MAT_T?window.MAT_T(s):s;}, EN=window.MAT_LANG==='en'; h+='<p class="note">'+esc(TT(z[0].n))+(EN?': no equipment table loaded for ':': sin tabla de equipamiento cargada para ')+z[1].nod.map(function(k){return esc(TT(P[k].n));}).join(', ')+(EN?' (shown as “—”, never an estimate).':' (se muestra «—», nunca una estimación).')+'</p>'; }});
   h+='<p class="note">Cifras tal como aparecen en las tablas «In service / Quantity» de los artículos de equipamiento de cada país en Wikipedia; en las facciones son la suma de sus miembros. Toca un modelo para ver la fuente. Las filas sin cifra (pedidos, «100/348», reservas) no suman.</p>';
   [A,B].forEach(function(z){ if(z.m.length===1&&z.m[0]!==(A===z?'':A.m[0])&&(DATA.inv[z.m[0]]||(DATA.cambios&&DATA.cambios[z.m[0]]))){ var c=chgHTML(z.m[0],'fzchg'); if(c) h+='<div class="fzchgw"><div class="fzchgn">'+X.flag(z.m[0],'mini')+esc(z.n)+'</div>'+c+'</div>'; } });
   // ---- per-category model rows
@@ -80,8 +87,8 @@ window.MAT_FUERZAS=function(app,X){
   IC.forEach(function(c){ var k=c[0], ra=IA.rows[k]||[], rb=IB.rows[k]||[]; if(!ra.length&&!rb.length) return;
     function agg(rows){ var m={}, L=[]; rows.forEach(function(r){var key=r.id||r.n; if(!m[key]){m[key]={n:r.id&&BY[r.id]?BY[r.id].n:r.n,id:r.id&&BY[r.id]?r.id:null,q:null,parts:[]}; L.push(m[key]);} var e=m[key]; if(r.q!=null) e.q=(e.q||0)+r.q; e.parts.push(r);}); L.sort(function(x,y){return (y.q||-1)-(x.q||-1)||x.n.localeCompare(y.n);}); return L;}
     var la=agg(ra), lb=agg(rb);
-    function col(L,sd){ if(!L.length) return '<div class="fzcol"><p class="empty" style="margin:6px 0">—</p></div>'; return '<div class="fzcol">'+L.map(function(e){ var det=e.parts.map(function(r){var f=DATA.fuentes[r.src]||['','',''];return (sd.m.length>1?P[r.p].n+': ':'')+(r.q!=null?nf(r.q):(r.qt?'«'+r.qt+'»':'sin cifra'))+(r.nota?' ('+r.nota+')':'')+' — '+f[0]+' ('+f[2]+')';}).join('\n');
-      return '<details class="fzm"><summary><span class="fmn">'+esc(e.n)+'</span><span class="fmq">'+(e.q!=null?nf(e.q):'—')+'</span></summary><div class="fzdet">'+e.parts.map(function(r){var f=DATA.fuentes[r.src]||['','',''];return '<div>'+(sd.m.length>1?X.flag(r.p,'mini')+esc(P[r.p].n)+': ':'')+'<b>'+(r.q!=null?nf(r.q):(r.qt?'«'+esc(r.qt)+'»':'sin cifra'))+'</b>'+(r.nota?' · '+esc(r.nota):'')+' · <a href="'+esc(f[1])+'" target="_blank" rel="noopener">'+esc(f[0])+'</a> ('+esc(f[2])+')</div>';}).join('')+(e.id?'<div><a href="#/a/'+e.id+'">Abrir ficha en M.A.T ›</a></div>':'')+'</div></details>';}).join('')+'</div>';}
+    function col(L,sd){ if(!L.length) return '<div class="fzcol"><p class="empty" style="margin:6px 0">—</p></div>'; return '<div class="fzcol">'+L.map(function(e){ var det=e.parts.map(function(r){var f=DATA.fuentes[r.src]||['','',''];return (sd.m.length>1?P[r.p].n+': ':'')+(r.q!=null?nf(r.q):(r.qt?'«'+r.qt+'»':'sin cifra'))+(r.nota?' ('+NT(r.nota)+')':'')+' — '+f[0]+' ('+f[2]+')';}).join('\n');
+      return '<details class="fzm"><summary><span class="fmn">'+esc(e.n)+'</span><span class="fmq">'+(e.q!=null?nf(e.q):'—')+'</span></summary><div class="fzdet">'+e.parts.map(function(r){var f=DATA.fuentes[r.src]||['','',''];return '<div>'+(sd.m.length>1?X.flag(r.p,'mini')+esc(P[r.p].n)+': ':'')+'<b>'+(r.q!=null?nf(r.q):(r.qt?'«'+esc(r.qt)+'»':'sin cifra'))+'</b>'+(r.nota?' · '+esc(NT(r.nota)):'')+' · <a href="'+esc(f[1])+'" target="_blank" rel="noopener">'+esc(f[0])+'</a> ('+esc(f[2])+')</div>';}).join('')+(e.id?'<div><a href="#/a/'+e.id+'">Abrir ficha en M.A.T ›</a></div>':'')+'</div></details>';}).join('')+'</div>';}
     var ta=IA.tot[k], tb=IB.tot[k];
     h+='<details class="fzcat"><summary><span>'+c[1]+'</span><span class="cnt">'+nf(ta)+' · '+nf(tb)+'</span></summary><div class="fzcols">'+col(la,A)+col(lb,B)+'</div></details>';});
   // ---- section 2: models (fichas)

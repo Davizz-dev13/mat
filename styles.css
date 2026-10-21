@@ -456,3 +456,117 @@ button.row{width:100%;background:none;border:0;border-bottom:1px solid var(--lin
 @media (max-width:374px){.topnav a.txt[href="#/comparar"]{display:none}}
 .mptag,.mpchips .chip{-webkit-appearance:none;appearance:none;line-height:1.3;height:auto;min-height:28px;display:inline-flex;align-items:center;overflow:visible;text-overflow:clip}
 .mptag{flex:0 1 auto}
+
+/* sanidad */
+.sanchips{margin:4px 0 8px}
+.sanchips .chip{text-decoration:none;display:inline-flex;align-items:center}
+.sanchips .chip:last-child{color:#d8dcc8}
+h2.sanh{color:var(--tx)}
+.cnt.sanv{color:#b7c08f}
+.vrol.vsan{flex-direction:column;align-items:flex-start}
+.vrol.vsan .bul{margin:2px 0 6px;color:var(--tx)}
+.vrol.vsan .bul li{font-size:14px}
+
+.vsan .srcl{font-size:.82em;color:#9aa4ad;text-decoration:underline;white-space:nowrap}
+
+/* Carrera espacial · cronología */
+.cr .chips{flex-wrap:wrap;overflow:visible}
+.cr .chips a.chip{text-decoration:none;display:inline-flex;align-items:center}
+.cr-figs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:6px 0 16px}
+.cr-fig{background:var(--s1);padding:12px 10px}
+.cr-fig .kv{font-size:20px;font-weight:650;color:var(--tx);overflow-wrap:anywhere}
+.cr-fig .kk{font-size:12px;color:var(--mu);margin-top:2px;line-height:1.3}
+.cr-fs{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.3}
+.cr-fs a{color:var(--dim)}
+.cr-n{margin:10px 0 0}
+.cr-dec{margin-top:22px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.cr-list{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--line)}
+.cr-it{position:relative;display:flex;gap:10px;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:10px;margin:10px 0;min-width:0}
+.cr-it::before{content:"";position:absolute;left:-21px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--ac)}
+.cr-th{flex:0 0 96px;width:96px}
+.cr-th img{width:96px;aspect-ratio:3/2;object-fit:cover;border-radius:4px;border:1px solid var(--line);display:block}
+.cr-th .nofoto{width:96px}
+.cr-b{min-width:0;flex:1}
+.cr-d{font-size:12px;color:var(--ac2);letter-spacing:.04em;text-transform:uppercase}
+.cr-it h3{margin:2px 0 4px;font-size:16px;line-height:1.3;font-weight:650}
+.cr-it p{margin:0;color:var(--mu);font-size:14px;line-height:1.4}
+.cr-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cr-ag{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--mu);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+.cr-ag img{border-radius:1px}
+.cr-lk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.cr-lk .tag{font-size:12px}
+.cr-cr{font-size:11px;color:var(--dim)}
+.esptile .t{font-weight:650}
+@media (min-width:700px){.cr-figs{grid-template-columns:repeat(4,minmax(0,1fr))}.cr-th,.cr-th img,.cr-th .nofoto{flex-basis:150px;width:150px}}
+
+.foot .lic{margin-top:10px;font-size:11px;line-height:1.5;color:var(--dim)}
+.foot .lic a{color:var(--mu)}
+.licpage .licback{margin:6px 0 10px}
+.lictxt{border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:14px;color:var(--tx);font-size:15px;line-height:1.55}
+.lictxt p{margin:0 0 12px}.lictxt p:last-child{margin:0}
+
+/* ONU (#/onu) */
+.onupg .fzcat .list{border-top:1px solid var(--line);margin:0 8px 8px}
+.onuit .row{border-bottom:0;padding-bottom:4px}
+.onuit{border-bottom:1px solid var(--line)}
+.onunote{margin:0 4px 10px 112px;font-size:12px;line-height:1.45;color:var(--mu)}
+.onusrc{color:var(--dim)} .onusrc a{color:var(--dim);text-decoration:underline}
+.onumis{color:var(--ac2);font-weight:600;letter-spacing:.04em}
+.gtag.onuact{color:var(--ac2)}
+.onunolink{cursor:default}
+.onumrow{min-height:0;align-items:flex-start} .onumrow .ds{margin-top:2px} .onumn{color:var(--mu)}
+.onuflags{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 4px}
+.onuk{margin:12px 12px 4px}
+.onutile .t .un{display:inline-block}
+@media (max-width:420px){.onunote{margin-left:4px}}
+@media (max-width:420px){.topnav a.txt{padding:0 4px;min-width:0}.topnav{gap:1px}}
+
+/* Carrera espacial · más países */
+.cr-more{margin-top:6px}
+.cr-more>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center}
+.cr-more>summary::-webkit-details-marker{display:none}
+.cr-more>summary::after{content:"▾";margin-left:6px;font-size:11px;opacity:.7}
+.cr-more[open]>summary::after{content:"▴"}
+.cr-more>.chips{margin-top:6px}
+
+/* España en el exterior (#/exterior) */
+.expg h2{margin-top:22px}
+.exsum{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:6px 0 1px}
+.exbig{background:var(--s1);padding:12px 10px;text-align:center}
+.exbig b{display:block;font-size:28px;line-height:1.1;color:var(--tx);font-variant-numeric:tabular-nums}
+.exbig span{display:block;font-size:12px;color:var(--mu);margin-top:3px}
+.exeq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-top:0;border-radius:0 0 var(--r) var(--r);overflow:hidden}
+.exeq>div{background:var(--bg);padding:8px 6px;text-align:center}
+.exeq b{display:block;font-size:18px;color:var(--ac2);font-variant-numeric:tabular-nums}
+.exeq span{display:block;font-size:11px;color:var(--mu);line-height:1.25}
+.exnote{margin-top:8px}
+.exreg,.exfw{margin-top:12px}
+.exmapw{margin-top:8px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0d1114}
+#exmap{display:block;width:100%;height:auto;touch-action:manipulation}
+.expin{cursor:pointer;outline:none}
+.exdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.excard{margin-top:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:12px}
+.exch{display:flex;gap:12px;align-items:flex-start}
+.exch .flag{width:42px;height:28px;flex:0 0 42px;object-fit:cover;border-radius:3px;margin-top:4px}
+.exch>div{flex:1;min-width:0}
+.exch h3{margin:2px 0 2px;font-size:18px;line-height:1.25}
+.exk{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.exx{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--mu);border-radius:999px;width:34px;height:34px;font-size:20px;line-height:1;cursor:pointer;font-family:inherit}
+.extro{display:flex;align-items:baseline;gap:10px;margin:12px 0 2px;flex-wrap:wrap}
+.extro b{font-size:30px;line-height:1;color:var(--tx)}
+.extro span{font-size:12px;color:var(--mu)}
+.excard .list{border-top:1px solid var(--line);margin-top:6px}
+.exeqr .rt{font-variant-numeric:tabular-nums;color:var(--ac2);font-weight:600;white-space:nowrap}
+.exnc{color:var(--dim)}
+.exn{font-size:13px;color:var(--mu);margin:10px 0 0;line-height:1.45}
+.exsrc{font-size:12px;color:var(--dim);margin:8px 0 0;line-height:1.45;overflow-wrap:anywhere}
+.exsrc a,.exfin a{color:var(--dim);text-decoration:underline}
+.exsusp{color:#c98a6b}
+.exsea{display:inline-flex;align-items:center;justify-content:center;width:42px;height:28px;flex:0 0 42px;border:1px solid var(--line);border-radius:3px;color:var(--ac2);font-size:16px}
+.exrow{width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.exrow .flag{width:36px;height:24px;flex:0 0 36px;object-fit:cover;border-radius:2px}
+.exrow .rt{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.exrow .m{flex:1;min-width:0}
+.exfin{padding:0 12px 6px} .exfin p{font-size:13px;color:var(--mu);margin:8px 0}
+.extile .t{color:var(--tx)}
+@media (max-width:420px){.exeq{grid-template-columns:repeat(3,minmax(0,1fr))}.exbig b{font-size:24px}}
