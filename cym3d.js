@@ -51,6 +51,9 @@ export function mount(el, C, H, texUrl, pins, opt){
   // marcadores HTML
   var lay=document.createElement('div'); lay.className='cym-lay'; el.appendChild(lay);
   var P3=pins.map(function(p){ var d=document.createElement('button'); d.type='button'; d.className='cym-pin '+(p.cls||''); d.innerHTML=p.html; d.setAttribute('aria-label',p.label||''); d.onclick=function(ev){ ev.stopPropagation(); if(opt.onPin) opt.onPin(p); }; lay.appendChild(d); return {p:p,el:d,v:P(p.ll,p.up||60)}; });
+  (function(){ if(!P3.length) return; var x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; P3.forEach(function(o){ x0=Math.min(x0,o.v.x); x1=Math.max(x1,o.v.x); z0=Math.min(z0,o.v.z); z1=Math.max(z1,o.v.z); });
+    var asp=Math.max(.6,(el.clientWidth||1)/(el.clientHeight||1)), M=Math.max(W,D); tgt.set((x0+x1)/2,0,(z0+z1)/2);
+    R=Math.max(M*0.42,Math.min(M*0.86,Math.max((x1-x0)/asp,(z1-z0))*1.7))*(opt.zoom||1); R0=Math.max(R0,R); home={th:th,ph:ph,R:R,t:tgt.clone()}; place(); })();
   var tmp=new THREE.Vector3();
   function size(){ var w=el.clientWidth||300, h=el.clientHeight||300; renderer.setSize(w,h,false); cv.style.width=w+'px'; cv.style.height=h+'px'; cam.aspect=w/h; cam.updateProjectionMatrix(); dirty=true; }
   size(); var ro=window.ResizeObserver?new ResizeObserver(size):null; if(ro) ro.observe(el); else window.addEventListener('resize',size);

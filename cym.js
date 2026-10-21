@@ -57,7 +57,7 @@ window.MAT_CYM=function(app,X){
     function three(){ mode='3d'; view.classList.remove('d2'); view.innerHTML='<div class="cym-msg" id="cymmsg">'+L.load+'</div>'; msg=document.getElementById('cymmsg');
       var b2=document.getElementById('cym2d'); b2.textContent=L.v2; document.getElementById('cymreset').disabled=false; document.getElementById('cymex').disabled=false;
       Promise.all([V3||(V3=import('./cym3d.js?v='+V())), hmap(city)]).then(function(z){ if(!document.body.contains(view)||mode!=='3d') return; kill();
-        CUR=z[0].mount(view,C,z[1],'cym_'+city+'.jpg?v='+V(),pins,{ex:+document.getElementById('cymex').value,onPin:function(q){ show(q.id,false); },onReady:function(){ if(msg&&msg.parentNode) msg.parentNode.removeChild(msg); },onError:function(){ two(); }});
+        CUR=z[0].mount(view,C,z[1],'cym_'+city+'.jpg?v='+V(),pins,{ex:+document.getElementById('cymex').value,zoom:city==='melilla'?1.2:1,onPin:function(q){ show(q.id,false); },onReady:function(){ if(msg&&msg.parentNode) msg.parentNode.removeChild(msg); },onError:function(){ two(); }});
       }).catch(function(){ V3=null; var m=document.createElement('p'); m.className='cym-hint'; m.textContent=L.no3d; view.parentNode.insertBefore(m,view.nextSibling); two(); }); }
     document.getElementById('cymreset').onclick=function(){ if(CUR) CUR.reset(); };
     document.getElementById('cymex').oninput=function(ev){ if(CUR&&CUR.exag) CUR.exag(+ev.target.value); };
