@@ -495,6 +495,7 @@ function route(){
   if(p[0]==='exterior'&&window.MAT_EXTERIOR) return window.MAT_EXTERIOR(app,{I:I,BY:BY,P:P,set:set,crumbs:crumbs,qs:qs,esc:esc,flag:flag,thumb:thumb,isFav:isFav});
   if(p[0]==='noticias'&&window.MAT_NOTICIAS) return window.MAT_NOTICIAS(app,{P:P,set:set,crumbs:crumbs,qs:qs,esc:esc,flag:flag});
   if(p[0]==='mapa'&&window.MAT_MAPA) return window.MAT_MAPA(app,{I:I,BY:BY,P:P,set:set,crumbs:crumbs,qs:qs,esc:esc,flag:flag});
+  if((p[0]==='debate'||p[0]==='feedback')&&window.MAT_DEBATE) return window.MAT_DEBATE(app,{set:set,crumbs:crumbs,qs:qs,esc:esc});
   if(p[0]==='duelo'&&window.MAT_DUELO) return window.MAT_DUELO(app,{I:I,BY:BY,P:P,set:set,crumbs:crumbs,options:options,qs:qs,esc:esc,fmt:fmt,EN:EN,openPicker:openPicker,pickBtn:pickBtn,hashFor:hashFor,ensure:ensure});
   notfound();
 }
