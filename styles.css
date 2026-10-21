@@ -781,3 +781,40 @@ body.r-home .hero .mark{font-size:34px}
 /* fin M.A.T inteligencia === */
 /* === M.A.T guerras2 (estilos en guerras2.js) === */
 /* fin M.A.T guerras2 === */
+
+/* === M.A.T ceuta-melilla (#/ceuta-melilla) === */
+.cym h1{margin-bottom:6px}
+.cym-tabs{display:flex;gap:8px;margin:12px 0 6px}
+.cym-tab{flex:1;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:var(--r);color:var(--mu);text-decoration:none;font-weight:650}
+.cym-tab.on{background:#d6b25e;color:#0b0c0d;border-color:#d6b25e}
+.cym-f{font-size:14px;color:#cfd2cc;line-height:1.45;margin:8px 0}
+.cym-view{position:relative;height:58vh;min-height:320px;max-height:560px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b0d0f;margin:8px 0 6px;touch-action:none}
+.cym-view.d2{height:auto;min-height:0;max-height:none;touch-action:auto}
+.cym-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:14px}
+.cym-lay{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.cym-pin{position:absolute;left:0;top:0;pointer-events:auto;min-width:24px;height:24px;padding:0 5px;border-radius:12px 12px 12px 2px;border:1.5px solid #0b0c0d;background:#d6b25e;color:#0b0c0d;font-family:inherit;font-weight:700;font-size:12px;line-height:21px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.6);white-space:nowrap}
+.cym-pin.k-mil{background:#7fb0ff}.cym-pin.k-valla{background:#ff8a65}.cym-pin.k-paso{background:#c7a0ff}.cym-pin.k-inst{background:#9ad18b}
+.cym-pin.ps{background:#f2f2ee;min-width:20px;height:20px;font-size:10px;line-height:17px;border-radius:4px}
+.cym-pin.on{outline:3px solid #fff;z-index:2000!important}
+.cym-2d{position:relative;width:100%}.cym-2d img{width:100%;height:100%;display:block}
+.cym-pin2{transform:translate(-50%,-100%)}
+.cym-ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.cym-b{background:transparent;border:1px solid var(--line);color:var(--mu);border-radius:var(--r);padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+.cym-b:disabled{opacity:.4}
+.cym-ex{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mu);flex:1;min-width:150px}.cym-ex input{flex:1;min-width:0}
+.cym-hint{font-size:12px;color:var(--dim);margin:2px 0 6px}
+.cym-leg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--mu);margin:4px 0 10px}
+.cym-leg span{display:inline-flex;align-items:center;gap:5px}
+.cym-k{display:inline-block;width:14px;height:10px;border-radius:2px}
+.cym-k.es{background:#c9a862}.cym-k.ma{background:#6a6e58}.cym-k.b{background:#e2482c;height:4px}.cym-k.ev{background:#d6b25e;border-radius:6px}.cym-k.ps{background:#f2f2ee;width:9px;height:9px;transform:rotate(45deg)}
+.cym-card{position:relative;border:1px solid var(--line);border-radius:var(--r);padding:10px 34px 10px 12px;margin:4px 0 12px;background:rgba(214,178,94,.06)}
+.cym-close{position:absolute;right:6px;top:4px;background:transparent;border:0;color:var(--mu);font-size:22px;cursor:pointer}
+.cym-ev{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.cym-ev:last-child{border-bottom:0}
+.cym-n{flex:0 0 26px;height:26px;border-radius:50%;background:#d6b25e;color:#0b0c0d;font-weight:700;font-size:12px;border:0;font-family:inherit;cursor:pointer}
+.cym-n.k-mil{background:#7fb0ff}.cym-n.k-valla{background:#ff8a65}.cym-n.k-paso{background:#c7a0ff}.cym-n.k-inst{background:#9ad18b}.cym-n.ps{background:#f2f2ee;border-radius:5px;font-size:10px}
+.cym-eb{min-width:0;flex:1}.cym-d{font-size:12px;color:var(--ac2)}.cym-t{font-weight:650;font-size:15px;line-height:1.3;margin:1px 0 2px}.cym-x{font-size:14px;color:#cfd2cc;line-height:1.45}
+.cym-s{font-size:11px;color:var(--dim);margin-top:3px;overflow-wrap:anywhere}.cym-s a{color:var(--mu)}
+.cym-intro{font-size:13px;color:var(--mu);line-height:1.45;margin:14px 0 8px;overflow-wrap:anywhere}.cym-intro a{color:var(--mu)}
+.cym-cred{font-size:11px;color:var(--dim);line-height:1.5;margin:8px 0}.cym-rev{font-size:11px;color:var(--dim)}
+.cymtile{}
+/* fin M.A.T ceuta-melilla === */
