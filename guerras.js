@@ -59,7 +59,7 @@ window.addEventListener('hashchange',function(){ if(location.hash.indexOf('#/gue
 
 // ---------- #/guerras ----------
 function card(w){
-  var href=w.map?'#/guerras/'+w.id:null, tag=w.map?'<span class="gwtag on">'+(EN()?'Interactive map ›':'Mapa interactivo ›')+'</span>':'<span class="gwtag">'+(EN()?'Map coming soon':'Mapa próximamente')+'</span>';
+  var hm=w.map||(window.MAT_GW2_IDS&&window.MAT_GW2_IDS.indexOf(w.id)>=0); var href=hm?'#/guerras/'+w.id:null, tag=hm?'<span class="gwtag on">'+(EN()?'Interactive map ›':'Mapa interactivo ›')+'</span>':'<span class="gwtag">'+(EN()?'Map coming soon':'Mapa próximamente')+'</span>';
   var h='<div class="gwhd"><div class="gwn">'+e(T(w.n))+'</div>'+tag+'</div>';
   h+='<div class="gwfl">'+w.locs.map(function(l){return flagImg(l[0],EN()?l[2]:l[1]);}).join('')+'</div>';
   h+='<div class="gwmeta">'+(EN()?'Where: ':'Dónde: ')+e(w.locs.map(function(l){return EN()?l[2]:l[1];}).join(', '))+'</div>';
@@ -186,15 +186,17 @@ function uaPage(app,X){
   var rg=document.querySelector('.gurange'); if(rg) rg.addEventListener('input',function(){ pick(U.snaps[+rg.value].k,'range'); });
   [].forEach.call(document.querySelectorAll('.gutog .chip'),function(b){ b.addEventListener('click',function(){ var t=b.getAttribute('data-t'), on=b.getAttribute('aria-pressed')!=='true'; b.setAttribute('aria-pressed',String(on)); if(!API) return; if(t==='base') API.toggle('base',on?'osm':'dark'); else API.toggle(t,on); }); });
   var el=document.getElementById('gumap');
-  Promise.all([loadLeaflet(),loadGeo()]).then(function(){ if(!document.body.contains(el)) return; el.innerHTML=''; API=buildMap(el,cur); window.MAT_GUERRAS_DBG=API; }).catch(function(){ if(document.body.contains(el)) el.innerHTML='<div class="gumsg">'+(EN()?'The map could not be loaded. Check your connection.':'No se pudo cargar el mapa. Comprueba la conexión.')+'</div>'; });
+  Promise.all([loadLeaflet(),loadGeo()]).then(function(){ if(!document.body.contains(el)) return; el.innerHTML=''; API=buildMap(el,cur); window.MAT_GUERRAS_DBG=API; if(window.MAT_GW2_UA) window.MAT_GW2_UA(API); }).catch(function(){ if(document.body.contains(el)) el.innerHTML='<div class="gumsg">'+(EN()?'The map could not be loaded. Check your connection.':'No se pudo cargar el mapa. Comprueba la conexión.')+'</div>'; });
   liveNews(U.news_fb).then(function(items){ var b=document.getElementById('gunewsbox'); if(b) b.innerHTML=newsHTML(items); });
 }
 function route(app,X){
   css(); var p=X.p||[];
-  if(p[1]&&p[1]!=='ucrania'){ location.replace('#/guerras'); return; }
+  var g2=!!(p[1]&&window.MAT_GW2_IDS&&window.MAT_GW2_IDS.indexOf(p[1])>=0);
+  if(p[1]&&p[1]!=='ucrania'&&!g2){ location.replace('#/guerras'); return; }
   if(!D){ X.set(X.crumbs([[EN()?'Home':'Inicio','#/'],[EN()?'Wars today':'Guerras en la actualidad']])+'<p class="sub" style="padding:24px 0">'+(EN()?'Loading…':'Cargando…')+'</p>',EN()?'Wars today':'Guerras en la actualidad');
     var h0=location.hash; load().then(function(){ if(location.hash===h0) route(app,X); }).catch(function(){ X.set('<p class="sub" style="padding:24px 0">'+(EN()?'Could not load the data.':'No se pudieron cargar los datos.')+'</p>'); }); return; }
   if(p[1]==='ucrania') return uaPage(app,X);
+  if(g2&&window.MAT_GW2_PAGE){ killMap(); var w2=D.wars.filter(function(x){return x.id===p[1];})[0]; return window.MAT_GW2_PAGE(app,X,p[1],w2,{loadLeaflet:loadLeaflet,killMap:killMap}); }
   killMap(); return listPage(app,X);
 }
 window.MAT_GUERRAS=route;
