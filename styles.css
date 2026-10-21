@@ -674,3 +674,70 @@ body.r-home .hero .mark{font-size:34px}
 .seo-links a{color:var(--tx);text-decoration:none;display:block;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
 #matld{padding:10px 0 0;margin:0}
 .hero h1.mark{line-height:inherit}
+/* === M.A.T reto (#/reto) === */
+.retobanner{display:flex;align-items:center;gap:14px;margin:4px 0 14px;padding:14px 14px;border-radius:10px;text-decoration:none;background:linear-gradient(135deg,#1d2414 0%,#262f17 55%,#3a3216 100%);border:1px solid #4f5a2c;box-shadow:0 0 0 1px rgba(214,178,94,.08) inset}
+.retobanner .rb-ic{flex:0 0 48px;height:48px;border-radius:10px;background:rgba(214,178,94,.14);display:flex;align-items:center;justify-content:center;font-size:26px}
+.retobanner .t{font-weight:700;font-size:17px;letter-spacing:.01em}
+.retobanner .t .rb-new{display:inline-block;margin-left:6px;font-size:10px;letter-spacing:.08em;font-weight:700;color:#0b0c0d;background:#d6b25e;border-radius:4px;padding:1px 5px;vertical-align:2px}
+.retobanner .d{color:#c9ccb8;font-size:13px;line-height:1.35;margin-top:2px}
+.retobanner .rb-go{margin-left:auto;flex:0 0 auto;background:#d6b25e;color:#0b0c0d;font-weight:700;font-size:13px;border-radius:999px;padding:7px 12px}
+.rt{padding-bottom:10px}
+.rt h1 .rt-num{color:var(--mu);font-weight:500;font-size:20px}
+.rt-note{font-size:13px;color:var(--mu);background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.rt-note a{color:var(--ac2)}
+.rt-play{margin:12px 0 8px}
+.rt-inp{position:relative}
+.rt-inp input{width:100%;font-size:17px;padding:13px 14px;border-radius:10px;border:1px solid #4a5130;background:var(--s1);color:var(--tx);outline:none}
+.rt-inp input:focus{border-color:var(--ac2);box-shadow:0 0 0 2px rgba(179,189,140,.25)}
+.rt-sug{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;background:var(--s2);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.rt-opt{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:var(--tx);padding:10px 12px;font:inherit;font-size:15px;cursor:pointer;min-height:44px}
+.rt-opt:last-child{border-bottom:0}
+.rt-opt.on,.rt-opt:hover{background:#252a22}
+.rt-opt img.flag{width:20px;height:14px;object-fit:cover;border-radius:2px;flex:0 0 20px}
+.rt-opt span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt-opt small{color:var(--dim);font-size:12px;flex:0 0 auto;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt-msg{min-height:18px;font-size:13px;color:#e0b05a;margin:6px 2px 0}
+.rt-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:13px;color:var(--mu);margin-top:4px}
+.rt-acts{margin-left:auto;display:flex;gap:8px}
+.rt-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--s2);color:var(--tx);font:inherit;font-size:15px;font-weight:600;text-decoration:none;cursor:pointer}
+.rt-btn.rt-sm{min-height:38px;padding:0 12px;font-size:13px}
+.rt-btn.rt-ghost{background:none;color:var(--mu)}
+.rt-btn.rt-pri{background:#d6b25e;border-color:#d6b25e;color:#0b0c0d}
+.rt-lastlbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:14px 0 4px}
+.rt-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.rt-row{position:relative;border-radius:8px;background:var(--s1);border:1px solid var(--line);overflow:hidden;min-height:44px}
+.rt-bar{position:absolute;left:0;top:0;bottom:0;opacity:.85}
+.rt-g .rt-bar{background:#2f6b3a}.rt-y .rt-bar{background:#8a6d1f}.rt-r .rt-bar{background:#7a2c25}.rt-win .rt-bar{background:#3d8a49}
+.rt-in{position:relative;display:flex;align-items:center;gap:10px;padding:9px 12px}
+.rt-nm{flex:1;min-width:0;font-size:15px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.rt-nm small{display:block;font-weight:400;font-size:11px;color:rgba(233,233,230,.7)}
+.rt-pos{font-variant-numeric:tabular-nums;font-weight:700;font-size:16px}
+.rt-row.rt-last{border-color:var(--ac2)}
+.rt-how{margin:16px 0 0;background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.rt-how summary,.rt-prev summary{cursor:pointer;font-weight:600;font-size:14px}
+.rt-how p{font-size:14px;color:var(--mu);margin:8px 0}
+.rt-leg{font-size:12px;color:var(--mu);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rt-dot{display:inline-block;width:12px;height:12px;border-radius:3px}
+.rt-dot.rt-g{background:#2f6b3a}.rt-dot.rt-y{background:#8a6d1f}.rt-dot.rt-r{background:#7a2c25}
+.rt-prev{margin:12px 0 0;background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.rt-prev .list{margin-top:8px;max-height:420px;overflow:auto}
+.rt-end{margin:14px 0 6px;border-radius:12px;padding:14px;border:1px solid var(--line);background:var(--s1);text-align:center}
+.rt-end.rt-ok{border-color:#3d8a49;background:linear-gradient(180deg,#14221a,#131517 60%)}
+.rt-endh{font-size:20px;font-weight:700;margin-bottom:10px}
+.rt-ph{display:block;border-radius:10px;overflow:hidden;background:#000;margin:0 auto 10px;max-width:640px}
+.rt-ph img{width:100%;max-height:300px;object-fit:cover}
+.rt-sn{display:flex;align-items:center;justify-content:center;gap:8px;font-size:18px}
+.rt-sn img.flag{width:24px;height:16px;object-fit:cover;border-radius:2px}
+.rt-sd{font-size:13px;color:var(--mu);margin-top:2px}
+.rt-res{font-size:14px;margin:8px 0}
+.rt-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 4px}
+.rt-cr{font-size:11px;color:var(--dim);margin:8px 0 0;overflow-wrap:anywhere}
+.rt-cr a{color:var(--mu)}
+.rt-solv{font-size:13px;color:var(--ac2);min-height:4px;margin-top:6px}
+.rt-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 4px}
+.rt-stats div{background:var(--s2);border-radius:8px;padding:8px 4px}
+.rt-stats b{display:block;font-size:20px}
+.rt-stats span{font-size:11px;color:var(--mu)}
+.rt-next{font-size:13px;color:var(--mu);margin:10px 0 0}
+.rt-next b{font-variant-numeric:tabular-nums;color:var(--tx)}
+/* fin M.A.T reto === */
