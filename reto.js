@@ -92,7 +92,7 @@ window.MAT_RETO=function(app,X){
     if(finished()) h+=endBox();
     else h+='<div class="rt-play"><div class="rt-inp"><input id="rtq" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="'+esc(T.ph)+'" aria-label="'+esc(T.ph)+'"><div id="rtsug" class="rt-sug" role="listbox"></div></div><div id="rtmsg" class="rt-msg" aria-live="polite"></div><div class="rt-meta"><span>'+T.att+': <b>'+G.g.length+'</b></span><span>'+T.hints+': <b>'+(G.h||0)+'</b></span><span class="rt-acts"><button type="button" class="rt-btn rt-sm" id="rthint">💡 '+T.hint+'</button><button type="button" class="rt-btn rt-sm rt-ghost" id="rtgive">'+T.give+'</button></span></div></div>';
     if(last&&!finished()){ h+='<div class="rt-lastlbl">'+T.last+'</div>'+rowH(last.id,true,last.h); }
-    if(sorted.length) h+='<div class="rt-list">'+sorted.map(function(x){ return rowH(x.id,last&&x.id===last.id&&!finished(),x.h); }).join('')+'</div>';
+    var rest=sorted.filter(function(x){ return finished()||!last||x.id!==last.id; }); if(rest.length) h+='<div class="rt-list">'+rest.map(function(x){ return rowH(x.id,false,x.h); }).join('')+'</div>';
     h+='<details class="rt-how"'+(G.g.length?'':' open')+'><summary>'+T.how+'</summary><p>'+T.howt+'</p><div class="rt-leg"><span class="rt-dot rt-g"></span> 2–'+GREEN+' <span class="rt-dot rt-y"></span> '+(GREEN+1)+'–'+YELLOW+' <span class="rt-dot rt-r"></span> '+(YELLOW+1)+'–'+TOT+'</div></details>';
     h+=prevList()+'<p class="rt-credit">'+T.cred+'</p></div>';
     X.set(h,T.h+' #'+num); wire(); }
