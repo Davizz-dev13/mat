@@ -740,4 +740,6 @@ body.r-home .hero .mark{font-size:34px}
 .rt-stats span{font-size:11px;color:var(--mu)}
 .rt-next{font-size:13px;color:var(--mu);margin:10px 0 0}
 .rt-next b{font-variant-numeric:tabular-nums;color:var(--tx)}
+.rt-credit{font-size:11px;color:var(--dim);margin:14px 2px 0;line-height:1.45}
+.rt-credit a{color:var(--mu)}
 /* fin M.A.T reto === */
