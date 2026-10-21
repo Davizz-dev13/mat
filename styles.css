@@ -664,3 +664,13 @@ body.r-home .hero .mark{font-size:34px}
 .dbx details.rules ul{padding-left:18px;margin:6px 0}
 .dbx .fbitem{border:1px solid var(--line);border-radius:var(--r);padding:10px;margin:8px 0;font-size:13.5px;white-space:pre-line;overflow-wrap:anywhere}
 /* === fin M.A.T orden === */
+
+/* === SEO static home fallback (v1792611124): real text inside #app for Google; the SPA replaces it on first render. Must stay. === */
+.seo-static{padding:18px 0 8px;max-width:680px}
+.seo-static h1{font-size:22px}
+.seo-static p{color:var(--mu);margin:8px 0;line-height:1.5}
+.seo-static .seo-lead{color:var(--tx)}
+.seo-links{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.seo-links a{color:var(--tx);text-decoration:none;display:block;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+#matld{padding:10px 0 0;margin:0}
+.hero h1.mark{line-height:inherit}
