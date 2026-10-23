@@ -1,5 +1,6 @@
 /* M.A.T — Modelos 3D (#/modelos-3d). Visor three.js con despiece ligado al scroll.
-   Modelo F-14: F-14B de FlightGear (Richard Harrison, Enrique Laso, Alexis Bory, Nikolai V. Chr.), FGAddon, GPL v2, convertido y dividido por M.A.T. */
+   Modelo F-14: F-14B de FlightGear (Richard Harrison, Enrique Laso, Alexis Bory, Nikolai V. Chr.), FGAddon, GPL v2, convertido y dividido por M.A.T.
+   Modelo Leopard 2: basado en «Abrams M1A2 SEPv3» de dannzjs (Sketchfab), CC BY 4.0 — geometría de Leopard 2 (2A5/2A6), reetiquetado y dividido por M.A.T. */
 import * as THREE from './three.module.min.js';
 import {GLTFLoader,MeshoptDecoder,RoomEnvironment} from './gltf.min.js';
 
@@ -15,6 +16,14 @@ export const MODELS=[{
         'Variable-sweep wings, two crew (pilot and RIO) and AIM-54 Phoenix missiles. Scroll: the jet turns, becomes a line drawing and comes apart piece by piece; scroll up and it goes back together.'],
   credit:['Modelo 3D: F-14B del simulador FlightGear (Richard Harrison, Enrique Laso, Alexis Bory, Nikolai V. Chr.; repositorio FGAddon, licencia GNU GPL v2), convertido, optimizado y dividido en piezas por M.A.T. Decoración VF-211 del propio modelo.',
           '3D model: F-14B from the FlightGear flight simulator (Richard Harrison, Enrique Laso, Alexis Bory, Nikolai V. Chr.; FGAddon repository, GNU GPL v2 licence), converted, optimised and split into parts by M.A.T. VF-211 livery from the model itself.']
+},{
+  id:'leopard-2', file:['m3d/leopard2.glb','m3d/leopard2_tren.glb'], poster:'m3d/leopard2.jpg', ficha:'#/a/t-leopard-2', ficha2:['#/a/t-leopard-2e','Leopardo 2E'], size:'2,1 MB', cfg:'leo',
+  name:'Leopard 2 (2A5/2A6)',
+  kind:['Carro de combate · Alemania · 1979–hoy','Main battle tank · Germany · 1979–present'],
+  desc:['Carro de combate alemán de Krauss-Maffei; con torre en cuña (2A5/2A6) es la base del Leopardo 2E del Ejército de Tierra. Desliza: la torre gira, pasa a dibujo técnico y se desmonta en torre, cañón, casco, motor, cadenas y faldones; al subir se vuelve a montar.',
+        'German main battle tank by Krauss-Maffei; with the wedge turret (2A5/2A6) it is the basis of the Spanish Army\'s Leopardo 2E. Scroll: the turret turns, becomes a line drawing and comes apart into turret, gun, hull, engine, tracks and skirts; scroll up and it goes back together.'],
+  credit:['Modelo 3D: basado en «Abrams M1A2 SEPv3» de dannzjs (sketchfab.com/dannzjs), licencia CC BY 4.0. Pese a su título original, la geometría corresponde a un Leopard 2 de la familia 2A5/2A6; M.A.T lo ha reetiquetado, optimizado y dividido en piezas (y le ha quitado la estación de armas remota).',
+          '3D model: based on "Abrams M1A2 SEPv3" by dannzjs (sketchfab.com/dannzjs), CC BY 4.0 licence. Despite its original title, the geometry is a Leopard 2 of the 2A5/2A6 family; M.A.T relabelled, optimised and split it into parts (and removed the remote weapon station).']
 }];
 
 export const CSS=`
@@ -74,9 +83,31 @@ const LABELS=[ // [piece, ES, EN, mobile]
   ['finL','Derivas|dobles','Twin|tails',0],
   ['aim54_1','Misiles|AIM-54 Phoenix','Missiles|AIM-54 Phoenix',1]];
 
+
+/* ---------- Leopard 2 despiece ---------- */
+// espacio del modelo: x hacia atrás, y arriba, z hacia la izquierda (cañón hacia -x)
+const LEO={
+  PART:{hull:[0,0,0],turret:[0,3.1,0],tracksL:[0,-0.7,2.7],tracksR:[0,-0.7,-2.7],skirtL:[0,0.5,4.6],skirtR:[0,0.5,-4.6]},
+  PIECE:{gun:[-3.3,0.25,0],turret_kit:[0.3,1.3,0],deck:[0.9,1.7,0],trackL:[0,-0.55,1.1],trackR:[0,-0.55,-1.1],driveL:[0,0.15,0.55],driveR:[0,0.15,-0.55]},
+  PIVOT:{turret:[0.95,2.6,-0.04]}, sgn:()=>1,
+  sweep:p=>(ss(0.03,0.13,p)-ss(0.16,0.25,p))*0.6, // la torre gira ~35° y vuelve
+  gearHide:/(?!)/,
+  yaw:[[0,0.62],[0.2,-0.2],[0.45,-0.7],[0.75,-1.15],[1,-2.45]],
+  el:[[0,0.2],[0.2,0.26],[0.45,0.55],[0.75,0.62],[1,0.24]],
+  LABELS:[
+    ['gun','Cañón|Rheinmetall 120 mm','Gun|Rheinmetall 120 mm',1],
+    ['turret_body','Torre|blindaje en cuña','Turret|wedge armour',1],
+    ['deck','Motor|MTU MB 873 · 1.500 CV','Engine|MTU MB 873 · 1,500 hp',1],
+    ['trackL','Cadenas y|tren de rodaje','Tracks and|running gear',1],
+    ['skirtL','Faldones|laterales','Side|skirts',0],
+    ['turret_kit','Visores y|lanzafumígenos','Sights and|smoke dischargers',0]]
+};
+const F14C={PART,PIECE,PIVOT,sgn:pn=>pn==='wingL'?1:-1,sweep:p=>(ss(0.03,0.13,p)-ss(0.16,0.25,p))*0.84,gearHide:GEARHIDE,yaw:[[0,0.62],[0.2,-0.2],[0.45,-0.7],[0.75,-1.15],[1,-2.45]],el:[[0,0.2],[0.2,0.26],[0.45,0.55],[0.75,0.62],[1,0.24]],LABELS};
+const CFGS={leo:LEO};
 const DARK=new THREE.Color(0x0b0c0d), PAPER=new THREE.Color(0xefebe2), FIT=new Float32Array(17*8*3+48);
 
 function viewer(sec,stage,model,opts){
+  const C=(model.cfg&&CFGS[model.cfg])||F14C;
   const reduced=!!opts.reduced, mob=Math.min(innerWidth,innerHeight)<600;
   const canvas=stage.querySelector('canvas'), ttl=stage.querySelector('.m3ttl'), hint=stage.querySelector('.m3hint'), lab=stage.querySelector('.m3lab'), bar=stage.querySelector('.m3bar'), load=stage.querySelector('.m3load');
   let renderer;
@@ -107,9 +138,12 @@ function viewer(sec,stage,model,opts){
 
   // ---- carga ----
   const loader=new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
-  loader.load(model.file+'?v='+VER, g=>{ if(dead) return; setup(g.scene); ready=true; if(load) load.remove(); drawn=-1; if(reduced){pose(0);render();} },
-    ev=>{ if(load&&ev.total) load.textContent=T('Cargando modelo 3D… ','Loading 3D model… ')+Math.round(ev.loaded/ev.total*100)+' %'; },
-    ()=>{ if(load) load.textContent=T('No se pudo cargar el modelo 3D.','The 3D model could not be loaded.'); });
+  const files=[].concat(model.file), got=[], prog=files.map(()=>[0,0]); let left=files.length, bad=false;
+  files.forEach((f,i)=>loader.load(f+'?v='+VER, g=>{ if(dead||bad) return; got[i]=g.scene; if(--left) return;
+      const root=got[0]; for(let k=1;k<got.length;k++) got[k].children.slice().forEach(ch=>root.add(ch));
+      setup(root); ready=true; if(load) load.remove(); drawn=-1; if(reduced){pose(0);render();} },
+    ev=>{ prog[i]=[ev.loaded,ev.total||0]; const L=prog.reduce((a,b)=>a+b[0],0), Tt=prog.reduce((a,b)=>a+b[1],0); if(load&&Tt&&prog.every(x=>x[1])) load.textContent=T('Cargando modelo 3D… ','Loading 3D model… ')+Math.round(L/Tt*100)+' %'; },
+    ()=>{ bad=true; if(load) load.textContent=T('No se pudo cargar el modelo 3D.','The 3D model could not be loaded.'); }));
 
   function patchMat(m){
     if(m.userData.m3p) return; m.userData.m3p=1; if(m.map&&/^base_t/.test(m.name||'')) m.color.setRGB(0.8,0.8,0.82); m.polygonOffset=true; m.polygonOffsetFactor=1; m.polygonOffsetUnits=1;
@@ -124,13 +158,13 @@ function viewer(sec,stage,model,opts){
     const tmp=new THREE.Box3(), v=new THREE.Vector3();
     root.children.slice().forEach(p=>{
       const pn=p.name.replace(/^P_/,'');
-      const P={name:pn,obj:p,dir:new THREE.Vector3().fromArray(PART[pn]||[0,0,0]),pcs:[],d:0};
+      const P={name:pn,obj:p,dir:new THREE.Vector3().fromArray(C.PART[pn]||[0,0,0]),pcs:[],d:0};
       tmp.setFromObject(p); P.c=tmp.getCenter(new THREE.Vector3()); P.gear=/^(gear[LR]|ngear)$/.test(pn);
       P.corners=[0,1,2,3,4,5,6,7].map(i=>new THREE.Vector3(i&1?tmp.max.x:tmp.min.x,i&2?tmp.max.y:tmp.min.y,i&4?tmp.max.z:tmp.min.z).sub(c));
       p.children.slice().forEach(n=>{ tmp.setFromObject(n); const pc=tmp.getCenter(new THREE.Vector3());
-        const pc2={name:n.name,obj:n,c:pc,base:n.position.clone(),bs:n.scale.clone(),off:new THREE.Vector3().fromArray(PIECE[n.name]||[0,0,0]),gear:GEARHIDE.test(n.name)};
+        const pc2={name:n.name,obj:n,c:pc,base:n.position.clone(),bs:n.scale.clone(),off:new THREE.Vector3().fromArray(C.PIECE[n.name]||[0,0,0]),gear:C.gearHide.test(n.name)};
         P.pcs.push(pc2); pieces[n.name]=pc2; if(pc2.gear) gearPieces.push(pc2); });
-      if(PIVOT[pn]){ const pv=new THREE.Group(); pv.position.fromArray(PIVOT[pn]); p.add(pv); p.updateMatrixWorld(true); P.pcs.forEach(q=>{pv.attach(q.obj); q.base.copy(q.obj.position); q.bs.copy(q.obj.scale);}); P.pivot=pv; P.sgn=pn==='wingL'?1:-1; P.pv=new THREE.Vector3().fromArray(PIVOT[pn]).sub(c); }
+      if(C.PIVOT[pn]){ const pv=new THREE.Group(); pv.position.fromArray(C.PIVOT[pn]); p.add(pv); p.updateMatrixWorld(true); P.pcs.forEach(q=>{pv.attach(q.obj); q.base.copy(q.obj.position); q.bs.copy(q.obj.scale);}); P.pivot=pv; P.sgn=C.sgn(pn); P.pv=new THREE.Vector3().fromArray(C.PIVOT[pn]).sub(c); }
       parts.push(P);
     });
     // pétalos de tobera: salen en abanico desde el eje
@@ -145,7 +179,7 @@ function viewer(sec,stage,model,opts){
     root.position.copy(c).multiplyScalar(-1); plane.add(root);
     // rótulos
     const svgNS='http://www.w3.org/2000/svg'; const svg=document.createElementNS(svgNS,'svg'); lab.appendChild(svg);
-    labs=LABELS.filter(L=>!mob||L[3]).filter(L=>pieces[L[0]]).map(L=>{ const a=document.createElement('a'); a.className='m3l'; a.href=model.ficha; const tx=(isEN()?L[2]:L[1]).split('|'); a.innerHTML='<b>'+tx[0]+'</b>'+tx[1]; a.setAttribute('data-noi18n',''); lab.appendChild(a);
+    labs=C.LABELS.filter(L=>!mob||L[3]).filter(L=>pieces[L[0]]).map(L=>{ const a=document.createElement('a'); a.className='m3l'; a.href=model.ficha; const tx=(isEN()?L[2]:L[1]).split('|'); a.innerHTML='<b>'+tx[0]+'</b>'+tx[1]; a.setAttribute('data-noi18n',''); lab.appendChild(a);
       const ln=document.createElementNS(svgNS,'polyline'); ln.setAttribute('fill','none'); ln.setAttribute('stroke','#1d1f21'); ln.setAttribute('stroke-width','0.8'); svg.appendChild(ln);
       const dot=document.createElementNS(svgNS,'circle'); dot.setAttribute('r','2.2'); dot.setAttribute('fill','#1d1f21'); svg.appendChild(dot);
       return {p:pieces[L[0]],a,ln,dot,w:0,h:0}; });
@@ -159,7 +193,7 @@ function viewer(sec,stage,model,opts){
     const E=p<0.72?ramp(0.29,0.56,p):1-ramp(0.79,0.93,p);
     const E2=p<0.72?ss(0.46,0.66,p):1-ss(0.76,0.89,p);
     const G=ss(0.31,0.42,p)*(1-ss(0.86,0.93,p));
-    const sweep=(ss(0.03,0.13,p)-ss(0.16,0.25,p))*0.84; // 20°→68°→20°
+    const sweep=C.sweep(p); // F-14: 20°→68°→20° · Leopard: giro de torre
     expl=E;
     U.uMix.value=mix*0.93; lineMat.opacity=mix; const lv=mix>0.01; if(lines.length&&lines[0].visible!==lv) lines.forEach(l=>l.visible=lv);
     scene.background.copy(DARK).lerp(PAPER,mix);
@@ -169,8 +203,8 @@ function viewer(sec,stage,model,opts){
     gearPieces.forEach(q=>{ const s=Math.max(G,0.001); q.obj.scale.copy(q.bs).multiplyScalar(s); q.obj.visible=G>0.004; });
     // cámara: encuadre calculado con las cajas de las piezas (sin saltos)
     const port=W<H;
-    const yaw=keyed([[0,0.62],[0.2,-0.2],[0.45,-0.7],[0.75,-1.15],[1,-2.45]],p);
-    const el=keyed([[0,0.2],[0.2,0.26],[0.45,0.55],[0.75,0.62],[1,0.24]],p)+(port?0.1:0);
+    const yaw=keyed(C.yaw,p);
+    const el=keyed(C.el,p)+(port?0.1:0);
     plane.rotation.y=yaw;
     const cy=Math.cos(yaw), sy=Math.sin(yaw), se=Math.sin(el), ce=Math.cos(el);
     const tV=Math.tan(THREE.MathUtils.degToRad(cam.fov)/2), tH=tV*cam.aspect;
@@ -242,7 +276,7 @@ function listPage(app,ctx){
   const en=isEN();
   let h=ctx.crumbs([[en?'Home':'Inicio','#/'],[en?'3D models':'Modelos 3D']])+'<div class="m3hd" data-noi18n><h1>'+(en?'3D models':'Modelos 3D')+'</h1><p class="sub">'+(en?'Realistic 3D models that come apart piece by piece as you scroll. One viewer per model.':'Modelos 3D realistas que se desmontan pieza a pieza al deslizar. Un visor por modelo.')+'</p></div><div class="m3grid" data-noi18n>';
   MODELS.forEach(m=>{ h+='<a class="m3card" href="#/modelos-3d/'+m.id+'"><div class="im" style="background-image:url('+m.poster+'?v='+VER+')" role="img" aria-label="'+ctx.esc(m.name)+'"></div><div class="b"><div class="t">'+ctx.esc(m.name)+'</div><div class="k">'+ctx.esc(m.kind[en?1:0])+'</div><div class="go">'+(en?'Open in 3D ›':'Ver en 3D ›')+'</div></div></a>'; });
-  h+='<div class="m3soon"><svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true"><rect x="8" y="24" width="32" height="10" rx="3" fill="none" stroke="#6b7177" stroke-width="1.6"/><path d="M16 24v-5h12l4 5M28 21h14" fill="none" stroke="#6b7177" stroke-width="1.6"/><circle cx="14" cy="34" r="3" fill="none" stroke="#6b7177" stroke-width="1.4"/><circle cx="24" cy="34" r="3" fill="none" stroke="#6b7177" stroke-width="1.4"/><circle cx="34" cy="34" r="3" fill="none" stroke="#6b7177" stroke-width="1.4"/></svg><div>'+(en?'Coming soon: main battle tanks and more models.':'Próximamente: carros de combate y más modelos.')+'</div></div></div>';
+  h+='<div class="m3soon"><svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true"><rect x="8" y="24" width="32" height="10" rx="3" fill="none" stroke="#6b7177" stroke-width="1.6"/><path d="M16 24v-5h12l4 5M28 21h14" fill="none" stroke="#6b7177" stroke-width="1.6"/><circle cx="14" cy="34" r="3" fill="none" stroke="#6b7177" stroke-width="1.4"/><circle cx="24" cy="34" r="3" fill="none" stroke="#6b7177" stroke-width="1.4"/><circle cx="34" cy="34" r="3" fill="none" stroke="#6b7177" stroke-width="1.4"/></svg><div>'+(en?'Coming soon: more models.':'Próximamente: más modelos.')+'</div></div></div>';
   ctx.set(h,en?'3D models':'Modelos 3D');
 }
 function viewPage(app,ctx,m){
@@ -252,7 +286,7 @@ function viewPage(app,ctx,m){
    '<div class="m3ttl"><h1>'+ctx.esc(m.name)+'</h1><p>'+ctx.esc(m.kind[en?1:0])+'</p></div>'+
    '<div class="m3load">'+(en?'Loading 3D model…':'Cargando modelo 3D…')+'</div><div class="m3lab" style="opacity:0;visibility:hidden"></div>'+
    (rm?'<button type="button" class="btn m3rmb">'+(en?'Show parts':'Ver despiece')+'</button>':'<div class="m3hint">'+(en?'Scroll · it comes apart ↓':'Desliza · se desmonta ↓')+'</div><div class="m3bar"></div>')+
-   '</div></section><div class="m3info" data-noi18n><p>'+ctx.esc(m.desc[en?1:0])+'</p><div class="row"><a class="btn" href="'+m.ficha+'">'+(en?'See entry ›':'Ver ficha ›')+'</a><a class="btn" href="#/modelos-3d">'+(en?'‹ All 3D models':'‹ Todos los modelos 3D')+'</a></div><p class="cr">'+ctx.esc(m.credit[en?1:0])+' <a href="#/license">LICENSE</a></p></div>';
+   '</div></section><div class="m3info" data-noi18n><p>'+ctx.esc(m.desc[en?1:0])+'</p><div class="row"><a class="btn" href="'+m.ficha+'">'+(en?'See entry ›':'Ver ficha ›')+'</a>'+(m.ficha2?'<a class="btn" href="'+m.ficha2[0]+'">'+(en?'See ':'Ver ')+ctx.esc(m.ficha2[1])+' ›</a>':'')+'<a class="btn" href="#/modelos-3d">'+(en?'‹ All 3D models':'‹ Todos los modelos 3D')+'</a></div><p class="cr">'+ctx.esc(m.credit[en?1:0])+' <a href="#/license">LICENSE</a></p></div>';
   ctx.set(h,m.name+' · '+(en?'3D models':'Modelos 3D'));
   const sec=app.querySelector('.m3sec'), stage=sec.querySelector('.m3stage');
   const fail=()=>{ stage.innerHTML='<div class="m3card" style="position:absolute;inset:0;border:0"><div class="im" style="height:100%;aspect-ratio:auto;background-image:url('+m.poster+'?v='+VER+')"></div></div>'; sec.classList.add('rm'); };

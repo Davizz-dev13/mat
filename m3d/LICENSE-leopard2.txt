@@ -1,0 +1,22 @@
+Leopard 2 3D model (leopard2.glb, leopard2_tren.glb, leopard2.jpg) — licence notice / aviso de licencia
+
+This work is based on "Abrams M1A2 SEPv3"
+(https://sketchfab.com/3d-models/abrams-m1a2-sepv3-eb6f5560198740269507e9948376414c)
+by dannzjs (https://sketchfab.com/dannzjs), licensed under CC-BY-4.0
+(http://creativecommons.org/licenses/by/4.0/).
+Obtained 2026-10-23 without login from a public GitHub mirror of the unmodified Sketchfab
+download bundle (github.com/DhruvBhargava007/Morv_AI, branch Dhruv,
+frontend/public/models/abrams_m1a2_sepv3/, with its original license.txt); licence re-checked
+the same day on the Sketchfab API (CC Attribution, downloadable, 256,832 faces).
+
+Changes by M.A.T (2026-10-23) / cambios de M.A.T:
+- Relabelled as a Leopard 2 (2A5/2A6 family): despite the original title, the geometry is a
+  Leopard 2-type tank (wedge turret, seven road wheels per side). / Reetiquetado como Leopard 2.
+- Remote weapon station (CROWS) removed. / Estación de armas remota eliminada.
+- Split into parts for the exploded view (hull, engine deck, turret, gun, turret fittings,
+  tracks, road wheels, drive wheels, side skirts); geometry simplified (about 126k triangles)
+  and compressed with meshoptimizer; textures reduced to 512/256 px JPEG; materials retuned.
+- Split into two files: leopard2.glb (hull, turret, skirts) and leopard2_tren.glb (running gear).
+
+These files are distributed under the same CC BY 4.0 licence. The rest of M.A.T is not covered
+by this notice. / Estos archivos se distribuyen con la misma licencia CC BY 4.0.
