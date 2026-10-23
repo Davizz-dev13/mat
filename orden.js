@@ -48,8 +48,7 @@ function home(){
   if(app.querySelector('.hgrid')) return; document.body.classList.add('r-home');
   var tiles=[].slice.call(app.children).filter(function(c){ return c.matches('a.maptile,a.newstile'); });
   if(tiles.length){ var g=document.createElement('div'); g.className='hgrid'; tiles[0].parentNode.insertBefore(g,tiles[0]); tiles.forEach(function(t){ g.appendChild(t); });
-    g.appendChild(tile('#/debate',ICO.debate,EN()?'Debate':'Debate',EN()?'Posts and replies: share what you think, kindly':'Publica tu opinión y responde a otros, con respeto'));
-    g.appendChild(tile('#/feedback',ICO.feedback,EN()?'Feedback':'Feedback',EN()?'Report an error or suggest an idea to the author':'Avisa de un error o propón ideas al autor'));
+    g.appendChild(tile('#/debate',ICO.debate,EN()?'Debate &amp; feedback':'Debate y feedback',EN()?'Share your opinion and reply to others, or report an error or idea to the author':'Opina y responde a otros, o avisa al autor de un error o una idea'));
     var h=document.createElement('h2'); h.className='hsec'; h.textContent=EN()?'Sections':'Secciones'; g.parentNode.insertBefore(h,g); }
   var cats=app.querySelector('.cats'); if(cats){ cats.classList.add('cgrid2'); var h2=document.createElement('h2'); h2.className='hsec'; h2.textContent=EN()?'Categories':'Categorías'; cats.parentNode.insertBefore(h2,cats); }
   var lists=[].slice.call(app.querySelectorAll(':scope > .list')); var acc=lists[lists.length-1];
