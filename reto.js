@@ -59,7 +59,7 @@ window.MAT_RETO=function(app,X){
   function finished(){ return G.w||G.gu; }
   function save1(){ S=store(); if(G.w&&num===today&&!G.gu) G.live=1; S[num]=G; save(S); }
   function counts(){ var c={g:0,y:0,r:0}; G.g.forEach(function(x){ var pos=R.pos[x.id||x]; if(pos===1) return; c[color(pos)==='g'?'g':color(pos)==='y'?'y':'r']++; }); return c; }
-  function shareText(){ var c=counts(), n=G.g.length, url='https://davizz-dev13.github.io/mat/#/reto';
+  function shareText(){ var c=counts(), n=G.g.length, url='https://matmilitar.es/#/reto';
     var head=G.w?(EN?'I solved M.A.T Daily Challenge #'+num+' in '+n+' '+(n===1?'guess':'guesses'):'Resolví el Reto M.A.T #'+num+' en '+n+' '+(n===1?'intento':'intentos')):(EN?'M.A.T Daily Challenge #'+num+': I gave up after '+n+' guesses':'Reto M.A.T #'+num+': me rendí tras '+n+' intentos');
     if(G.h) head+=EN?' ('+G.h+' '+(G.h===1?'hint':'hints')+')':' ('+G.h+' '+(G.h===1?'pista':'pistas')+')';
     return head+(G.w?' 🎯':' 🏳️')+'\n🟩 '+c.g+'  🟨 '+c.y+'  🟥 '+c.r+'\n'+url; }

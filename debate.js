@@ -98,7 +98,7 @@ function modPage(){
 function sendFS(d){ try{ var ifr=document.getElementById('fsifr'); if(!ifr){ ifr=document.createElement('iframe'); ifr.name='fsifr'; ifr.id='fsifr'; ifr.style.display='none'; ifr.setAttribute('aria-hidden','true'); document.body.appendChild(ifr); }
   var f=document.createElement('form'); f.method='POST'; f.action=FS; f.target='fsifr'; f.style.display='none';
   var add=function(k,v){ var i=document.createElement('input'); i.type='hidden'; i.name=k; i.value=v; f.appendChild(i); };
-  add('_subject','M.A.T — Feedback: '+({error:'Error',idea:'Idea',otro:'Otro'}[d.type]||d.type)); add('_template','table'); add('_captcha','false'); add('_next','https://davizz-dev13.github.io/mat/favicon.svg');
+  add('_subject','M.A.T — Feedback: '+({error:'Error',idea:'Idea',otro:'Otro'}[d.type]||d.type)); add('_template','table'); add('_captcha','false'); add('_next','https://matmilitar.es/favicon.svg');
   add('Tipo',d.type); add('Nombre',d.name||'—'); add('Email',d.email||'—'); add('Mensaje',d.message); add('Página',d.page||'—'); add('Web',location.origin); add('Idioma',window.MAT_LANG||'es'); if(d.email) add('_replyto',d.email);
   document.body.appendChild(f); f.submit(); setTimeout(function(){ f.remove(); },2000); return true; }catch(e){ return false; } }
 function feedback(){
