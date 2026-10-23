@@ -356,7 +356,8 @@ export function mount(sec) {
         pc.position.copy(v.home).addScaledVector(v.e, k2); pc.rotation.set(v.r.x * k2, v.r.y * k2, v.r.z * k2); });
     });
     // giro del conjunto (anime.js lleva p; aquí solo se mapea) + leve flotación
-    const yaw = S.yaw, pit = S.pit + (mobile ? S.pm : 0);
+    const mk = mobile ? eio(seg(p, .4, .85)) : 0; // en móvil (vertical) el despiece se gira hacia el morro para usar la altura
+    const yaw = S.yaw + mk * 45, pit = S.pit + (mobile ? S.pm : 0) + mk * 10;
     holder.rotation.set(0, 0, 0); model.rotation.set(0, yaw * D2R, 0);
     model.rotation.x = Math.sin(t * .0007) * .012;
     // cámara: encuadre automático (todas las piezas dentro del recuadro libre)
