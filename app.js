@@ -491,6 +491,7 @@ function route0(){
   if(p[0]==='espacio'&&p[1]==='cronologia'&&window.MAT_ESP_CRONO) return window.MAT_ESP_CRONO(app,{P:P,BY:BY,set:set,crumbs:crumbs,qs:qs,esc:esc,flag:flag});
   if(CN[p[0]]){ if(p.length===1) return catPage(p[0]); if(p.length===2){st.era='';st.q='';st.gen='';return paises(p[1]);} return lista(p[1],p[2]);}
   if(p[0]==='modelos-3d') return m3d(p);
+  if(p[0]==='a'&&p[1]==='l-heavy-equipment-transport-system'){location.replace('#/a/l-oshkosh-m1070');return;}
   if(p[0]==='a') return detalle(p[1]);
   if(p[0]==='license') return licPage();
   if(p[0]==='favoritos') return favPage();
