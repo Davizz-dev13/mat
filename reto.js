@@ -118,9 +118,11 @@ window.MAT_RETO=function(app,X){
     document.getElementById('rtgive').onclick=function(){ if(!confirm(T.sure)) return; G.gu=1; save1(); render(); };
     if(!('ontouchstart' in window)) setTimeout(function(){ try{ inp.focus(); }catch(e){} },50);
   }
-  var API='https://mat-debate.sites.tab.bot/api/reto';
-  function solved(){ try{ if(localStorage.getItem('mat_reto_sent_'+num)) return; localStorage.setItem('mat_reto_sent_'+num,'1'); fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({n:num,g:G.g.length})}).catch(function(){}); }catch(e){} }
-  function loadSolvers(){ if(num!==today) return; var el=document.getElementById('rtsolv'); if(!el) return; fetch(API+'?n='+num).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){ if(d&&d.solved>0&&document.body.contains(el)) el.textContent='👥 '+d.solved+' '+(d.solved===1?T.solver1:T.solvers); }).catch(function(){}); }
+  var SB_REST=window.MAT_SB_REST||((window.MAT_SB_URL||'https://kmfcejpvetjnacuqfyrs.supabase.co').replace(/\/+$/,'')+'/rest/v1'), SB_KEY='sb_publishable_nP2jUAFPXocNUViIsCVaaA_Tn17813h';
+  function sbrpc(fn,args){ return fetch(SB_REST+'/rpc/'+fn,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(args),cache:'no-store'}); }
+  function rcid(){ try{ var c=localStorage.getItem('mat_cid'); if(!c||!/^[A-Za-z0-9_-]{16,64}$/.test(c)){ var a=new Uint8Array(16); crypto.getRandomValues(a); c=Array.prototype.map.call(a,function(b){return ('0'+b.toString(16)).slice(-2);}).join(''); localStorage.setItem('mat_cid',c); } return c; }catch(e){ return null; } }
+  function solved(){ try{ if(localStorage.getItem('mat_reto_sent_'+num)) return; localStorage.setItem('mat_reto_sent_'+num,'1'); sbrpc('reto_solve',{p_n:num,p_g:G.g.length,p_client:rcid()}).catch(function(){}); }catch(e){} }
+  function loadSolvers(){ if(num!==today) return; var el=document.getElementById('rtsolv'); if(!el) return; sbrpc('reto_get',{p_n:num}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){ if(d&&d.solved>0&&document.body.contains(el)) el.textContent='👥 '+d.solved+' '+(d.solved===1?T.solver1:T.solvers); }).catch(function(){}); }
   if(!G.g) G={g:[],h:0};
   render();
 };

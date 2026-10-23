@@ -1,7 +1,6 @@
 (function(){
 "use strict";
-// M.A.T · Debate (publicaciones y respuestas) y Feedback. API: mat-debate.sites.tab.bot (D1). Autor: José Luis Pérez Rodríguez.
-var API='https://mat-debate.sites.tab.bot/api';
+// M.A.T · Debate (publicaciones y respuestas) y Feedback. Backend: Supabase (RPC). Autor: José Luis Pérez Rodríguez.
 var FS='https://formsubmit.co/jlpr2006@gmail.com';
 var CATS=[['general','General','General'],['carros','Carros de combate y blindados','Tanks and armour'],['aviacion','Aviación','Aviation'],['naval','Naval y submarinos','Naval and submarines'],['armamento','Armamento','Weapons'],['geopolitica','Geopolítica y guerras','Geopolitics and wars'],['historia','Historia','History'],['espacio','Espacio','Space'],['otro','Otro','Other']];
 function en(){return window.MAT_LANG==='en';}
@@ -13,7 +12,27 @@ function ago(t){ var s=Math.max(1,Math.round((Date.now()-t)/1000)); var u=s<60?[
 (function(){ try{ var m=(location.search+'&'+location.hash).match(/[?&]mod=([A-Za-z0-9]{20,})/); if(m){ localStorage.setItem('mat_mod',m[1]); var u=location.href.replace(/([?&])mod=[A-Za-z0-9]+&?/g,'$1').replace(/[?&](#|$)/,'$1').replace(/\?#/,'#'); history.replaceState(null,'',u); } }catch(e){} })();
 function tok(){ try{return localStorage.getItem('mat_mod')||'';}catch(e){return '';} }
 var MOD=null;
-function req(path,body,method){ var h={'content-type':'application/json'}; var t=tok(); if(t) h['x-mod-token']=t; return fetch(API+path,{method:method||(body?'POST':'GET'),headers:h,body:body?JSON.stringify(body):undefined,cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {ok:false,error:'Error '+r.status,error_en:'Error '+r.status};}); }); }
+// Backend: Supabase (proyecto de José). Clave publicable = pública, se puede enviar desde el navegador.
+var SB_URL=(window.MAT_SB_URL||'https://kmfcejpvetjnacuqfyrs.supabase.co').replace(/\/+$/,'');
+var SB_REST=window.MAT_SB_REST||(SB_URL+'/rest/v1');
+var SB_KEY='sb_publishable_nP2jUAFPXocNUViIsCVaaA_Tn17813h';
+function cid(){ try{ var c=localStorage.getItem('mat_cid'); if(!c||!/^[A-Za-z0-9_-]{16,64}$/.test(c)){ var a=new Uint8Array(16); (window.crypto||window.msCrypto).getRandomValues(a); c=Array.prototype.map.call(a,function(b){return ('0'+b.toString(16)).slice(-2);}).join(''); localStorage.setItem('mat_cid',c); } return c; }catch(e){ return null; } }
+function rpc(fn,args){ return fetch(SB_REST+'/rpc/'+fn,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{}),cache:'no-store'}).then(function(r){ return r.json().catch(function(){return null;}).then(function(j){ if(j&&typeof j==='object'&&!Array.isArray(j)&&'ok' in j) return j; return {ok:false,error:'Error '+r.status,error_en:'Error '+r.status}; }); }); }
+// Misma interfaz que antes (rutas /api/...) traducida a funciones RPC de Supabase
+function req(path,body){ var t=tok()||null, b=body||{}, m, q;
+  var u=path.split('?'), p=u[0]; q={}; (u[1]||'').split('&').forEach(function(kv){ if(!kv) return; var i=kv.indexOf('='); q[decodeURIComponent(i<0?kv:kv.slice(0,i))]=decodeURIComponent(i<0?'':kv.slice(i+1)); });
+  if(p==='/mod/check') return rpc('mod_check',{p_token:t});
+  if(p==='/posts'&&!body) return rpc('list_posts',{p_page:parseInt(q.page||'0',10)||0,p_cat:q.cat||null,p_sort:q.sort||null,p_token:t});
+  if(p==='/posts') return rpc('create_post',{p_nick:b.nick,p_title:b.title,p_body:b.body,p_cat:b.cat,p_website:b.website||null,p_client:cid(),p_token:t});
+  if((m=p.match(/^\/posts\/(\d+)\/replies$/))) return rpc('create_reply',{p_post_id:+m[1],p_nick:b.nick,p_body:b.body,p_website:b.website||null,p_client:cid(),p_token:t});
+  if((m=p.match(/^\/posts\/(\d+)$/))) return rpc('get_post',{p_id:+m[1],p_token:t});
+  if(p==='/report') return rpc('report',{p_kind:b.kind,p_id:b.id,p_client:cid()});
+  if(p==='/feedback') return rpc('send_feedback',{p_message:b.message,p_type:b.type,p_name:b.name||null,p_email:b.email||null,p_page:b.page||null,p_lang:b.lang,p_mailed:!!b.mailed,p_website:b.website||null,p_client:cid(),p_token:t});
+  if(p==='/mod/reports') return rpc('mod_list_reported',{p_token:t});
+  if(p==='/mod/feedback') return rpc('mod_list_feedback',{p_token:t});
+  if(p==='/mod/delete') return rpc('mod_delete',{p_token:t,p_kind:b.kind,p_id:b.id});
+  if(p==='/mod/restore') return rpc('mod_restore',{p_token:t,p_kind:b.kind,p_id:b.id});
+  return Promise.resolve({ok:false,error:'No encontrado',error_en:'Not found'}); }
 function errTxt(j){ return esc(en()?(j.error_en||j.error||'Error'):(j.error||'Error')); }
 function nickGet(){ try{return localStorage.getItem('mat_nick')||'';}catch(e){return '';} }
 function nickSet(n){ try{localStorage.setItem('mat_nick',n);}catch(e){} }
@@ -79,7 +98,7 @@ function modPage(){
 function sendFS(d){ try{ var ifr=document.getElementById('fsifr'); if(!ifr){ ifr=document.createElement('iframe'); ifr.name='fsifr'; ifr.id='fsifr'; ifr.style.display='none'; ifr.setAttribute('aria-hidden','true'); document.body.appendChild(ifr); }
   var f=document.createElement('form'); f.method='POST'; f.action=FS; f.target='fsifr'; f.style.display='none';
   var add=function(k,v){ var i=document.createElement('input'); i.type='hidden'; i.name=k; i.value=v; f.appendChild(i); };
-  add('_subject','M.A.T — Feedback: '+({error:'Error',idea:'Idea',otro:'Otro'}[d.type]||d.type)); add('_template','table'); add('_captcha','false'); add('_next','https://mat-debate.sites.tab.bot/');
+  add('_subject','M.A.T — Feedback: '+({error:'Error',idea:'Idea',otro:'Otro'}[d.type]||d.type)); add('_template','table'); add('_captcha','false'); add('_next','https://davizz-dev13.github.io/mat/favicon.svg');
   add('Tipo',d.type); add('Nombre',d.name||'—'); add('Email',d.email||'—'); add('Mensaje',d.message); add('Página',d.page||'—'); add('Web',location.origin); add('Idioma',window.MAT_LANG||'es'); if(d.email) add('_replyto',d.email);
   document.body.appendChild(f); f.submit(); setTimeout(function(){ f.remove(); },2000); return true; }catch(e){ return false; } }
 function feedback(){
