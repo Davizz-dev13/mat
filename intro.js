@@ -84,7 +84,7 @@ var OFF=[[-200,-58],[0,0],[-190,-62]];
 var CAPS=EN?[['MAR · SEA','Aircraft carrier · Juan Carlos I'],['AIRE · AIR','Fighter · Eurofighter Typhoon'],['TIERRA · LAND','Main battle tank · Leopard 2E']]
            :[['MAR','Portaaviones · Juan Carlos I'],['AIRE','Caza · Eurofighter Typhoon'],['TIERRA','Carro de combate · Leopard 2E']];
 
-var ov,svg,G={},T0=0,raf=0,done=false,tEnd=RM?0:3700,tAuto=RM?3200:6900,seekT=null,pts=[];
+var ov,svg,G={},T0=0,raf=0,done=false,tEnd=RM?0:5500,tAuto=RM?3200:10000,seekT=null,pts=[];
 
 function build(){
  if(done) return;
@@ -186,10 +186,10 @@ function drawCarrier(S){
 function drawJet(S){
  var fx=S.fx;
  S.ab=E2('g',{opacity:0},fx);
- E2('rect',{x:-19,y:156,width:14,height:92,fill:'url(#miAB)',rx:7},S.ab);
- E2('rect',{x:5,y:156,width:14,height:92,fill:'url(#miAB)',rx:7},S.ab);
+ E2('rect',{x:-19,y:156,width:14,height:POR?62:92,fill:'url(#miAB)',rx:7},S.ab);
+ E2('rect',{x:5,y:156,width:14,height:POR?62:92,fill:'url(#miAB)',rx:7},S.ab);
  S.abc=[E2('ellipse',{cx:-11.5,cy:164,rx:7.5,ry:11,fill:'#fff3cf'},S.ab),E2('ellipse',{cx:11.5,cy:164,rx:7.5,ry:11,fill:'#fff3cf'},S.ab)];
- S.trail=E2('rect',{x:-3,y:170,width:6,height:170,fill:'url(#miAB)',opacity:.2},fx);
+ S.trail=E2('rect',{x:-3,y:170,width:6,height:POR?80:170,fill:'url(#miAB)',opacity:.2},fx);
  var b=S.body;
  S.main.push(P(b,JET.body,{fill:'url(#miMa)'}));
  S.main.push(P(b,JET.can,{fill:'url(#miMa)'}));
@@ -233,7 +233,7 @@ function eo(x){return 1-Math.pow(1-x,3);}
 
 function frame(now){
  if(done) return;
- var el=now-T0, t=seekT!=null?seekT:(RM?99999:el*0.82), lt=RM?el/1000:t/1000; /* 0.82: morph algo más lento */
+ var el=now-T0, t=seekT!=null?seekT:(RM?99999:el*0.66), lt=el/1000; /* 0.66: transformación lenta (termina ~5,5 s); el final queda animado hasta ~10 s */
  G.mark.setAttribute('opacity',(seg(t,2600,3300)*0.9).toFixed(3));
  for(var i=0;i<3;i++){
   var L=G.let[i], S=G.sil[i], p0=LAY.let[i], sl=LAY.sl[i];
@@ -278,12 +278,12 @@ function frame(now){
    var dr=RM?0:Math.sin(lt*1.3)*3*fxo; S.in.setAttribute('transform','translate(0 '+(-dr).toFixed(2)+')'); }
   if(i===2){ S.gnd.setAttribute('opacity',fxo.toFixed(3));
    S.dust.forEach(function(c,k){ var ph=RM?0.35+k*0.08:((lt*0.55+k/7)%1), on=fxo*(RM?0.8:Math.sin(Math.PI*ph));
-    c.setAttribute('cx',(14-ph*62-k*3).toFixed(1)); c.setAttribute('cy',(95-ph*16-(k%3)*3).toFixed(1)); c.setAttribute('r',(8+ph*18).toFixed(1)); c.setAttribute('opacity',(on*0.9).toFixed(3)); });
+    c.setAttribute('cx',(POR?20-ph*16-k*1.2:14-ph*62-k*3).toFixed(1)); c.setAttribute('cy',(95-ph*(POR?22:16)-(k%3)*3).toFixed(1)); c.setAttribute('r',(POR?7+ph*9:8+ph*18).toFixed(1)); c.setAttribute('opacity',(on*0.9).toFixed(3)); });
    S.flag.setAttribute('transform','translate(62 -6) skewY('+(RM?0:Math.sin(lt*5)*6).toFixed(2)+')');
    S.in.setAttribute('transform','translate('+OFF[2][0]+' '+(OFF[2][1]+(RM?0:Math.abs(Math.sin(lt*7))*0.5*fxo)).toFixed(2)+')'); }
  }
  G.pt.setAttribute('opacity',RM?'0':'1');
- if(t>=2700||RM) G.go.classList.add('on');
+ if((seekT!=null?t>=2700:el>=3400)||RM) G.go.classList.add('on');
  if(seekT==null&&el>=tAuto){ exit(); return; }
  if(seekT==null) raf=requestAnimationFrame(frame);
 }
