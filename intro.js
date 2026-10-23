@@ -84,7 +84,7 @@ var OFF=[[-200,-58],[0,0],[-190,-62]];
 var CAPS=EN?[['MAR · SEA','Aircraft carrier · Juan Carlos I'],['AIRE · AIR','Fighter · Eurofighter Typhoon'],['TIERRA · LAND','Main battle tank · Leopard 2E']]
            :[['MAR','Portaaviones · Juan Carlos I'],['AIRE','Caza · Eurofighter Typhoon'],['TIERRA','Carro de combate · Leopard 2E']];
 
-var ov,svg,G={},T0=0,raf=0,done=false,tEnd=RM?0:3700,tAuto=RM?3200:4900,seekT=null,pts=[];
+var ov,svg,G={},T0=0,raf=0,done=false,tEnd=RM?0:3700,tAuto=RM?3200:6900,seekT=null,pts=[];
 
 function build(){
  if(done) return;
@@ -233,7 +233,7 @@ function eo(x){return 1-Math.pow(1-x,3);}
 
 function frame(now){
  if(done) return;
- var t=seekT!=null?seekT:(RM?99999:now-T0), lt=RM?(now-T0)/1000:t/1000;
+ var el=now-T0, t=seekT!=null?seekT:(RM?99999:el*0.82), lt=RM?el/1000:t/1000; /* 0.82: morph algo más lento */
  G.mark.setAttribute('opacity',(seg(t,2600,3300)*0.9).toFixed(3));
  for(var i=0;i<3;i++){
   var L=G.let[i], S=G.sil[i], p0=LAY.let[i], sl=LAY.sl[i];
@@ -284,7 +284,7 @@ function frame(now){
  }
  G.pt.setAttribute('opacity',RM?'0':'1');
  if(t>=2700||RM) G.go.classList.add('on');
- if(seekT==null&&(RM?now-T0:t)>=tAuto){ exit(); return; }
+ if(seekT==null&&el>=tAuto){ exit(); return; }
  if(seekT==null) raf=requestAnimationFrame(frame);
 }
 function onKey(e){ if(e.key==='Escape') exit(); }
