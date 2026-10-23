@@ -22,8 +22,9 @@ export const MODELS=[{
   kind:['Carro de combate · Alemania · 1979–hoy','Main battle tank · Germany · 1979–present'],
   desc:['Carro de combate alemán de Krauss-Maffei; con torre en cuña (2A5/2A6) es la base del Leopardo 2E del Ejército de Tierra. Desliza: la torre gira, pasa a dibujo técnico y se desmonta en torre, cañón, casco, motor, cadenas y faldones; al subir se vuelve a montar.',
         'German main battle tank by Krauss-Maffei; with the wedge turret (2A5/2A6) it is the basis of the Spanish Army\'s Leopardo 2E. Scroll: the turret turns, becomes a line drawing and comes apart into turret, gun, hull, engine, tracks and skirts; scroll up and it goes back together.'],
-  credit:['Modelo 3D: basado en «Abrams M1A2 SEPv3» de dannzjs (sketchfab.com/dannzjs), licencia CC BY 4.0. Pese a su título original, la geometría corresponde a un Leopard 2 de la familia 2A5/2A6; M.A.T lo ha reetiquetado, optimizado y dividido en piezas (y le ha quitado la estación de armas remota).',
-          '3D model: based on "Abrams M1A2 SEPv3" by dannzjs (sketchfab.com/dannzjs), CC BY 4.0 licence. Despite its original title, the geometry is a Leopard 2 of the 2A5/2A6 family; M.A.T relabelled, optimised and split it into parts (and removed the remote weapon station).']
+  credit:['Modelo 3D: basado en «Abrams M1A2 SEPv3» de dannzjs (sketchfab.com/dannzjs), licencia CC BY 4.0. Pese a su título original, la geometría corresponde a un Leopard 2 de la familia 2A5/2A6; M.A.T lo ha reetiquetado, optimizado y dividido en piezas (y le ha quitado la estación de armas remota). Textura modificada: repintado por M.A.T con la decoración del Ejército de Tierra.',
+          '3D model: based on "Abrams M1A2 SEPv3" by dannzjs (sketchfab.com/dannzjs), CC BY 4.0 licence. Despite its original title, the geometry is a Leopard 2 of the 2A5/2A6 family; M.A.T relabelled, optimised and split it into parts (and removed the remote weapon station). Modified texture: repainted by M.A.T in the Spanish Army livery.'],
+  caption:['Decoración del Ejército de Tierra','Spanish Army livery']
 }];
 
 export const CSS=`
@@ -50,6 +51,7 @@ export const CSS=`
 .m3rmb{position:absolute;right:12px;bottom:12px}
 .m3info{max-width:760px;margin:20px auto 34px}.m3info .cr{color:var(--dim);font-size:13px;margin-top:12px}
 .m3info .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.m3info .m3cap{color:var(--mu);font-size:13px;letter-spacing:.02em;margin:0 0 8px}
 `;
 
 function ss(a,b,x){const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);}
@@ -286,7 +288,7 @@ function viewPage(app,ctx,m){
    '<div class="m3ttl"><h1>'+ctx.esc(m.name)+'</h1><p>'+ctx.esc(m.kind[en?1:0])+'</p></div>'+
    '<div class="m3load">'+(en?'Loading 3D model…':'Cargando modelo 3D…')+'</div><div class="m3lab" style="opacity:0;visibility:hidden"></div>'+
    (rm?'<button type="button" class="btn m3rmb">'+(en?'Show parts':'Ver despiece')+'</button>':'<div class="m3hint">'+(en?'Scroll · it comes apart ↓':'Desliza · se desmonta ↓')+'</div><div class="m3bar"></div>')+
-   '</div></section><div class="m3info" data-noi18n><p>'+ctx.esc(m.desc[en?1:0])+'</p><div class="row"><a class="btn" href="'+m.ficha+'">'+(en?'See entry ›':'Ver ficha ›')+'</a>'+(m.ficha2?'<a class="btn" href="'+m.ficha2[0]+'">'+(en?'See ':'Ver ')+ctx.esc(m.ficha2[1])+' ›</a>':'')+'<a class="btn" href="#/modelos-3d">'+(en?'‹ All 3D models':'‹ Todos los modelos 3D')+'</a></div><p class="cr">'+ctx.esc(m.credit[en?1:0])+' <a href="#/license">LICENSE</a></p></div>';
+   '</div></section><div class="m3info" data-noi18n>'+(m.caption?'<p class="m3cap">'+ctx.esc(m.caption[en?1:0])+'</p>':'')+'<p>'+ctx.esc(m.desc[en?1:0])+'</p><div class="row"><a class="btn" href="'+m.ficha+'">'+(en?'See entry ›':'Ver ficha ›')+'</a>'+(m.ficha2?'<a class="btn" href="'+m.ficha2[0]+'">'+(en?'See ':'Ver ')+ctx.esc(m.ficha2[1])+' ›</a>':'')+'<a class="btn" href="#/modelos-3d">'+(en?'‹ All 3D models':'‹ Todos los modelos 3D')+'</a></div><p class="cr">'+ctx.esc(m.credit[en?1:0])+' <a href="#/license">LICENSE</a></p></div>';
   ctx.set(h,m.name+' · '+(en?'3D models':'Modelos 3D'));
   const sec=app.querySelector('.m3sec'), stage=sec.querySelector('.m3stage');
   const fail=()=>{ stage.innerHTML='<div class="m3card" style="position:absolute;inset:0;border:0"><div class="im" style="height:100%;aspect-ratio:auto;background-image:url('+m.poster+'?v='+VER+')"></div></div>'; sec.classList.add('rm'); };

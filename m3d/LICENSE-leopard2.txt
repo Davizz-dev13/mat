@@ -17,6 +17,10 @@ Changes by M.A.T (2026-10-23) / cambios de M.A.T:
   tracks, road wheels, drive wheels, side skirts); geometry simplified (about 126k triangles)
   and compressed with meshoptimizer; textures reduced to 512/256 px JPEG; materials retuned.
 - Split into two files: leopard2.glb (hull, turret, skirts) and leopard2_tren.glb (running gear).
+- Texture modified (2026-10-23): base-colour textures repainted in the Spanish Army (Ejército de Tierra)
+  NATO three-tone camouflage (green, brown, black), with a Spanish flag on the turret sides, "ET-" number
+  plates and dust weathering; textures up to 1024 px; matte paint materials. / Textura modificada:
+  repintado con la decoración del Ejército de Tierra (camuflaje OTAN de tres tonos, bandera, matrículas ET, polvo).
 
 These files are distributed under the same CC BY 4.0 licence. The rest of M.A.T is not covered
 by this notice. / Estos archivos se distribuyen con la misma licencia CC BY 4.0.
