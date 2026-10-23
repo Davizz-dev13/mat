@@ -461,18 +461,7 @@ function comparar(){
     openPicker(function(x){return x.cat===C;},'Elegir '+CN[C].toLowerCase(),function(id){var o=qs();o.c=C;o[k]=id;location.hash=hashFor('#/comparar',o);});});});
 }
 
-function cover(){
-  var f=BY['t-leopard-2e']||pick('tanques'); 
-  var ov=document.createElement('div'); ov.className='cover'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-label','M.A.T');
-  ov.innerHTML=(f&&f.img?'<img class="cvbg" src="'+f.img.src+'" alt="">':'')+'<div class="cvsh"></div><div class="cvin"><div class="cvmark">M.A.T</div><div class="cvsub">Enciclopedia de material militar</div><button class="cvbtn" id="cvgo">M.A.T</button><div class="cvfoot">Aviones · Helicópteros · Carros de combate · Blindados · Buques · Submarinos · Logística y Sanidad · Armamento · Carrera espacial · ONU · España en el exterior</div></div>';
-  document.body.appendChild(ov); document.body.style.overflow='hidden';
-  home();
-  var b=ov.querySelector('#cvgo'); setTimeout(function(){try{b.focus({preventScroll:true});}catch(e){}},50);
-  b.addEventListener('click',function(){try{sessionStorage.setItem('mat_in','1');}catch(e){} ov.classList.add('out'); document.body.style.overflow=''; setTimeout(function(){ov.remove();},650);});
-}
-function seen(){try{return sessionStorage.getItem('mat_in')==='1';}catch(e){return true;}}
 function notfound(){set(crumbs([['Inicio','#/']])+'<h1>No encontrado</h1><p class="sub"><a href="#/">Volver al inicio</a></p>');}
-var FIRST=!(location.hash&&location.hash.length>2);
 function m3d(p){ set('<p class="sub" style="padding:30px 0">'+(window.MAT_LANG==='en'?'Loading…':'Cargando…')+'</p>',window.MAT_LANG==='en'?'3D models':'Modelos 3D'); var v=(document.querySelector('script[data-v]')||{getAttribute:function(){return '1';}}).getAttribute('data-v'); import('./modelos3d.js?v='+v).then(function(m){ if(!/^#\/modelos-3d/.test(location.hash)) return; m.route(app,{set:set,crumbs:crumbs,esc:esc},p); }).catch(function(){ set(crumbs([['Inicio','#/'],['Modelos 3D']])+'<h1>Modelos 3D</h1><p class="sub">'+(window.MAT_LANG==='en'?'The 3D viewer could not be loaded.':'No se pudo cargar el visor 3D.')+'</p>'); }); }
 // memoria de scroll al volver atrás (cada entrada del historial guarda su posición)
 try{ if('scrollRestoration' in history) history.scrollRestoration='manual'; }catch(e){}
@@ -482,8 +471,7 @@ function navRestore(y){ if(!y) return; var n=0; (function f(){ if(n>0&&window.sc
 function route(){ var y=navMark(); route0(); navRestore(y); }
 function route0(){
   var h=location.hash.replace(/^#\/?/,''),path=h.split('?')[0],p=path.split('/').filter(Boolean);
-  if(!p.length){ if(!seen()&&!document.querySelector('.cover')&&FIRST) {FIRST=false; return cover();} return home(); }
-  FIRST=false;
+  if(!p.length) return home(); // la intro de entrada (intro.js) va aparte y solo una vez por sesión
   if(p[0]==='aviones'&&p[1]==='vigilancia'){location.replace('#/aviones/patrulla'+(p[2]?'/'+p[2]:''));return;}
   if(p[0]==='aviones'&&p[1]==='helicoptero'){location.replace('#/helicopteros'+(p[2]?'/h_transporte/'+p[2]:''));return;}
   if(p[0]==='sanidad'){location.replace('#/logistica/sanidad');return;}
