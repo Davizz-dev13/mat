@@ -1,0 +1,13 @@
+F-14 Tomcat 3D model (f14.glb) — licence notice / aviso de licencia
+
+Source / origen: the F-14B 3D model of the FlightGear flight simulator
+  Authors / autores: Richard Harrison, Enrique Laso, Alexis Bory, Nikolai V. Chr.
+  Source repository: https://github.com/Zaretto/fg-aircraft/tree/flightgear-release/aircraft/f-14b
+  Also in FlightGear's FGAddon repository: https://sourceforge.net/p/flightgear/fgaddon/HEAD/tree/trunk/Aircraft/f-14b/
+  Licence / licencia: GNU General Public License v2 (FGAddon), https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+Changes by M.A.T (2026-10-23): converted from AC3D (Models/f14.ac, Stores/ext-stores.ac:
+AIM-54 missiles and pylons) to glTF, grouped into parts for the exploded view, materials
+mapped to PBR, VF-211 livery textures (Models/Liveries/*.checkmates.png) re-encoded as
+JPEG 1024 px, geometry compressed with meshoptimizer. This file (f14.glb) is distributed
+under the same GNU GPL v2 licence. The rest of M.A.T is not covered by this notice.
