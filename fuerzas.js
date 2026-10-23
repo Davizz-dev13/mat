@@ -87,6 +87,7 @@ window.MAT_FUERZAS=function(app,X){
     h+='<p class="note">Cifras tal como aparecen en las tablas «In service / Quantity» de los artículos de equipamiento de cada país en Wikipedia; en las facciones son la suma de sus miembros. Toca un modelo para ver la fuente. Las filas sin cifra (pedidos, «100/348», reservas) no suman.</p>';
     if(S.m.length===1&&(DATA.inv[S.m[0]]||(DATA.cambios&&DATA.cambios[S.m[0]]))){ var cg=chgHTML(S.m[0],'fzchg'); if(cg) h+='<div class="fzchgw">'+cg+'</div>'; }
     if(window.MAT_GASTO){ if(S.m.length===1) h+=window.MAT_GASTO.block(S.m[0],'mph3'); else if(window.MAT_GASTO.solo) h+=window.MAT_GASTO.solo(S); }
+    if(window.MAT_FB&&S.m.length===1) h+=window.MAT_FB.block(S.m[0]);
     h+='<h2>Por modelo</h2>';
     IC.forEach(function(c){ var k=c[0], ra=I1.rows[k]||[]; if(!ra.length) return;
       var m={}, L=[]; ra.forEach(function(r){var key=r.id||r.n; if(!m[key]){m[key]={n:r.id&&BY[r.id]?BY[r.id].n:r.n,id:r.id&&BY[r.id]?r.id:null,q:null,parts:[]}; L.push(m[key]);} var e=m[key]; if(r.q!=null) e.q=(e.q||0)+r.q; e.parts.push(r);}); L.sort(function(x,y){return (y.q||-1)-(x.q||-1)||x.n.localeCompare(y.n);});

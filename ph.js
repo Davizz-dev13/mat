@@ -12,7 +12,8 @@ missile:'<path d="M8 13.5h38q10 0 14 2.5-4 2.5-14 2.5H8z"/><path d="M8 13.5L4 8h
 rocket:'<path d="M29.5 5q2.5-4 5 0v19h-5z"/><path d="M29.5 17L25 27h4.5zM34.5 17L39 27h-4.5z"/><path d="M30.5 25h3l-1.5 4z"/>',
 sat:'<path d="M28 12h8v8h-8z"/><path d="M6 13h18v6H6zM40 13h18v6H40z"/><path d="M24 15.3h4v1.4h-4zM36 15.3h4v1.4h-4z"/><path d="M29 11q3-6 6 0z"/>',
 astro:'<circle cx="32" cy="12" r="8"/><path d="M18 30q0-10 14-10t14 10z"/>',
-emb:'<path d="M32 3l14 4v9q0 9-14 13-14-4-14-13V7z"/>'
+emb:'<path d="M32 3l14 4v9q0 9-14 13-14-4-14-13V7z"/>',
+moto:'<circle cx="13" cy="23" r="6"/><circle cx="51" cy="23" r="6"/><path d="M12 22l9-8h15l5 3 9 5-2 2-8-3H27l-10 8z"/><path d="M35 8h7l4 6h-9z"/><path d="M22 12h10v3H22z"/>'
 };
 function kind(a){
   var c=(a&&a.cat)||'', t=(a&&a.tipo)||'';

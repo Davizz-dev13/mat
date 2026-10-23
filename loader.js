@@ -3,7 +3,7 @@ var V=document.currentScript.getAttribute('data-v');
 var F=["data.json.gz", "tanques.json.gz", "blindados.json.gz", "buques.json.gz", "submarinos.json.gz", "logistica.json.gz", "armamento.json.gz", "espacio.json.gz"];
 var app=document.getElementById('app');
 var ld=document.createElement('p');ld.className='sub';ld.id='matld';ld.textContent='Cargando archivo…';app.insertBefore(ld,app.firstChild);
-function go(D){window.MAT_DATA=D;['ph.js','duelo.js','fuerzas.js','mapa.js','noticias.js','espacio.js','onu.js','exterior.js','fyse.js','gasto.js','guerras.js','debate.js','orden.js','reto.js','inteligencia.js','guerras2.js','cym.js','app.js'].forEach(function(f){var s=document.createElement('script');s.src=f+'?v='+V;s.async=false;document.body.appendChild(s);});}
+function go(D){window.MAT_DATA=D;['ph.js','duelo.js','fuerzas.js','mapa.js','noticias.js','espacio.js','onu.js','exterior.js','fyse.js','gasto.js','guerras.js','debate.js','orden.js','reto.js','inteligencia.js','guerras2.js','cym.js','factbook.js','app.js'].forEach(function(f){var s=document.createElement('script');s.src=f+'?v='+V;s.async=false;document.body.appendChild(s);});}
 function fail(){var x=document.getElementById('matld'); if(x){x.textContent='No se pudo cargar M.A.T. Comprueba la conexión o actualiza Safari/Chrome.';} else app.innerHTML='<p class="sub" style="padding:24px 0">No se pudo cargar M.A.T. Comprueba la conexión o actualiza Safari/Chrome.</p>';}
 if(!('DecompressionStream' in window)){fail();return;}
 function get(f){return fetch(f+'?v='+V).then(function(r){if(!r.ok) throw new Error(r.status); return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();}).catch(function(){return fetch(f+'?v='+V).then(function(r){return r.json();});});}
