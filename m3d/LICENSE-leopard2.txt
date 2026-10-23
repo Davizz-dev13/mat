@@ -17,10 +17,16 @@ Changes by M.A.T (2026-10-23) / cambios de M.A.T:
   tracks, road wheels, drive wheels, side skirts); geometry simplified (about 126k triangles)
   and compressed with meshoptimizer; textures reduced to 512/256 px JPEG; materials retuned.
 - Split into two files: leopard2.glb (hull, turret, skirts) and leopard2_tren.glb (running gear).
-- Texture modified (2026-10-23): base-colour textures repainted in the Spanish Army (Ejército de Tierra)
-  NATO three-tone camouflage (green, brown, black), with a Spanish flag on the turret sides, "ET-" number
-  plates and dust weathering; textures up to 1024 px; matte paint materials. / Textura modificada:
-  repintado con la decoración del Ejército de Tierra (camuflaje OTAN de tres tonos, bandera, matrículas ET, polvo).
+- Texture modified (2026-10-23, second pass): base-colour textures replaced by a uniform satin NATO green
+  (as on the Spanish Army's Leopardo 2E) with ambient-occlusion shading and dust on the lower hull, skirts
+  and tracks; the earlier camouflage, painted flag and ET plates were removed. / Textura modificada:
+  verde OTAN satinado uniforme (como el Leopardo 2E del Ejército de Tierra) con sombreado y polvo.
+- Roof leftovers of the original model (mast stubs, weapon-station base) removed. / Restos del techo eliminados.
+- Stowage details added by M.A.T (built in code in the viewer, not part of the original model): NATO jerrycans,
+  bustle basket with rolled tarp and kit bags, tow cables, spare track links, commander's periscope, two whip
+  antennas with a Spanish flag and a NATO pennant, headlights and the yellow "70" bridge-class disc.
+  / Detalles de estiba añadidos por M.A.T (bidones, cestón con lona, cables, eslabones, periscopio, antenas
+  con bandera y banderín OTAN, faros y disco «70»).
 
 These files are distributed under the same CC BY 4.0 licence. The rest of M.A.T is not covered
 by this notice. / Estos archivos se distribuyen con la misma licencia CC BY 4.0.
