@@ -1,7 +1,7 @@
 (function(){
 "use strict";
 // M.A.T · Debate (publicaciones y respuestas) y Feedback. Backend: Supabase (RPC). Autor: José Luis Pérez Rodríguez.
-var FS='https://formsubmit.co/jlpr2006@gmail.com';
+var FS='https://formsubmit.co/matmilitaroficial@gmail.com';
 var CATS=[['general','General','General'],['carros','Carros de combate y blindados','Tanks and armour'],['aviacion','Aviación','Aviation'],['naval','Naval y submarinos','Naval and submarines'],['armamento','Armamento','Weapons'],['geopolitica','Geopolítica y guerras','Geopolitics and wars'],['historia','Historia','History'],['espacio','Espacio','Space'],['otro','Otro','Other']];
 function en(){return window.MAT_LANG==='en';}
 function T(es,e){return en()?e:es;}
