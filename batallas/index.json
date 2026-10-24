@@ -1,1 +1,41 @@
-[{"id":"dia-d","t":["Día D: Operación Overlord","D-Day: Operation Overlord"],"fecha":["6 de junio de 1944","6 June 1944"],"lugar":["Normandía (Francia)","Normandy (France)"],"d":["El desembarco de Normandía en 13 pasos: engaño, embarque, paracaidistas, bombardeo, las cinco playas y el contraataque alemán.","The Normandy landings in 13 steps: deception, embarkation, paratroopers, bombardment, the five beaches and the German counter-attack."]},{"id":"stalingrado","soon":true,"t":["Stalingrado","Stalingrad"],"fecha":["agosto de 1942 – febrero de 1943","August 1942 – February 1943"],"lugar":["Unión Soviética","Soviet Union"]}]
+[
+ {
+  "id": "dia-d",
+  "t": [
+   "Día D: Operación Overlord",
+   "D-Day: Operation Overlord"
+  ],
+  "fecha": [
+   "6 de junio de 1944",
+   "6 June 1944"
+  ],
+  "lugar": [
+   "Normandía (Francia)",
+   "Normandy (France)"
+  ],
+  "d": [
+   "El desembarco de Normandía en 13 pasos: engaño, embarque, paracaidistas, bombardeo, las cinco playas y el contraataque alemán.",
+   "The Normandy landings in 13 steps: deception, embarkation, paratroopers, bombardment, the five beaches and the German counter-attack."
+  ]
+ },
+ {
+  "id": "stalingrado",
+  "tema": "nieve",
+  "t": [
+   "Batalla de Stalingrado",
+   "Battle of Stalingrad"
+  ],
+  "fecha": [
+   "17 de julio de 1942 – 2 de febrero de 1943",
+   "17 July 1942 – 2 February 1943"
+  ],
+  "lugar": [
+   "Stalingrado, Unión Soviética",
+   "Stalingrad, Soviet Union"
+  ],
+  "d": [
+   "En 16 pasos: Fall Blau, el bombardeo, la lucha en la ciudad (Mamáyev Kurgán, la Casa de Pávlov, las fábricas, los francotiradores), el cerco de Urano, el puente aéreo y la rendición. El mapa se vuelve blanco con el invierno.",
+   "In 16 steps: Case Blue, the bombing, the fight for the city (Mamayev Kurgan, Pavlov’s House, the factories, the snipers), the Uranus encirclement, the airlift and the surrender. The map turns white with the winter."
+  ]
+ }
+]
