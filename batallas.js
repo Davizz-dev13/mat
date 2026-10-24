@@ -15,8 +15,8 @@ window.MAT_BATALLAS_ICON=ICON;
 var UI={es:{h:'Batallas históricas',home:'Inicio',sub:'Grandes batallas contadas paso a paso sobre mapas de estilo antiguo: dónde estaba cada fuerza, con qué carros de combate y aviones, por dónde atacaron y los pequeños detalles. Datos de fuentes públicas citadas en cada paso.',ver:'Ver batalla',soon:'Próximamente',prev:'Anterior',next:'Siguiente',paso:'Paso',det:'Detalle',src:'Fuentes de este paso',playas:'Las cinco playas',fz:'Fuerzas enfrentadas',fuentes:'Todas las fuentes',leyenda:'Leyenda del mapa',back:'Volver a los pasos',vermap:'Ver en el mapa',hora:'Hora H',sec:'Sector',uds:'Unidades',mandos:'Mandos',tropas:'Desembarcados',bajas:'Bajas aliadas (aprox.)',carros:'Carros de combate y vehículos',de:'Defensores alemanes',cur:'Curiosidad',defs:'Defensas en el mapa',cifras:'Cifras',medios:'Material (fichas M.A.T)',tap:'Toca una unidad o una defensa del mapa para ver más.',eq:'Material',aprox:'Posición aproximada',cerrar:'Cerrar',load:'Cargando…',err:'No se pudo cargar la batalla.',timeline:'Línea de tiempo',notfound:'Batalla no encontrada'},
  en:{h:'Historic battles',home:'Home',sub:'Great battles told step by step on old-style maps: where each force was, with which tanks and aircraft, where they attacked and the small details. Data from public sources cited in every step.',ver:'View battle',soon:'Coming soon',prev:'Previous',next:'Next',paso:'Step',det:'Detail',src:'Sources for this step',playas:'The five beaches',fz:'Opposing forces',fuentes:'All sources',leyenda:'Map legend',back:'Back to the steps',vermap:'Show on the map',hora:'H-Hour',sec:'Sector',uds:'Units',mandos:'Commanders',tropas:'Landed',bajas:'Allied casualties (approx.)',carros:'Tanks and vehicles',de:'German defenders',cur:'Did you know?',defs:'Defences on the map',cifras:'Figures',medios:'Equipment (M.A.T entries)',tap:'Tap a unit or a defence on the map for more.',eq:'Equipment',aprox:'Approximate position',cerrar:'Close',load:'Loading…',err:'Could not load the battle.',timeline:'Timeline',notfound:'Battle not found'}};
 function U_(k){return UI[EN()?'en':'es'][k];}
-var NAT={us:'EE. UU.|USA',uk:'Reino Unido|UK',ca:'Canadá|Canada',fr:'Francia|France',de:'Alemania|Germany',su:'URSS|USSR',ro:'Rumanía|Romania',it:'Italia|Italy',hu:'Hungría|Hungary',hr:'Croacia|Croatia'};
-var FLAG={us:'us',uk:'gb',ca:'ca',fr:'fr',de:'de',su:'su',ro:'ro',it:'it',hu:'hu',hr:'hr'};
+var NAT={jp:'Japón|Japan',us:'EE. UU.|USA',uk:'Reino Unido|UK',ca:'Canadá|Canada',fr:'Francia|France',de:'Alemania|Germany',su:'URSS|USSR',ro:'Rumanía|Romania',it:'Italia|Italy',hu:'Hungría|Hungary',hr:'Croacia|Croatia'};
+var FLAG={jp:'jp',us:'us',uk:'gb',ca:'ca',fr:'fr',de:'de',su:'su',ro:'ro',it:'it',hu:'hu',hr:'hr'};
 var LD=null; // bandos de la batalla actual (D.lados): colores y distintivos por bando
 
 var CSS='.bt{--pa:#efe3c2;--pa2:#e4d3a8;--ink:#3b2b16;--ink2:#6b5433;--al:#1d3f8a;--al2:#b3261e;--ge:#2b2b2b;--ge2:#7a7a72;color:var(--tx)}'+
@@ -51,7 +51,11 @@ var CSS='.bt{--pa:#efe3c2;--pa2:#e4d3a8;--ink:#3b2b16;--ink2:#6b5433;--al:#1d3f8
 '.bt-beach{border:1px solid var(--line);border-radius:6px;margin:10px 0;background:var(--s1)}.bt-beach>summary{cursor:pointer;padding:10px 12px;display:flex;gap:10px;align-items:center;list-style:none}.bt-beach>summary::-webkit-details-marker{display:none}.bt-beach .bn{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:18px;font-weight:700}.bt-beach .bh{margin-left:auto;color:var(--mu);font-size:13px}.bt-beach .bb{padding:0 12px 12px;font-size:14px}.bt-beach dl{margin:0}.bt-beach dt{color:var(--mu);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-top:8px}.bt-beach dd{margin:2px 0 0}'+
 '.bt-fz{display:grid;gap:12px}@media(min-width:760px){.bt-fz{grid-template-columns:1fr 1fr}}.bt-fz>div{border:1px solid var(--line);border-radius:6px;padding:12px;background:var(--s1)}.bt-fz h3{margin:0 0 6px;font-size:18px;display:flex;gap:6px;align-items:center}.bt-fz table{width:100%;border-collapse:collapse;font-size:13px}.bt-fz td{padding:4px 0;border-bottom:1px solid var(--line);vertical-align:top}.bt-fz td:first-child{color:var(--mu);padding-right:8px;width:48%}.bt-fz .tags{margin-top:6px}.bt-fz .tag small{color:var(--mu)}'+
 '.bt-leg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 10px;font-size:12px;color:var(--mu);margin:8px 0}.bt-leg span{display:flex;gap:6px;align-items:center}.bt-leg svg{flex:0 0 34px}'+
-'.bt-mapw,.bt-step,.bt-info{transition:background-color .9s,border-color .9s,color .9s}.bt-map .land,.bt-map .landov,.bt-map .sea{transition:fill .9s}'+'.bt-card.snow{background:#eef2f5 radial-gradient(circle at 30% 20%,#fbfcfd,#d6dfe6);color:#22303b;border-color:#9fb0bd;box-shadow:inset 0 0 30px rgba(60,90,120,.22)}.bt-card.snow .d,.bt-card.snow .go{color:#4f6475}'+'.bt.snow .bt-mapw{background:#eef2f5;border-color:#8a9aa8;box-shadow:inset 0 0 50px rgba(60,80,100,.35)}.bt.snow .bt-mapw:before{filter:grayscale(1);opacity:.2}.bt.snow .bt-mapw:after{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(40,60,85,.3) 100%)}'+'.bt.snow .bt-map .sea{fill:#d3e1ea}.bt.snow .bt-map .wl{stroke:#b7cddb}.bt.snow .bt-map .land,.bt.snow .bt-map .landov{fill:#f7f9fb}.bt.snow .bt-map .coast{stroke:#2f3d4a}.bt.snow .bt-map .riv{stroke:#7895ab}.bt.snow .bt-map .grat{stroke:#9fb0bd}.bt.snow .bt-map text{fill:#22303b;stroke:#f7f9fb}'+'.bt.snow .bt-cap{background:rgba(246,248,250,.92);color:#22303b;border-color:#8a9aa8}.bt.snow .bt-step{background:#f3f6f8;color:#22303b;border-color:#a9b8c4;box-shadow:inset 0 0 40px rgba(70,100,130,.16)}.bt.snow .bt-step .hh{color:#4f6475}.bt.snow .bt-step h2{color:#1b2731}.bt.snow .bt-step summary{color:#4f6475}.bt.snow .bt-det{background:rgba(255,255,255,.8)}.bt.snow .bt-info{background:#f5f8fa;color:#22303b;border-color:#a9b8c4}.bt.snow .bt-info .x{color:#4f6475}'+'.bt-snowfx{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:0;transition:opacity .9s;background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 1.3px,transparent 1.8px),radial-gradient(circle,rgba(95,125,150,.35) 0 .9px,transparent 1.3px),radial-gradient(circle,rgba(255,255,255,.85) 0 .9px,transparent 1.4px);background-size:90px 90px,60px 60px,40px 40px;background-position:0 0,23px 37px,11px 7px}'+'.bt.snow .bt-snowfx{opacity:.9;animation:btsnow 24s linear infinite}@keyframes btsnow{to{background-position:90px 270px,-60px 180px,40px 160px}}@media(prefers-reduced-motion:reduce){.bt.snow .bt-snowfx{animation:none}.bt-mapw,.bt-step,.bt-info,.bt-map .land,.bt-map .sea{transition:none}}'+'.bt-flag{width:20px;height:13px;border-radius:2px;vertical-align:-2px}.bt-cred{font-size:11px;color:var(--dim);margin:6px 0 0}.bt-modep{display:none;margin:8px 0}.bt-modep.on{display:block}';
+'.bt-mapw,.bt-step,.bt-info{transition:background-color .9s,border-color .9s,color .9s}.bt-map .land,.bt-map .landov,.bt-map .sea{transition:fill .9s}'+'.bt-card.snow{background:#eef2f5 radial-gradient(circle at 30% 20%,#fbfcfd,#d6dfe6);color:#22303b;border-color:#9fb0bd;box-shadow:inset 0 0 30px rgba(60,90,120,.22)}.bt-card.snow .d,.bt-card.snow .go{color:#4f6475}'+'.bt.snow .bt-mapw{background:#eef2f5;border-color:#8a9aa8;box-shadow:inset 0 0 50px rgba(60,80,100,.35)}.bt.snow .bt-mapw:before{filter:grayscale(1);opacity:.2}.bt.snow .bt-mapw:after{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(40,60,85,.3) 100%)}'+'.bt.snow .bt-map .sea{fill:#d3e1ea}.bt.snow .bt-map .wl{stroke:#b7cddb}.bt.snow .bt-map .land,.bt.snow .bt-map .landov{fill:#f7f9fb}.bt.snow .bt-map .coast{stroke:#2f3d4a}.bt.snow .bt-map .riv{stroke:#7895ab}.bt.snow .bt-map .grat{stroke:#9fb0bd}.bt.snow .bt-map text{fill:#22303b;stroke:#f7f9fb}'+'.bt.snow .bt-cap{background:rgba(246,248,250,.92);color:#22303b;border-color:#8a9aa8}.bt.snow .bt-step{background:#f3f6f8;color:#22303b;border-color:#a9b8c4;box-shadow:inset 0 0 40px rgba(70,100,130,.16)}.bt.snow .bt-step .hh{color:#4f6475}.bt.snow .bt-step h2{color:#1b2731}.bt.snow .bt-step summary{color:#4f6475}.bt.snow .bt-det{background:rgba(255,255,255,.8)}.bt.snow .bt-info{background:#f5f8fa;color:#22303b;border-color:#a9b8c4}.bt.snow .bt-info .x{color:#4f6475}'+'.bt-snowfx{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:0;transition:opacity .9s;background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 1.3px,transparent 1.8px),radial-gradient(circle,rgba(95,125,150,.35) 0 .9px,transparent 1.3px),radial-gradient(circle,rgba(255,255,255,.85) 0 .9px,transparent 1.4px);background-size:90px 90px,60px 60px,40px 40px;background-position:0 0,23px 37px,11px 7px}'+'.bt.snow .bt-snowfx{opacity:.9;animation:btsnow 24s linear infinite}@keyframes btsnow{to{background-position:90px 270px,-60px 180px,40px 160px}}@media(prefers-reduced-motion:reduce){.bt.snow .bt-snowfx{animation:none}.bt-mapw,.bt-step,.bt-info,.bt-map .land,.bt-map .sea{transition:none}}'+'.bt-map .stx{display:none}.bt-map .st-sunk .stx,.bt-map .st-dmg .stx{display:inline}.bt-map .st-dmg .stx-s{display:none}.bt-map .reef{fill:#d7e6e3;fill-opacity:.55;stroke:#5f8f95;stroke-opacity:.9}'+
+'.bt-fig{margin:4px 0 12px}.bt-fig img{display:block;width:100%;height:auto;border-radius:4px;border:1px solid #b89a63;background:#e4d3a8;filter:sepia(.12)}.bt-fig figcaption{font-size:12.5px;line-height:1.4;color:#5b4526;margin-top:5px}.bt-fig .cr{display:block;font-size:11px;color:#7a6440}.bt-fig a{color:#1d3f8a}'+
+'.bt-card.mar{background:#d9e6ee radial-gradient(circle at 30% 20%,#eef5f9,#b7cedc);color:#1f2f3c;border-color:#8ea6b4;box-shadow:inset 0 0 30px rgba(40,80,110,.22)}.bt-card.mar .d,.bt-card.mar .go{color:#425b6c}'+
+'.bt.mar .bt-mapw{background:#dfe8ec;border-color:#7d97a6}.bt.mar .bt-map .sea{fill:#a9c2cf}.bt.mar .bt-map .wl{stroke:#c8dce4;stroke-opacity:.8}.bt.mar .bt-map .grat{stroke:#5f7f92;stroke-opacity:.3}.bt.mar .bt-mapw:after{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(30,60,85,.32) 100%)}'+
+'.bt-flag{width:20px;height:13px;border-radius:2px;vertical-align:-2px}.bt-cred{font-size:11px;color:var(--dim);margin:6px 0 0}.bt-modep{display:none;margin:8px 0}.bt-modep.on{display:block}';
 function css(){ if(document.getElementById('bt-css')) return; var s=document.createElement('style'); s.id='bt-css'; s.textContent=CSS; document.head.appendChild(s); }
 
 // ---------- list page ----------
@@ -62,7 +66,7 @@ function listPage(app,X){
     var h=X.crumbs([[U_('home'),'#/'],[U_('h')]])+'<div class="bt" data-noi18n><h1 class="bt-title">'+e(U_('h'))+'</h1><p class="sub">'+e(U_('sub'))+'</p><div class="bt-list">';
     L.forEach(function(b){
       if(b.soon) h+='<div class="bt-card soon" aria-disabled="true">'+ICON+'<div><div class="t">'+e(T(b.t))+'<span class="bdg">'+e(U_('soon'))+'</span></div><div class="d">'+e(T(b.fecha))+' · '+e(T(b.lugar))+'</div></div></div>';
-      else h+='<a class="bt-card'+(b.tema==='nieve'?' snow':'')+'" href="#/batallas/'+e(b.id)+'">'+ICON+'<div><div class="t">'+e(T(b.t))+'</div><div class="d">'+e(T(b.fecha))+' · '+e(T(b.lugar))+'</div><div class="d" style="margin-top:3px">'+e(T(b.d))+'</div></div><span class="go">›</span></a>';
+      else h+='<a class="bt-card'+(b.tema==='nieve'?' snow':b.tema==='mar'?' mar':'')+'" href="#/batallas/'+e(b.id)+'">'+ICON+'<div><div class="t">'+e(T(b.t))+'</div><div class="d">'+e(T(b.fecha))+' · '+e(T(b.lugar))+'</div><div class="d" style="margin-top:3px">'+e(T(b.d))+'</div></div><span class="go">›</span></a>';
     });
     h+='</div></div>'; X.set(h,U_('h'));
   }).catch(function(){ X.set(X.crumbs([[U_('home'),'#/'],[U_('h')]])+'<p class="sub">'+U_('err')+'</p>',U_('h')); });
@@ -85,11 +89,21 @@ function wob(pts,amp,seed){ // hand-drawn wobble: extra jittered midpoints
     [.33,.66].forEach(function(t){ var j=rnd()*amp*L; out.push([a[0]+dx*t+nx*j,a[1]+dy*t+ny*j]); }); out.push(b); }
   return out; }
 
+// ship silhouettes (screen px) for naval battles: cv portaaviones, bb acorazado, ca crucero, dd destructor, ss submarino, tr transporte
+var SHIP={
+ cv:function(g,f,k){ el('path',{d:'M-13,0 L13,0 L10,5 L-10,5 Z',fill:f,stroke:k,'stroke-width':1.5},g); el('path',{d:'M-15,-1.6 L15,-1.6',stroke:k,'stroke-width':2.4,'stroke-linecap':'round'},g); el('rect',{x:4,y:-7,width:3.4,height:5,fill:k},g); },
+ bb:function(g,f,k){ el('path',{d:'M-14,0 L14,0 L10,5 L-10,5 Z',fill:f,stroke:k,'stroke-width':1.5},g); el('path',{d:'M-4,0 L-4,-5 L3,-5 L3,0 Z',fill:f,stroke:k,'stroke-width':1.3},g); el('path',{d:'M-0.5,-5 L-0.5,-10 M-11,-2.2 L-6,-2.2 M6,-2.2 L11,-2.2',stroke:k,'stroke-width':1.6},g); },
+ ca:function(g,f,k){ el('path',{d:'M-12,0 L12,0 L9,4.5 L-9,4.5 Z',fill:f,stroke:k,'stroke-width':1.4},g); el('path',{d:'M-3,0 L-3,-4 L2,-4 L2,0',fill:f,stroke:k,'stroke-width':1.2},g); el('path',{d:'M-0.5,-4 L-0.5,-8 M-9,-1.8 L-5,-1.8 M5,-1.8 L9,-1.8',stroke:k,'stroke-width':1.3},g); },
+ dd:function(g,f,k){ el('path',{d:'M-10,0 L11,0 L8,4 L-8,4 Z',fill:f,stroke:k,'stroke-width':1.3},g); el('path',{d:'M-2,0 L-2,-3.5 L2,-3.5 L2,0 M0,-3.5 L0,-6.5',fill:'none',stroke:k,'stroke-width':1.2},g); },
+ ss:function(g,f,k){ el('path',{d:'M-12,1.5 Q0,-3 12,1.5 Q0,5 -12,1.5 Z',fill:f,stroke:k,'stroke-width':1.3},g); el('path',{d:'M-2,-0.5 L-1.5,-4 L2,-4 L2.5,-0.5',fill:f,stroke:k,'stroke-width':1.2},g); },
+ tr:function(g,f,k){ el('path',{d:'M-12,0 L12,0 L10,5 L-10,5 Z',fill:f,stroke:k,'stroke-width':1.4},g); el('rect',{x:-2,y:-4,width:5,height:4,fill:f,stroke:k,'stroke-width':1.1},g); }
+};
 // unit symbol (NATO-like box), size in screen px (scaled by group transform)
 function unitSym(u){
   var g=document.createElementNS(NS,'g'), al=u.s==='al', L=LD&&LD[u.s];
   var stroke=L?L.c:(al?'#1d3f8a':'#1f1f1f'), fill=L?L.f:(al?'rgba(214,226,246,.95)':'rgba(170,170,162,.95)');
   if(u.ty==='naval'){ el('path',{d:'M-13,-2 L13,-2 L9,5 L-9,5 Z',fill:fill,stroke:stroke,'stroke-width':1.6},g); el('path',{d:'M-4,-2 L-4,-7 L3,-7 L3,-2 M-1,-7 L-1,-10',fill:'none',stroke:stroke,'stroke-width':1.4},g); }
+  else if(SHIP[u.ty]){ SHIP[u.ty](g,fill,stroke); }
   else {
     el('rect',{x:-12,y:-8,width:24,height:16,fill:fill,stroke:stroke,'stroke-width':1.6,'stroke-dasharray':u.ty==='fake'?'3 2':''},g);
     if(u.ty==='inf'||u.ty==='para'||u.ty==='glider'||u.ty==='rng'||u.ty==='fake'||u.ty==='mech') el('path',{d:'M-12,-8 L12,8 M-12,8 L12,-8',stroke:stroke,'stroke-width':1.3},g);
@@ -105,7 +119,8 @@ function unitSym(u){
   }
   if(al&&u.nat&&u.ty!=='fake'){ var r=el('rect',{x:9,y:-12,width:12,height:7,fill:'#b3261e',rx:1},g); var tn=el('text',{x:15,y:-6.6,'text-anchor':'middle','font-size':5.8,'font-weight':700,style:'stroke:none;fill:#fff'},g); tn.textContent=u.nat==='uk'?'GB':u.nat.toUpperCase(); }
   else if(L&&L.b){ el('rect',{x:9,y:-12,width:12,height:7,fill:L.bc||stroke,rx:1},g); var tb=el('text',{x:15,y:-6.6,'text-anchor':'middle','font-size':5.8,'font-weight':700,style:'stroke:none;fill:#fff'},g); tb.textContent=L.b; }
-  var lb=el('text',{x:0,y:u.ty==='naval'?16:19,'text-anchor':'middle','font-size':9.5,'font-weight':600,'class':'ulab'},g); lb.textContent=T(u.sn||u.n);
+  if(SHIP[u.ty]){ var sx=el('g',{'class':'stx'},g); el('path',{d:'M-3,-4 C-6,-9 -1,-11 0,-16 C2,-12 6,-10 3,-4 Z',fill:'#e0622b',stroke:'#7a2a10','stroke-width':.8},sx); el('path',{'class':'stx-s',d:'M-11,-3 L11,7 M-11,7 L11,-3',stroke:'#8b1d1d','stroke-width':2.2,'stroke-linecap':'round'},sx); }
+  var lb=el('text',{x:0,y:(u.ty==='naval'||SHIP[u.ty])?16:19,'text-anchor':'middle','font-size':9.5,'font-weight':600,'class':'ulab'},g); lb.textContent=T(u.sn||u.n);
   el('rect',{x:-16,y:-14,width:32,height:36,fill:'transparent'},g);
   return g; }
 function lmIcon(ic,g){ var k='#3b2b16';
@@ -131,8 +146,13 @@ function mkSym(m){
   else if(m.k==='storm'){ el('path',{d:'M-10,0 a10,10 0 1 1 10,10 M10,0 a10,10 0 1 1 -10,-10',fill:'none',stroke:'#5c7794','stroke-width':1.8},g); t=el('text',{y:22,'text-anchor':'middle','font-size':9,'font-style':'italic'},g); t.textContent=T(m.n); }
   else if(m.k==='bridge'){ el('path',{d:'M-7,-3 L7,-3 M-7,3 L7,3 M-9,-6 L-7,-3 M9,-6 L7,-3 M-9,6 L-7,3 M9,6 L7,3',stroke:'#3b2b16','stroke-width':1.6,fill:'none'},g); t=el('text',{y:-8,'text-anchor':'middle','font-size':8.5,'font-weight':700},g); t.textContent=T(m.n); }
   else if(m.k==='airf'){ lmIcon('air',g); t=el('text',{y:-9,'text-anchor':'middle','font-size':8.5,'font-weight':700,'font-style':'italic'},g); t.textContent=T(m.n); }
+  else if(m.k==='ship'){ var L2=LD&&LD[m.c], kc=L2?L2.c:'#1d3f8a', kf=m.st==='sunk'?'#c0392b':m.st==='cap'?'#7a2a10':m.st==='dmg'?'#e9a23b':(L2?L2.f:'#d6e2f6'), sl=m.w||16;
+    var hg=el('g',{transform:'rotate('+(m.rot||0)+')'},g); el('path',{d:'M'+(-sl/2)+',-2.6 L'+(sl/2-3)+',-2.6 L'+(sl/2)+',0 L'+(sl/2-3)+',2.6 L'+(-sl/2)+',2.6 Z',fill:kf,stroke:m.st==='cap'?'#3b2b16':kc,'stroke-width':1.1,'stroke-dasharray':m.st==='cap'?'2 1.2':''},hg);
+    if(m.st==='sunk'||m.st==='cap') el('path',{d:'M-3,-3 L3,3 M-3,3 L3,-3',stroke:'#3b1a10','stroke-width':1.3},hg);
+    if(m.n){ t=el('text',{x:m.lx||0,y:(m.ly!=null?m.ly:-6),'text-anchor':m.la||'middle','font-size':m.fs||8.5,'font-weight':700},g); t.textContent=T(m.n); } }
+  else if(m.k==='radar'){ el('path',{d:'M-5,6 L0,-1 L5,6 M0,-1 L0,-4 M-6,-8 Q0,-3 6,-8',stroke:'#3b2b16','stroke-width':1.4,fill:'none'},g); t=el('text',{y:-11,'text-anchor':'middle','font-size':8.5,'font-weight':700,'font-style':'italic'},g); t.textContent=T(m.n); }
   else if(m.k==='harbour'){ el('path',{d:'M-10,4 L-10,-4 L10,-4 L10,4 M-6,-4 L-6,-9 M6,-4 L6,-9',stroke:'#1d3f8a','stroke-width':2,fill:'none'},g); t=el('text',{y:-12,'text-anchor':'middle','font-size':8.5,'font-weight':700,style:'fill:#1d3f8a'},g); t.textContent=T(m.n); }
-  else { t=el('text',{y:0,'text-anchor':'middle','font-size':11,'font-style':'italic','font-weight':700,'letter-spacing':'.08em',style:(LD&&LD[m.c])?'fill:'+LD[m.c].c:m.c==='de'?'fill:#222':m.c==='fake'?'fill:#6b6b60':m.c==='ink'?'fill:#3b2b16':'fill:#1d3f8a'},g); t.textContent=T(m.n); }
+  else { t=el('text',{y:0,'text-anchor':m.la||'middle','font-size':m.fs||11,'font-style':'italic','font-weight':700,'letter-spacing':'.08em',style:(LD&&LD[m.c])?'fill:'+LD[m.c].c:m.c==='de'?'fill:#222':m.c==='fake'?'fill:#6b6b60':m.c==='ink'?'fill:#3b2b16':'fill:#1d3f8a'},g); t.textContent=T(m.n); }
   return g; }
 function placeSym(p){
   var g=document.createElementNS(NS,'g'), big=p.k==='city', port=p.k==='port';
@@ -152,7 +172,7 @@ function battle(app,X,id){
 }
 function srcList(D,keys){ return '<ol>'+keys.map(function(k){ var s=D.src[k]; return s?'<li><a href="'+e(s[1])+'" target="_blank" rel="noopener">'+e(s[0])+'</a></li>':''; }).join('')+'</ol>'; }
 function flag(n){ return '<img class="bt-flag" src="flags/'+FLAG[n]+'.png" alt="" loading="lazy">'; }
-function ficha(id,name,note){ return '<a class="tag" href="#/a/'+e(id)+'">'+e(name)+(note?' <small>· '+e(T(note))+'</small>':'')+'</a>'; }
+function ficha(id,name,note){ return '<a class="tag" href="#/a/'+e(id)+'">'+e(T(name))+(note?' <small>· '+e(T(note))+'</small>':'')+'</a>'; }
 function render(app,X,D){
   LD=D.lados||null;
   var N=D.steps.length, qm=(location.hash.match(/[?&]paso=(\d+)/)||[])[1], cur=qm?Math.max(0,Math.min(N-1,(+qm)-1)):0;
@@ -185,12 +205,13 @@ function render(app,X,D){
   var mode=null;
   var ROOT=app.querySelector('.bt')||document.querySelector('.bt[data-noi18n]');
   function show(i,instant){ cur=i; var s=D.steps[i];
-    if(ROOT) ROOT.classList.toggle('snow',(s.tema||D.tema||'')==='nieve');
+    if(ROOT){ var th=s.tema||D.tema||''; ROOT.classList.toggle('snow',th==='nieve'); ROOT.classList.toggle('mar',th==='mar'); }
     document.getElementById('btnum').textContent=U_('paso')+' '+(i+1)+' / '+N+' · '+T(s.h);
     document.getElementById('btrng').value=i;
     document.getElementById('btprev').disabled=i===0; document.getElementById('btnext').disabled=i===N-1;
     var st=document.getElementById('btstep');
     st.innerHTML='<p class="hh">'+e(U_('paso'))+' '+(i+1)+' · '+e(T(s.h))+'</p><h2>'+e(T(s.t))+'</h2>'+T(s.txt).split('\n\n').map(function(p){return '<p>'+e(p)+'</p>';}).join('')+
+      (s.foto?'<figure class="bt-fig"><img src="'+e(s.foto.f)+'" alt="'+e(T(s.foto.c))+'" loading="lazy"'+(s.foto.w?' width="'+s.foto.w+'" height="'+s.foto.h+'"':'')+'><figcaption>'+e(T(s.foto.c))+' <span class="cr">'+e(T(s.foto.a))+(s.foto.u?' · <a href="'+e(s.foto.u)+'" target="_blank" rel="noopener">'+(EN()?'Source':'Fuente')+'</a>':'')+'</span></figcaption></figure>':'')+
       (s.det?'<div class="bt-det"><b>'+e(U_('det'))+'</b><span class="tt">'+e(T(s.det.t))+'</span>'+e(T(s.det.x))+'</div>':'')+
       '<p class="cnt" style="margin:0 0 4px">'+e(U_('tap'))+'</p><details><summary>'+e(U_('src'))+' ('+s.src.length+')</summary>'+srcList(D,s.src)+'</details>';
     document.getElementById('btcap').style.display='none';
@@ -245,7 +266,7 @@ function Map_(svg,D){
   var P=mkP(D.proj), api={}, VB=null, anim=null, curStep=null;
   var G=D.geo, defsEl=el('defs',null,svg);
   defsEl.innerHTML='<pattern id="btFlood" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="6" height="6" fill="#c9d3d6"/><path d="M0,3 h6" stroke="#5c7794" stroke-width="1"/></pattern>';
-  var sea=el('rect',{x:-2000,y:-2000,width:4000,height:4000,'class':'sea'},svg);
+  var sea=el('rect',{x:-40000,y:-40000,width:80000,height:80000,'class':'sea'},svg);
   var grat=el('path',{'class':'grat'},svg), gd='';
   var GR=D.proj.grat||[-8,4,47.5,52.5,.5];
   for(var lo=GR[0];lo<=GR[1]+1e-9;lo+=GR[4]){ var a=P([lo,GR[2]]),b=P([lo,GR[3]]); gd+='M'+a[0].toFixed(1)+','+a[1].toFixed(1)+'L'+b[0].toFixed(1)+','+b[1].toFixed(1); }
@@ -256,6 +277,7 @@ function Map_(svg,D){
   var gFlood=el('path',{d:G.flood,'class':'flood hide'},svg);
   var gArea=el('path',{d:G.areas,'class':'area hide'},svg);
   var gZn=el('g',null,svg), ZN=[]; // zonas y frentes por paso (s.zn)
+  var gReef=G.reef?el('path',{d:G.reef,'class':'reef'},gDet):null;
   var gRiv=el('path',{d:G.riv,'class':'riv'},gDet);
   var gCoast=el('path',{d:G.coast,'class':'coast'},gDet);
   var gBeach=el('g',null,svg), beachEls={};
@@ -284,7 +306,7 @@ function Map_(svg,D){
   function applyVB(vb){ VB=vb; svg.setAttribute('viewBox',vb.map(function(x){return x.toFixed(3);}).join(' ')); var s=vb[2]/pxW();
     for(var i=0;i<syms.length;i++){ var o=syms[i]; o.g.setAttribute('transform','translate('+o.x.toFixed(3)+','+o.y.toFixed(3)+') scale('+(s*(o.u&&WIDE?.8:1)).toFixed(5)+')'); }
     gOv.style.strokeWidth=(1.3*s).toFixed(4); gOvR.style.strokeWidth=(.9*s).toFixed(4); gOvRM.style.strokeWidth=(2*s).toFixed(4);
-    ZN.forEach(function(z){ z.e.style.strokeWidth=((z.k==='line'?2.6:1.4)*s).toFixed(4); z.e.style.strokeDasharray=z.k==='line'?(z.dash?(6*s)+' '+(3*s):''):(5*s)+' '+(3*s); }); gDetC2.style.strokeWidth=(1.3*s).toFixed(4); gOvW.style.strokeWidth=(9*s).toFixed(4); gDetW.style.strokeWidth=(12*s).toFixed(4); gCoast.style.strokeWidth=(1.5*s).toFixed(4); gRiv.style.strokeWidth=(1.1*s).toFixed(4); grat.style.strokeWidth=(.8*s).toFixed(4); gArea.style.strokeWidth=(1.2*s).toFixed(4); gFlood.style.strokeWidth=(.6*s).toFixed(4);
+    ZN.forEach(function(z){ z.e.style.strokeWidth=((z.k==='line'?2.6:1.4)*s).toFixed(4); z.e.style.strokeDasharray=z.k==='line'?(z.dash?(6*s)+' '+(3*s):''):(5*s)+' '+(3*s); }); gDetC2.style.strokeWidth=(1.3*s).toFixed(4); gOvW.style.strokeWidth=(9*s).toFixed(4); gDetW.style.strokeWidth=(12*s).toFixed(4); gCoast.style.strokeWidth=(1.5*s).toFixed(4); gRiv.style.strokeWidth=(1.1*s).toFixed(4); if(gReef){ gReef.style.strokeWidth=(1.2*s).toFixed(4); gReef.style.strokeDasharray=(3*s)+' '+(2*s); } grat.style.strokeWidth=(.8*s).toFixed(4); gArea.style.strokeWidth=(1.2*s).toFixed(4); gFlood.style.strokeWidth=(.6*s).toFixed(4);
     gArea.style.strokeDasharray=(4*s)+' '+(3*s);
     for(var k in beachEls) beachEls[k].style.strokeWidth=(5*s).toFixed(4);
     arrowsScale(s); }
@@ -338,7 +360,8 @@ function Map_(svg,D){
     var from=VB?VB.slice():null, to=fit(v), moves=[];
     Object.keys(UN).forEach(function(id){ var o=UN[id], on=!!want[id]; var tgt=(s.pos&&s.pos[id])?P(s.pos[id]):[o.hx,o.hy];
       if(on){ if(o.g.classList.contains('off')){ o.x=tgt[0]; o.y=tgt[1]; o.g.classList.remove('off'); } else moves.push({o:o,x0:o.x,y0:o.y,x1:tgt[0],y1:tgt[1]}); }
-      else o.g.classList.add('off'); });
+      else o.g.classList.add('off');
+      var st=s.st&&s.st[id]; o.g.classList.toggle('st-sunk',st==='sunk'); o.g.classList.toggle('st-dmg',st==='dmg'); });
     drawArrows(null);
     if(anim){ cancelAnimationFrame(anim); anim=null; } if(api._fb) clearTimeout(api._fb);
     var dur=(instant||!from||RM())?0:850, t0=null;
