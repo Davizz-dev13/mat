@@ -99,6 +99,25 @@
   ]
  },
  {
+  "id": "remagen",
+  "t": [
+   "Batalla de Remagen (1945)",
+   "Battle of Remagen (1945)"
+  ],
+  "fecha": [
+   "7 – 25 de marzo de 1945",
+   "7 – 25 March 1945"
+  ],
+  "lugar": [
+   "Puente Ludendorff, Remagen (Alemania)",
+   "Ludendorff Bridge, Remagen (Germany)"
+  ],
+  "d": [
+   "En 16 pasos: el puente que no voló, Timmermann y los primeros hombres al otro lado del Rin, la «esquina del muerto», los reactores Ar 234, las V-2 y los hombres rana contra el puente, su hundimiento el 17 de marzo, los consejos de guerra de Hitler y la ruptura hacia el corazón de Alemania.",
+   "In 16 steps: the bridge that didn’t blow, Timmermann and the first men across the Rhine, “Dead Man’s Corner”, the Ar 234 jets, V-2s and frogmen against the bridge, its collapse on 17 March, Hitler’s courts-martial and the breakout into the heart of Germany."
+  ]
+ },
+ {
   "id": "berlin",
   "tema": "ruinas",
   "t": [

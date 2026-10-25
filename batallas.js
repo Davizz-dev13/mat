@@ -112,6 +112,8 @@ function unitSym(u){
     if(u.ty==='arm'||u.ty==='mech') el('ellipse',{cx:0,cy:0,rx:8,ry:4.2,fill:u.ty==='mech'?fill:'none',stroke:stroke,'stroke-width':1.5},g);
     if(u.ty==='cav') el('path',{d:'M-12,8 L12,-8',stroke:stroke,'stroke-width':1.4},g);
     if(u.ty==='art') el('circle',{cx:0,cy:0,r:3.2,fill:stroke},g);
+    if(u.ty==='eng') el('path',{d:'M-7,4 L-7,-3 L7,-3 L7,4 M0,-3 L0,4',fill:'none',stroke:stroke,'stroke-width':1.4},g);
+    if(u.ty==='aa') el('path',{d:'M-11,7 Q0,-5 11,7',fill:'none',stroke:stroke,'stroke-width':1.4},g);
     if(u.ty==='air') el('path',{d:'M-8,0 C-6,-5 -2,-5 0,0 C2,5 6,5 8,0 C6,-5 2,-5 0,0 C-2,5 -6,5 -8,0 Z',fill:'none',stroke:stroke,'stroke-width':1.3},g);
     if(u.ty==='hq') el('path',{d:'M-12,-8 L-12,14',stroke:stroke,'stroke-width':1.6},g);
     if(u.ty==='para') el('path',{d:'M-6,5 Q-3,1 0,5 Q3,1 6,5',fill:'none',stroke:stroke,'stroke-width':1.3},g);
