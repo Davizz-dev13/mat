@@ -1,5 +1,25 @@
 [
  {
+  "id": "verdun",
+  "tema": "barro",
+  "t": [
+   "Batalla de Verdún",
+   "Battle of Verdun"
+  ],
+  "fecha": [
+   "21 de febrero – 18 de diciembre de 1916",
+   "21 February – 18 December 1916"
+  ],
+  "lugar": [
+   "Verdún, a orillas del Mosa (Francia)",
+   "Verdun, on the Meuse (France)"
+  ],
+  "d": [
+   "En 16 pasos: los fuertes medio desarmados, el bombardeo de un millón de proyectiles, Driant en el bosque de los Caures, Douaumont tomado sin un disparo, la Vía Sagrada, el Mort-Homme, el fuerte de Vaux, «No pasarán» y la reconquista. El mapa se cubre de barro.",
+   "In 16 steps: the half-disarmed forts, the million-shell bombardment, Driant in the Bois des Caures, Douaumont taken without a shot, the Sacred Way, the Mort-Homme, Fort Vaux, “They shall not pass” and the recapture. The map turns to mud."
+  ]
+ },
+ {
   "id": "pearl-harbor",
   "tema": "mar",
   "t": [
@@ -76,6 +96,26 @@
   "d": [
    "El desembarco de Normandía en 13 pasos: engaño, embarque, paracaidistas, bombardeo, las cinco playas y el contraataque alemán.",
    "The Normandy landings in 13 steps: deception, embarkation, paratroopers, bombardment, the five beaches and the German counter-attack."
+  ]
+ },
+ {
+  "id": "berlin",
+  "tema": "ruinas",
+  "t": [
+   "Batalla de Berlín",
+   "Battle of Berlin"
+  ],
+  "fecha": [
+   "16 de abril – 2 de mayo de 1945",
+   "16 April – 2 May 1945"
+  ],
+  "lugar": [
+   "Del Óder a Berlín (Alemania)",
+   "From the Oder to Berlin (Germany)"
+  ],
+  "d": [
+   "En 17 pasos: los reflectores de Seelow, la carrera entre Zhúkov y Kónev, el cerco, el encuentro en el Elba, la bolsa de Halbe, el combate casa por casa, el Reichstag, la rendición de Weidling y la bandera de Jaldéi. El mapa se cubre de ruinas.",
+   "In 17 steps: the Seelow searchlights, the race between Zhukov and Konev, the encirclement, the meeting on the Elbe, the Halbe pocket, house-to-house fighting, the Reichstag, Weidling’s surrender and Khaldei’s flag. The map turns to ruins."
   ]
  }
 ]
