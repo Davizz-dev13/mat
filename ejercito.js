@@ -1,4 +1,4 @@
-// M.A.T · Monta tu ejército (#/ejercito). Módulo que se carga solo al abrir la sección.
+// M.A.T · Crea tu ejército (#/ejercito). Módulo que se carga solo al abrir la sección.
 // Datos: ejercito.json.gz (precios con fuente), gasto.json.gz (presupuestos SIPRI), fuerzas.json.gz (inventario real) y factbook.json (militares en activo).
 let D=null,G=null,FZ=null,FB=null,X=null,APP=null;
 const ST={b:'espana',cu:0,pm:1,real:0,cart:{},cat:'caz',cmp:'',open:0};
@@ -98,7 +98,7 @@ let PF=null;
 function ensureFz(){ if(!PF) PF=Promise.all([get('fuerzas.json.gz').catch(()=>null),fetch('factbook.json?v='+V()).then(r=>r.json()).catch(()=>null)]).then(z=>{FZ=z[0];FB=z[1];}); return PF; }
 // ---------- render ----------
 export function route(app,XX){ X=XX; APP=app; css();
-  X.set('<div class="ejw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Monta tu ejército','Build your army')]])+'<h1>'+L('Monta tu ejército','Build your army')+'</h1><p class="sub">'+L('Cargando precios…','Loading prices…')+'</p></div>',L('Monta tu ejército','Build your army'));
+  X.set('<div class="ejw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu ejército','Build your army')]])+'<h1>'+L('Crea tu ejército','Build your army')+'</h1><p class="sub">'+L('Cargando precios…','Loading prices…')+'</p></div>',L('Crea tu ejército','Build your army'));
   ensure().then(()=>{ if(!/^#\/ejercito/.test(location.hash)) return; load(); readURL(); if(!ST.cmp) ST.cmp=(ST.b==='custom'||ST.b==='otan')?'espana':ST.b; page(); if(ST.open) openSum(true); }).catch(err=>{ console.warn('ejercito',err); const w=app.querySelector('.ejw .sub'); if(w) w.textContent=L('No se pudieron cargar los datos. Actualiza la página.','Could not load the data. Please reload.'); });
 }
 function bdesc(){ if(ST.b==='custom') return L('Presupuesto personalizado','Custom budget');
@@ -106,8 +106,8 @@ function bdesc(){ if(ST.b==='custom') return L('Presupuesto personalizado','Cust
   const p=G.p[ST.b]; return pn(ST.b)+' · '+L('gasto militar ','military spending ')+p.y+' (SIPRI)'; }
 function page(){
   const h=[]; h.push('<div class="ejw" data-noi18n>');
-  h.push(X.crumbs([[L('Inicio','Home'),'#/'],[L('Monta tu ejército','Build your army')]]));
-  h.push('<h1>'+L('Monta tu ejército','Build your army')+'</h1>');
+  h.push(X.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu ejército','Build your army')]]));
+  h.push('<h1>'+L('Crea tu ejército','Build your army')+'</h1>');
   h.push('<p class="ejlead">'+L('Tienes el presupuesto de defensa de un país real. Gástalo en cazas, fragatas, carros de combate, drones, defensa aérea y soldados con precios reales sacados de contratos y presupuestos públicos, y al final compara tu ejército con el de verdad.','You get a real country\'s defence budget. Spend it on fighters, frigates, tanks, drones, air defence and soldiers at real prices taken from public contracts and budgets, then compare your army with the real one.')+'</p>');
   // presupuesto
   h.push('<div class="ejbox"><h3>'+L('1 · Elige el presupuesto','1 · Pick the budget')+'</h3><div class="chips ejpre" role="group">');
@@ -131,7 +131,7 @@ function page(){
   h.push('<div class="ejwarn">'+L('Precios aproximados. Cada precio es una cifra pública (contrato, presupuesto oficial o estimación de prensa o analistas) dividida entre las unidades; muchos contratos incluyen armas, repuestos, formación o desarrollo, y por eso hay rangos. Salvo que se indique, no incluyen el mantenimiento ni el coste de operar durante décadas, que suele superar el de compra. Los soldados sí son un coste anual.','Approximate prices. Each price is a public figure (contract, official budget or press/analyst estimate) divided by the number of units; many contracts include weapons, spares, training or development, hence the ranges. Unless stated, they exclude maintenance and the cost of operating for decades, which usually exceeds the purchase price. Soldiers are a yearly cost.')+'</div>');
   h.push(srcHTML());
   h.push('</div>');
-  X.set(h.join(''),L('Monta tu ejército','Build your army'));
+  X.set(h.join(''),L('Crea tu ejército','Build your army'));
   bind(); refreshBudget(); list(); bar(); stickTop();
 }
 function stickTop(){ const tp=document.querySelector('.top'), st=document.getElementById('ejstk'); if(!tp||!st) return; const cs=getComputedStyle(tp); st.style.top=(/sticky|fixed/.test(cs.position)?tp.offsetHeight:0)+'px'; }
