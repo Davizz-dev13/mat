@@ -46,7 +46,7 @@ function css(){ if(document.getElementById('ej-css')) return; const s=document.c
  '.ejit{display:flex;gap:10px;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:9px;align-items:flex-start;min-width:0}.ejit.has{border-color:#6f6236;background:linear-gradient(90deg,#1b1a12,#131517 60%)}'+
  '.ejth{flex:0 0 76px;width:76px;height:54px;border-radius:4px;overflow:hidden;background:#0d1013;display:flex;align-items:center;justify-content:center}.ejth img{width:100%;height:100%;object-fit:cover;display:block}.ejth svg{width:34px;height:34px}'+
  '.ejm{flex:1 1 auto;min-width:0}.ejn{font-weight:650;font-size:15px;line-height:1.25;overflow-wrap:anywhere}.ejn .ejfl{width:18px;height:12px;object-fit:cover;border-radius:2px;margin-left:5px;vertical-align:-1px}'+
- '.ejp{margin-top:3px;font-size:13px;color:var(--mu);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}.ejp b{color:#d6b25e;font-variant-numeric:tabular-nums;font-size:14px}.ejb{font-size:11px;border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:var(--mu)}.ejb.est{border-color:#6b4b3a;color:#d6a08a}'+
+ '.ejp{margin-top:3px;font-size:13px;color:var(--mu);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}.ejp b{color:#d6b25e;font-variant-numeric:tabular-nums;font-size:14px}.ejb{font-size:11px;border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:var(--mu)}.ejb.est{border-color:#6b4b3a;color:#d6a08a}.ejsrch{margin:12px 0 4px}.ejsrch input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--s1);color:var(--tx);font-size:16px;font-family:inherit}.ejsrch input:focus{outline:none;border-color:#d6b25e}'+
  '.ejm details{margin-top:4px;font-size:12.5px;color:var(--mu);line-height:1.45}.ejm summary{cursor:pointer;color:var(--ac2);list-style:none}.ejm summary::-webkit-details-marker{display:none}.ejm details a{color:var(--ac2);overflow-wrap:anywhere}.ejm details p{margin:4px 0}'+
  '.ejq{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px}.ejqq{display:flex;align-items:center;border:1px solid var(--line);border-radius:999px;overflow:hidden}'+
  '.ejqq button{width:38px;height:38px;border:0;background:var(--s2);color:var(--tx);font-size:20px;line-height:1;cursor:pointer;font-family:inherit}.ejqq button:disabled{opacity:.3;cursor:default}.ejqq button.pl{background:#2b2f22;color:#d6e09c}'+
@@ -123,6 +123,7 @@ function page(){
   // barra fija
   h.push('<div class="ejsticky" id="ejstk"><div class="ejst"><span>'+L('Gastado','Spent')+' <b id="ejsp"></b></span><span id="ejrem"></span></div><div class="ejbar" id="ejbar"></div><div class="ejmsg" id="ejmsg"></div></div>');
   // pestañas
+  h.push('<div class="ejsrch"><input type="search" id="ejq" autocomplete="off" enterkeyhint="search" aria-label="'+L('Buscar equipo','Search equipment')+'" placeholder="'+L('Buscar: F-35, Leopard, Rusia… ('+D.items.length+' equipos)','Search: F-35, Leopard, Russia… ('+D.items.length+' items)')+'"></div>');
   h.push('<div class="chips ejtabs" role="tablist" id="ejtabs">'+D.cats.map(c=>'<button type="button" class="chip" role="tab" data-cat="'+c[0]+'" aria-pressed="'+(ST.cat===c[0])+'">'+e(EN()?c[2]:c[1])+'<em hidden></em></button>').join('')+'</div>');
   h.push('<div class="ejlist" id="ejlist"></div>');
   h.push('<div class="ejgo"><button type="button" class="btn pri" id="ejver">'+L('Ver mi ejército','See my army')+' ›</button><button type="button" class="btn" id="ejclr">'+L('Vaciar','Clear')+'</button></div>');
@@ -149,16 +150,17 @@ function refreshBudget(){ const b=budgetFull(); const v=document.getElementById(
   document.getElementById('ejbnote').textContent=n;
   const sl=document.getElementById('ejsl'); if(sl&&ST.b==='custom') sl.value=Math.round((Math.log10(ST.cu)-2)/4*1000);
 }
-function list(){ const el=document.getElementById('ejlist'); if(!el) return; const its=D.items.filter(i=>i.c===ST.cat);
-  el.innerHTML=its.map(card).join(''); upd(); }
+const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
+function list(){ const el=document.getElementById('ejlist'); if(!el) return; const qv=nrm(ST.q); const its=qv?D.items.filter(i=>nrm(i.n+' '+(i.ne||'')+' '+(i.o||[]).map(k=>pn(k)+' '+((P()[k]||{}).n||'')).join(' ')).indexOf(qv)>=0):D.items.filter(i=>i.c===ST.cat);
+  el.innerHTML=its.length?its.map(card).join(''):'<p class="ejnote">'+L('No hay ningún equipo con ese nombre.','No equipment matches that name.')+'</p>'; upd(); }
 function card(it){ const q=ST.cart[it.id]||0; const B=D.basis[it.b]||['','']; const est=it.b==='est';
   const src=it.s.map(k=>{const s=D.src[k]; return s?'<a href="'+e(s[1])+'" target="_blank" rel="noopener nofollow">'+e(s[0])+'</a>':'';}).join('<br>');
   const fich=it.f&&FICHA[it.f]?' · <a href="#/a/'+e(it.f)+'">'+L('Ver ficha','View entry')+' ›</a>':'';
-  const per=it.c==='sol'?L(' /año',' /year'):it.c==='mis'?L(' /misil',' /missile'):it.c==='dfa'?L(' /sistema',' /system'):'';
+  const per=it.u?' '+(EN()?it.u[1]:it.u[0]):it.c==='sol'?L(' /año',' /year'):it.c==='mis'?L(' /misil',' /missile'):it.c==='dfa'?L(' /sistema',' /system'):'';
   const th=it.f&&FICHA[it.f]?'<a class="ejth" href="#/a/'+e(it.f)+'" aria-label="'+e(nm(it))+'">'+thumb(it)+'</a>':'<div class="ejth">'+ico(it.c)+'</div>';
   const ex=it.c==='sol'?[100,1000,10000]:(price(it)<60?[10]:[]);
   return '<div class="ejit'+(q?' has':'')+'" data-id="'+it.id+'">'+th+'<div class="ejm"><div class="ejn">'+e(nm(it))+(it.o||[]).slice(0,4).map(k=>fl(k)).join('')+'</div>'+
-   '<div class="ejp"><b>'+fmr(it)+per+'</b><span class="ejb'+(est?' est':'')+'">'+e(EN()?B[1]:B[0])+'</span></div>'+
+   '<div class="ejp"><b>'+fmr(it)+per+'</b><span class="ejb'+(est?' est':'')+'">'+e(EN()?B[1]:B[0])+'</span>'+(it.x&&!est?'<span class="ejb est">'+L('Estimación','Estimate')+'</span>':'')+'</div>'+
    '<details><summary>'+L('De dónde sale el precio','Where the price comes from')+'</summary><p>'+e(EN()?it.en:it.es)+'</p><p>'+src+fich+'</p></details></div>'+
    '<div class="ejq"><div class="ejqq"><button type="button" data-a="-1" aria-label="'+L('Quitar','Remove')+'">−</button><span class="ejqn">'+nf(q)+'</span><button type="button" class="pl" data-a="1" aria-label="'+L('Añadir','Add')+'">+</button></div><div class="ejx">'+ex.map(n=>'<button type="button" data-a="'+n+'">+'+nf(n)+'</button>').join('')+'<button type="button" data-a="max">'+L('Máx','Max')+'</button></div></div></div>'; }
 function toast(t){ let x=document.querySelector('.ejtoast'); if(!x){x=document.createElement('div');x.className='ejtoast';document.body.appendChild(x);} x.textContent=t; clearTimeout(x._t); x.style.display='block'; x._t=setTimeout(()=>{x.style.display='none';},1900); }
@@ -186,7 +188,7 @@ function bind(){ const w=APP.querySelector('.ejw');
       w.querySelectorAll('.ejpre .chip').forEach(c=>c.setAttribute('aria-pressed',c===t)); document.getElementById('ejcust').hidden=ST.b!=='custom'; refreshBudget(); save(); upd(); bar(); resum(); return; }
     if(t.dataset.pm!=null){ ST.pm=+t.dataset.pm; w.querySelectorAll('#ejpm .chip').forEach(c=>c.setAttribute('aria-pressed',c===t)); list(); bar(); save(); resum(); return; }
     if(t.id==='ejreal'){ ST.real=ST.real?0:1; t.setAttribute('aria-pressed',!!ST.real); refreshBudget(); upd(); bar(); save(); resum(); return; }
-    if(t.dataset.cat){ ST.cat=t.dataset.cat; w.querySelectorAll('#ejtabs .chip').forEach(c=>c.setAttribute('aria-pressed',c===t)); list(); return; }
+    if(t.dataset.cat){ ST.cat=t.dataset.cat; ST.q=''; const qi=document.getElementById('ejq'); if(qi) qi.value=''; w.querySelectorAll('#ejtabs .chip').forEach(c=>c.setAttribute('aria-pressed',c===t)); list(); return; }
     if(t.dataset.a){ const c=t.closest('.ejit'); if(c) add(c.dataset.id,t.dataset.a); return; }
     if(t.id==='ejver'){ openSum(true); return; }
     if(t.id==='ejclr'){ if(!Object.keys(ST.cart).length) return; ST.cart={}; save(); upd(); bar(); document.getElementById('ejsum').innerHTML=''; document.getElementById('ejmsg').textContent=''; toast(L('Ejército vaciado','Army cleared')); return; }
@@ -196,6 +198,7 @@ function bind(){ const w=APP.querySelector('.ejw');
     if(t.dataset.vs){ ST.cmp=t.dataset.vs; openSum(false,true); return; }
   });
   const sl=document.getElementById('ejsl'); if(sl) sl.addEventListener('input',()=>{ const v=Math.pow(10,2+4*(+sl.value)/1000); const r=v<1000?10:v<10000?50:v<100000?500:5000; ST.cu=Math.max(100,Math.round(v/r)*r); refreshBudget(); upd(); bar(); save(); });
+  w.addEventListener('input',ev=>{ if(ev.target.id==='ejq'){ ST.q=ev.target.value; list(); } });
   w.addEventListener('change',ev=>{ if(ev.target.id==='ejcsel'){ ST.cmp=ev.target.value; openSum(false,true); } });
   w.addEventListener('error',ev=>{ const t=ev.target; if(t&&t.tagName==='IMG'&&t.dataset.ejc){ const p=t.parentNode; p.innerHTML=ico(t.dataset.ejc); } },true);
 }
@@ -207,7 +210,7 @@ function shareURL(){ return 'https://matmilitar.es/#/ejercito?'+qstr(true)+'&ver
 // ---------- resumen ----------
 function stats(){ const ds={}; let s=0; for(const k in ST.cart){ const it=IB[k]; if(!it) continue; const v=price(it)*ST.cart[k]; s+=v; for(const d in DOM) if(DOM[d].indexOf(it.c)>=0) ds[d]=(ds[d]||0)+v; }
   const sh={}; for(const d in DOM) sh[d]=s?(ds[d]||0)/s:0; return {ds:ds,s:s,sh:sh,sol:ST.cart.sold||0}; }
-function cnt(c){ let n=0; for(const k in ST.cart){ const it=IB[k]; if(it&&it.c===c) n+=ST.cart[k]; } return n; }
+function cnt(c,inv){ let n=0; for(const k in ST.cart){ const it=IB[k]; if(!it) continue; const cc=inv?(it.nc?null:(it.cm||it.c)):it.c; if(cc===c) n+=ST.cart[k]; } return n; }
 function rating(S){ const b=budget(); const f=b?Math.min(1,S.s/b):0; let sc=f*25; ['aire','mar','tierra'].forEach(d=>{ if(S.sh[d]>=0.1) sc+=15; }); if(cnt('dfa')) sc+=10; if(S.sol>=1000) sc+=10; if(cnt('mis')) sc+=10;
   const stars=Math.max(S.s?1:0,Math.min(5,Math.round(sc/20)));
   let t,d; const has=k=>!!ST.cart[k];
@@ -227,7 +230,7 @@ function invCount(c,cats){ const rows=FZ&&FZ.inv&&FZ.inv[c]; if(!rows) return nu
   rows.forEach(r=>{ if(cs.indexOf(r[2])<0) return; let v=r[3]; if(typeof v!=='number'){ const t=String(r[4]||''); if(/on order|planned|unknown|pedido/i.test(t)&&!/\//.test(t)) v=0; else if(/\//.test(t)) v=+(t.match(/\d+/)||[0])[0]; else { v=0; (t.split('(')[0].match(/\d+/g)||[]).forEach(x=>v+= +x); } } n+=v||0; });
   return n; }
 function persons(c){ const x=FB&&FB.c&&FB.c[c]; if(!x||!x.pers) return null; const t=x.pers[0]; const m=t.match(/≈?\s*([\d.,]+)\s*(millones|millón)?/i); if(!m) return null; let v=parseFloat(m[1].replace(/\./g,'').replace(',','.')); if(m[2]) v*=1e6; return v>=100?Math.round(v):null; }
-function similar(){ if(!FZ||!FZ.inv) return null; const mine=CMP.map(r=>r[1].reduce((a,c)=>a+cnt(c),0)); const tm=mine.reduce((a,b)=>a+b,0); if(!tm) return null; const lm=mine.map(x=>Math.log1p(x)); const nm=Math.hypot(...lm); let best=null;
+function similar(){ if(!FZ||!FZ.inv) return null; const mine=CMP.map(r=>r[1].reduce((a,c)=>a+cnt(c,1),0)); const tm=mine.reduce((a,b)=>a+b,0); if(!tm) return null; const lm=mine.map(x=>Math.log1p(x)); const nm=Math.hypot(...lm); let best=null;
   for(const c in FZ.inv){ if(!P()[c]) continue; const v=CMP.map(r=>invCount(c,r[0])||0); const tot=v.reduce((a,b)=>a+b,0); if(tot<50) continue; const lv=v.map(x=>Math.log1p(x)); const nv=Math.hypot(...lv); if(!nv) continue;
     const cos=lm.reduce((a,x,i)=>a+x*lv[i],0)/(nm*nv); const sc=cos-0.12*Math.abs(Math.log10(tot/tm));
     if(!best||sc>best.sc) best={c:c,sc:sc}; }
@@ -255,7 +258,7 @@ function sumHTML(S,R,loading){ const b=budget(); const h=[]; const bought=D.item
   else if(FZ&&FZ.inv){ const opts=Object.keys(FZ.inv).filter(c=>P()[c]).sort((a,c)=>pn(a).localeCompare(pn(c),EN()?'en':'es'));
     h.push('<div class="ejrow"><label for="ejcsel">'+L('Otro país:','Another country:')+'</label><select class="ejsel" id="ejcsel">'+opts.map(c=>'<option value="'+c+'"'+(c===ST.cmp?' selected':'')+'>'+e(pn(c))+'</option>').join('')+'</select></div>');
     const c=ST.cmp; h.push('<table class="ejtbl"><thead><tr><th>'+L('Categoría','Category')+'</th><th>'+L('Tú','You')+'</th><th>'+fl(c,'ejfl')+' '+e(pn(c))+'</th></tr></thead><tbody>');
-    CMP.forEach(r=>{ const m=r[1].reduce((a,x)=>a+cnt(x),0); const v=invCount(c,r[0]); h.push('<tr><td>'+e(EN()?r[3]:r[2])+'</td><td class="'+(m>(v||0)?'y':'')+'">'+nf(m)+'</td><td>'+(v==null?'—':nf(v))+'</td></tr>'); });
+    CMP.forEach(r=>{ const m=r[1].reduce((a,x)=>a+cnt(x,1),0); const v=invCount(c,r[0]); h.push('<tr><td>'+e(EN()?r[3]:r[2])+'</td><td class="'+(m>(v||0)?'y':'')+'">'+nf(m)+'</td><td>'+(v==null?'—':nf(v))+'</td></tr>'); });
     const pp=persons(c); h.push('<tr><td>'+L('Militares en activo','Active personnel')+'</td><td class="'+(S.sol>(pp||0)?'y':'')+'">'+nf(S.sol)+'</td><td>'+(pp?'≈'+nf(pp):'—')+'</td></tr></tbody></table>');
     const cp=G.p[c]; h.push('<p class="ejnote">'+L('Inventario real según la sección','Real inventory from the section')+' <a href="#/fuerzas?a='+e(c)+'">'+L('Fuerzas armadas','Armed forces')+' · '+e(pn(c))+'</a> (Wikipedia'+(FZ.revisado?', '+L('revisado ','checked ')+e(FZ.revisado):'')+'): '+L('suma las unidades en servicio de cada categoría (en blindados entran todos los vehículos acorazados; en defensa aérea, lanzadores y sistemas tal como se declaran). Militares en activo: CIA World Factbook (archivo).','adds up the units in service in each category (armoured vehicles include every armoured vehicle; air defence counts launchers and systems as declared). Active personnel: CIA World Factbook (archive).')+(cp?' '+L('Gasto militar de ','Military spending of ')+e(pn(c))+' ('+cp.y+', SIPRI): '+fm(cp.e)+'.':'')+'</p>'); }
   h.push('<div class="ejshare"><button type="button" class="btn pri" id="ejnative">'+L('Compartir','Share')+'</button><button type="button" class="btn" id="ejcopy">'+L('Copiar texto','Copy text')+'</button><button type="button" class="btn" id="ejlink">'+L('Copiar enlace','Copy link')+'</button></div>');
