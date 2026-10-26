@@ -40,6 +40,26 @@
   ]
  },
  {
+  "id": "inglaterra",
+  "tema": "cielo",
+  "t": [
+   "Batalla de Inglaterra",
+   "Battle of Britain"
+  ],
+  "fecha": [
+   "10 de julio – 31 de octubre de 1940",
+   "10 July – 31 October 1940"
+  ],
+  "lugar": [
+   "Cielo del sur de Inglaterra y el canal de la Mancha",
+   "Skies over southern England and the Channel"
+  ],
+  "d": [
+   "En 18 pasos: León Marino, las tres Luftflotten, el sistema Dowding y sus radares, la batalla del Canal, el Día del Águila, el «Jueves Negro», el día más duro, «los pocos», los aeródromos al límite, los pilotos polacos y checos, el giro hacia Londres, el 15 de septiembre, los cazabombarderos y los italianos, y el Blitz hasta mayo de 1941. El mapa se vuelve cielo.",
+   "In 18 steps: Sea Lion, the three Luftflotten, the Dowding system and its radars, the Channel battles, Eagle Day, “Black Thursday”, the Hardest Day, “the Few”, the airfields at the limit, the Polish and Czech pilots, the switch to London, 15 September, the fighter-bombers and the Italians, and the Blitz until May 1941. The map turns to sky."
+  ]
+ },
+ {
   "id": "pearl-harbor",
   "tema": "mar",
   "t": [
