@@ -100,6 +100,26 @@
   ]
  },
  {
+  "id": "alamein",
+  "tema": "desierto",
+  "t": [
+   "Batallas de El Alamein (1942)",
+   "Battles of El Alamein (1942)"
+  ],
+  "fecha": [
+   "1 de julio – 11 de noviembre de 1942",
+   "1 July – 11 November 1942"
+  ],
+  "lugar": [
+   "El Alamein, desierto occidental (Egipto)",
+   "El Alamein, Western Desert (Egypt)"
+  ],
+  "d": [
+   "En 20 pasos: Gazala y la caída de Tobruk, el repliegue a El Alamein, la línea entre el mar y la depresión de Qattara, la primera batalla (Deir el Shein, Tel el Eisa, Ruweisat), Montgomery, Malta y la guerra del combustible, Alam el Halfa, los «jardines del diablo», el engaño Bertram, Lightfoot, Kidney y el puesto «Snipe», Supercharge, «la victoria o la muerte», la persecución, Torch y «el final del principio». El mapa se vuelve arena.",
+   "In 20 steps: Gazala and the fall of Tobruk, the retreat to El Alamein, the line between the sea and the Qattara Depression, the first battle (Deir el Shein, Tel el Eisa, Ruweisat), Montgomery, Malta and the fuel war, Alam el Halfa, the “Devil’s Gardens”, the Bertram deception, Lightfoot, Kidney and Outpost “Snipe”, Supercharge, “victory or death”, the pursuit, Torch and “the end of the beginning”. The map turns to sand."
+  ]
+ },
+ {
   "id": "stalingrado",
   "tema": "nieve",
   "t": [
