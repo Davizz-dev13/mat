@@ -1,6 +1,7 @@
 (function(){
 "use strict";
-// ============ M.A.T · Guerra nuclear (#/guerra-nuclear; alias #/nuclear) ============
+// ============ M.A.T · Guerra nuclear (#/guerra-nuclear; alias #/nuclear y #/alcance) ============
+// Contenedor de dos pasos: ① Alcance (alcance.js, cargado al abrir esa pestaña) y ② Impacto (simulador de efectos, este archivo).
 // Simulador divulgativo de los efectos de UNA detonación nuclear sobre una ciudad.
 // Datos: nuclear.json.gz (442 ciudades con población por anillos GHSL 2025, preajustes de potencia, fuentes).
 // Mapa: Leaflet (ya alojado en la web) + teselas estándar de OpenStreetMap, cargados solo en esta ruta.
@@ -94,13 +95,41 @@ function readQ(X){ var q=X.qs(), s={c:IDX['madrid-es'],ll:null,y:100,yid:'w76',b
   if(q.ll){ var m=q.ll.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/); if(m&&Math.abs(+m[1])<=85&&Math.abs(+m[2])<=180){ s.ll=[+m[1],+m[2]]; s.c=null; } }
   if(q.y&&+q.y>=0.1&&+q.y<=50000){ s.y=+q.y; s.yid=null; D.fx.y.forEach(function(p){ if(p[3]===s.y) s.yid=p[0]; }); }
   if(q.b==='surf') s.b='surf'; if(q.fo==='0') s.fo=0; if(q.wd&&isFinite(+q.wd)) s.wd=((+q.wd%360)+360)%360; if(q.ws&&+q.ws>=13&&+q.ws<=72) s.ws=+q.ws;
+  if(q.yi){ D.fx.y.forEach(function(p){ if(p[0]===q.yi&&(!q.y||+q.y===p[3])){ s.y=p[3]; s.yid=p[0]; } }); }
+  if(q.fm&&/^[a-z0-9-]{1,40}$/.test(q.fm)){ s.fm=q.fm; s.fp=/^([a-z0-9-]{1,40}|-?\d+(\.\d+)?,-?\d+(\.\d+)?)$/.test(q.fp||'')?q.fp:''; }
   if(q.y2&&+q.y2>=0.1&&+q.y2<=50000) s.y2=+q.y2; if(q.dk==='1') s.dk=1;
   return s; }
-function qstr(){ var h='#/guerra-nuclear?'+(S.c!=null?'c='+slug(D.c[S.c]):'ll='+S.ll[0].toFixed(4)+','+S.ll[1].toFixed(4))+'&y='+S.y+'&b='+S.b; if(S.b==='surf') h+='&fo='+S.fo+'&wd='+S.wd+'&ws='+S.ws; if(S.y2) h+='&y2='+S.y2; return h; }
-function writeQ(){ var h=qstr(); if(location.hash!==h){ try{ history.replaceState(null,'',h); }catch(x){} } }
+function qstr(){ var h='#/guerra-nuclear?tab=impacto&'+(S.c!=null?'c='+slug(D.c[S.c]):'ll='+S.ll[0].toFixed(4)+','+S.ll[1].toFixed(4))+'&y='+S.y+'&b='+S.b; if(S.b==='surf') h+='&fo='+S.fo+'&wd='+S.wd+'&ws='+S.ws; if(S.yid) h+='&yi='+S.yid; if(S.y2) h+='&y2='+S.y2; if(S.fm) h+='&fm='+S.fm+(S.fp?'&fp='+S.fp:''); return h; }
+function writeQ(){ var h=qstr(); if(location.hash!==h){ try{ history.replaceState(null,'',h); }catch(x){} } window.MAT_GN_Q('impacto',h); org(); }
+// ---------- «viene de Alcance»: misil, lanzamiento, distancia y tiempo hasta el punto cero ----------
+function wmHref(){ var g=gz(), t=g.c?slug(g.c):g.lat.toFixed(3)+','+g.lon.toFixed(3), b=GN.q.alcance||'';
+  var m=b.match(/[?&]m=([^&]*)/), p=b.match(/[?&]p=([^&]*)/), ms=m?m[1].split(',').filter(Boolean):[], pp=p?p[1]:'';
+  if(S.fm){ ms=[S.fm].concat(ms.filter(function(x){ return x!==S.fm; })).slice(0,3); if(S.fp) pp=S.fp; }
+  var h='#/guerra-nuclear?tab=alcance'; if(ms.length) h+='&m='+ms.join(','); if(pp) h+='&p='+pp; return h+'&t='+t; }
+function org(){ var el=document.getElementById('nu-org'); if(!el) return; var a=document.getElementById('nu-wm'); if(a) a.setAttribute('href',wmHref());
+  if(!S.fm){ el.hidden=true; el.innerHTML=''; GN.org=null; return; }
+  var g=gz(), key=[S.fm,S.fp,g.lat,g.lon,S.yid,window.MAT_LANG].join('|'); if(GN.org===key) return; GN.org=key;
+  gnScript('alc-js','alcance.js').then(function(){ return window.MAT_ALC_ORIGIN(S.fm,S.fp,g.lat,g.lon); }).then(function(o){ if(GN.org!==key||!document.getElementById('nu-org')) return; if(!o){ el.hidden=true; return; }
+    var nyp=(o.ny||[]).map(function(x){ var yp=null; D.fx.y.forEach(function(y){ if(y[0]===x[0]) yp=y; }); return yp; }).filter(Boolean);
+    var st=o.reach===2?'<span class="gno-ok">✓ '+T2('dentro de su alcance','within its range')+'</span>':(o.reach===1?'<span class="gno-mb">≈ '+T2('solo con la estimación de alcance más alta','only within the highest range estimate')+'</span>':'<span class="gno-ko">✗ '+T2('fuera de su alcance','out of its range')+' ('+e(o.rng)+')</span>');
+    var wh;
+    if(nyp.length) wh=T2('Potencia de su cabeza nuclear según la fuente','Yield of its nuclear warhead according to the source')+' ('+nyp.map(function(y){ return '<a href="'+e(y[4].u)+'" target="_blank" rel="noopener">'+e(y[4].t.split(' (')[0])+'</a>'; }).filter(function(x,i,a){ return a.indexOf(x)===i; }).join(', ')+'): '+nyp.map(function(y){ return '<button type="button" class="chip" data-y="'+y[3]+'" data-yid="'+y[0]+'" aria-pressed="'+(S.yid===y[0])+'">'+e(EN()?y[2]:y[1])+' · '+ykt(y[3])+'</button>'; }).join(' ');
+    else if(o.wh==='conv') wh=T2('Según las fuentes es un misil <b>convencional</b> (no lleva cabeza nuclear): la simulación es hipotética, con la potencia de referencia elegida abajo.','According to the sources this is a <b>conventional</b> missile (no nuclear warhead): the simulation is hypothetical, using the reference yield chosen below.');
+    else if(o.wh==='dual') wh=T2('<b>Capacidad dual</b> (convencional o nuclear); las fuentes usadas no publican la potencia de su cabeza: la simulación usa la potencia de referencia elegida abajo.','<b>Dual-capable</b> (conventional or nuclear); the sources used do not publish its warhead yield: the simulation uses the reference yield chosen below.');
+    else wh=T2('Misil con cabeza <b>nuclear</b>; las fuentes usadas no dan una potencia única: la simulación usa la potencia de referencia elegida abajo.','Missile with a <b>nuclear</b> warhead; the sources used give no single yield: the simulation uses the reference yield chosen below.');
+    el.innerHTML='<button type="button" class="gno-x" data-ox="1" aria-label="'+T2('Quitar','Remove')+'">×</button><div class="gno-t">🚀 '+o.fl+'<b>'+e(o.n)+'</b> '+T2('desde','from')+' '+e(o.from)+' → <b>'+e(g.n)+'</b></div>'+
+     '<div class="gno-d">'+e(o.km)+' · '+T2('tiempo de vuelo','flight time')+' '+e(o.t)+' · '+st+'</div><div class="gno-w">'+wh+'</div>'+
+     '<a class="gno-b" href="'+wmHref()+'">‹ '+T2('Cambiar misil o punto de lanzamiento','Change missile or launch point')+'</a>';
+    el.hidden=false; }).catch(function(){ el.hidden=true; }); }
+
 function gz(){ if(S.c!=null){ var c=D.c[S.c]; return {lat:c[3],lon:c[4],c:c,n:cn(c)}; } return {lat:S.ll[0],lon:S.ll[1],c:null,n:(EN()?'Chosen point':'Punto elegido')+' ('+dec(Math.abs(S.ll[0]),2)+'°'+(S.ll[0]>=0?'N':'S')+' '+dec(Math.abs(S.ll[1]),2)+'°'+(S.ll[1]>=0?'E':(EN()?'W':'O'))+')'}; }
 // ---------- CSS ----------
 function css(){ if(document.getElementById('nu-css')) return; var s=document.createElement('style'); s.id='nu-css'; s.textContent=
+ '.gn h1{margin-bottom:2px}.gn .subt{color:var(--mu);font-size:14px;margin:0 0 12px}'+
+ '.gn-tabs{display:flex;align-items:stretch;gap:6px;margin:4px 0 14px;padding:2px 0}.gn-tabs a{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);color:var(--tx,#e8e6e1);text-decoration:none;min-height:54px}.gn-tabs a .n{flex:0 0 22px;height:22px;border-radius:50%;border:1px solid var(--mu);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--mu)}.gn-tabs a .i{font-size:20px}.gn-tabs a .t{display:flex;flex-direction:column;font-weight:700;font-size:15px;line-height:1.15;min-width:0}.gn-tabs a .t small{font-weight:400;font-size:11.5px;color:var(--mu);line-height:1.2;margin-top:1px}.gn-tabs a.on{border-color:#d6b25e;background:rgba(214,178,94,.12);box-shadow:inset 0 -3px 0 #d6b25e}.gn-tabs a.on .n{background:#d6b25e;border-color:#d6b25e;color:#111}.gn-tabs .ar{align-self:center;color:var(--mu);font-size:18px}'+
+ '@media (max-width:420px){.gn-tabs a{padding:8px 7px;gap:6px}.gn-tabs a .i{font-size:17px}.gn-tabs a .t small{font-size:10.5px}}'+
+ '.gn-how{margin-top:22px}.gn-how .gn-d>summary{font-weight:700;font-size:15px}'+
+ '.nu .gno{position:relative;display:block;border:1px solid #6a2a24;background:rgba(162,64,47,.10);border-radius:var(--r);padding:10px 34px 10px 12px;margin:4px 0 12px;font-size:13.5px;line-height:1.45}.nu .gno[hidden]{display:none}.nu .gno .gno-t{font-size:15px}.nu .gno .gno-d{color:#e6d4cf;margin:2px 0 4px}.nu .gno .gno-ok{color:#7fd18b}.nu .gno .gno-mb{color:#f0c96a}.nu .gno .gno-ko{color:#ff8a7a}.nu .gno .gno-w{color:#d9d4cc}.nu .gno .gno-w a{color:var(--ac2)}.nu .gno .gno-w .chip{margin:4px 4px 0 0}.nu .gno .gno-b{display:inline-block;margin-top:8px;color:#ff9c8a;font-size:13px;border:0;background:none;padding:0}.nu .gno .gno-x{position:absolute;top:4px;right:4px;background:none;border:0;color:var(--mu);font-size:22px;cursor:pointer;line-height:1;padding:4px 8px}'+
  '.nu h1{margin-bottom:2px}.nu .subt{color:var(--mu);font-size:14px;margin:0 0 10px}'+
  '.nu .ctx{border:1px solid #3a4a5a;background:rgba(79,179,224,.06);border-radius:var(--r);padding:9px 11px;font-size:13px;color:#cfd8de;margin:8px 0 12px;line-height:1.45}.nu .ctx b{color:#9fd3ee}.nu .ctx a{color:var(--ac2)}'+
  '.nu .note{border:1px solid #5a4a22;background:rgba(232,181,74,.07);color:#e6dcc4;border-radius:var(--r);padding:9px 11px;font-size:13px;margin:10px 0;line-height:1.45}.nu .note b{color:#f0c96a}'+
@@ -155,9 +184,9 @@ function leaflet(){ if(window.L&&window.L.map) return Promise.resolve(window.L);
 // ---------- vista ----------
 var QUICK=['madrid-es','barcelona-es','sevilla-es','valencia-es','kiev-ua','moscu-ru','washingtondc-us','londres-gb','paris-fr','berlin-de','pekin-cn','teheran-ir','pionyang-kp','telaviv-il','nuevayork-us','tokio-jp'];
 function render(app,X){
-  var h='<div class="nu" data-noi18n>'+X.crumbs([[T2('Inicio','Home'),'#/'],[T2('Guerra nuclear','Nuclear war')]])+
-  '<h1>💥 '+T2('Guerra nuclear','Nuclear war')+'</h1><p class="subt">'+T2('Simulador de efectos de una detonación nuclear — divulgativo','Simulator of the effects of a nuclear detonation — educational')+'</p>'+
+  var h='<div class="nu" data-noi18n>'+
   '<div class="ctx"><b>'+T2('Para qué sirve esto:','What this is for:')+'</b> '+T2('divulgación. Muestra, con datos públicos y modelos clásicos (Congreso de EE. UU., Glasstone y Dolan), la escala de los efectos de una sola detonación sobre una ciudad real. No es una predicción ni representa ningún plan: los efectos reales dependerían de muchísimos factores. Ver <a href="javascript:void 0" data-how="1">fuentes y método</a>.','education. Using public data and classic models (U.S. Congress, Glasstone & Dolan), it shows the scale of the effects of a single detonation over a real city. It is not a prediction and does not represent any plan: real effects would depend on a great many factors. See <a href="javascript:void 0" data-how="1">sources and method</a>.')+'</div>'+
+  '<div class="gno" id="nu-org" hidden></div>'+
   '<div class="grid"><div>'+
   '<div class="lbl">'+T2('1 · Ciudad (punto cero en el centro)','1 · City (ground zero at the centre)')+'</div>'+
   '<button type="button" class="citb" id="nu-cb" aria-expanded="false"></button><div class="pick" id="nu-pick" hidden><input type="search" id="nu-q" placeholder="'+T2('Busca una ciudad o un país…','Search a city or a country…')+'" autocomplete="off" aria-label="'+T2('Buscar ciudad','Search city')+'"><div class="plist" id="nu-pl"></div></div>'+
@@ -176,13 +205,14 @@ function render(app,X){
   '</div><div class="side">'+
   '<div id="nu-res"></div>'+
   '<div class="box"><label class="tog"><input type="checkbox" id="nu-cmp"> '+T2('Comparar con otra potencia','Compare with another yield')+'</label><div id="nu-cmpb"></div></div>'+
-  '<div class="acts"><button type="button" class="btn" id="nu-sh">🔗 '+T2('Compartir','Share')+'</button><a class="btn" href="#/alcance">🎯 '+T2('Alcance de misiles','Missile ranges')+'</a></div>'+
+  '<div class="acts"><button type="button" class="btn" id="nu-sh">🔗 '+T2('Compartir','Share')+'</button><a class="btn" id="nu-wm" href="#/guerra-nuclear?tab=alcance">🚀 '+T2('¿Qué misiles llegan aquí?','Which missiles reach here?')+'</a></div>'+
   '<div id="nu-tab"></div><div class="box cloud" id="nu-cl"></div>'+
   '</div></div>'+
   '<div class="note">'+T2('<b>Simulación divulgativa y muy aproximada.</b> Los efectos reales dependerían de la hora (la población de día y de noche es distinta), el tiempo, el relieve, los edificios, los refugios y la altura exacta de la explosión. Las cifras de víctimas no incluyen la lluvia radiactiva, las tormentas de fuego, el colapso de los servicios sanitarios ni los efectos a largo plazo.','<b>Educational, very rough simulation.</b> Real effects would depend on the time of day (daytime and night-time population differ), weather, terrain, buildings, shelters and the exact height of burst. Casualty figures exclude fallout, firestorms, the collapse of health services and long-term effects.')+'</div>'+
   '<div id="nu-how"></div></div>';
-  X.set(h,T2('Guerra nuclear: simulador de efectos','Nuclear war: effects simulator'));
+  X.set(h,T2('Guerra nuclear: impacto','Nuclear war: impact'));
   var R0=app.querySelector('.nu');
+  R0.querySelector('#nu-org').addEventListener('click',function(ev){ var b=ev.target.closest('[data-yid]'); if(b){ S.y=+b.getAttribute('data-y'); S.yid=b.getAttribute('data-yid'); var ys0=R0.querySelector('#nu-ys'); if(ys0) ys0.value=y2s(S.y); upd(true); return; } if(ev.target.closest('[data-ox]')){ S.fm=null; S.fp=''; upd(false); } });
   // ciudad
   var cb=R0.querySelector('#nu-cb'), pk=R0.querySelector('#nu-pick'), qi=R0.querySelector('#nu-q');
   cb.addEventListener('click',function(){ var o=pk.hidden; pk.hidden=!o; cb.setAttribute('aria-expanded',String(o)); if(o){ qi.value=''; plist(''); setTimeout(function(){ try{ qi.focus({preventScroll:true}); }catch(x){} },30); } });
@@ -205,8 +235,8 @@ function render(app,X){
   R0.querySelector('#nu-fit').addEventListener('click',function(){ fit(); });
   R0.querySelector('#nu-dk').addEventListener('click',function(){ S.dk=S.dk?0:1; R0.querySelector('#nu-mw').classList.toggle('dk',!!S.dk); });
   R0.querySelector('#nu-mw').classList.toggle('dk',!!S.dk);
-  R0.querySelector('[data-how]').addEventListener('click',function(ev){ ev.preventDefault(); var t=document.getElementById('nu-how'); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); });
-  how();
+  R0.querySelector('[data-how]').addEventListener('click',function(ev){ ev.preventDefault(); var d=document.getElementById('gn-hi'); if(d){ d.open=true; gnHow('i'); d.scrollIntoView({behavior:'smooth',block:'start'}); } });
+  var hi0=document.getElementById('gn-hi'); if(hi0&&hi0.open) gnHow('i');
   upd(false);
   leaflet().then(function(){ if(!document.getElementById('nu-map')) return; mapInit(); draw(true); }).catch(function(){ var m=document.getElementById('nu-map'); if(m) m.innerHTML='<p class="sub" style="padding:20px">'+T2('No se pudo cargar el mapa.','Could not load the map.')+'</p>'; });
 }
@@ -317,7 +347,7 @@ function share(){ var url=location.href.split('#')[0]+qstr(), g=CUR.g, t=T2('Gue
   function ok(){ toast(T2('Enlace copiado','Link copied')); }
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok,function(){ prompt(T2('Copia el enlace:','Copy the link:'),url); }); else prompt(T2('Copia el enlace:','Copy the link:'),url); }
 function how(){ var el=document.getElementById('nu-how'); if(!el) return; function li(s){ return '<li><a href="'+e(s.u)+'" target="_blank" rel="noopener">'+e(s.t)+'</a></li>'; }
-  el.innerHTML='<h2>'+T2('Cómo se calcula','How it is calculated')+'</h2><details class="mt" open><summary>'+T2('Método, supuestos y límites','Method, assumptions and limits')+'</summary>'+
+  el.innerHTML=
   (EN()?'<p><b>Blast.</b> Overpressure radii (20, 12, 5, 2 and 1 psi) come from the U.S. Congress OTA report <i>The Effects of Nuclear War</i> (1979, table 3 and figure 1) for 1 Mt and are scaled to other yields with the cube-root law (Glasstone & Dolan, ch. 3). For an air burst the height is the one that maximises the reach of each pressure, as in OTA.</p>'+
    '<p><b>Fireball.</b> Maximum radius from Glasstone & Dolan (1977, ch. 2).</p>'+
    '<p><b>Thermal burns.</b> Anchored on OTA (1979, p. 21): a 1 Mt burst on a clear day (16 km visibility) causes 1st-degree burns at about 11 km, 2nd-degree at 10 km and 3rd-degree at 8 km. For other yields the radii are scaled with curve fits to Glasstone & Dolan (fig. 12.65 and eq. for thermal fluence vs distance; surface bursts deliver ~70% of the air-burst fluence), as compiled in NUKEMAP. Approximation: fog, rain, clouds or snow change these radii a lot (OTA: with 3 km visibility 2nd-degree burns reach only 4.3 km at 1 Mt).</p>'+
@@ -335,8 +365,45 @@ function how(){ var el=document.getElementById('nu-how'); if(!el) return; functi
    '<p><b>Víctimas.</b> Modelo de la OTA (1979): dentro de 12 psi, 98 % muertos y 2 % heridos; entre 5 y 12 psi, 50 % y 40 %; entre 2 y 5 psi, 5 % y 45 %; entre 1 y 2 psi, 0 % y 25 %. La población de cada banda sale de GHS-POP R2023A (Centro Común de Investigación de la Comisión Europea), la población residente estimada para 2025 en celdas de 1 km; M.A.T ha sumado la población de todas las celdas dentro de anillos de 0,5 a 150 km alrededor del centro de cada ciudad e interpola entre ellos. El intervalo mostrado es el resultado del modelo ±30 %. Es población residente (de noche): no tiene en cuenta a quienes se desplazan a trabajar, turistas, refugios ni tipos de edificio, y no incluye lluvia radiactiva, incendios ni efectos a largo plazo.</p>'+
    '<p><b>Mapa.</b> Mapa base © colaboradores de OpenStreetMap (ODbL), teselas estándar de OpenStreetMap, mostradas con Leaflet. El punto cero es el centro de la ciudad según Natural Earth (mundo) o Wikidata (municipios españoles).</p>')+
   '<h3 style="font-size:15px;margin:12px 0 4px">'+T2('Fuentes','Sources')+'</h3><ul class="srcl">'+D.src.map(li).join('')+D.fx.y.map(function(y){ return y[4]; }).filter(function(s,i,a){ return a.map(function(x){ return x.u; }).indexOf(s.u)===i; }).map(li).join('')+'</ul>'+
-  '<p class="ds">'+T2('Potencias de los preajustes: cifras públicas citadas en cada fuente; las de algunas cabezas son estimaciones.','Preset yields: public figures cited in each source; some warhead yields are estimates.')+' '+T2('Datos actualizados: ','Data updated: ')+e(D.upd)+'</p></details>'; }
-window.MAT_NUCLEAR=function(app,X){ css(); X0=X; if(MAP){ try{ MAP.remove(); }catch(x){} MAP=null; }
-  app.innerHTML='<p class="sub" style="padding:24px 0">'+T2('Cargando…','Loading…')+'</p>';
-  load().then(function(){ if(!/^#\/guerra-nuclear/.test(location.hash||'')) return; S=readQ(X); if(S.c==null&&!S.ll) S.c=0; render(app,X); }).catch(function(err){ app.innerHTML='<p class="sub" style="padding:24px 0">'+T2('No se pudo cargar esta sección.','Could not load this section.')+'</p>'; if(window.console) console.error(err); }); };
+  '<p class="ds">'+T2('Potencias de los preajustes: cifras públicas citadas en cada fuente; las de algunas cabezas son estimaciones.','Preset yields: public figures cited in each source; some warhead yields are estimates.')+' '+T2('Datos actualizados: ','Data updated: ')+e(D.upd)+'</p>'; }
+// ---------- contenedor «Guerra nuclear»: ① Alcance (alcance.js) + ② Impacto (este archivo) ----------
+var GN={q:{},seq:0,tab:null,lang:null,org:null};
+function gnTab(q){ if(q.tab==='alcance'||q.tab==='impacto') return q.tab; if(q.c||q.ll||q.y||q.b||q.fm) return 'impacto'; return 'alcance'; }
+function gnScript(id,src){ return new Promise(function(res,rej){ var s0=document.getElementById(id); if(s0){ if(s0.getAttribute('data-ok')) return res(); s0.addEventListener('load',function(){ res(); }); s0.addEventListener('error',rej); return; }
+  var s=document.createElement('script'); s.id=id; s.src=src+'?v='+V(); s.onload=function(){ s.setAttribute('data-ok','1'); res(); }; s.onerror=function(){ s.remove(); rej(new Error('load '+src)); }; document.body.appendChild(s); }); }
+window.MAT_GN_Q=function(tab,h){ GN.q[tab]=h; var a=document.querySelector('#gn-tabs [data-gt="'+tab+'"]'); if(a) a.setAttribute('href',h); };
+function gnHref(tab){ return GN.q[tab]||('#/guerra-nuclear?tab='+tab); }
+function gnHow(which){ if(which==='a'){ var el=document.getElementById('alc-meta'); if(!el||el.getAttribute('data-ok')) return; gnScript('alc-js','alcance.js').then(function(){ return window.MAT_ALCANCE_META(); }).then(function(){ el.setAttribute('data-ok','1'); }).catch(function(){ el.innerHTML='<p class="sub">'+T2('No se pudo cargar.','Could not load.')+'</p>'; }); }
+  else { var el2=document.getElementById('nu-how'); if(!el2||el2.getAttribute('data-ok')) return; load().then(function(){ how(); el2.setAttribute('data-ok','1'); }).catch(function(){}); } }
+function gnShell(app,X){
+  var h='<div class="gn" id="gn-shell" data-noi18n>'+X.crumbs([[T2('Inicio','Home'),'#/'],[T2('Guerra nuclear','Nuclear war')]])+
+  '<h1>☢️ '+T2('Guerra nuclear','Nuclear war')+'</h1><p class="subt">'+T2('Alcance de misiles y efectos de una detonación nuclear — divulgativo','Missile ranges and the effects of a nuclear detonation — educational')+'</p>'+
+  '<nav class="gn-tabs" id="gn-tabs" aria-label="'+T2('Pasos','Steps')+'">'+
+   '<a data-gt="alcance" href="'+gnHref('alcance')+'"><span class="n">1</span><span class="i" aria-hidden="true">🚀</span><span class="t">'+T2('Alcance','Range')+'<small>'+T2('Misil y lanzamiento','Missile and launch')+'</small></span></a>'+
+   '<span class="ar" aria-hidden="true">›</span>'+
+   '<a data-gt="impacto" href="'+gnHref('impacto')+'"><span class="n">2</span><span class="i" aria-hidden="true">💥</span><span class="t">'+T2('Impacto','Impact')+'<small>'+T2('Efectos en la ciudad','Effects on the city')+'</small></span></a></nav>'+
+  '<div id="gn-body"></div>'+
+  '<section class="gn-how" id="gn-how"><h2>'+T2('Cómo se calcula y fuentes','How it is calculated and sources')+'</h2>'+
+   '<details class="mt gn-d" id="gn-ha"><summary>🚀 '+T2('Alcance de misiles: método y fuentes','Missile ranges: method and sources')+'</summary><div id="alc-meta"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
+   '<details class="mt gn-d" id="gn-hi"><summary>💥 '+T2('Efectos de la detonación: método y fuentes','Detonation effects: method and sources')+'</summary><div id="nu-how"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
+   '<p class="ds" style="margin-top:10px">'+T2('Contenido divulgativo basado en fuentes abiertas. No es una predicción ni una herramienta de designación de blancos.','Educational content based on open sources. It is neither a prediction nor a targeting tool.')+'</p></section></div>';
+  X.set(h,T2('Guerra nuclear','Nuclear war'));
+  var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi');
+  ha.addEventListener('toggle',function(){ if(ha.open) gnHow('a'); }); hi.addEventListener('toggle',function(){ if(hi.open) gnHow('i'); });
+}
+function gnSet(tab,reuse){ var X=X0, prev=GN.tab; GN.tab=tab; var seq=++GN.seq;
+  if(MAP){ try{ clear(); MAP.remove(); }catch(x){} MAP=null; }
+  [].forEach.call(document.querySelectorAll('#gn-tabs [data-gt]'),function(a){ var on=a.getAttribute('data-gt')===tab; a.classList.toggle('on',on); if(on) a.setAttribute('aria-current','step'); else a.removeAttribute('aria-current'); });
+  var body=document.getElementById('gn-body'); body.innerHTML='<p class="sub" style="padding:24px 0">'+T2('Cargando…','Loading…')+'</p>';
+  var SX={p:X.p,qs:X.qs,esc:X.esc,crumbs:function(){ return ''; },set:function(h,t){ body.innerHTML=h; document.title=(t?t+' · ':'')+'M.A.T'; },alive:function(){ return seq===GN.seq&&document.body.contains(body); }};
+  if(reuse&&prev!==tab){ var tb=document.getElementById('gn-tabs'); if(tb){ var y=tb.getBoundingClientRect().top+(window.scrollY||0)-8; if((window.scrollY||0)>y) window.scrollTo(0,Math.max(0,y)); } }
+  var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi'); if(ha&&hi&&prev!==tab){ ha.open=(tab==='alcance'); hi.open=(tab==='impacto'); }
+  var fail=function(err){ if(!SX.alive()) return; body.innerHTML='<p class="sub" style="padding:24px 0">'+T2('No se pudo cargar esta parte. Actualiza la página.','Could not load this part. Refresh the page.')+'</p>'; if(window.console) console.error(err); };
+  if(tab==='alcance'){ gnScript('alc-js','alcance.js').then(function(){ if(!SX.alive()) return; window.MAT_ALCANCE(body,SX); }).catch(fail); }
+  else { load().then(function(){ if(!SX.alive()) return; var q=X.qs(), old=S; S=readQ(SX); if(S.c==null&&!S.ll) S.c=0; if(q.fm&&!q.y&&!q.yi){ S.yid=null; } else if(old&&!q.y&&!q.yi){ S.y=old.y; S.yid=old.yid; if(!q.b) S.b=old.b; } GN.org=null; render(body,SX); }).catch(fail); }
+}
+window.MAT_NUCLEAR=function(app,X){ css(); X0=X; var q=X.qs(), tab=gnTab(q);
+  var sh=document.getElementById('gn-shell'), reuse=!!(sh&&app.contains(sh)&&GN.lang===window.MAT_LANG);
+  if(!reuse){ GN.lang=window.MAT_LANG; gnShell(app,X); }
+  gnSet(tab,reuse); };
 })();

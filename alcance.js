@@ -1,6 +1,7 @@
 (function(){
 "use strict";
-// ============ M.A.T · Alcance de misiles (#/alcance) ============
+// ============ M.A.T · Guerra nuclear, pestaña ① Alcance (#/guerra-nuclear?tab=alcance; alias #/alcance) ============
+// Cargado por el contenedor de nuclear.js (pestañas Alcance / Impacto).
 // Datos: alcance.json.gz (misiles, presets, ciudades) + world.json.gz (Natural Earth 1:50m, el mismo mapa base de #/mapa).
 // Proyección azimutal equidistante centrada en el punto de lanzamiento: los círculos de alcance son círculos reales
 // (distancias geodésicas sobre una esfera de 6.371 km). Sin librerías ni teselas externas.
@@ -36,9 +37,19 @@ function readQ(X){ var q=X.qs(), s={m:[],p:'kaliningrado',ll:null};
   if(q.m){ q.m.split(',').forEach(function(id){ if(byId(id)&&s.m.indexOf(id)<0&&s.m.length<3) s.m.push(id); }); }
   if(!q.m) s.m=['iskander-m','kalibr','oreshnik'];
   if(q.p){ var mm=q.p.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/); if(mm){ var la=+mm[1], lo=+mm[2]; if(Math.abs(la)<=90&&Math.abs(lo)<=180){ s.p=null; s.ll=[la,lo]; } } else if(preset(q.p)) s.p=q.p; }
+  if(q.t){ var ti=cityIdx(q.t); if(ti>=0) s.t={i:ti}; else { var tm=q.t.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/); if(tm&&Math.abs(+tm[1])<=90&&Math.abs(+tm[2])<=180) s.t={ll:[+tm[1],+tm[2]]}; } }
   return s; }
-function writeQ(){ var h='#/alcance?m='+ST.m.join(',')+'&p='+(ST.p||(ST.ll[0].toFixed(2)+','+ST.ll[1].toFixed(2)));
-  if(location.hash!==h){ try{ history.replaceState(null,'',h); }catch(x){} } }
+function cityIdx(sl){ for(var i=0;i<D.c.length;i++) if(nuks(D.c[i])===sl) return i; return -1; }
+function tpos(){ var t=ST.t; if(!t) return null; if(t.i!=null){ var c=D.c[t.i]; return {lat:c[3],lon:c[4],n:cn(c),q:nuks(c)}; } return {lat:t.ll[0],lon:t.ll[1],n:customName(t.ll),q:t.ll[0].toFixed(3)+','+t.ll[1].toFixed(3)}; }
+function lpq(){ return ST.p||(ST.ll[0].toFixed(2)+','+ST.ll[1].toFixed(2)); }
+// enlace a la pestaña ② Impacto para una ciudad (índice) o un punto: misil que llega (con potencia de su cabeza si la fuente la da)
+function impHref(i,ll){ var lp=launch(), c=i!=null?D.c[i]:null, d=c?dist(lp.lat,lp.lon,c[3],c[4]):dist(lp.lat,lp.lon,ll[0],ll[1]), pick=null;
+  sel().forEach(function(m){ if(d<=m.r[1]&&(!pick||(m.ny&&!pick.ny))) pick=m; });
+  var h='#/guerra-nuclear?tab=impacto&'+(c?'c='+nuks(c):'ll='+ll[0].toFixed(4)+','+ll[1].toFixed(4));
+  if(pick){ h+='&fm='+pick.id+'&fp='+lpq(); if(pick.ny) h+='&y='+pick.ny[0][1]+'&yi='+pick.ny[0][0]; }
+  return h; }
+function writeQ(){ var h='#/guerra-nuclear?tab=alcance&m='+ST.m.join(',')+'&p='+lpq(); var tp=tpos(); if(tp) h+='&t='+tp.q;
+  if(location.hash!==h){ try{ history.replaceState(null,'',h); }catch(x){} } if(window.MAT_GN_Q) window.MAT_GN_Q('alcance',h); }
 function launch(){ if(ST.p){ var p=preset(ST.p); return {lat:p[3],lon:p[4],n:EN()?p[2]:p[1]}; } return {lat:ST.ll[0],lon:ST.ll[1],n:customName(ST.ll)}; }
 function customName(ll){ var best=null,bd=1e9; D.c.forEach(function(c){ var d=dist(ll[0],ll[1],c[3],c[4]); if(d<bd){bd=d;best=c;} });
   var t=(Math.abs(ll[0]).toFixed(2)+'°'+(ll[0]>=0?'N':'S')+' '+Math.abs(ll[1]).toFixed(2)+'°'+(ll[1]>=0?'E':(EN()?'W':'O')));
@@ -48,6 +59,9 @@ function sel(){ return ST.m.map(byId).filter(Boolean); }
 // ---------- CSS ----------
 function css(){ if(document.getElementById('alc-css')) return; var s=document.createElement('style'); s.id='alc-css';
  s.textContent=
+ '.alc .alc-nuk{display:inline-block;margin-top:4px;font-size:12.5px;color:#ff9c8a;border:1px solid #6a2a24;border-radius:999px;padding:3px 10px;text-decoration:none}.alc .alc-nuk:hover{background:#2a1311}'+
+ '.alc .tgt{border:1px solid #6a2a24;background:rgba(162,64,47,.10);border-radius:var(--r);padding:10px 12px;margin:8px 0 10px}.alc .tgt h3{margin:0 0 2px;font-size:16px}.alc .tgt .tx{float:right;background:none;border:0;color:var(--mu);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}.alc .tgt .tl{display:flex;flex-direction:column;gap:4px;margin:8px 0 4px}.alc .tgt .tr{display:flex;align-items:center;gap:8px;text-align:left;width:100%;background:rgba(0,0,0,.25);border:1px solid #3a2a26;border-radius:8px;padding:7px 9px;color:inherit;font:inherit;font-size:13.5px;cursor:pointer}.alc .tgt .tr:hover{border-color:#a2402f}.alc .tgt .tr b{flex:1;min-width:0}.alc .tgt .tr small{color:var(--mu);white-space:nowrap}.alc .tgt .cur{font-size:13px;color:#e6d4cf;margin:6px 0 0}'+
+ '.alc .nextc{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border:1px solid #a2402f;background:#2a1311;border-radius:var(--r);padding:12px 14px;margin:14px 0 6px;color:#ffd9cf}.alc .nextc .tx2{flex:1 1 240px;font-size:14px;line-height:1.45}.alc .nextc b{color:#fff}.alc .nextc a.btn{border-color:#a2402f;background:#3a1714;color:#ffd9cf;font-weight:700;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}'+
  '.alc .note{border:1px solid #5a4a22;background:rgba(232,181,74,.07);color:#e6dcc4;border-radius:var(--r);padding:9px 11px;font-size:13px;margin:10px 0 4px;line-height:1.45}'+
  '.alc .note b{color:#f0c96a}'+
  '.alc .selbar{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}'+
@@ -100,7 +114,9 @@ function css(){ if(document.getElementById('alc-css')) return; var s=document.cr
  document.head.appendChild(s); }
 function toast(t){ var o=document.querySelector('.alc-toast'); if(o) o.remove(); var d=document.createElement('div'); d.className='toast alc-toast'; d.textContent=t; (document.querySelector('.alc')||document.body).appendChild(d); setTimeout(function(){ d.remove(); },2600); }
 // ---------- carga ----------
-function load(){ if(LD) return LD; LD=Promise.all([window.MAT_GET('alcance.json.gz'),window.MAT_GET('world.json.gz')]).then(function(z){ D=z[0]; W=prepW(z[1]); return D; }); return LD; }
+var LDD=null;
+function loadD(){ if(!LDD) LDD=window.MAT_GET('alcance.json.gz').then(function(z){ if(!D) D=z; return D; }); return LDD; }
+function load(){ if(LD) return LD; LD=Promise.all([loadD(),window.MAT_GET('world.json.gz')]).then(function(z){ W=prepW(z[1]); return D; }); return LD; }
 function prepW(w){ return w.c.map(function(c){ var R2=c.r.map(function(a){ var o=new Float32Array(a.length), x=0,y=0; for(var i=0;i<a.length;i+=2){ x+=a[i]; y+=a[i+1]; o[i]=x/100; o[i+1]=y/100; } return o; }); return {i:c.i,n:c.n,R:R2}; }); }
 // ---------- mapa ----------
 function Map(cv,wrap,onTap){
@@ -169,6 +185,8 @@ function Map(cv,wrap,onTap){
       var lx=p[0]+5, ly=p[1]-12; if(lx+w>Wd-46) lx=p[0]-5-w;
       if(!free(lx,ly,w,14)) return; occ.push([lx,ly,w,14]);
       ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)'; ctx.strokeText(t,lx+2,ly+7); ctx.fillStyle=inr?'#fff':(es?'#e4dfcf':'#b9bec2'); ctx.fillText(t,lx+2,ly+7); });
+    // objetivo elegido en Impacto («¿Qué misiles llegan aquí?»)
+    if(self.tgt!=null&&cityP&&cityP[self.tgt]){ var tq=cityP[self.tgt], tp=S(tq[0],tq[1]); if(tp[0]>-20&&tp[0]<Wd+20&&tp[1]>-20&&tp[1]<Hd+20){ ctx.lineWidth=2.2; ctx.strokeStyle='#ff6a55'; ctx.beginPath(); ctx.arc(tp[0],tp[1],9,0,7); ctx.stroke(); ctx.beginPath(); ctx.moveTo(tp[0]-16,tp[1]); ctx.lineTo(tp[0]-5,tp[1]); ctx.moveTo(tp[0]+5,tp[1]); ctx.lineTo(tp[0]+16,tp[1]); ctx.moveTo(tp[0],tp[1]-16); ctx.lineTo(tp[0],tp[1]-5); ctx.moveTo(tp[0],tp[1]+5); ctx.lineTo(tp[0],tp[1]+16); ctx.stroke(); } }
     // punto de lanzamiento
     var o=S(0,0); ctx.beginPath(); ctx.arc(o[0],o[1],9,0,7); ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fill(); ctx.beginPath(); ctx.arc(o[0],o[1],4.5,0,7); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#d33'; ctx.stroke();
     // etiquetas de anillo
@@ -178,6 +196,14 @@ function Map(cv,wrap,onTap){
         if(x<4||x+w>Wd-48||y<4||y+hh>Hd-22) continue; var clash=lb.some(function(o){ return x<o[0]+o[2]&&x+w>o[0]&&y<o[1]+o[3]&&y+hh>o[1]; }); if(!clash) ok=[x,y,w,hh]; }
       if(!ok) return; lb.push(ok); ctx.fillStyle='rgba(8,10,12,.78)'; ctx.fillRect(ok[0],ok[1],ok[2],ok[3]); ctx.fillStyle=g.c; ctx.textBaseline='middle'; ctx.textAlign='left'; ctx.fillText(t,ok[0]+3,ok[1]+hh/2+0.5); });
   };
+  self.fly=function(ix,done){ var q=cityP&&cityP[ix]; if(!q){ done(); return; } var t0=performance.now(), dur=1400;
+    function f(now){ var t=Math.min(1,(now-t0)/dur), ez=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; self.draw(); var o=S(0,0), d=S(q[0],q[1]), x=o[0]+(d[0]-o[0])*ez, y=o[1]+(d[1]-o[1])*ez;
+      ctx.setTransform(dpr,0,0,dpr,0,0); ctx.setLineDash([5,4]); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,150,120,.95)'; ctx.beginPath(); ctx.moveTo(o[0],o[1]); ctx.lineTo(x,y); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(d[0],d[1],8,0,7); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(255,106,85,.9)'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2.2; ctx.strokeStyle='#ff5a3c'; ctx.stroke();
+      if(t<1){ requestAnimationFrame(f); return; }
+      ctx.beginPath(); ctx.arc(d[0],d[1],16,0,7); ctx.fillStyle='rgba(255,226,190,.9)'; ctx.fill(); setTimeout(done,280); }
+    requestAnimationFrame(f); };
   // gestos
   var pts={}, start=null, pinch=null, moved=false;
   function pos(ev){ var b=cv.getBoundingClientRect(); return [ev.clientX-b.left, ev.clientY-b.top]; }
@@ -200,10 +226,9 @@ function Map(cv,wrap,onTap){
 // ---------- página ----------
 function render(app,X){
   var M=sel(), lp=launch();
-  var h='<div class="alc" data-noi18n>'+X.crumbs([[EN()?'Home':'Inicio','#/'],[EN()?'Missile ranges':'Alcance de misiles']])+
-   '<h1>'+(EN()?'Missile ranges':'Alcance de misiles')+'</h1>'+
-   '<p class="lead">'+(EN()?'Pick up to three missiles and a launch point: the map draws each one’s range as a true geodesic circle and shows which cities it reaches, how far and roughly how fast.':'Elige hasta tres misiles y un punto de lanzamiento: el mapa dibuja su alcance como un círculo geodésico real y te dice a qué ciudades llega, a qué distancia y en cuánto tiempo aproximado.')+'</p>'+
-   '<a class="btn alc-nuc" href="#/guerra-nuclear" style="display:flex;align-items:center;gap:10px;min-height:52px;margin:6px 0 10px;border-color:#a2402f;background:#2a1311;color:#ffd9cf;font-weight:700;font-size:16px;text-decoration:none"><span style="font-size:22px">💥</span><span style="flex:1">'+(EN()?'Nuclear war':'Guerra nuclear')+'<small style="display:block;font-weight:400;font-size:12.5px;color:#e6bdb3">'+(EN()?'Effects simulator on the real map of any city':'Simulador de efectos sobre el mapa real de cualquier ciudad')+'</small></span><span style="font-size:20px">›</span></a>'+'<div class="selbar" id="alc-sel"></div>'+
+  var h='<div class="alc" data-noi18n>'+
+   '<p class="lead">'+(EN()?'<b>Step 1.</b> Pick up to three missiles and a launch point: the map draws each one’s range as a true geodesic circle and shows which cities it reaches, how far and roughly how fast. Then tap <b>💥 Simulate impact here</b> on any city to go to step 2.':'<b>Paso 1.</b> Elige hasta tres misiles y un punto de lanzamiento: el mapa dibuja su alcance como un círculo geodésico real y te dice a qué ciudades llega, a qué distancia y en cuánto tiempo aproximado. Después toca <b>💥 Simular impacto aquí</b> en cualquier ciudad para pasar al paso 2.')+'</p>'+
+   '<div class="tgt" id="alc-tgt" hidden></div>'+'<div class="selbar" id="alc-sel"></div>'+
    '<div class="pick" id="alc-pick" hidden></div>'+
    '<div class="lrow"><label for="alc-lp" style="font-size:13px;color:var(--mu)">'+(EN()?'Launch from':'Lanzar desde')+'</label><select class="sel" id="alc-lp"></select><span class="hint">'+(EN()?'…or tap the map to launch from any point. Drag to move · pinch or scroll to zoom.':'…o toca el mapa para lanzar desde cualquier punto. Arrastra para moverte · pellizca o rueda para zoom.')+'</span></div>'+
    '<div class="grid"><div><div class="mapw" id="alc-mw"><canvas id="alc-cv" aria-label="'+(EN()?'Range map':'Mapa de alcance')+'"></canvas>'+
@@ -211,27 +236,35 @@ function render(app,X){
    '<div class="mtip" id="alc-tip"></div><div class="mleg" id="alc-leg"></div></div>'+
    '<div class="note">'+(EN()?'<b>Estimated nominal range.</b> Real range depends on payload, trajectory, launch platform and conditions. Many figures are third-party estimates or claims by the countries themselves; disputed figures are shown as a range (dashed inner ring = lowest figure, or the shortest-range version). Informational content based on open sources.':'<b>Alcance nominal estimado.</b> El alcance real depende de la carga útil, la trayectoria, la plataforma de lanzamiento y las condiciones. Muchas cifras son estimaciones de terceros o afirmaciones de los propios países; las disputadas se muestran como un intervalo (anillo interior discontinuo = cifra más baja, o la versión de menor alcance). Contenido divulgativo basado en fuentes abiertas.')+'</div>'+'<p class="sub" style="margin-top:8px;font-size:12.5px">'+(EN()?'Azimuthal equidistant projection centred on the launch point: distances and directions from that point are true, which is why ranges are perfect circles; distant shapes are distorted. The outer edge is the antipode (20,015 km).':'Proyección azimutal equidistante centrada en el punto de lanzamiento: las distancias y direcciones desde ese punto son reales, por eso los alcances son círculos perfectos; las formas lejanas se deforman. El borde exterior es el antípoda (20.015 km).')+'</p></div>'+
    '<div class="side"><div id="alc-sum"></div></div></div>'+
-   '<div id="alc-cities"></div><div id="alc-ctry"></div>'+
-   '<h2>💥 '+(EN()?'Nuclear detonation effects (simulator)':'Efectos de una detonación nuclear (simulador)')+'</h2><div id="alc-fx"></div>'+
+   '<div id="alc-cities"></div>'+
+   '<div class="nextc" id="alc-next"></div>'+
+   '<div id="alc-ctry"></div>'+
    '<h2>'+(EN()?'Missile profiles':'Fichas de los misiles')+'</h2><div class="fichas" id="alc-fichas"></div>'+
-   '<div id="alc-meta"></div></div>';
-  X.set(h,EN()?'Missile ranges':'Alcance de misiles');
+   '</div>';
+  X.set(h,EN()?'Nuclear war: missile ranges':'Guerra nuclear: alcance de misiles');
   var root=app.querySelector('.alc');
   // presets
   var s=root.querySelector('#alc-lp'); s.innerHTML=D.p.map(function(p){ return '<option value="'+p[0]+'">'+e(EN()?p[2]:p[1])+'</option>'; }).join('')+'<option value="_c">'+(EN()?'Point chosen on the map':'Punto elegido en el mapa')+'</option>';
   s.addEventListener('change',function(){ if(s.value==='_c') return; ST.p=s.value; ST.ll=null; recenter(true); });
   var cv=root.querySelector('#alc-cv'), mw=root.querySelector('#alc-mw');
-  MAP=new Map(cv,mw,function(ll){ if(CUR.pickT){ CUR.pickT=false; fxPick(ll); return; } ST.p=null; ST.ll=[Math.round(ll[0]*100)/100,Math.round(ll[1]*100)/100]; recenter(false); toast((EN()?'Launch point: ':'Punto de lanzamiento: ')+launch().n); });
+  MAP=new Map(cv,mw,function(ll){ ST.p=null; ST.ll=[Math.round(ll[0]*100)/100,Math.round(ll[1]*100)/100]; recenter(false); toast((EN()?'Launch point: ':'Punto de lanzamiento: ')+launch().n); });
   MAP.resize();
   root.querySelector('.mbtn').addEventListener('click',function(ev){ var b=ev.target.closest('button'); if(!b) return; if(b.dataset.z) MAP.zoom(+b.dataset.z); else if(b.dataset.fit) fitAll(); else if(b.dataset.lab){ MAP.labels=!MAP.labels; MAP.draw(); } });
   root.querySelector('#alc-sel').addEventListener('click',function(ev){ var b=ev.target.closest('button'); if(!b) return; if(b.dataset.rm){ ST.m=ST.m.filter(function(x){return x!==b.dataset.rm;}); update(true); } else if(b.dataset.add!=null){ var pk=root.querySelector('#alc-pick'); pk.hidden=!pk.hidden; if(!pk.hidden){ pickRender(); var i=pk.querySelector('input'); if(i&&window.matchMedia&&window.matchMedia('(hover: hover)').matches) i.focus(); } } });
-  root.addEventListener('click',function(ev){ var b=ev.target.closest('[data-home]'); if(b){ ST.p=b.getAttribute('data-home'); ST.ll=null; recenter(true); try{ root.querySelector('#alc-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} }
+  root.addEventListener('click',function(ev){ var nk=ev.target.closest('a.alc-nuk[data-ci]');
+    if(nk&&!ev.metaKey&&!ev.ctrlKey&&!ev.shiftKey&&!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){ ev.preventDefault(); var fx=+nk.getAttribute('data-ci'), fh=nk.getAttribute('href'); if(CUR.flying) return; CUR.flying=1;
+      try{ root.querySelector('#alc-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} MAP.fit(Math.max(CUR.dist[fx]*1.3,400));
+      setTimeout(function(){ MAP.fly(fx,function(){ CUR.flying=0; location.hash=fh; }); },450); return; }
+    var b=ev.target.closest('[data-home]'); if(b){ ST.p=b.getAttribute('data-home'); ST.ll=null; recenter(true); try{ root.querySelector('#alc-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} }
+    var tm=ev.target.closest('[data-tm]'); if(tm){ var mid=tm.getAttribute('data-tm'), mm=byId(mid); if(mm){ ST.m=[mid].concat(ST.m.filter(function(x){ return x!==mid; })).slice(0,3); ST.p=mm.home; ST.ll=null; recenter(true); try{ root.querySelector('#alc-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} } }
+    if(ev.target.closest('[data-tx]')){ ST.t=null; update(false); }
+    if(ev.target.closest('[data-tmore]')){ CUR.tmore=true; tgt(); }
     var t=ev.target.closest('[data-tab]'); if(t){ CUR.tab=t.getAttribute('data-tab'); CUR.more=false; cities(); }
     var mo=ev.target.closest('[data-more]'); if(mo){ CUR.more=true; cities(); }
     var cp=ev.target.closest('[data-copy]'); if(cp){ var u=location.href; (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){ toast(EN()?'Link copied':'Enlace copiado'); },function(){ window.prompt(EN()?'Copy this link':'Copia este enlace',u); }); } });
-  var rz=null; CUR.onrs=function(){ clearTimeout(rz); rz=setTimeout(function(){ if(!document.body.contains(cv)){ window.removeEventListener('resize',CUR.onrs); return; } var k0=MAP.k; MAP.resize(); MAP.k=k0; MAP.draw(); if(CUR.fxcv) fxUpd(false); },120); };
+  var rz=null; CUR.onrs=function(){ clearTimeout(rz); rz=setTimeout(function(){ if(!document.body.contains(cv)){ window.removeEventListener('resize',CUR.onrs); return; } var k0=MAP.k; MAP.resize(); MAP.k=k0; MAP.draw(); },120); };
   window.addEventListener('resize',CUR.onrs);
-  meta(); recenter(true); fxInit();
+  meta(); recenter(true);
 }
 function fitAll(){ var mx=0; sel().forEach(function(m){ if(m.r[1]>mx) mx=m.r[1]; }); MAP.fit(mx||1000); }
 function recenter(fit){ var lp=launch(); MAP.center(lp.lat,lp.lon); update(fit!==false); var s=document.getElementById('alc-lp'); if(s) s.value=ST.p||'_c'; }
@@ -251,8 +284,25 @@ function update(fit){
   var pk2=document.getElementById('alc-pick'); if(pk2&&!pk2.hidden) pickRender(true);
   document.getElementById('alc-leg').textContent=(EN()?'Launch: ':'Lanzamiento: ')+lp.n;
   document.getElementById('alc-tip').style.opacity=0;
-  summary(); cities(); countries(); fichas(); if(CUR.fxcv) fxUpd(false);
+  tgt(); summary(); cities(); nextc(); countries(); fichas();
 }
+// panel «¿Qué misiles llegan a…?» (viene de la pestaña Impacto) y tarjeta del paso 2
+function tgt(){ var el=document.getElementById('alc-tgt'); if(!el) return; var tp=tpos(); MAP.tgt=(ST.t&&ST.t.i!=null)?ST.t.i:null;
+  if(!tp){ el.hidden=true; el.innerHTML=''; return; } el.hidden=false;
+  var L2=D.m.map(function(m){ var hp=preset(m.home), d=dist(hp[3],hp[4],tp.lat,tp.lon); return {m:m,hp:hp,d:d}; }).filter(function(x){ return x.d<=x.m.r[1]; });
+  L2.sort(function(a,b){ return a.d-b.d; });
+  var lp=launch(), dl=dist(lp.lat,lp.lon,tp.lat,tp.lon), cur=sel().filter(function(m){ return dl<=m.r[1]; });
+  var lim=CUR.tmore?L2.length:6;
+  var h='<button type="button" class="tx" data-tx="1" aria-label="'+(EN()?'Close':'Cerrar')+'">×</button><h3>🎯 '+(EN()?'Which missiles reach ':'¿Qué misiles llegan a ')+'<b>'+e(tp.n)+'</b>?</h3>'+
+   '<div class="sub" style="font-size:12.5px">'+(L2.length?(EN()?L2.length+' of '+D.m.length+' missiles, each from its reference launch point in M.A.T (its country or usual base). Tap one to draw it on the map.':L2.length+' de '+D.m.length+' misiles, cada uno desde su punto de lanzamiento de referencia en M.A.T (su país o base habitual). Toca uno para dibujarlo en el mapa.'):(EN()?'None of the '+D.m.length+' missiles reaches it from its reference launch point.':'Ninguno de los '+D.m.length+' misiles llega desde su punto de lanzamiento de referencia.'))+'</div>';
+  if(L2.length) h+='<div class="tl">'+L2.slice(0,lim).map(function(x){ return '<button type="button" class="tr" data-tm="'+x.m.id+'">'+fl(x.m.pa)+'<b>'+e(x.m.n.split(' (')[0])+'</b><small>'+(EN()?'from ':'desde ')+e(EN()?x.hp[2]:x.hp[1])+' · '+km(x.d)+' · '+ftime(x.m,x.d)+'</small></button>'; }).join('')+'</div>'+(L2.length>lim?'<button type="button" class="more" data-tmore="1">'+(EN()?'Show all ':'Ver todos ')+'('+L2.length+')</button>':'');
+  h+='<p class="cur">'+(EN()?'From the current launch point (':'Desde el punto de lanzamiento actual (')+e(lp.n)+', '+km(dl)+'): '+(cur.length?cur.map(function(m){ return '<b>'+e(m.n.split(' (')[0])+'</b> '+ftime(m,dl); }).join(', '):(EN()?'none of the selected missiles reaches it.':'no llega ninguno de los misiles elegidos.'))+'</p>'+
+   '<a class="alc-nuk" href="'+impHref(ST.t.i!=null?ST.t.i:null,ST.t.ll)+'">💥 '+(EN()?'Back to the impact on ':'Volver al impacto en ')+e(tp.n)+'</a>';
+  el.innerHTML=h; }
+function nextc(){ var el=document.getElementById('alc-next'); if(!el) return; var tp=tpos(), mi=0; D.c.forEach(function(c,i){ if(c[0]==='Madrid') mi=i; });
+  var href=tp?impHref(ST.t.i!=null?ST.t.i:null,ST.t.ll):impHref(mi), nm=tp?tp.n:cn(D.c[mi]);
+  el.innerHTML='<div class="tx2"><b>② '+(EN()?'What would happen if it hit?':'¿Qué pasaría si impacta?')+'</b><br>'+(EN()?'Tap <b>💥 Simulate impact here</b> on any city above, or go straight to the Impact tab: effects of the detonation on the real street map.':'Toca <b>💥 Simular impacto aquí</b> en cualquier ciudad de la lista, o pasa directamente a la pestaña Impacto: efectos de la detonación sobre el callejero real.')+'</div><a class="btn" href="'+href+'">💥 '+(EN()?'Impact on ':'Impacto en ')+e(nm)+' ›</a>'; }
+
 function pickRender(keep){ var pk=document.getElementById('alc-pick'); if(!pk) return; var c=CUR.cat||'all', q=(CUR.q||'');
   if(!keep||!pk.querySelector('.plist')){
     pk.innerHTML='<div class="chips" id="alc-cats">'+CATS.map(function(k){ return '<button type="button" class="chip" data-cat="'+k[0]+'" aria-pressed="'+(k[0]===c)+'">'+e(EN()?k[2]:k[1])+'</button>'; }).join('')+'</div>'+
@@ -272,7 +322,7 @@ function toggle(id){ var i=ST.m.indexOf(id); if(i>=0) ST.m.splice(i,1); else { i
 function summary(){ var M=sel(), lp=launch(), el=document.getElementById('alc-sum'); if(!el) return;
   var mi=-1; D.c.forEach(function(c,i){ if(c[0]==='Madrid') mi=i; }); var md=CUR.dist[mi];
   var reach=M.filter(function(m){ return md<=m.r[1]; });
-  var h='<div class="mad">📍 <b>Madrid</b> · '+km(md)+(EN()?' from ':' desde ')+e(lp.n)+'<br>'+(M.length?(reach.length?(EN()?'Within range of: ':'Al alcance de: ')+reach.map(function(m){ var i=ST.m.indexOf(m.id); return '<span class="bd'+(md>m.r[0]?' o':'')+'" style="border-color:'+COL[i]+';background:'+COL[i]+'22;color:'+COL[i]+'">'+e(m.n.split(' (')[0])+' · '+ftime(m,md)+'</span>'; }).join(''):(EN()?'Out of range of the selected missiles.':'Fuera del alcance de los misiles elegidos.')):'')+'</div>';
+  var h='<div class="mad">📍 <b>Madrid</b> · '+km(md)+(EN()?' from ':' desde ')+e(lp.n)+'<br>'+(M.length?(reach.length?(EN()?'Within range of: ':'Al alcance de: ')+reach.map(function(m){ var i=ST.m.indexOf(m.id); return '<span class="bd'+(md>m.r[0]?' o':'')+'" style="border-color:'+COL[i]+';background:'+COL[i]+'22;color:'+COL[i]+'">'+e(m.n.split(' (')[0])+' · '+ftime(m,md)+'</span>'; }).join(''):(EN()?'Out of range of the selected missiles.':'Fuera del alcance de los misiles elegidos.')):'')+'<br><a class="alc-nuk" data-ci="'+mi+'" href="'+impHref(mi)+'">💥 '+(EN()?'Simulate impact on Madrid':'Simular impacto en Madrid')+'</a></div>';
   h+='<div class="cards">'+M.map(function(m,i){ var n=0,ne=0; CUR.dist.forEach(function(d,j){ if(d<=m.r[1]){ n++; if(D.c[j][2]==='es') ne++; } });
     return '<div class="sc" style="border-left-color:'+COL[i]+'"><div class="t">'+fl(m.pa)+e(m.n)+'</div><div class="d">'+(EN()?'Range ':'Alcance ')+'<b>'+rng(m)+'</b> · '+e(L(GS[m.g]))+'</div><div class="d"><b>'+n+'</b> '+(EN()?'cities in range':'ciudades al alcance')+' ('+(EN()?'Spain: ':'España: ')+'<b>'+ne+'</b>)'+(m.air?' · '+(EN()?'from the release point':'desde el punto de suelta'):'')+'</div></div>'; }).join('')+'</div>';
   h+='<button type="button" class="btn" data-copy="1" style="width:100%">🔗 '+(EN()?'Copy link to this map':'Copiar enlace a este mapa')+'</button>';
@@ -289,7 +339,7 @@ function cities(){ var el=document.getElementById('alc-cities'); if(!el) return;
   if(!tot) h+='<p class="sub">'+(EN()?'No major city falls within the selected ranges.':'Ninguna ciudad importante queda dentro de los alcances elegidos.')+'</p>';
   else h+='<table><thead><tr><th>'+(EN()?'City':'Ciudad')+'</th><th style="text-align:right">'+(EN()?'Distance':'Distancia')+'</th></tr></thead><tbody>'+shown.map(function(i){ var c=D.c[i], d=CUR.dist[i];
     var bs=M.map(function(m,j){ return badge(m,j,d); }).join('');
-    return '<tr><td>'+fl(c[2])+'<b>'+e(cn(c))+'</b>'+(c[2]!=='es'?' <span class="no">'+e(cname(c[2]))+'</span>':'')+'<br>'+(bs||'<span class="no">'+(EN()?'out of range':'fuera de alcance')+'</span>')+'<br><a class="alc-nuk" href="#/guerra-nuclear?c='+nuks(c)+'" style="display:inline-block;margin-top:4px;font-size:12.5px;color:#ff9c8a;border:1px solid #6a2a24;border-radius:999px;padding:3px 10px;text-decoration:none">💥 '+(EN()?'Simulate impact here':'Simular impacto aquí')+'</a></td><td class="n">'+km(d)+'</td></tr>'; }).join('')+'</tbody></table>';
+    return '<tr><td>'+fl(c[2])+'<b>'+e(cn(c))+'</b>'+(c[2]!=='es'?' <span class="no">'+e(cname(c[2]))+'</span>':'')+'<br>'+(bs||'<span class="no">'+(EN()?'out of range':'fuera de alcance')+'</span>')+'<br><a class="alc-nuk" data-ci="'+i+'" href="'+impHref(i)+'">💥 '+(EN()?'Simulate impact here':'Simular impacto aquí')+'</a></td><td class="n">'+km(d)+'</td></tr>'; }).join('')+'</tbody></table>';
   if(tot>lim) h+='<button type="button" class="more" data-more="1">'+(EN()?'Show all ':'Ver todas ')+'('+tot+')</button>';
   h+='<p class="sub" style="font-size:12px;margin-top:8px">'+(EN()?'Times are rough estimates (see “How it is calculated”). Dashed badge = only within the highest range estimate.':'Los tiempos son estimaciones orientativas (ver «Cómo se calcula»). Etiqueta discontinua = solo dentro de la estimación de alcance más alta.')+'</p>';
   el.innerHTML=h; }
@@ -314,104 +364,29 @@ function ficha(m,i){ var lp=launch(), hp=preset(m.home);
    '<div class="src">'+(EN()?'Sources: ':'Fuentes: ')+m.src.map(function(s){ return '<a href="'+e(s.u)+'" target="_blank" rel="noopener">'+e(s.t)+'</a>'; }).join(' · ')+'</div></div>'; }
 function fichas(){ var el=document.getElementById('alc-fichas'); if(!el) return; var M=sel(); el.innerHTML=M.length?M.map(ficha).join(''):'<p class="sub">'+(EN()?'Add a missile to see its profile.':'Añade un misil para ver su ficha.')+'</p>'; }
 function meta(){ var el=document.getElementById('alc-meta'); if(!el) return; var U={}, lst=[];
-  D.m.forEach(function(m){ m.src.forEach(function(s){ if(!U[s.u]){ U[s.u]=1; lst.push(s); } }); }); D.fx.y.forEach(function(y){ var s=y[4]; if(!U[s.u]){ U[s.u]=1; lst.push(s); } }); D.fx.src.concat([{t:'Union of Concerned Scientists — ICBMs are unnecessary (tiempo de vuelo de unos 30 minutos)',u:'https://www.ucs.org/about/news/icbms-are-unnecessary-according-union-concerned-scientists'}]).forEach(function(s){ if(!U[s.u]){ U[s.u]=1; lst.push(s); } });
+  D.m.forEach(function(m){ m.src.forEach(function(s){ if(!U[s.u]){ U[s.u]=1; lst.push(s); } }); }); [{t:'Union of Concerned Scientists — ICBMs are unnecessary (tiempo de vuelo de unos 30 minutos)',u:'https://www.ucs.org/about/news/icbms-are-unnecessary-according-union-concerned-scientists'}].forEach(function(s){ if(!U[s.u]){ U[s.u]=1; lst.push(s); } });
   var cs=lst.filter(function(s){return /csis/.test(s.u);}), ot=lst.filter(function(s){return !/csis/.test(s.u);});
   function li(s){ return '<li><a href="'+e(s.u)+'" target="_blank" rel="noopener">'+e(s.t)+'</a></li>'; }
-  el.innerHTML='<h2>'+(EN()?'How it is calculated':'Cómo se calcula')+'</h2>'+
-  '<details class="mt"><summary>'+(EN()?'Method, assumptions and limits':'Método, supuestos y límites')+'</summary>'+
-  (EN()?'<p><b>Range rings.</b> Each ring is the set of points at exactly the stated range from the launch point, measured as a great-circle (geodesic) distance on a sphere of radius 6,371 km (difference from the real ellipsoid: under 0.5%). The map uses an azimuthal equidistant projection centred on the launch point, so rings are drawn as true circles. When sources disagree, the solid ring is the highest figure and the dashed ring the lowest; the band between them is the uncertainty zone.</p><p><b>Cities and countries.</b> A city is “in range” if its distance is less than or equal to the range. Countries count if any point of their outline is inside the largest ring.</p><p><b>Flight times (rough estimates by M.A.T).</b> Ballistic missiles: time of a minimum-energy ballistic trajectory between two points on the surface (Kepler’s laws, no atmosphere or Earth rotation), without the boost phase (about 1–5 minutes depending on the missile). Real missiles can fly flatter (depressed) or higher (lofted) trajectories, which change the time. Cruise, glide and hypersonic missiles: distance divided by the speed given by the sources (Mach ≈ 1,100 km/h at altitude); for subsonic missiles with no published speed, 800–900 km/h is assumed. For air-launched missiles the range and time are counted from the release point; the aircraft can fly a long way before launching.</p><p><b>What this tool does not do.</b> It does not model defences, accuracy, warhead effects, terrain or missile routing (cruise missiles do not fly in a straight line). It is not a targeting tool: it is an educational map based on public data.</p>':
-  '<p><b>Anillos de alcance.</b> Cada anillo es el conjunto de puntos que están exactamente a la distancia del alcance indicado desde el punto de lanzamiento, medida como distancia ortodrómica (geodésica) sobre una esfera de 6.371 km de radio (diferencia con el elipsoide real: menos del 0,5 %). El mapa usa una proyección azimutal equidistante centrada en el punto de lanzamiento, por eso los anillos se dibujan como círculos reales. Cuando las fuentes discrepan, el anillo continuo es la cifra más alta y el discontinuo la más baja; la franja entre ambos es la zona de incertidumbre.</p><p><b>Ciudades y países.</b> Una ciudad está «al alcance» si su distancia es menor o igual que el alcance. Un país cuenta si algún punto de su contorno queda dentro del mayor anillo.</p><p><b>Tiempos de vuelo (estimaciones orientativas de M.A.T).</b> Misiles balísticos: tiempo de una trayectoria balística de mínima energía entre dos puntos de la superficie (leyes de Kepler, sin atmósfera ni rotación terrestre), sin contar la fase propulsada (entre 1 y 5 minutos según el misil). Los misiles reales pueden volar trayectorias más tendidas (deprimidas) o más altas (elevadas), que cambian el tiempo. Misiles de crucero, de planeo e hipersónicos: distancia dividida entre la velocidad que dan las fuentes (Mach ≈ 1.100 km/h en altura); en los subsónicos sin velocidad publicada se suponen 800-900 km/h. En los lanzados desde avión, alcance y tiempo se cuentan desde el punto de suelta; el avión puede volar muy lejos antes de lanzar.</p><p><b>Lo que esta herramienta no hace.</b> No modela defensas, precisión, efectos de la cabeza de guerra, relieve ni rutas (los misiles de crucero no vuelan en línea recta). No es una herramienta de designación de blancos: es un mapa divulgativo basado en datos públicos.</p>')+
-  (EN()?'<p><b>Check on flight times.</b> The model gives about 30–33 minutes for 9,000–10,000 km, in line with the roughly 30-minute flight time of an intercontinental ballistic missile cited by the Union of Concerned Scientists.</p><p><b>Nuclear effects simulator.</b> Blast rings: distances for 1 megaton from the U.S. Congress Office of Technology Assessment (OTA, <i>The Effects of Nuclear War</i>, 1979): air burst at 8,000 ft, table 3 (20 psi 1.3 km, 10 psi 4.8 km, 5 psi 7.0 km, 3 psi 9.5 km, 1 psi 18.6 km; 12 and 2 psi interpolated by M.A.T); surface burst, Detroit case (12 psi 2.7 km, 5 psi 4.4 km, 2 psi 7.6 km; 1 psi ≈11.8 km measured on its figure 4). Other yields use the cube-root scaling law (Glasstone & Dolan, ch. 3). Fireball: maximum radius ≈ twice the breakaway radius, 100·W<sup>0.4</sup> ft in the air and 145·W<sup>0.4</sup> ft on the surface (Glasstone & Dolan §2.127). Third-degree burns: 8 km for 1 Mt on a clear day (OTA), scaled with W<sup>0.41</sup>, an approximation that allows for atmospheric attenuation (thermal range is smaller for surface bursts and in haze, rain or cloud). Casualties: population of the built-up urban area (Demographia World Urban Areas 2025) spread uniformly over a circle of the same area centred on the city, multiplied by the OTA fractions (figure 1): over 12 psi 98% killed and 2% injured; 5–12 psi 50% killed and 40% injured; 2–5 psi 5% killed and 45% injured; 1–2 psi 25% injured. The result is shown as a ±30% range and rounded. It ignores fallout, fires, radiation and the actual layout of the city.</p>':'<p><b>Comprobación de los tiempos.</b> El modelo da unos 30-33 minutos para 9.000-10.000 km, en línea con los unos 30 minutos de vuelo de un misil intercontinental que cita la Union of Concerned Scientists.</p><p><b>Simulador de efectos nucleares.</b> Anillos de la onda expansiva: distancias para 1 megatón de la Oficina de Evaluación Tecnológica del Congreso de EE. UU. (OTA, <i>The Effects of Nuclear War</i>, 1979): explosión aérea a 8.000 pies, tabla 3 (20 psi 1,3 km; 10 psi 4,8 km; 5 psi 7,0 km; 3 psi 9,5 km; 1 psi 18,6 km; 12 y 2 psi interpolados por M.A.T); explosión en superficie, caso de Detroit (12 psi 2,7 km; 5 psi 4,4 km; 2 psi 7,6 km; 1 psi ≈11,8 km medido sobre su figura 4). Para otras potencias se aplica la ley de escala de la raíz cúbica (Glasstone y Dolan, cap. 3). Bola de fuego: radio máximo ≈ el doble del radio de «breakaway», 100·W<sup>0,4</sup> pies en el aire y 145·W<sup>0,4</sup> pies en superficie (Glasstone y Dolan §2.127). Quemaduras de tercer grado: 8 km para 1 Mt en un día despejado (OTA), escalado con W<sup>0,41</sup>, aproximación que tiene en cuenta la atenuación atmosférica (el alcance térmico es menor en superficie y con bruma, lluvia o nubes). Víctimas: población del área urbana construida (Demographia World Urban Areas 2025) repartida uniformemente en un círculo de la misma superficie centrado en la ciudad, multiplicada por las fracciones de la OTA (figura 1): más de 12 psi, 98 % muertos y 2 % heridos; 5-12 psi, 50 % muertos y 40 % heridos; 2-5 psi, 5 % muertos y 45 % heridos; 1-2 psi, 25 % heridos. El resultado se da como intervalo ±30 % y redondeado. No tiene en cuenta lluvia radiactiva, incendios, radiación ni la forma real de la ciudad.</p>')+'</details>'+
-  '<h2>'+(EN()?'Sources':'Fuentes')+' · '+lst.length+'</h2>'+
+  el.innerHTML=
+  (EN()?'<p><b>Range rings.</b> Each ring is the set of points at exactly the stated range from the launch point, measured as a great-circle (geodesic) distance on a sphere of radius 6,371 km (difference from the real ellipsoid: under 0.5%). The map uses an azimuthal equidistant projection centred on the launch point, so rings are drawn as true circles. When sources disagree, the solid ring is the highest figure and the dashed ring the lowest; the band between them is the uncertainty zone.</p><p><b>Cities and countries.</b> A city is “in range” if its distance is less than or equal to the range. Countries count if any point of their outline is inside the largest ring.</p><p><b>Flight times (rough estimates by M.A.T).</b> Ballistic missiles: time of a minimum-energy ballistic trajectory between two points on the surface (Kepler’s laws, no atmosphere or Earth rotation), without the boost phase (about 1–5 minutes depending on the missile). Real missiles can fly flatter (depressed) or higher (lofted) trajectories, which change the time. Cruise, glide and hypersonic missiles: distance divided by the speed given by the sources (Mach ≈ 1,100 km/h at altitude); for subsonic missiles with no published speed, 800–900 km/h is assumed. For air-launched missiles the range and time are counted from the release point; the aircraft can fly a long way before launching.</p><p><b>What this tool does not do.</b> It does not model defences, accuracy, terrain or missile routing (cruise missiles do not fly in a straight line). It is not a targeting tool: it is an educational map based on public data. Detonation effects are in step ② Impact.</p>':
+  '<p><b>Anillos de alcance.</b> Cada anillo es el conjunto de puntos que están exactamente a la distancia del alcance indicado desde el punto de lanzamiento, medida como distancia ortodrómica (geodésica) sobre una esfera de 6.371 km de radio (diferencia con el elipsoide real: menos del 0,5 %). El mapa usa una proyección azimutal equidistante centrada en el punto de lanzamiento, por eso los anillos se dibujan como círculos reales. Cuando las fuentes discrepan, el anillo continuo es la cifra más alta y el discontinuo la más baja; la franja entre ambos es la zona de incertidumbre.</p><p><b>Ciudades y países.</b> Una ciudad está «al alcance» si su distancia es menor o igual que el alcance. Un país cuenta si algún punto de su contorno queda dentro del mayor anillo.</p><p><b>Tiempos de vuelo (estimaciones orientativas de M.A.T).</b> Misiles balísticos: tiempo de una trayectoria balística de mínima energía entre dos puntos de la superficie (leyes de Kepler, sin atmósfera ni rotación terrestre), sin contar la fase propulsada (entre 1 y 5 minutos según el misil). Los misiles reales pueden volar trayectorias más tendidas (deprimidas) o más altas (elevadas), que cambian el tiempo. Misiles de crucero, de planeo e hipersónicos: distancia dividida entre la velocidad que dan las fuentes (Mach ≈ 1.100 km/h en altura); en los subsónicos sin velocidad publicada se suponen 800-900 km/h. En los lanzados desde avión, alcance y tiempo se cuentan desde el punto de suelta; el avión puede volar muy lejos antes de lanzar.</p><p><b>Lo que esta herramienta no hace.</b> No modela defensas, precisión, relieve ni rutas (los misiles de crucero no vuelan en línea recta). No es una herramienta de designación de blancos: es un mapa divulgativo basado en datos públicos. Los efectos de la detonación están en el paso ② Impacto.</p>')+
+  (EN()?'<p><b>Check on flight times.</b> The model gives about 30–33 minutes for 9,000–10,000 km, in line with the roughly 30-minute flight time of an intercontinental ballistic missile cited by the Union of Concerned Scientists.</p>':'<p><b>Comprobación de los tiempos.</b> El modelo da unos 30-33 minutos para 9.000-10.000 km, en línea con los unos 30 minutos de vuelo de un misil intercontinental que cita la Union of Concerned Scientists.</p>')+
+  '<h3 style="font-size:15px;margin:12px 0 4px">'+(EN()?'Sources':'Fuentes')+' · '+lst.length+'</h3>'+
   '<details class="mt"><summary>'+(EN()?'All sources used':'Todas las fuentes usadas')+' ('+lst.length+')</summary>'+
   '<p><b>CSIS Missile Threat</b> — Center for Strategic and International Studies, Missile Defense Project (missilethreat.csis.org). '+cs.length+(EN()?' entries:':' fichas:')+'</p><ul class="srcl">'+cs.map(li).join('')+'</ul>'+
   '<p><b>'+(EN()?'Official sources, manufacturers and other references':'Fuentes oficiales, fabricantes y otras referencias')+'</b></p><ul class="srcl">'+ot.map(li).join('')+'</ul>'+
   '<p><b>'+(EN()?'Map and cities':'Mapa y ciudades')+'</b></p><ul class="srcl"><li><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a> — '+(EN()?'1:50m country outlines and 1:10m populated places (public domain). City selection: national capitals, cities over 3 million, large European and Mediterranean cities and every Spanish city over ~140,000 inhabitants plus provincial capitals and Ceuta, Melilla, Cartagena and Rota.':'contornos de países 1:50m y núcleos de población 1:10m (dominio público). Selección de ciudades: capitales nacionales, ciudades de más de 3 millones, grandes ciudades europeas y mediterráneas y todas las españolas de más de unos 140.000 habitantes, más capitales de provincia, Ceuta, Melilla, Cartagena y Rota.')+'</li></ul>'+
   '<p class="sub" style="font-size:12px">'+(EN()?'Figures checked against the sources on ':'Cifras comprobadas en las fuentes el ')+e(D.upd||'')+'. '+(EN()?'Neutral, informational content: M.A.T does not make its own range estimates.':'Contenido neutral y divulgativo: M.A.T no hace estimaciones propias de alcance.')+'</p></details>'; }
 
-// ---------- simulador de efectos nucleares (divulgativo) ----------
-function sig2(n){ if(n<=0) return '0'; var p=Math.pow(10,Math.floor(Math.log10(n))-1); return Math.round(n/p)*p; }
-function people(n){ n=sig2(n); if(n>=1e6) return (EN()?(n/1e6).toFixed(n>=1e7?0:1):String((n/1e6).toFixed(n>=1e7?0:1)).replace('.',','))+(EN()?' million':' millones'); return nf(n); }
-function ykt(y){ return y>=1000?(String(+(y/1000).toFixed(y>=10000?0:2)).replace('.',EN()?'.':',')+' Mt'):(String(+y.toFixed(y<1?2:(y<10?1:0))).replace('.',EN()?'.':',')+' kt'); }
-function fxRadii(y,b){ var F=D.fx, s=Math.cbrt(y/1000), B=b==='surf'?F.surf:F.air, R=[];
-  var fb=(b==='surf'?290:200)*Math.pow(y,0.4)*0.0003048;
-  R.push({k:'fb',r:fb,c:'#ffd34d',t:['Bola de fuego (radio máximo)','Fireball (maximum radius)'],d:['Todo lo que hay dentro se vaporiza o arde.','Everything inside is vaporised or burned.']});
-  if(B.p20) R.push({k:'p20',r:B.p20*s,c:'#b3261e',t:['Onda expansiva 20 psi','Blast 20 psi'],d:['Arrasa estructuras de hormigón armado (OTA).','Levels reinforced-concrete structures (OTA).']});
-  R.push({k:'p12',r:B.p12*s,c:'#e8452c',t:['Onda expansiva 12 psi','Blast 12 psi'],d:['Destrucción casi total; mueren casi todos (98 % en el modelo OTA).','Near-total destruction; almost everyone killed (98% in the OTA model).']});
-  R.push({k:'p5',r:B.p5*s,c:'#f08a24',t:['Onda expansiva 5 psi','Blast 5 psi'],d:['Se derrumban las viviendas típicas y los edificios ligeros (OTA).','Typical homes and light buildings collapse (OTA).']});
-  R.push({k:'th',r:F.th3*Math.pow(y/1000,0.41),c:'#ffb000',dash:1,t:['Quemaduras de tercer grado','Third-degree burns'],d:['Radiación térmica en un día despejado, personas al descubierto.','Thermal radiation on a clear day, people in the open.']});
-  R.push({k:'p2',r:B.p2*s,c:'#c7a27a',t:['Onda expansiva 2 psi','Blast 2 psi'],d:['Daños graves en viviendas; heridos por escombros.','Severe damage to homes; injuries from debris.']});
-  R.push({k:'p1',r:B.p1*s,c:'#8fb3c9',t:['Onda expansiva 1 psi','Blast 1 psi'],d:['Rotura de cristales; heridos por cristales y objetos lanzados (OTA).','Windows shattered; injuries from glass and flying objects (OTA).']});
-  R.forEach(function(x){ x.r=Math.round(x.r*1000)/1000; }); return R; }
-function fxCas(c,R){ if(!c[7]) return null; var P0=c[7][0], A=c[7][1], ru=Math.sqrt(A/PI), rho=P0/A;
-  function rr(k){ for(var i=0;i<R.length;i++) if(R[i].k===k) return R[i].r; return 0; }
-  var e=[0,rr('p12'),rr('p5'),rr('p2'),rr('p1')], F=D.fx.fr, dead=0, inj=0;
-  for(var i=0;i<4;i++){ var a=Math.min(e[i],ru), b=Math.min(e[i+1],ru), pop=rho*PI*(b*b-a*a); dead+=pop*F[i][0]/100; inj+=pop*F[i][1]/100; }
-  return {dead:dead,inj:inj,pop:P0,area:A,ru:ru}; }
-function fxTargets(){ var L2=[]; D.c.forEach(function(c,i){ if(c[7]) L2.push(i); }); L2.sort(function(a,b){ var A=D.c[a],B=D.c[b]; if((A[2]==='es')!==(B[2]==='es')) return A[2]==='es'?-1:1; return cn(A).localeCompare(cn(B)); }); return L2; }
-function fxInit(){ var el=document.getElementById('alc-fx'); if(!el) return; var F=CUR.fx;
-  var T2=fxTargets();
-  el.innerHTML='<a class="btn alc-nuc2" href="#/guerra-nuclear" style="display:inline-flex;min-height:42px;margin:4px 0 8px;border-color:#a2402f;color:#ffd9cf;text-decoration:none">💥 '+(EN()?'Open the full simulator (real street map, more effects)':'Abrir el simulador completo (callejero real, más efectos)')+' ›</a>'+'<p class="sub" style="font-size:13.5px;color:#cfd1cd">'+(EN()?'What would a single nuclear detonation do to a city? Choose a target and a yield (presets are real warheads with sourced yields). Rings follow the classic scaling laws; casualties use the simple U.S. Congress (OTA, 1979) model.':'¿Qué haría una sola detonación nuclear sobre una ciudad? Elige objetivo y potencia (los preajustes son cabezas reales con potencias citadas). Los anillos siguen las leyes de escala clásicas; las víctimas, el modelo sencillo del Congreso de EE. UU. (OTA, 1979).')+'</p>'+
-   '<div class="lrow"><label for="alc-tg" style="font-size:13px;color:var(--mu)">'+(EN()?'Target':'Objetivo')+'</label><select class="sel" id="alc-tg">'+T2.map(function(i){ var c=D.c[i]; return '<option value="'+i+'"'+(i===F.t?' selected':'')+'>'+e(cn(c))+(c[2]!=='es'?' ('+e(cname(c[2]))+')':'')+'</option>'; }).join('')+'</select><button type="button" class="btn" id="alc-tgmap" style="min-height:40px;font-size:13px">🎯 '+(EN()?'Pick on the map':'Elegir en el mapa')+'</button></div>'+
-   '<div style="font-size:13px;color:var(--mu);margin:4px 0">'+(EN()?'Yield':'Potencia')+': <b id="alc-yv" style="color:var(--tx)"></b> <span id="alc-yn" class="no"></span></div>'+
-   '<div class="chips" id="alc-ych">'+D.fx.y.map(function(y){ return '<button type="button" class="chip" data-y="'+y[3]+'" data-yid="'+y[0]+'">'+e(EN()?y[2]:y[1])+' · '+ykt(y[3])+'</button>'; }).join('')+'</div>'+
-   '<input type="range" id="alc-ys" min="0" max="1000" step="1" aria-label="'+(EN()?'Yield':'Potencia')+'" style="width:100%;height:32px;padding:0;margin:6px 0;background:transparent;border:0;accent-color:#e8452c">'+
-   '<div class="tabs" style="flex-wrap:wrap"><button type="button" class="chip" data-b="air">'+(EN()?'Air burst':'Explosión aérea')+'</button><button type="button" class="chip" data-b="surf">'+(EN()?'Surface burst':'Explosión en superficie')+'</button><button type="button" class="btn" id="alc-det" style="margin-left:auto;min-height:36px;font-size:13px;border-color:#7a3b37">'+(EN()?'▶ Detonate':'▶ Detonar')+'</button></div>'+
-   '<div class="mapw" style="touch-action:auto"><canvas id="alc-fxc" aria-label="'+(EN()?'Effects map':'Mapa de efectos')+'"></canvas><div class="mleg" id="alc-fxl" style="top:8px;bottom:auto;right:8px"></div></div>'+
-   '<div id="alc-fxo"></div>';
-  var ys=el.querySelector('#alc-ys'); function y2s(y){ return Math.round((Math.log10(y)+1)/(Math.log10(50000)+1)*1000); } function s2y(s){ var v=Math.pow(10,s/1000*(Math.log10(50000)+1)-1); return v<10?Math.round(v*10)/10:(v<1000?Math.round(v):Math.round(v/10)*10); }
-  ys.value=y2s(F.y);
-  ys.addEventListener('input',function(){ F.y=s2y(+ys.value); F.yid=null; fxUpd(false); });
-  el.querySelector('#alc-ych').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y]'); if(!b) return; F.y=+b.getAttribute('data-y'); F.yid=b.getAttribute('data-yid'); ys.value=y2s(F.y); fxUpd(true); });
-  el.querySelector('.tabs').addEventListener('click',function(ev){ var b=ev.target.closest('[data-b]'); if(b){ F.b=b.getAttribute('data-b'); fxUpd(true); } });
-  el.querySelector('#alc-det').addEventListener('click',function(){ fxUpd(true); });
-  el.querySelector('#alc-tg').addEventListener('change',function(ev){ F.t=+ev.target.value; fxUpd(true); });
-  el.querySelector('#alc-tgmap').addEventListener('click',function(){ CUR.pickT=true; toast(EN()?'Tap the map above to choose the target city':'Toca el mapa de arriba para elegir la ciudad objetivo'); try{ document.getElementById('alc-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} });
-  var cv=el.querySelector('#alc-fxc'); CUR.fxcv=cv;
-  fxUpd(true); }
-function fxPick(ll){ var best=-1,bd=1e9; D.c.forEach(function(c,i){ if(!c[7]) return; var d=dist(ll[0],ll[1],c[3],c[4]); if(d<bd){ bd=d; best=i; } }); if(best<0) return; CUR.fx.t=best; var s=document.getElementById('alc-tg'); if(s) s.value=best; fxUpd(true); toast((EN()?'Target: ':'Objetivo: ')+cn(D.c[best])); try{ document.getElementById('alc-fx').scrollIntoView({behavior:'smooth',block:'start'}); }catch(x){} }
-function fxUpd(anim){ var F=CUR.fx, el=document.getElementById('alc-fx'); if(!el) return; var c=D.c[F.t];
-  el.querySelector('#alc-yv').textContent=ykt(F.y);
-  var yp=null; D.fx.y.forEach(function(y){ if(y[0]===F.yid) yp=y; }); el.querySelector('#alc-yn').textContent=yp?'— '+(EN()?yp[2]:yp[1]):'';
-  [].forEach.call(el.querySelectorAll('[data-yid]'),function(b){ b.setAttribute('aria-pressed',b.getAttribute('data-yid')===F.yid); });
-  [].forEach.call(el.querySelectorAll('[data-b]'),function(b){ b.setAttribute('aria-pressed',b.getAttribute('data-b')===F.b); });
-  var R=fxRadii(F.y,F.b), cs=fxCas(c,R), lp=launch(), d=dist(lp.lat,lp.lon,c[3],c[4]);
-  var M=sel(), h='';
-  h+='<div class="mad">🎯 <b>'+e(cn(c))+'</b> · '+km(d)+(EN()?' from ':' desde ')+e(lp.n)+'<br>'+(M.length?M.map(function(m,i){ var ok=d<=m.r[1]; return '<span class="bd'+(ok&&d>m.r[0]?' o':'')+'" style="border-color:'+COL[i]+';background:'+(ok?COL[i]+'22':'transparent')+';color:'+(ok?COL[i]:'var(--dim)')+'">'+e(m.n.split(' (')[0])+' · '+(ok?ftime(m,d):(EN()?'out of range':'fuera de alcance'))+(ok&&m.wh==='conv'?' · '+(EN()?'conventional only':'solo convencional'):'')+'</span>'; }).join(''):'')+'</div>';
-  h+='<table><thead><tr><th>'+(EN()?'Effect':'Efecto')+'</th><th style="text-align:right">'+(EN()?'Radius':'Radio')+'</th></tr></thead><tbody>'+R.map(function(x){ return '<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+x.c+';margin-right:6px"></span><b>'+e(L(x.t))+'</b><br><span class="no" style="font-size:12.5px">'+e(L(x.d))+'</span></td><td class="n">'+(x.r<1?String(Math.round(x.r*1000))+' m':String(x.r.toFixed(x.r<10?1:0)).replace('.',EN()?'.':',')+' km')+'<br><span class="no">'+String(+(PI*x.r*x.r).toFixed(PI*x.r*x.r<10?1:0)).replace('.',EN()?'.':',')+' km²</span></td></tr>'; }).join('')+'</tbody></table>';
-  if(cs){ var lo=0.7, hi=1.3;
-    h+='<div class="sc" style="border-left-color:#b3261e;margin-top:12px"><div class="t">'+(EN()?'Rough casualty estimate':'Estimación muy aproximada de víctimas')+'</div>'+
-      '<div class="d">'+(EN()?'Deaths: ':'Muertos: ')+'<b>'+people(cs.dead*lo)+' – '+people(cs.dead*hi)+'</b></div><div class="d">'+(EN()?'Injured: ':'Heridos: ')+'<b>'+people(cs.inj*lo)+' – '+people(cs.inj*hi)+'</b></div>'+
-      '<div class="d" style="font-size:12px">'+(EN()?'Urban area: ':'Área urbana: ')+people(cs.pop)+(EN()?' people on ':' habitantes en ')+nf(cs.area)+' km² (Demographia 2025). '+(EN()?'Range = model result ±30%.':'Intervalo = resultado del modelo ±30 %.')+'</div></div>';
-  } else h+='<p class="sub">'+(EN()?'No urban population data for this city.':'Sin datos de población urbana para esta ciudad.')+'</p>';
-  h+='<div class="note">'+(EN()?'<b>Educational, very rough simulation.</b> Real effects depend on the time of day, weather, terrain, shelters, building types and burst height. It does not include radioactive fallout, firestorms, initial radiation or long-term effects, which would add many more victims. Method and sources in “How it is calculated”.':'<b>Simulación divulgativa y muy aproximada.</b> Los efectos reales dependen de la hora, el clima, el relieve, los refugios, el tipo de edificios y la altura de la explosión. No incluye lluvia radiactiva, tormentas de fuego, radiación inicial ni efectos a largo plazo, que añadirían muchas más víctimas. Método y fuentes en «Cómo se calcula».')+'</div>';
-  el.querySelector('#alc-fxo').innerHTML=h;
-  fxDraw(c,R,cs,anim); }
-function fxDraw(c,R,cs,anim){ var cv=CUR.fxcv; if(!cv) return; var wrap=cv.parentNode, w=wrap.clientWidth||320, hh=Math.round(Math.min(w*0.85,520)), dpr=Math.min(window.devicePixelRatio||1,2);
-  cv.style.height=hh+'px'; cv.width=Math.round(w*dpr); cv.height=Math.round(hh*dpr); var ctx=cv.getContext('2d');
-  var lat0=c[3], lon0=c[4], kx=111.32*Math.cos(lat0*RAD), ky=110.57, rmax=0; R.forEach(function(x){ if(x.r>rmax) rmax=x.r; }); if(cs) rmax=Math.max(rmax,cs.ru);
-  var vr=rmax*1.18, k=Math.min(w,hh)/2/vr, cx=w/2, cy=hh/2;
-  function P(lat,lon){ var dl=lon-lon0; if(dl>180) dl-=360; if(dl<-180) dl+=360; return [cx+dl*kx*k, cy-(lat-lat0)*ky*k]; }
-  var dlat=vr*1.6/ky, dlon=vr*1.6/Math.max(kx,1);
-  var land=new Path2D();
-  W.forEach(function(cc){ cc.R.forEach(function(a){ var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for(var i=0;i<a.length;i+=2){ var dx=((a[i]-lon0+540)%360)-180; if(dx<x0)x0=dx; if(dx>x1)x1=dx; if(a[i+1]<y0)y0=a[i+1]; if(a[i+1]>y1)y1=a[i+1]; } if(x1<-dlon||x0>dlon||y1<lat0-dlat||y0>lat0+dlat||x1-x0>300) return; var p=new Path2D(); for(var j=0;j<a.length;j+=2){ var q=P(a[j+1],a[j]); if(j) p.lineTo(q[0],q[1]); else p.moveTo(q[0],q[1]); } p.closePath(); land.addPath(p); }); });
-  var t0=performance.now(), dur=anim?1700:0;
-  function frame(now){ var t=dur?Math.min(1,(now-t0)/dur):1;
-    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.fillStyle='#0d1820'; ctx.fillRect(0,0,w,hh); ctx.fillStyle='#262d24'; ctx.fill(land); ctx.lineWidth=0.8; ctx.strokeStyle='#4a5641'; ctx.stroke(land);
-    if(cs){ ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(230,225,205,.55)'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.arc(cx,cy,cs.ru*k,0,7); ctx.stroke(); ctx.setLineDash([]); }
-    var S2=R.slice().sort(function(a,b){ return b.r-a.r; });
-    S2.forEach(function(x,i){ var idx=R.indexOf(x), st=idx/(R.length+2), tt=Math.max(0,Math.min(1,(t-st*0.5)/(1-st*0.5))), ez=1-Math.pow(1-tt,3), r=x.r*k*ez; if(r<=0) return;
-      ctx.beginPath(); ctx.arc(cx,cy,r,0,7); if(!x.dash){ ctx.globalAlpha=x.k==='fb'?0.85:0.22; ctx.fillStyle=x.c; ctx.fill(); ctx.globalAlpha=1; }
-      ctx.lineWidth=x.dash?2:1.6; ctx.strokeStyle=x.c; if(x.dash) ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]); });
-    // ciudades cercanas
-    ctx.font='600 11px -apple-system,Segoe UI,Roboto,Arial,sans-serif'; ctx.lineJoin='round'; ctx.textBaseline='middle';
-    D.c.forEach(function(o){ var q=P(o[3],o[4]); if(q[0]<4||q[0]>w-4||q[1]<4||q[1]>hh-4) return; ctx.beginPath(); ctx.arc(q[0],q[1],o===c?3.5:2.2,0,7); ctx.fillStyle='#fff'; ctx.fill(); var tx=cn(o); ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)'; ctx.strokeText(tx,q[0]+6,q[1]-8); ctx.fillStyle='#fff'; ctx.fillText(tx,q[0]+6,q[1]-8); });
-    // escala
-    var sb=[0.5,1,2,5,10,20,50,100,200], L3=sb[0]; for(var i=0;i<sb.length;i++) if(sb[i]*k<w*0.28) L3=sb[i];
-    ctx.fillStyle='rgba(8,10,12,.75)'; ctx.fillRect(8,hh-30,L3*k+16,22); ctx.strokeStyle='#ddd'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(16,hh-14); ctx.lineTo(16+L3*k,hh-14); ctx.stroke(); ctx.fillStyle='#ddd'; ctx.font='10.5px -apple-system,Segoe UI,Roboto,Arial,sans-serif'; ctx.fillText(String(L3).replace('.',',')+' km',18,hh-22);
-    if(t<1) requestAnimationFrame(frame); }
-  requestAnimationFrame(frame); if(!anim) frame(performance.now());
-  document.getElementById('alc-fxl').textContent=cs?(EN()?'Dashed white circle: urban area of the same size (Demographia)':'Círculo blanco discontinuo: área urbana de igual superficie (Demographia)'):''; }
+// ---------- datos para la pestaña Impacto («viene de Alcance») ----------
+// Devuelve el misil, el punto de lanzamiento, la distancia y el tiempo de vuelo hasta el punto cero (solo carga alcance.json.gz).
+window.MAT_ALC_ORIGIN=function(fm,fp,lat,lon){ return loadD().then(function(){ var m=byId(fm); if(!m) return null; var lp=null;
+  if(fp&&preset(fp)){ var p=preset(fp); lp={lat:p[3],lon:p[4],n:EN()?p[2]:p[1]}; }
+  else { var mm=String(fp||'').match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/); if(mm&&Math.abs(+mm[1])<=90&&Math.abs(+mm[2])<=180) lp={lat:+mm[1],lon:+mm[2],n:customName([+mm[1],+mm[2]])}; }
+  if(!lp){ var h=preset(m.home); lp={lat:h[3],lon:h[4],n:EN()?h[2]:h[1]}; fp=m.home; }
+  var d=dist(lp.lat,lp.lon,lat,lon);
+  return {id:m.id,n:m.n.split(' (')[0],fl:fl(m.pa),pa:pais(m),from:lp.n,fp:fp,d:d,km:km(d),t:ftime(m,d),reach:d<=m.r[0]?2:(d<=m.r[1]?1:0),rng:rng(m),wh:m.wh,whl:L(WHL[m.wh]),ny:m.ny||null,src:m.src[0]||null}; }); };
+window.MAT_ALCANCE_META=function(){ return loadD().then(function(){ css(); meta(); }); };
 window.MAT_ALCANCE=function(app,X){ css(); app.innerHTML='<p class="sub" style="padding:24px 0">'+(EN()?'Loading map…':'Cargando mapa…')+'</p>';
-  load().then(function(){ if(!/^#\/alcance/.test(location.hash||'')) return; ST=readQ(X); var mi=0; D.c.forEach(function(c,i){ if(c[0]==='Madrid') mi=i; }); CUR={tab:'es',fx:{t:mi,y:100,yid:'w76',b:'air'}}; render(app,X); }).catch(function(err){ app.innerHTML='<p class="sub" style="padding:24px 0">'+(EN()?'Could not load the map.':'No se pudo cargar el mapa.')+'</p>'; if(window.console) console.error(err); }); };
+  load().then(function(){ if(X.alive&&!X.alive()) return; ST=readQ(X); CUR={tab:(CUR&&CUR.tab)||'es'}; render(app,X); }).catch(function(err){ app.innerHTML='<p class="sub" style="padding:24px 0">'+(EN()?'Could not load the map.':'No se pudo cargar el mapa.')+'</p>'; if(window.console) console.error(err); }); };
 })();
