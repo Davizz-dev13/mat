@@ -2,7 +2,7 @@
 "use strict";
 // M.A.T · Batallas históricas (#/batallas, #/batallas/<id>). Motor genérico: cada batalla vive en batallas/<id>.json
 // (pasos, vistas del mapa, unidades, flechas, defensas, playas, fuerzas y fuentes). Mapa SVG dibujado por M.A.T.
-var IDX=null, CACHE={};
+var IDX=null, CACHE={}, IDXS={}, BASE='batallas'; // BASE: 'batallas' | 'operaciones' (mismo motor)
 function EN(){return window.MAT_LANG==='en';}
 function T(a){ if(a==null) return ''; if(Array.isArray(a)) return EN()?(a[1]!=null?a[1]:a[0]):a[0]; a=String(a); var i=a.indexOf('|'); if(i>0) return EN()?a.slice(i+1):a.slice(0,i); return a; }
 function e(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -12,12 +12,15 @@ function RM(){ try{ return window.matchMedia&&window.matchMedia('(prefers-reduce
 var NS='http://www.w3.org/2000/svg';
 var ICON='<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" style="flex:0 0 48px"><rect x="6" y="9" width="36" height="30" rx="2" fill="#e9dcb8" stroke="#8a6d3b" stroke-width="1.4"/><path d="M9 30c5-2 8 2 13 0s7-6 11-5 5 3 6 2" fill="none" stroke="#5b4526" stroke-width="1.3"/><path d="M14 20q8-7 17 1" fill="none" stroke="#1d3f8a" stroke-width="1.8" stroke-linecap="round"/><path d="M28 17.5l3.6 3.9-5.1.4z" fill="#1d3f8a"/><rect x="31" y="25" width="7" height="5" fill="none" stroke="#222" stroke-width="1.2"/></svg>';
 window.MAT_BATALLAS_ICON=ICON;
-var UI={es:{h:'Batallas históricas',home:'Inicio',sub:'Grandes batallas contadas paso a paso sobre mapas de estilo antiguo: dónde estaba cada fuerza, con qué carros de combate y aviones, por dónde atacaron y los pequeños detalles. Datos de fuentes públicas citadas en cada paso.',ver:'Ver batalla',soon:'Próximamente',prev:'Anterior',next:'Siguiente',paso:'Paso',det:'Detalle',src:'Fuentes de este paso',playas:'Las cinco playas',fz:'Fuerzas enfrentadas',fuentes:'Todas las fuentes',leyenda:'Leyenda del mapa',back:'Volver a los pasos',vermap:'Ver en el mapa',hora:'Hora H',sec:'Sector',uds:'Unidades',mandos:'Mandos',tropas:'Desembarcados',bajas:'Bajas aliadas (aprox.)',carros:'Carros de combate y vehículos',de:'Defensores alemanes',cur:'Curiosidad',defs:'Defensas en el mapa',cifras:'Cifras',medios:'Material (fichas M.A.T)',tap:'Toca una unidad o una defensa del mapa para ver más.',eq:'Material',aprox:'Posición aproximada',cerrar:'Cerrar',load:'Cargando…',err:'No se pudo cargar la batalla.',timeline:'Línea de tiempo',notfound:'Batalla no encontrada'},
- en:{h:'Historic battles',home:'Home',sub:'Great battles told step by step on old-style maps: where each force was, with which tanks and aircraft, where they attacked and the small details. Data from public sources cited in every step.',ver:'View battle',soon:'Coming soon',prev:'Previous',next:'Next',paso:'Step',det:'Detail',src:'Sources for this step',playas:'The five beaches',fz:'Opposing forces',fuentes:'All sources',leyenda:'Map legend',back:'Back to the steps',vermap:'Show on the map',hora:'H-Hour',sec:'Sector',uds:'Units',mandos:'Commanders',tropas:'Landed',bajas:'Allied casualties (approx.)',carros:'Tanks and vehicles',de:'German defenders',cur:'Did you know?',defs:'Defences on the map',cifras:'Figures',medios:'Equipment (M.A.T entries)',tap:'Tap a unit or a defence on the map for more.',eq:'Equipment',aprox:'Approximate position',cerrar:'Close',load:'Loading…',err:'Could not load the battle.',timeline:'Timeline',notfound:'Battle not found'}};
+var UI={es:{hub:'Batallas y operaciones especiales',hubsub:'Dos colecciones contadas paso a paso sobre el mapa: grandes batallas de la historia y operaciones especiales modernas, con fuentes en cada paso.',bh:'Batallas históricas',bhd:'Diez grandes batallas, de Verdún a Berlín, en mapas de estilo antiguo',oh:'Operaciones especiales',ohd:'Misiones de fuerzas especiales paso a paso: la primera, la operación contra Bin Laden (2011)',osub:'Misiones de fuerzas especiales contadas paso a paso sobre el mapa: antecedentes, planificación, la noche de la operación y sus consecuencias. Datos de fuentes públicas citadas en cada paso; donde las versiones difieren, se indican todas.',over:'Ver operación',onf:'Operación no encontrada',oerr:'No se pudo cargar la operación.',datos:'Datos clave',caps:'Capítulos',vers:'Versiones',nmis:'misión',nmiss:'misiones',nbat:'batallas',h:'Batallas históricas',home:'Inicio',sub:'Grandes batallas contadas paso a paso sobre mapas de estilo antiguo: dónde estaba cada fuerza, con qué carros de combate y aviones, por dónde atacaron y los pequeños detalles. Datos de fuentes públicas citadas en cada paso.',ver:'Ver batalla',soon:'Próximamente',prev:'Anterior',next:'Siguiente',paso:'Paso',det:'Detalle',src:'Fuentes de este paso',playas:'Las cinco playas',fz:'Fuerzas enfrentadas',fuentes:'Todas las fuentes',leyenda:'Leyenda del mapa',back:'Volver a los pasos',vermap:'Ver en el mapa',hora:'Hora H',sec:'Sector',uds:'Unidades',mandos:'Mandos',tropas:'Desembarcados',bajas:'Bajas aliadas (aprox.)',carros:'Carros de combate y vehículos',de:'Defensores alemanes',cur:'Curiosidad',defs:'Defensas en el mapa',cifras:'Cifras',medios:'Material (fichas M.A.T)',tap:'Toca una unidad o una defensa del mapa para ver más.',eq:'Material',aprox:'Posición aproximada',cerrar:'Cerrar',load:'Cargando…',err:'No se pudo cargar la batalla.',timeline:'Línea de tiempo',notfound:'Batalla no encontrada'},
+ en:{hub:'Battles & special operations',hubsub:'Two collections told step by step on the map: great battles of history and modern special operations, with sources in every step.',bh:'Historic battles',bhd:'Ten great battles, from Verdun to Berlin, on old-style maps',oh:'Special operations',ohd:'Special-forces missions step by step: the first one, the raid on Bin Laden (2011)',osub:'Special-forces missions told step by step on the map: background, planning, the night of the operation and its aftermath. Data from public sources cited in every step; where accounts differ, all of them are shown.',over:'View operation',onf:'Operation not found',oerr:'Could not load the operation.',datos:'Key facts',caps:'Chapters',vers:'Accounts',nmis:'mission',nmiss:'missions',nbat:'battles',h:'Historic battles',home:'Home',sub:'Great battles told step by step on old-style maps: where each force was, with which tanks and aircraft, where they attacked and the small details. Data from public sources cited in every step.',ver:'View battle',soon:'Coming soon',prev:'Previous',next:'Next',paso:'Step',det:'Detail',src:'Sources for this step',playas:'The five beaches',fz:'Opposing forces',fuentes:'All sources',leyenda:'Map legend',back:'Back to the steps',vermap:'Show on the map',hora:'H-Hour',sec:'Sector',uds:'Units',mandos:'Commanders',tropas:'Landed',bajas:'Allied casualties (approx.)',carros:'Tanks and vehicles',de:'German defenders',cur:'Did you know?',defs:'Defences on the map',cifras:'Figures',medios:'Equipment (M.A.T entries)',tap:'Tap a unit or a defence on the map for more.',eq:'Equipment',aprox:'Approximate position',cerrar:'Close',load:'Loading…',err:'Could not load the battle.',timeline:'Timeline',notfound:'Battle not found'}};
 function U_(k){return UI[EN()?'en':'es'][k];}
-var NAT={jp:'Japón|Japan',us:'EE. UU.|USA',uk:'Reino Unido|UK',ca:'Canadá|Canada',fr:'Francia|France',de:'Alemania|Germany',su:'URSS|USSR',ro:'Rumanía|Romania',it:'Italia|Italy',hu:'Hungría|Hungary',hr:'Croacia|Croatia',esr:'República Española|Spanish Republic',esn:'Bando sublevado (nacional)|Nationalists',bri:'Brigadas Internacionales|International Brigades',au:'Australia|Australia',nz:'Nueva Zelanda|New Zealand',za:'Sudáfrica|South Africa',in:'India británica|British India',gr:'Grecia|Greece',ffr:'Francia Libre|Free France',itr:'Reino de Italia|Kingdom of Italy'};
-var FLAG={jp:'jp',us:'us',uk:'gb',ca:'ca',fr:'fr',de:'de',su:'su',ro:'ro',it:'it',hu:'hu',hr:'hr',pl:'pl',dei:'de_imp',esr:'es_rep',esn:'es_nac',bri:'brig_int',cz:'cz',car:'ca_red',nz:'nz',au:'au',zao:'za_old',be:'be',ie:'ie',itr:'it_kgd',za:'za_old',in:'in_raj',gr:'gr_1822',ffr:'fr_libre'};
-var THEMES={nieve:'snow',mar:'mar',barro:'barro',ruinas:'ruinas',meseta:'meseta',cielo:'cielo',desierto:'desierto'}; // tema -> clase CSS
+function OPS(){return BASE==='operaciones';}
+function LT(){return OPS()?U_('oh'):U_('h');} function LR(){return OPS()?'#/operaciones':'#/batallas/historicas';}
+var OPICON='<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" style="flex:0 0 48px"><rect x="6" y="9" width="36" height="30" rx="2" fill="#1f2a33" stroke="#8fa3b3" stroke-width="1.4"/><circle cx="24" cy="24" r="9" fill="none" stroke="#d6b25e" stroke-width="1.6"/><path d="M24 11v7M24 30v7M11 24h7M30 24h7" stroke="#d6b25e" stroke-width="1.6"/><circle cx="24" cy="24" r="2" fill="#e0622b"/></svg>';
+var NAT={pk:'Pakistán|Pakistan',sa:'Arabia Saudí|Saudi Arabia',af:'Afganistán|Afghanistan',none:'Al Qaeda|Al-Qaeda',jp:'Japón|Japan',us:'EE. UU.|USA',uk:'Reino Unido|UK',ca:'Canadá|Canada',fr:'Francia|France',de:'Alemania|Germany',su:'URSS|USSR',ro:'Rumanía|Romania',it:'Italia|Italy',hu:'Hungría|Hungary',hr:'Croacia|Croatia',esr:'República Española|Spanish Republic',esn:'Bando sublevado (nacional)|Nationalists',bri:'Brigadas Internacionales|International Brigades',au:'Australia|Australia',nz:'Nueva Zelanda|New Zealand',za:'Sudáfrica|South Africa',in:'India británica|British India',gr:'Grecia|Greece',ffr:'Francia Libre|Free France',itr:'Reino de Italia|Kingdom of Italy'};
+var FLAG={pk:'pk',sa:'sa',sd:'sd',ye:'ye',af:'af',none:'none',jp:'jp',us:'us',uk:'gb',ca:'ca',fr:'fr',de:'de',su:'su',ro:'ro',it:'it',hu:'hu',hr:'hr',pl:'pl',dei:'de_imp',esr:'es_rep',esn:'es_nac',bri:'brig_int',cz:'cz',car:'ca_red',nz:'nz',au:'au',zao:'za_old',be:'be',ie:'ie',itr:'it_kgd',za:'za_old',in:'in_raj',gr:'gr_1822',ffr:'fr_libre'};
+var THEMES={noche:'noche',nieve:'snow',mar:'mar',barro:'barro',ruinas:'ruinas',meseta:'meseta',cielo:'cielo',desierto:'desierto'}; // tema -> clase CSS
 var LD=null; // bandos de la batalla actual (D.lados): colores y distintivos por bando
 
 var CSS='.bt{--pa:#efe3c2;--pa2:#e4d3a8;--ink:#3b2b16;--ink2:#6b5433;--al:#1d3f8a;--al2:#b3261e;--ge:#2b2b2b;--ge2:#7a7a72;color:var(--tx)}'+
@@ -60,20 +63,44 @@ var CSS='.bt{--pa:#efe3c2;--pa2:#e4d3a8;--ink:#3b2b16;--ink2:#6b5433;--al:#1d3f8
 '.bt-card.meseta{background:#ead9b5 radial-gradient(circle at 30% 20%,#f4e7c9,#d2b27a);color:#3a2610;border-color:#9a6f3a;box-shadow:inset 0 0 30px rgba(120,70,20,.22)}.bt-card.meseta .d,.bt-card.meseta .go{color:#6e4b22}'+'.bt.meseta .bt-mapw{background:#e3cc9c;border-color:#8a5f2e;box-shadow:inset 0 0 50px rgba(110,65,20,.40)}.bt.meseta .bt-mapw:after{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 54%,rgba(95,55,15,.36) 100%)}.bt.meseta .bt-map .sea{fill:#b9c8c4}.bt.meseta .bt-map .land,.bt.meseta .bt-map .landov{fill:#e8d3a4}.bt.meseta .bt-map .riv{stroke:#3f6a88;stroke-opacity:.9}.bt.meseta .bt-map .coast{stroke:#4a3218}.bt.meseta .bt-map .grat{stroke:#9a7440}'+
 '.bt-card.desierto{background:#f0dcae radial-gradient(circle at 70% 25%,#f7e7c0,#d9b26c);color:#3d2a0e;border-color:#a8792f;box-shadow:inset 0 0 30px rgba(150,95,20,.24)}.bt-card.desierto .d,.bt-card.desierto .go{color:#7a5218}'+'.bt.desierto .bt-mapw{background:#ecd7a6;border-color:#9c6d2a;box-shadow:inset 0 0 50px rgba(140,90,25,.42)}.bt.desierto .bt-mapw:after{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 54%,rgba(120,75,15,.36) 100%)}.bt.desierto .bt-map .sea{fill:#9fc1c9}.bt.desierto .bt-map .land,.bt.desierto .bt-map .landov{fill:#efd9a3}.bt.desierto .bt-map .riv{stroke:#3f6a88;stroke-opacity:.9}.bt.desierto .bt-map .coast{stroke:#4f3410}.bt.desierto .bt-map .grat{stroke:#a87b3a}'+'.bt-map .dep{fill:url(#btDep);stroke:#7a5620;stroke-opacity:.75;fill-rule:evenodd}.bt-map .rail{fill:none;stroke:#3a3a3a;stroke-opacity:.75}'+'.bt-flag{width:20px;height:13px;border-radius:2px;vertical-align:-2px}.bt-cred{font-size:11px;color:var(--dim);margin:6px 0 0}.bt-modep{display:none;margin:8px 0}.bt-modep.on{display:block}';
 CSS+='.bt-card.cielo{background:#dfe9f3 radial-gradient(circle at 30% 20%,#f3f8fc,#b9cde0);color:#1c2b3a;border-color:#8aa2b8;box-shadow:inset 0 0 30px rgba(40,70,110,.22)}.bt-card.cielo .d,.bt-card.cielo .go{color:#3f566c}.bt.cielo .bt-mapw{background:#e6eef5;border-color:#7891a8;box-shadow:inset 0 0 50px rgba(40,70,105,.35)}.bt.cielo .bt-mapw:after{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(30,55,90,.30) 100%)}.bt.cielo .bt-map .sea{fill:#aac4d8}.bt.cielo .bt-map .wl{stroke:#d3e2ee;stroke-opacity:.75}.bt.cielo .bt-map .land,.bt.cielo .bt-map .landov{fill:#e6e9d8}.bt.cielo .bt-map .coast{stroke:#33475a}.bt.cielo .bt-map .riv{stroke:#4f7896}.bt.cielo .bt-map .grat{stroke:#6f8aa3;stroke-opacity:.35}.bt-cloudfx{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:0;transition:opacity .9s;background-image:radial-gradient(ellipse 34% 14% at 18% 20%,rgba(255,255,255,.42),transparent 70%),radial-gradient(ellipse 28% 11% at 78% 66%,rgba(255,255,255,.34),transparent 70%),radial-gradient(ellipse 22% 9% at 46% 90%,rgba(255,255,255,.28),transparent 70%);background-repeat:no-repeat}.bt.cielo .bt-cloudfx{opacity:1;animation:btcloud 40s ease-in-out infinite alternate}@keyframes btcloud{to{background-position:46px -10px,-52px 8px,30px -12px}}@media(prefers-reduced-motion:reduce){.bt.cielo .bt-cloudfx{animation:none}}'; // tema cielo (batallas aéreas)
+CSS+='.bt-hub{display:grid;grid-template-columns:1fr;gap:14px;margin:14px 0 26px}@media(min-width:760px){.bt-hub{grid-template-columns:1fr 1fr}}'+
+'.bt-hubc{position:relative;display:flex;flex-direction:column;gap:6px;min-height:150px;padding:22px 52px 22px 22px;border-radius:12px;text-decoration:none;overflow:hidden;border:1px solid #b89a63}'+
+'.bt-hubc .em{font-size:34px;line-height:1}.bt-hubc .tt{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:24px;font-weight:700;line-height:1.15}.bt-hubc .dd{font-size:14px;line-height:1.4}.bt-hubc .nn{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;margin-top:auto}.bt-hubc .go{position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:30px}'+
+'.bt-hubc.bat{background:#e9dcb8 radial-gradient(circle at 30% 20%,#f3e8cb,#dcc89a);color:#3b2b16;box-shadow:inset 0 0 40px rgba(110,80,30,.28)}.bt-hubc.bat .dd,.bt-hubc.bat .go{color:#5b4526}'+
+'.bt-hubc.ops{background:#18222b radial-gradient(circle at 75% 25%,#2a3a47,#121a21);color:#e8e4d4;border-color:#4d6272;box-shadow:inset 0 0 40px rgba(0,0,0,.45)}.bt-hubc.ops .dd{color:#b9c3c9}.bt-hubc.ops .go{color:#d6b25e}'+
+'.bt-hubc:hover,.bt-hubc:focus-visible{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.25)}'+
+'.bt-card.op{background:#1b252e radial-gradient(circle at 70% 20%,#2b3b48,#141c23);color:#e8e4d4;border-color:#4d6272;box-shadow:inset 0 0 30px rgba(0,0,0,.4)}.bt-card.op .d{color:#b9c3c9}.bt-card.op .go{color:#d6b25e}'+
+'.bt-datos dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:8px 0;font-size:14px}.bt-datos dt{font-weight:700;color:var(--mu)}.bt-datos dd{margin:0}@media(max-width:520px){.bt-datos dl{grid-template-columns:1fr}.bt-datos dt{margin-top:6px}}'+
+'.bt-caps{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:8px 0 4px;scrollbar-width:thin}.bt-capb{flex:0 0 auto;font:inherit;font-size:13px;padding:6px 11px;border-radius:999px;border:1px solid var(--line,#555);background:transparent;color:var(--tx);cursor:pointer;white-space:nowrap}.bt-capb.on{background:#d6b25e;color:#1b1b1b;border-color:#d6b25e;font-weight:700}'+
+'.bt-capl{display:inline-block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;background:#d6b25e;color:#1b1b1b;border-radius:3px;padding:1px 6px;margin-right:4px;vertical-align:1px}'+
+'.bt-ver{margin:10px 0;padding:10px 12px;border-left:3px solid #d6b25e;background:rgba(214,178,94,.10);border-radius:4px;font-size:14px}.bt-ver>b{display:block;margin-bottom:6px}.bt-ver .vi{margin:6px 0;line-height:1.45}.bt-ver .vw{display:block;font-weight:700;font-size:12.5px;letter-spacing:.03em;color:#b38a2e}.bt-ver .vn{font-size:12.5px;opacity:.85;margin-top:6px;font-style:italic}'+
+'.bt-ins{margin:8px 0 0;border:1px solid #8a6d3b;border-radius:8px;background:#efe3c2;color:#3b2b16;padding:6px 8px 8px}.bt-ins-t{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#6b5433}.bt-ins svg{display:block;width:100%;height:auto;max-height:230px}.bt-ins-c{font-size:12.5px;color:#5b4526;margin-top:2px}'+
+'.bt-ins text{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;fill:#3b2b16}.bt-ins .fl{fill:#e4d3a8;stroke:#5b4526;stroke-width:1.2}.bt-ins .fl.on{fill:#f2c76a}.bt-ins .gt{fill:#3b2b16}.bt-ins .gt.on{fill:#e0622b}'+
+'.bt-vn{position:absolute;left:8px;bottom:8px;z-index:3;font-size:11px;font-style:italic;background:rgba(239,227,194,.92);color:#3b2b16;border:1px solid #8a6d3b;border-radius:4px;padding:2px 7px;max-width:70%;pointer-events:none}'+
+'.bt-map .bord{fill:none;stroke:#7a5a32;stroke-opacity:.75}.bt-map .road{fill:none;stroke:#c9b48a;stroke-linecap:round;stroke-linejoin:round}.bt-map .road2{fill:none;stroke:#cdb98f;stroke-opacity:.8;stroke-linecap:round}.bt-map .mil{fill:#5c6b3a;fill-opacity:.14;stroke:#4a5a2a}.bt-map .bld{fill:#b49a6c;stroke:#3b2b16}.bt-map .wall{fill:none;stroke:#3b2b16;stroke-linejoin:round;stroke-linecap:round}.bt-map .yard{fill:#d9c79c;stroke:#8a6d3b}'+
+'.bt.noche .bt-mapw{background:#d9cba6}.bt.noche .bt-map .sea{fill:#9db7c4}.bt.noche .bt-map .land,.bt.noche .bt-map .landov{fill:#e2d3a8}.bt-nightfx{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:0;transition:opacity .9s;background:radial-gradient(ellipse at center,rgba(12,22,40,.06) 35%,rgba(12,22,40,.42) 100%)}.bt.noche .bt-nightfx{opacity:1}';
 function css(){ if(document.getElementById('bt-css')) return; var s=document.createElement('style'); s.id='bt-css'; s.textContent=CSS; document.head.appendChild(s); }
 
 // ---------- list page ----------
+function hubPage(app,X){ css();
+  var h=X.crumbs([[U_('home'),'#/'],[U_('hub')]])+'<div class="bt" data-noi18n><h1 class="bt-title">'+e(U_('hub'))+'</h1><p class="sub">'+e(U_('hubsub'))+'</p><div class="bt-hub">'+
+    '<a class="bt-hubc bat" href="#/batallas/historicas"><span class="em" aria-hidden="true">⚔️</span><span class="tt">'+e(U_('bh'))+'</span><span class="dd">'+e(U_('bhd'))+'</span><span class="nn" id="bthubb"></span><span class="go">›</span></a>'+
+    '<a class="bt-hubc ops" href="#/operaciones"><span class="em" aria-hidden="true">🎯</span><span class="tt">'+e(U_('oh'))+'</span><span class="dd">'+e(U_('ohd'))+'</span><span class="nn" id="bthubo"></span><span class="go">›</span></a></div></div>';
+  X.set(h,U_('hub'));
+  [['batallas','bthubb','nbat','nbat'],['operaciones','bthubo','nmis','nmiss']].forEach(function(q){ (IDXS[q[0]]?Promise.resolve(IDXS[q[0]]):get(q[0]+'/index.json').then(function(d){IDXS[q[0]]=d;return d;})).then(function(L){ var n=L.filter(function(x){return !x.soon;}).length, el2=document.getElementById(q[1]); if(el2) el2.textContent=n+' '+U_(n===1?q[2]:q[3]); }).catch(function(){}); });
+}
 function listPage(app,X){
-  set0(X,'<p class="sub" style="padding:24px 0">'+U_('load')+'</p>',U_('h'));
-  (IDX?Promise.resolve(IDX):get('batallas/index.json').then(function(d){IDX=d;return d;})).then(function(L){
-    if(!/^#\/batallas\/?$/.test(location.hash.split('?')[0])) return;
-    var h=X.crumbs([[U_('home'),'#/'],[U_('h')]])+'<div class="bt" data-noi18n><h1 class="bt-title">'+e(U_('h'))+'</h1><p class="sub">'+e(U_('sub'))+'</p><div class="bt-list">';
+  set0(X,'<p class="sub" style="padding:24px 0">'+U_('load')+'</p>',LT());
+  var B0=BASE;
+  (IDXS[B0]?Promise.resolve(IDXS[B0]):get(B0+'/index.json').then(function(d){IDXS[B0]=d;return d;})).then(function(L){
+    if(location.hash.split('?')[0].replace(/\/$/,'')!==(B0==='operaciones'?'#/operaciones':'#/batallas/historicas')) return;
+    var h=X.crumbs([[U_('home'),'#/'],[U_('hub'),'#/batallas'],[LT()]])+'<div class="bt" data-noi18n><h1 class="bt-title">'+e(LT())+'</h1><p class="sub">'+e(OPS()?U_('osub'):U_('sub'))+'</p><div class="bt-list">';
     L.forEach(function(b){
       if(b.soon) h+='<div class="bt-card soon" aria-disabled="true">'+ICON+'<div><div class="t">'+e(T(b.t))+'<span class="bdg">'+e(U_('soon'))+'</span></div><div class="d">'+e(T(b.fecha))+' · '+e(T(b.lugar))+'</div></div></div>';
-      else h+='<a class="bt-card'+(THEMES[b.tema]?' '+THEMES[b.tema]:'')+'" href="#/batallas/'+e(b.id)+'">'+ICON+'<div><div class="t">'+e(T(b.t))+'</div><div class="d">'+e(T(b.fecha))+' · '+e(T(b.lugar))+'</div><div class="d" style="margin-top:3px">'+e(T(b.d))+'</div></div><span class="go">›</span></a>';
+      else h+='<a class="bt-card'+(B0==='operaciones'?' op':(THEMES[b.tema]?' '+THEMES[b.tema]:''))+'" href="#/'+B0+'/'+e(b.id)+'">'+(B0==='operaciones'?OPICON:ICON)+'<div><div class="t">'+e(T(b.t))+'</div><div class="d">'+e(T(b.fecha))+' · '+e(T(b.lugar))+'</div><div class="d" style="margin-top:3px">'+e(T(b.d))+'</div></div><span class="go">›</span></a>';
     });
-    h+='</div></div>'; X.set(h,U_('h'));
-  }).catch(function(){ X.set(X.crumbs([[U_('home'),'#/'],[U_('h')]])+'<p class="sub">'+U_('err')+'</p>',U_('h')); });
+    h+='</div></div>'; X.set(h,LT());
+  }).catch(function(){ X.set(X.crumbs([[U_('home'),'#/'],[U_('hub'),'#/batallas'],[LT()]])+'<p class="sub">'+(OPS()?U_('oerr'):U_('err'))+'</p>',LT()); });
 }
 function set0(X,h,t){ X.set(h,t); }
 
@@ -118,6 +145,9 @@ function unitSym(u){
     if(u.ty==='aa') el('path',{d:'M-11,7 Q0,-5 11,7',fill:'none',stroke:stroke,'stroke-width':1.4},g);
     if(u.ty==='air') el('path',{d:'M-8,0 C-6,-5 -2,-5 0,0 C2,5 6,5 8,0 C6,-5 2,-5 0,0 C-2,5 -6,5 -8,0 Z',fill:'none',stroke:stroke,'stroke-width':1.3},g);
     if(u.ty==='ftr'||u.ty==='bmb'||u.ty==='dive'||u.ty==='zer'){ var ap=u.ty==='ftr'?'M0,-6.5 L0,6.2 M-9.5,-1.2 L9.5,-1.2 M-3.6,5 L3.6,5':u.ty==='dive'?'M0,-6.5 L0,6.2 M-9.8,-3.6 L-4.2,-0.4 L0,-1.4 L4.2,-0.4 L9.8,-3.6 M-3.6,5 L3.6,5':u.ty==='zer'?'M0,-6 L0,5.2 M-9.6,-1 L9.6,-1 M-4.2,5.2 L4.2,5.2 M-4.2,3.4 L-4.2,7 M4.2,3.4 L4.2,7':'M0,-7 L0,6.4 M-10.4,-1.6 L10.4,-1.6 M-4,5.6 L4,5.6'; el('path',{d:ap,fill:'none',stroke:stroke,'stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round'},g); if(u.ty==='bmb'||u.ty==='zer'){ el('circle',{cx:-4.8,cy:-1.4,r:1.6,fill:fill,stroke:stroke,'stroke-width':1.1},g); el('circle',{cx:4.8,cy:-1.4,r:1.6,fill:fill,stroke:stroke,'stroke-width':1.1},g); } }
+    if(u.ty==='heli'){ el('path',{d:'M-9,-5 L9,5 M-9,5 L9,-5',stroke:stroke,'stroke-width':1.6,'stroke-linecap':'round'},g); el('ellipse',{cx:0,cy:0,rx:3.2,ry:2.4,fill:stroke},g); }
+    if(u.ty==='sof'){ var tsf=el('text',{x:0,y:3.4,'text-anchor':'middle','font-size':8.6,'font-weight':700,style:'stroke:none;fill:'+stroke},g); tsf.textContent='SOF'; }
+    if(u.ty==='uav'){ el('path',{d:'M0,-6 L0,5 M-10,-1 L10,-1 M-3.5,5 L3.5,5',fill:'none',stroke:stroke,'stroke-width':1.5,'stroke-linecap':'round'},g); var tu2=el('text',{x:0,y:-1.5,'text-anchor':'middle','font-size':5,'font-weight':700,style:'stroke:none;fill:'+stroke},g); tu2.textContent='UAV'; }
     if(u.ty==='rdr') el('path',{d:'M-5,6 L0,-1 L5,6 M0,-1 L0,-4 M-6,-7 Q0,-2 6,-7',fill:'none',stroke:stroke,'stroke-width':1.4},g);
     if(u.ty==='hq') el('path',{d:'M-12,-8 L-12,14',stroke:stroke,'stroke-width':1.6},g);
     if(u.ty==='para') el('path',{d:'M-6,5 Q-3,1 0,5 Q3,1 6,5',fill:'none',stroke:stroke,'stroke-width':1.3},g);
@@ -154,7 +184,11 @@ function defSym(d){
 function mkSym(m){
   var g=document.createElementNS(NS,'g'), t;
   if(m.k==='dz'){ el('circle',{r:9,fill:'rgba(29,63,138,.10)',stroke:'#1d3f8a','stroke-width':1.2,'stroke-dasharray':'2 2'},g); t=el('text',{y:3,'text-anchor':'middle','font-size':7.5,'font-weight':700,style:'stroke:none;fill:#1d3f8a'},g); t.textContent=m.n; }
-  else if(m.k==='bomb'){ el('path',{d:'M0,-9 L2.5,-3 L9,-3 L4,1 L6,8 L0,4 L-6,8 L-4,1 L-9,-3 L-2.5,-3 Z',fill:'#c0392b',stroke:'#6d1a12','stroke-width':.8,'fill-opacity':.85},g); }
+  else if(m.k==='bomb'){ el('path',{d:'M0,-9 L2.5,-3 L9,-3 L4,1 L6,8 L0,4 L-6,8 L-4,1 L-9,-3 L-2.5,-3 Z',fill:'#c0392b',stroke:'#6d1a12','stroke-width':.8,'fill-opacity':.85},g); if(m.n){ t=el('text',{x:m.lx||0,y:m.ly!=null?m.ly:-12,'text-anchor':m.la||'middle','font-size':m.fs||8.5,'font-weight':700},g); t.textContent=T(m.n); } }
+  else if(m.k==='per'){ var dead=m.st==='dead', pc=m.c&&LD&&LD[m.c]?LD[m.c].c:(m.c==='us'?'#1d3f8a':'#5b4526'); el('circle',{r:4.6,fill:dead?'#8a8478':(m.st==='hurt'?'#e9a23b':'#efe3c2'),stroke:dead?'#4a453c':pc,'stroke-width':1.4},g); if(dead) el('path',{d:'M-2.6,-2.6 L2.6,2.6 M-2.6,2.6 L2.6,-2.6',stroke:'#2b2620','stroke-width':1.1},g); if(m.n){ t=el('text',{x:m.lx!=null?m.lx:7,y:m.ly!=null?m.ly:3,'text-anchor':m.la||'start','font-size':m.fs||8.5,'font-weight':700},g); t.textContent=T(m.n); } }
+  else if(m.k==='heli'){ var hc=m.st==='crash'?'#7a2a10':m.st==='gone'?'#6b6b60':'#1d3f8a', hf=m.st==='crash'?'#e9a23b':m.st==='gone'?'#c9c3b2':'#d6e2f6', hg2=el('g',{transform:'rotate('+(m.rot||0)+')'},g); var hs=m.sz||1; el('path',{d:'M'+(-7*hs)+',0 C'+(-7*hs)+','+(-3.4*hs)+' '+(5*hs)+','+(-3.4*hs)+' '+(6*hs)+',0 C'+(5*hs)+','+(3.4*hs)+' '+(-7*hs)+','+(3.4*hs)+' '+(-7*hs)+',0 Z M'+(-7*hs)+',0 L'+(-17*hs)+',0',fill:hf,stroke:hc,'stroke-width':1.3,'stroke-dasharray':m.st==='gone'?'2 1.5':''},hg2); el('path',{d:'M'+(-17*hs)+','+(-3*hs)+' L'+(-17*hs)+','+(3*hs),stroke:hc,'stroke-width':1.3},hg2); if(m.st!=='crash'&&m.st!=='gone') el('circle',{r:11*hs,fill:'none',stroke:hc,'stroke-width':.8,'stroke-dasharray':'3 2','stroke-opacity':.7},hg2); if(m.st==='crash') el('path',{d:'M-2,-7 C1,-11 4,-9 3,-5 C5,-7 6,-3 3,-2 Z',fill:'#e0622b',stroke:'#7a2a10','stroke-width':.6},g); if(m.n){ t=el('text',{x:m.lx||0,y:m.ly!=null?m.ly:-14,'text-anchor':m.la||'middle','font-size':m.fs||8.5,'font-weight':700},g); t.textContent=T(m.n); } }
+  else if(m.k==='gate'){ el('rect',{x:-4,y:-2,width:8,height:4,fill:m.st==='open'?'#e9a23b':'#3b2b16',stroke:'#3b2b16','stroke-width':.8},g); if(m.st==='open') el('path',{d:'M-6,-5 L-3,-2 M6,-5 L3,-2 M0,-6 L0,-3',stroke:'#c0392b','stroke-width':1},g); if(m.n){ t=el('text',{x:m.lx||0,y:m.ly!=null?m.ly:-7,'text-anchor':m.la||'middle','font-size':m.fs||7.5,'font-style':'italic'},g); t.textContent=T(m.n); } }
+  else if(m.k==='plane'){ var pc2=(LD&&LD[m.c])?LD[m.c].c:'#3b2b16', pg=el('g',{transform:'rotate('+(m.rot||0)+')'},g); el('path',{d:'M7,0 L-6,0 M2,0 L-2,-6 M2,0 L-2,6 M-5,0 L-7,-2.5 M-5,0 L-7,2.5',stroke:pc2,'stroke-width':1.8,'stroke-linecap':'round',fill:'none'},pg); if(m.n){ t=el('text',{x:m.lx||0,y:m.ly!=null?m.ly:-9,'text-anchor':m.la||'middle','font-size':m.fs||8.5,'font-weight':700,style:'fill:'+pc2},g); t.textContent=T(m.n); } }
   else if(m.k==='zone'){ el('circle',{r:12,fill:'none',stroke:'#1d3f8a','stroke-width':1.4,'stroke-dasharray':'3 2'},g); t=el('text',{y:m.below?24:-15,'text-anchor':'middle','font-size':9,'font-style':'italic'},g); t.textContent=T(m.n); }
   else if(m.k==='storm'){ el('path',{d:'M-10,0 a10,10 0 1 1 10,10 M10,0 a10,10 0 1 1 -10,-10',fill:'none',stroke:'#5c7794','stroke-width':1.8},g); t=el('text',{y:22,'text-anchor':'middle','font-size':9,'font-style':'italic'},g); t.textContent=T(m.n); }
   else if(m.k==='bridge'){ el('path',{d:'M-7,-3 L7,-3 M-7,3 L7,3 M-9,-6 L-7,-3 M9,-6 L7,-3 M-9,6 L-7,3 M9,6 L7,3',stroke:'#3b2b16','stroke-width':1.6,fill:'none'},g); t=el('text',{y:-8,'text-anchor':'middle','font-size':8.5,'font-weight':700},g); t.textContent=T(m.n); }
@@ -178,25 +212,28 @@ function placeSym(p){
 // ---------- battle page ----------
 function battle(app,X,id){
   css();
-  X.set('<p class="sub" style="padding:24px 0">'+U_('load')+'</p>',U_('h'));
-  (CACHE[id]?Promise.resolve(CACHE[id]):get('batallas/'+id+'.json').then(function(d){CACHE[id]=d;return d;})).then(function(D){
-    if(location.hash.split('?')[0].replace(/\/$/,'')!=='#/batallas/'+id) return;
+  var B0=BASE, ck=B0+'/'+id;
+  X.set('<p class="sub" style="padding:24px 0">'+U_('load')+'</p>',LT());
+  (CACHE[ck]?Promise.resolve(CACHE[ck]):get(ck+'.json').then(function(d){CACHE[ck]=d;return d;})).then(function(D){
+    if(location.hash.split('?')[0].replace(/\/$/,'')!=='#/'+B0+'/'+id) return;
     render(app,X,D);
-  }).catch(function(err){ X.set(X.crumbs([[U_('home'),'#/'],[U_('h'),'#/batallas']])+'<h1>'+U_('notfound')+'</h1><p class="sub">'+U_('err')+'</p>',U_('h')); if(window.console) console.warn(err); });
+  }).catch(function(err){ X.set(X.crumbs([[U_('home'),'#/'],[U_('hub'),'#/batallas'],[LT(),LR()]])+'<h1>'+(OPS()?U_('onf'):U_('notfound'))+'</h1><p class="sub">'+(OPS()?U_('oerr'):U_('err'))+'</p>',LT()); if(window.console) console.warn(err); });
 }
 function srcList(D,keys){ return '<ol>'+keys.map(function(k){ var s=D.src[k]; return s?'<li><a href="'+e(s[1])+'" target="_blank" rel="noopener">'+e(s[0])+'</a></li>':''; }).join('')+'</ol>'; }
-function flag(n){ return '<img class="bt-flag" src="flags/'+FLAG[n]+'.png" alt="" loading="lazy">'; }
+function flag(n){ if(!FLAG[n]) return ''; return '<img class="bt-flag" src="flags/'+FLAG[n]+'.png" alt="" loading="lazy">'; }
 function ficha(id,name,note){ return '<a class="tag" href="#/a/'+e(id)+'">'+e(T(name))+(note?' <small>· '+e(T(note))+'</small>':'')+'</a>'; }
 function render(app,X,D){
   LD=D.lados||null;
   var N=D.steps.length, qm=(location.hash.match(/[?&]paso=(\d+)/)||[])[1], cur=qm?Math.max(0,Math.min(N-1,(+qm)-1)):0;
-  var h=X.crumbs([[U_('home'),'#/'],[U_('h'),'#/batallas'],[T(D.t)]])+'<div class="bt" data-noi18n>';
+  var h=X.crumbs([[U_('home'),'#/'],[U_('hub'),'#/batallas'],[LT(),LR()],[T(D.t)]])+'<div class="bt" data-noi18n>';
   h+='<h1 class="bt-title">'+e(T(D.t))+'</h1><p class="bt-meta">'+e(T(D.fecha))+' · '+e(T(D.lugar))+' · '+e(T(D.guerra))+'</p><p class="sub" style="margin-top:0">'+e(T(D.intro))+'</p>';
-  function HAS(t){ return D.tema===t||D.steps.some(function(s){return s.tema===t;}); } var SNOW=HAS('nieve'), MUD=HAS('barro'), SMOKE=HAS('ruinas'); var SKY=HAS('cielo');
-  h+='<div class="bt-mapw">'+(SNOW?'<div class="bt-snowfx" aria-hidden="true"></div>':'')+(MUD?'<div class="bt-mudfx" aria-hidden="true"></div>':'')+(SMOKE?'<div class="bt-smokefx" aria-hidden="true"></div>':'')+(SKY?'<div class="bt-cloudfx" aria-hidden="true"></div>':'')+'<div class="bt-cap" id="btcap"></div><svg class="bt-map" id="btmap" role="img" aria-label="'+e(T(D.t))+'"></svg></div>';
+  if(D.datos&&D.datos.length) h+='<details class="bt-sec bt-datos"'+(window.innerWidth>=760?' open':'')+'><summary>'+e(U_('datos'))+'</summary><dl>'+D.datos.map(function(r){return '<dt>'+e(T(r[0]))+'</dt><dd>'+e(T(r[1]))+'</dd>';}).join('')+'</dl>'+(D.datosrc?'<details style="font-size:13px"><summary>'+e(U_('src'))+'</summary>'+srcList(D,D.datosrc)+'</details>':'')+'</details>';
+  function HAS(t){ return D.tema===t||D.steps.some(function(s){return s.tema===t;}); } var SNOW=HAS('nieve'), MUD=HAS('barro'), SMOKE=HAS('ruinas'); var SKY=HAS('cielo'); var NIGHT=HAS('noche');
+  h+='<div class="bt-mapw">'+(SNOW?'<div class="bt-snowfx" aria-hidden="true"></div>':'')+(MUD?'<div class="bt-mudfx" aria-hidden="true"></div>':'')+(SMOKE?'<div class="bt-smokefx" aria-hidden="true"></div>':'')+(SKY?'<div class="bt-cloudfx" aria-hidden="true"></div>':'')+(NIGHT?'<div class="bt-nightfx" aria-hidden="true"></div>':'')+'<div class="bt-vn" id="btvn"></div><div class="bt-cap" id="btcap"></div><svg class="bt-map" id="btmap" role="img" aria-label="'+e(T(D.t))+'"></svg></div><div id="btins"></div>';
+  if(D.caps&&D.caps.length) h+='<div class="bt-caps" role="tablist" aria-label="'+e(U_('caps'))+'">'+D.caps.map(function(c,ci){return '<button type="button" class="bt-capb" data-s="'+c.s+'">'+e(T(c.t))+'</button>';}).join('')+'</div>';
   h+='<div class="bt-modep" id="btmodep"><button type="button" class="btn" id="btback">‹ '+e(U_('back'))+'</button></div>';
   h+='<div id="btsteps"><div class="bt-ctl"><button type="button" class="btn" id="btprev" aria-label="'+e(U_('prev'))+'">‹ '+e(U_('prev'))+'</button><span class="num" id="btnum"></span><button type="button" class="btn" id="btnext" aria-label="'+e(U_('next'))+'">'+e(U_('next'))+' ›</button></div>';
-  h+='<input type="range" class="bt-rng" id="btrng" min="0" max="'+(N-1)+'" step="1" value="'+cur+'" aria-label="'+e(U_('timeline'))+'"><div class="bt-ticks">'+D.steps.map(function(s,i){return '<span>'+(i+1)+'</span>';}).join('')+'</div></div>';
+  h+='<input type="range" class="bt-rng" id="btrng" min="0" max="'+(N-1)+'" step="1" value="'+cur+'" aria-label="'+e(U_('timeline'))+'"><div class="bt-ticks">'+D.steps.map(function(s,i){return '<span>'+((N<=20||i===0||i===N-1||(i+1)%5===0)?(i+1):'·')+'</span>';}).join('')+'</div></div>';
   h+='<div id="btinfo"></div><div class="bt-step" id="btstep" aria-live="polite"></div>';
   // legend
   h+='<details class="bt-sec"><summary>'+e(U_('leyenda'))+'</summary><div class="bt-leg">'+legend(D)+'</div><p class="bt-cred">'+e(T(D.credito))+'</p></details>';
@@ -219,25 +256,30 @@ function render(app,X,D){
   var mode=null;
   var ROOT=app.querySelector('.bt')||document.querySelector('.bt[data-noi18n]');
   function show(i,instant){ cur=i; var s=D.steps[i];
-    if(ROOT){ var th=s.tema||D.tema||''; ROOT.classList.toggle('snow',th==='nieve'); ROOT.classList.toggle('mar',th==='mar'); ROOT.classList.toggle('barro',th==='barro'); ROOT.classList.toggle('ruinas',th==='ruinas'); ROOT.classList.toggle('meseta',th==='meseta'); ROOT.classList.toggle('desierto',th==='desierto'); ROOT.classList.toggle('cielo',th==='cielo'); }
+    if(ROOT){ var th=s.tema||D.tema||''; ROOT.classList.toggle('snow',th==='nieve'); ROOT.classList.toggle('mar',th==='mar'); ROOT.classList.toggle('barro',th==='barro'); ROOT.classList.toggle('ruinas',th==='ruinas'); ROOT.classList.toggle('meseta',th==='meseta'); ROOT.classList.toggle('desierto',th==='desierto'); ROOT.classList.toggle('cielo',th==='cielo'); ROOT.classList.toggle('noche',th==='noche'); }
+    if(D.caps){ var ac=0; D.caps.forEach(function(c,ci){ if(i>=c.s) ac=ci; }); Array.prototype.forEach.call(document.querySelectorAll('.bt-capb'),function(bb,bi){ bb.classList.toggle('on',bi===ac); bb.setAttribute('aria-selected',bi===ac?'true':'false'); if(bi===ac&&bb.parentNode){ var pc=bb.parentNode; pc.scrollLeft=Math.max(0,bb.offsetLeft-pc.offsetLeft-12); } }); }
+    var vn=document.getElementById('btvn'); if(vn){ var vt=D.vnote&&D.vnote[s.view]; vn.textContent=vt?T(vt):''; vn.style.display=vt?'':'none'; }
+    var ins=document.getElementById('btins'); if(ins){ var I0=s.ins&&D.ins&&D.ins[s.ins.id]; if(I0){ ins.innerHTML='<div class="bt-ins"><div class="bt-ins-t">'+e(T(I0.t))+'</div><svg viewBox="'+I0.vb+'" role="img" aria-label="'+e(T(I0.t))+'">'+T(I0.svg)+(s.ins.add?T(s.ins.add):'')+'</svg>'+(s.ins.cap?'<div class="bt-ins-c">'+e(T(s.ins.cap))+'</div>':'')+'</div>'; (s.ins.hl||[]).forEach(function(k){ Array.prototype.forEach.call(ins.querySelectorAll('[data-k="'+k+'"]'),function(n){ n.classList.add('on'); }); }); } else ins.innerHTML=''; }
     document.getElementById('btnum').textContent=U_('paso')+' '+(i+1)+' / '+N+' · '+T(s.h);
     document.getElementById('btrng').value=i;
     document.getElementById('btprev').disabled=i===0; document.getElementById('btnext').disabled=i===N-1;
     var st=document.getElementById('btstep');
-    st.innerHTML='<p class="hh">'+e(U_('paso'))+' '+(i+1)+' · '+e(T(s.h))+'</p><h2>'+e(T(s.t))+'</h2>'+T(s.txt).split('\n\n').map(function(p){return '<p>'+e(p)+'</p>';}).join('')+
+    st.innerHTML='<p class="hh">'+(s.cap?'<span class="bt-capl">'+e(T(s.cap))+'</span> ':'')+e(U_('paso'))+' '+(i+1)+' · '+e(T(s.h))+'</p><h2>'+e(T(s.t))+'</h2>'+T(s.txt).split('\n\n').map(function(p){return '<p>'+e(p)+'</p>';}).join('')+
       (s.foto?'<figure class="bt-fig"><img src="'+e(s.foto.f)+'" alt="'+e(T(s.foto.c))+'" loading="lazy"'+(s.foto.w?' width="'+s.foto.w+'" height="'+s.foto.h+'"':'')+'><figcaption>'+e(T(s.foto.c))+' <span class="cr">'+e(T(s.foto.a))+(s.foto.u?' · <a href="'+e(s.foto.u)+'" target="_blank" rel="noopener">'+(EN()?'Source':'Fuente')+'</a>':'')+'</span></figcaption></figure>':'')+
       (s.det?'<div class="bt-det"><b>'+e(U_('det'))+'</b><span class="tt">'+e(T(s.det.t))+'</span>'+e(T(s.det.x))+'</div>':'')+
+      (s.ver?'<div class="bt-ver"><b>'+e(T(s.ver.t||U_('vers')))+'</b>'+s.ver.it.map(function(v){return '<div class="vi"><span class="vw">'+e(T(v[0]))+'</span>'+e(T(v[1]))+'</div>';}).join('')+(s.ver.n?'<div class="vn">'+e(T(s.ver.n))+'</div>':'')+'</div>':'')+
       '<p class="cnt" style="margin:0 0 4px">'+e(U_('tap'))+'</p><details><summary>'+e(U_('src'))+' ('+s.src.length+')</summary>'+srcList(D,s.src)+'</details>';
     document.getElementById('btcap').style.display='none';
     document.getElementById('btinfo').innerHTML='';
     M.go(s,instant);
-    try{ history.replaceState(history.state,'',location.pathname+location.search+'#/batallas/'+D.id+(i?'?paso='+(i+1):'')); }catch(x){}
+    try{ history.replaceState(history.state,'',location.pathname+location.search+'#/'+BASE+'/'+D.id+(i?'?paso='+(i+1):'')); }catch(x){}
   }
   function exitMode(){ mode=null; document.getElementById('btmodep').classList.remove('on'); document.getElementById('btsteps').style.display=''; document.getElementById('btstep').style.display=''; show(cur); }
   document.getElementById('btprev').onclick=function(){ if(cur>0) show(cur-1); };
   document.getElementById('btnext').onclick=function(){ if(cur<N-1) show(cur+1); };
   document.getElementById('btrng').oninput=function(){ show(+this.value); };
   document.getElementById('btback').onclick=exitMode;
+  Array.prototype.forEach.call(document.querySelectorAll('.bt-capb'),function(bb){ bb.onclick=function(){ show(+bb.getAttribute('data-s')); var w=document.getElementById('btnum'); if(w&&w.scrollIntoView){ try{ var hd=document.querySelector('header.top'), y=document.querySelector('.bt-mapw').getBoundingClientRect().top+window.scrollY-((hd&&hd.offsetHeight)||0)-8; if(window.scrollY>y) window.scrollTo(0,y); }catch(x){} } }; });
   Array.prototype.forEach.call(document.querySelectorAll('.btbeach'),function(b){ b.onclick=function(){ var p=byId(D.playas,b.getAttribute('data-b')); if(!p) return; mode=p.id;
     document.getElementById('btmodep').classList.add('on'); document.getElementById('btsteps').style.display='none'; document.getElementById('btstep').style.display='none';
     var cp=document.getElementById('btcap'); cp.style.display=''; cp.textContent=p.n+' · '+U_('hora')+' '+p.hora; document.getElementById('btinfo').innerHTML='';
@@ -286,13 +328,14 @@ function Map_(svg,D){
   for(var lo=GR[0];lo<=GR[1]+1e-9;lo+=GR[4]){ var a=P([lo,GR[2]]),b=P([lo,GR[3]]); gd+='M'+a[0].toFixed(1)+','+a[1].toFixed(1)+'L'+b[0].toFixed(1)+','+b[1].toFixed(1); }
   for(var la=GR[2];la<=GR[3]+1e-9;la+=GR[4]){ var c=P([GR[0],la]),d2=P([GR[1],la]); gd+='M'+c[0].toFixed(1)+','+c[1].toFixed(1)+'L'+d2[0].toFixed(1)+','+d2[1].toFixed(1); }
   grat.setAttribute('d',gd);
-  var gOvG=el('g',null,svg), gOvW=el('path',{d:G.ovc,'class':'wl'},gOvG); el('path',{d:G.ov,'class':'land'},gOvG); var gOvR=el('path',{d:G.ovriv||'','class':'riv'},gOvG), gOvRM=el('path',{d:G.ovrivM||'','class':'riv'},gOvG); var gOv=el('path',{d:G.ovc,'class':'coast'},gOvG);
+  var gOvG=el('g',null,svg), gOvW=el('path',{d:G.ovc,'class':'wl'},gOvG); el('path',{d:G.ov,'class':'land'},gOvG); var gOvR=el('path',{d:G.ovriv||'','class':'riv'},gOvG), gOvRM=el('path',{d:G.ovrivM||'','class':'riv'},gOvG); var gOv=el('path',{d:G.ovc,'class':'coast'},gOvG); var gBord=G.bord?el('path',{d:G.bord,'class':'bord'},gOvG):null;
   var gDet=el('g',null,svg); var gDetW=el('path',{d:G.coast+(G.ovoutc||''),'class':'wl'},gDet); el('path',{d:G.ovout||'','class':'land'},gDet); el('path',{d:G.det,'class':'land'},gDet); var gDetC2=el('path',{d:G.ovoutc||'','class':'coast'},gDet);
   var gFlood=el('path',{d:G.flood,'class':'flood hide'},svg);
   var gArea=el('path',{d:G.areas,'class':'area hide'},svg);
   var gDep=G.dep?el('path',{d:G.dep,'class':'dep'},svg):null; // depresiones (p. ej. Qattara), visibles en ambos niveles
   var gZn=el('g',null,svg), ZN=[]; // zonas y frentes por paso (s.zn)
   var gReef=G.reef?el('path',{d:G.reef,'class':'reef'},gDet):null;
+  var gMil=G.mil?el('path',{d:G.mil,'class':'mil'},gDet):null, gYard=G.yard?el('path',{d:G.yard,'class':'yard'},gDet):null, gRd2=G.road2?el('path',{d:G.road2,'class':'road2'},gDet):null, gRd=G.road?el('path',{d:G.road,'class':'road'},gDet):null, gBld=G.bld?el('path',{d:G.bld,'class':'bld'},gDet):null, gWall=G.wall?el('path',{d:G.wall,'class':'wall'},gDet):null;
   var gRiv=el('path',{d:G.riv,'class':'riv'},gDet);
   var gRail=G.rail?el('path',{d:G.rail,'class':'rail'},gDet):null; // ferrocarril fijo opcional
   var gCoast=el('path',{d:G.coast,'class':'coast'},gDet);
@@ -324,6 +367,7 @@ function Map_(svg,D){
     gOv.style.strokeWidth=(1.3*s).toFixed(4); gOvR.style.strokeWidth=(.9*s).toFixed(4); gOvRM.style.strokeWidth=(2*s).toFixed(4);
     ZN.forEach(function(z){ z.e.style.strokeWidth=((z.k==='line'?2.6:1.4)*s).toFixed(4); z.e.style.strokeDasharray=z.k==='line'?(z.dash?(6*s)+' '+(3*s):''):(5*s)+' '+(3*s); }); gDetC2.style.strokeWidth=(1.3*s).toFixed(4); gOvW.style.strokeWidth=(9*s).toFixed(4); gDetW.style.strokeWidth=(12*s).toFixed(4); gCoast.style.strokeWidth=(1.5*s).toFixed(4); gRiv.style.strokeWidth=(1.1*s).toFixed(4); if(gReef){ gReef.style.strokeWidth=(1.2*s).toFixed(4); gReef.style.strokeDasharray=(3*s)+' '+(2*s); } grat.style.strokeWidth=(.8*s).toFixed(4); gArea.style.strokeWidth=(1.2*s).toFixed(4); gFlood.style.strokeWidth=(.6*s).toFixed(4);
     gArea.style.strokeDasharray=(4*s)+' '+(3*s); if(gDep) gDep.style.strokeWidth=(1*s).toFixed(4); if(gRail){ gRail.style.strokeWidth=(1.5*s).toFixed(4); gRail.style.strokeDasharray=(5*s)+' '+(2.5*s); }
+    if(gBord){ gBord.style.strokeWidth=(1.1*s).toFixed(4); gBord.style.strokeDasharray=(4*s)+' '+(2.5*s); } if(gRd) gRd.style.strokeWidth=(2.2*s).toFixed(4); if(gRd2) gRd2.style.strokeWidth=(1*s).toFixed(4); if(gMil){ gMil.style.strokeWidth=(1.2*s).toFixed(4); gMil.style.strokeDasharray=(4*s)+' '+(2*s); } if(gBld) gBld.style.strokeWidth=(1*s).toFixed(4); if(gWall) gWall.style.strokeWidth=(2.6*s).toFixed(4); if(gYard) gYard.style.strokeWidth=(.6*s).toFixed(4);
     for(var k in beachEls) beachEls[k].style.strokeWidth=(5*s).toFixed(4);
     arrowsScale(s); }
   // arrows
@@ -394,7 +438,13 @@ function Map_(svg,D){
 }
 
 window.MAT_BATALLAS=function(app,X){
-  css(); var p=X.p||[];
+  css(); var p=X.p||[]; BASE='batallas';
+  if(p.length<2) return hubPage(app,X);
+  if(p[1]==='historicas') return listPage(app,X);
+  return battle(app,X,p[1]);
+};
+window.MAT_OPERACIONES=function(app,X){
+  css(); var p=X.p||[]; BASE='operaciones';
   if(p.length<2) return listPage(app,X);
   return battle(app,X,p[1]);
 };
