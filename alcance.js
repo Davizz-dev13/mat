@@ -53,6 +53,7 @@ function writeQ(){ var h='#/guerra-nuclear?tab=alcance&m='+ST.m.join(',')+'&p='+
 function launch(){ if(ST.p){ var p=preset(ST.p); return {lat:p[3],lon:p[4],n:EN()?p[2]:p[1]}; } return {lat:ST.ll[0],lon:ST.ll[1],n:customName(ST.ll)}; }
 function customName(ll){ var best=null,bd=1e9; D.c.forEach(function(c){ var d=dist(ll[0],ll[1],c[3],c[4]); if(d<bd){bd=d;best=c;} });
   var t=(Math.abs(ll[0]).toFixed(2)+'°'+(ll[0]>=0?'N':'S')+' '+Math.abs(ll[1]).toFixed(2)+'°'+(ll[1]>=0?'E':(EN()?'W':'O')));
+  if(best&&bd<3) return cn(best)+' ('+t+')';
   if(best&&bd<300) return (EN()?'Near ':'Cerca de ')+cn(best)+' ('+t+')'; return (EN()?'Chosen point ':'Punto elegido ')+'('+t+')'; }
 function cn(c){ return EN()&&c[1]?c[1]:c[0]; }
 function sel(){ return ST.m.map(byId).filter(Boolean); }
@@ -62,6 +63,20 @@ function css(){ if(document.getElementById('alc-css')) return; var s=document.cr
  '.alc .alc-nuk{display:inline-block;margin-top:4px;font-size:12.5px;color:#ff9c8a;border:1px solid #6a2a24;border-radius:999px;padding:3px 10px;text-decoration:none}.alc .alc-nuk:hover{background:#2a1311}'+
  '.alc .tgt{border:1px solid #6a2a24;background:rgba(162,64,47,.10);border-radius:var(--r);padding:10px 12px;margin:8px 0 10px}.alc .tgt h3{margin:0 0 2px;font-size:16px}.alc .tgt .tx{float:right;background:none;border:0;color:var(--mu);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}.alc .tgt .tl{display:flex;flex-direction:column;gap:4px;margin:8px 0 4px}.alc .tgt .tr{display:flex;align-items:center;gap:8px;text-align:left;width:100%;background:rgba(0,0,0,.25);border:1px solid #3a2a26;border-radius:8px;padding:7px 9px;color:inherit;font:inherit;font-size:13.5px;cursor:pointer}.alc .tgt .tr:hover{border-color:#a2402f}.alc .tgt .tr b{flex:1;min-width:0}.alc .tgt .tr small{color:var(--mu);white-space:nowrap}.alc .tgt .cur{font-size:13px;color:#e6d4cf;margin:6px 0 0}'+
  '.alc .nextc{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border:1px solid #a2402f;background:#2a1311;border-radius:var(--r);padding:12px 14px;margin:14px 0 6px;color:#ffd9cf}.alc .nextc .tx2{flex:1 1 240px;font-size:14px;line-height:1.45}.alc .nextc b{color:#fff}.alc .nextc a.btn{border-color:#a2402f;background:#3a1714;color:#ffd9cf;font-weight:700;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}'+
+ '.alc .csr,.alc .lsr{position:relative;display:flex;align-items:center;margin:6px 0 8px}.alc .lsr{flex:1 1 100%;margin:0}'+
+ '.alc .csr input,.alc .lsr input{width:100%;height:46px;box-sizing:border-box;border:1px solid var(--line);background:var(--bg);color:var(--tx);border-radius:10px;padding:0 42px 0 38px;font:inherit;font-size:16px;-webkit-appearance:none;appearance:none}'+
+ '.alc .csr input{border-color:#7a5a24;background:var(--s1)}.alc .csr input:focus,.alc .lsr input:focus{outline:2px solid #e8b54a;outline-offset:1px}'+
+ '.alc .csr input::-webkit-search-cancel-button,.alc .lsr input::-webkit-search-cancel-button{-webkit-appearance:none;display:none}'+
+ '.alc .csr .ic,.alc .lsr .ic{position:absolute;left:12px;top:23px;transform:translateY(-50%);font-size:15px;pointer-events:none;opacity:.85}'+
+ '.alc .cx{position:absolute;right:4px;top:23px;transform:translateY(-50%);width:38px;height:38px;border:0;background:none;color:var(--mu);font-size:24px;line-height:1;cursor:pointer;padding:0}.alc .cx[hidden]{display:none}'+
+ '.alc .cresh{font-size:12.5px;color:var(--mu);margin:2px 0 4px}'+
+ '.alc .crow{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);background:var(--s1);border-radius:10px;padding:9px 11px;margin:6px 0;cursor:pointer}.alc .crow.on{border-color:#ffd166;box-shadow:0 0 0 1px #ffd166 inset}'+
+ '.alc .crow .cm{flex:1;min-width:0;line-height:1.55;overflow-wrap:anywhere}.alc .crow .n{white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums;padding-top:1px}'+
+ '.alc .crow .out{font-size:12.5px;color:#ff9c8a}.alc .crow .ca{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.alc .crow .ca .alc-nuk{margin-top:0}'+
+ '.alc .cb2{font:inherit;font-size:12.5px;color:var(--tx);background:var(--s2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer}.alc .cb2:hover{border-color:#e8b54a}'+
+ '.alc .cres0{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.45;margin:6px 0}.alc .cres0 a{color:#ff9c8a}'+
+ '.alc .lpl{position:absolute;left:0;right:0;top:48px;z-index:30;background:var(--s1);border:1px solid var(--line);border-radius:10px;max-height:min(50vh,340px);overflow:auto;-webkit-overflow-scrolling:touch;box-shadow:0 10px 28px rgba(0,0,0,.5)}.alc .lpl[hidden]{display:none}'+
+ '.alc .lpl .pr{padding:9px 10px}.alc .lpl .pr:focus{background:var(--s2);outline:none}.alc .pick input{font-size:16px}'+
  '.alc .note{border:1px solid #5a4a22;background:rgba(232,181,74,.07);color:#e6dcc4;border-radius:var(--r);padding:9px 11px;font-size:13px;margin:10px 0 4px;line-height:1.45}'+
  '.alc .note b{color:#f0c96a}'+
  '.alc .selbar{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}'+
@@ -187,6 +202,9 @@ function Map(cv,wrap,onTap){
       ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)'; ctx.strokeText(t,lx+2,ly+7); ctx.fillStyle=inr?'#fff':(es?'#e4dfcf':'#b9bec2'); ctx.fillText(t,lx+2,ly+7); });
     // objetivo elegido en Impacto («¿Qué misiles llegan aquí?»)
     if(self.tgt!=null&&cityP&&cityP[self.tgt]){ var tq=cityP[self.tgt], tp=S(tq[0],tq[1]); if(tp[0]>-20&&tp[0]<Wd+20&&tp[1]>-20&&tp[1]<Hd+20){ ctx.lineWidth=2.2; ctx.strokeStyle='#ff6a55'; ctx.beginPath(); ctx.arc(tp[0],tp[1],9,0,7); ctx.stroke(); ctx.beginPath(); ctx.moveTo(tp[0]-16,tp[1]); ctx.lineTo(tp[0]-5,tp[1]); ctx.moveTo(tp[0]+5,tp[1]); ctx.lineTo(tp[0]+16,tp[1]); ctx.moveTo(tp[0],tp[1]-16); ctx.lineTo(tp[0],tp[1]-5); ctx.moveTo(tp[0],tp[1]+5); ctx.lineTo(tp[0],tp[1]+16); ctx.stroke(); } }
+    // ciudad resaltada desde el buscador
+    if(self.hl!=null&&cityP&&cityP[self.hl]){ var hq=cityP[self.hl], hp=S(hq[0],hq[1]); ctx.setLineDash([]); ctx.lineWidth=2.5; ctx.strokeStyle='#ffd166'; ctx.beginPath(); ctx.arc(hp[0],hp[1],11,0,7); ctx.stroke(); ctx.beginPath(); ctx.arc(hp[0],hp[1],4,0,7); ctx.fillStyle='#ffd166'; ctx.fill();
+      var ht=cn(D.c[self.hl]); ctx.font='700 13px -apple-system,Segoe UI,Roboto,Arial,sans-serif'; var hw=ctx.measureText(ht).width+10, hx=Math.max(4,Math.min(Wd-hw-4,hp[0]-hw/2)), hy=hp[1]-36; if(hy<4) hy=hp[1]+16; ctx.fillStyle='rgba(8,10,12,.88)'; ctx.fillRect(hx,hy,hw,20); ctx.fillStyle='#ffd166'; ctx.textBaseline='middle'; ctx.textAlign='left'; ctx.fillText(ht,hx+5,hy+10.5); }
     // punto de lanzamiento
     var o=S(0,0); ctx.beginPath(); ctx.arc(o[0],o[1],9,0,7); ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fill(); ctx.beginPath(); ctx.arc(o[0],o[1],4.5,0,7); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#d33'; ctx.stroke();
     // etiquetas de anillo
@@ -230,12 +248,15 @@ function render(app,X){
    '<p class="lead">'+(EN()?'<b>Step 1.</b> Pick up to three missiles and a launch point: the map draws each one’s range as a true geodesic circle and shows which cities it reaches, how far and roughly how fast. Then tap <b>💥 Simulate impact here</b> on any city to go to step 2.':'<b>Paso 1.</b> Elige hasta tres misiles y un punto de lanzamiento: el mapa dibuja su alcance como un círculo geodésico real y te dice a qué ciudades llega, a qué distancia y en cuánto tiempo aproximado. Después toca <b>💥 Simular impacto aquí</b> en cualquier ciudad para pasar al paso 2.')+'</p>'+
    '<div class="tgt" id="alc-tgt" hidden></div>'+'<div class="selbar" id="alc-sel"></div>'+
    '<div class="pick" id="alc-pick" hidden></div>'+
-   '<div class="lrow"><label for="alc-lp" style="font-size:13px;color:var(--mu)">'+(EN()?'Launch from':'Lanzar desde')+'</label><select class="sel" id="alc-lp"></select><span class="hint">'+(EN()?'…or tap the map to launch from any point. Drag to move · pinch or scroll to zoom.':'…o toca el mapa para lanzar desde cualquier punto. Arrastra para moverte · pellizca o rueda para zoom.')+'</span></div>'+
+   '<div class="lrow"><label for="alc-lp" style="font-size:13px;color:var(--mu)">'+(EN()?'Launch from':'Lanzar desde')+'</label><select class="sel" id="alc-lp"></select><div class="lsr"><span class="ic" aria-hidden="true">🚀</span><input type="search" id="alc-lq" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="'+(EN()?'…or search a launch point or city: Madrid, Moscow…':'…o busca un punto o ciudad de lanzamiento: Madrid, Moscú…')+'" aria-label="'+(EN()?'Search launch point':'Buscar punto de lanzamiento')+'" aria-controls="alc-lpl"><button type="button" class="cx" id="alc-lx" aria-label="'+(EN()?'Clear':'Borrar')+'" hidden>×</button><div class="lpl" id="alc-lpl" role="listbox" hidden></div></div><span class="hint">'+(EN()?'…or tap the map to launch from any point. Drag to move · pinch or scroll to zoom.':'…o toca el mapa para lanzar desde cualquier punto. Arrastra para moverte · pellizca o rueda para zoom.')+'</span></div>'+
    '<div class="grid"><div><div class="mapw" id="alc-mw"><canvas id="alc-cv" aria-label="'+(EN()?'Range map':'Mapa de alcance')+'"></canvas>'+
    '<div class="mbtn"><button type="button" data-z="1.5" aria-label="Zoom +">+</button><button type="button" data-z="0.667" aria-label="Zoom −">−</button><button type="button" data-fit="1" aria-label="'+(EN()?'Fit':'Encuadrar')+'">⤢</button><button type="button" data-lab="1" aria-label="'+(EN()?'Labels':'Nombres')+'" style="font-size:13px">Aa</button></div>'+
    '<div class="mtip" id="alc-tip"></div><div class="mleg" id="alc-leg"></div></div>'+
    '<div class="note">'+(EN()?'<b>Estimated nominal range.</b> Real range depends on payload, trajectory, launch platform and conditions. Many figures are third-party estimates or claims by the countries themselves; disputed figures are shown as a range (dashed inner ring = lowest figure, or the shortest-range version). Informational content based on open sources.':'<b>Alcance nominal estimado.</b> El alcance real depende de la carga útil, la trayectoria, la plataforma de lanzamiento y las condiciones. Muchas cifras son estimaciones de terceros o afirmaciones de los propios países; las disputadas se muestran como un intervalo (anillo interior discontinuo = cifra más baja, o la versión de menor alcance). Contenido divulgativo basado en fuentes abiertas.')+'</div>'+'<p class="sub" style="margin-top:8px;font-size:12.5px">'+(EN()?'Azimuthal equidistant projection centred on the launch point: distances and directions from that point are true, which is why ranges are perfect circles; distant shapes are distorted. The outer edge is the antipode (20,015 km).':'Proyección azimutal equidistante centrada en el punto de lanzamiento: las distancias y direcciones desde ese punto son reales, por eso los alcances son círculos perfectos; las formas lejanas se deforman. El borde exterior es el antípoda (20.015 km).')+'</p></div>'+
    '<div class="side"><div id="alc-sum"></div></div></div>'+
+   '<h2 id="alc-ch">'+(EN()?'Cities in range':'Ciudades al alcance')+'</h2>'+
+   '<div class="csr"><span class="ic" aria-hidden="true">🔎</span><input type="search" id="alc-cq" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="'+(EN()?'Search any city: Lima, Málaga, New York…':'Busca cualquier ciudad: Lima, Málaga, Nueva York…')+'" aria-label="'+(EN()?'Search city':'Buscar ciudad')+'"><button type="button" class="cx" id="alc-cx" aria-label="'+(EN()?'Clear':'Borrar')+'" hidden>×</button></div>'+
+   '<div id="alc-cres" aria-live="polite"></div>'+
    '<div id="alc-cities"></div>'+
    '<div class="nextc" id="alc-next"></div>'+
    '<div id="alc-ctry"></div>'+
@@ -246,6 +267,19 @@ function render(app,X){
   // presets
   var s=root.querySelector('#alc-lp'); s.innerHTML=D.p.map(function(p){ return '<option value="'+p[0]+'">'+e(EN()?p[2]:p[1])+'</option>'; }).join('')+'<option value="_c">'+(EN()?'Point chosen on the map':'Punto elegido en el mapa')+'</option>';
   s.addEventListener('change',function(){ if(s.value==='_c') return; ST.p=s.value; ST.ll=null; recenter(true); });
+  // buscadores
+  var cq=root.querySelector('#alc-cq'), lq=root.querySelector('#alc-lq'), lpl=root.querySelector('#alc-lpl');
+  cq.addEventListener('input',function(){ CUR.cmore=false; csearch(); });
+  cq.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); cq.blur(); } else if(ev.key==='Escape'){ cq.value=''; csearch(); } });
+  root.querySelector('#alc-cx').addEventListener('click',function(){ cq.value=''; CUR.cmore=false; if(MAP){ MAP.hl=null; MAP.draw(); } csearch(); cq.focus(); });
+  root.querySelector('#alc-cres').addEventListener('click',function(ev){ if(ev.target.closest('a')) return; var lf=ev.target.closest('[data-lfrom]'); if(lf){ var c=D.c[+lf.getAttribute('data-lfrom')]; lfrom([c[3],c[4]],cn(c)); return; }
+    if(ev.target.closest('[data-cmore]')){ CUR.cmore=true; csearch(); return; } var sh=ev.target.closest('[data-show]'); if(sh) cshow(+sh.getAttribute('data-show')); });
+  lq.addEventListener('input',lsearch); lq.addEventListener('focus',function(){ if(lq.value) lsearch(); });
+  lq.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); lpick(lpl.querySelector('.pr')); } else if(ev.key==='Escape'){ lq.value=''; lsearch(); } else if(ev.key==='ArrowDown'){ var f=lpl.querySelector('.pr'); if(f){ ev.preventDefault(); f.focus(); } } });
+  lpl.addEventListener('keydown',function(ev){ var b=ev.target.closest('.pr'); if(!b) return; if(ev.key==='ArrowDown'&&b.nextElementSibling){ ev.preventDefault(); b.nextElementSibling.focus(); } else if(ev.key==='ArrowUp'){ ev.preventDefault(); (b.previousElementSibling||lq).focus(); } else if(ev.key==='Escape'){ lq.focus(); lpl.hidden=true; } });
+  lpl.addEventListener('click',function(ev){ lpick(ev.target.closest('.pr')); });
+  root.querySelector('#alc-lx').addEventListener('click',function(){ lq.value=''; lsearch(); lq.focus(); });
+  root.addEventListener('click',function(ev){ if(!ev.target.closest('.lsr')){ lpl.hidden=true; } });
   var cv=root.querySelector('#alc-cv'), mw=root.querySelector('#alc-mw');
   MAP=new Map(cv,mw,function(ll){ ST.p=null; ST.ll=[Math.round(ll[0]*100)/100,Math.round(ll[1]*100)/100]; recenter(false); toast((EN()?'Launch point: ':'Punto de lanzamiento: ')+launch().n); });
   MAP.resize();
@@ -266,6 +300,48 @@ function render(app,X){
   window.addEventListener('resize',CUR.onrs);
   meta(); recenter(true);
 }
+// ---------- buscador de ciudades (todas las de D.c, dentro o fuera de alcance) ----------
+function nz(s){ return norm(s).replace(/[^a-z0-9]+/g,' ').trim(); }
+var AKA={us:'usa eeuu ee uu estados unidos united states america',gb:'uk inglaterra england gran bretana britain',ru:'rusia russia',kp:'corea del norte north korea',kr:'corea del sur south korea',cn:'china',ae:'emiratos uae',nl:'holanda holland'};
+var CK=null;
+function ckeys(){ if(CK) return CK; var DNs={};
+  function cnm(iso,l){ try{ if(!DNs[l]) DNs[l]=new Intl.DisplayNames([l],{type:'region'}); return DNs[l].of(String(iso).toUpperCase())||''; }catch(x){ return ''; } }
+  CK=D.c.map(function(c){ var iso=c[2]; return {n:[nz(c[0]),nz(c[1]||'')].filter(Boolean), k:nz([cnm(iso,'es'),cnm(iso,'en'),PN[iso]?PN[iso].join(' '):'',AKA[iso]||''].join(' '))}; });
+  return CK; }
+function cfind(q){ var n=nz(q); if(!n) return []; var nc=n.replace(/ /g,''), toks=n.split(' '), K=ckeys(), out=[];
+  K.forEach(function(k,i){ var sc=0;
+    k.n.forEach(function(nm){ var cm=nm.replace(/ /g,''), v=0; if(nm===n||cm===nc) v=100; else if(cm.indexOf(nc)===0) v=80; else if((' '+nm).indexOf(' '+n)>=0) v=70; else if(cm.indexOf(nc)>=0) v=50; if(v>sc) sc=v; });
+    if(!sc){ var hay=k.n.join(' ')+' '+k.k; if(toks.every(function(t){ return hay.indexOf(t)>=0; })) sc=(' '+k.k).indexOf(' '+n)>=0?30:15; }
+    if(sc) out.push([i,sc]); });
+  out.sort(function(a,b){ var A=D.c[a[0]],B=D.c[b[0]]; return b[1]-a[1]||((B[2]==='es')-(A[2]==='es'))||((B[6]||0)-(A[6]||0))||(B[5]-A[5]); });
+  return out.map(function(x){ return x[0]; }); }
+function csearch(){ var el=document.getElementById('alc-cres'), qi=document.getElementById('alc-cq'); if(!el||!qi) return; var q=qi.value, cx=document.getElementById('alc-cx'); if(cx) cx.hidden=!q;
+  if(!nz(q)){ el.innerHTML=''; return; }
+  var r=cfind(q), M=sel(), lp=launch();
+  if(!r.length){ el.innerHTML='<div class="cres0"><b>'+(EN()?'Not in M.A.T’s city list':'No está en la lista de ciudades de M.A.T')+'</b><br>'+(EN()?'Tip: tap the map at any point to launch from there, or pick any point on the map as a target in the <a href="#/guerra-nuclear?tab=impacto">Impact tab</a>.':'Consejo: toca el mapa en cualquier punto para lanzar desde ahí, o elige cualquier punto del mapa como objetivo en la <a href="#/guerra-nuclear?tab=impacto">pestaña Impacto</a>.')+'</div>'; return; }
+  var lim=CUR.cmore?60:8, shown=r.slice(0,lim);
+  var h='<div class="cresh">'+(EN()?(r.length===1?'1 result':r.length+' results')+' · distance from '+e(lp.n):(r.length===1?'1 resultado':r.length+' resultados')+' · distancia desde '+e(lp.n))+'</div>'+
+   shown.map(function(i){ var c=D.c[i], d=CUR.dist[i]; var bs=M.map(function(m,j){ return badge(m,j,d); }).join('');
+    return '<div class="crow'+(MAP&&MAP.hl===i?' on':'')+'" data-show="'+i+'"><div class="cm">'+fl(c[2])+'<b>'+e(cn(c))+'</b> <span class="no">'+e(cname(c[2]))+'</span><br>'+
+     (bs||'<span class="out">'+(M.length?(EN()?'Out of range of the selected missiles':'Fuera de alcance de los misiles elegidos'):(EN()?'Pick a missile to see if it reaches':'Elige un misil para ver si llega'))+'</span>')+
+     '<div class="ca"><a class="alc-nuk" data-ci="'+i+'" href="'+impHref(i)+'">💥 '+(EN()?'Simulate impact here':'Simular impacto aquí')+'</a><button type="button" class="cb2" data-show="'+i+'">📍 '+(EN()?'See on map':'Ver en el mapa')+'</button><button type="button" class="cb2" data-lfrom="'+i+'">🚀 '+(EN()?'Launch from here':'Lanzar desde aquí')+'</button></div></div><div class="n">'+km(d)+'</div></div>'; }).join('');
+  if(r.length>lim) h+='<button type="button" class="more" data-cmore="1">'+(EN()?'Show more results ':'Ver más resultados ')+'('+r.length+')</button>';
+  el.innerHTML=h; }
+function cshow(i){ if(!MAP) return; MAP.hl=i; MAP.fit(Math.max((CUR.dist[i]||0)*1.25,600)); MAP.draw(); csearch(); try{ document.getElementById('alc-mw').scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(x){} }
+function lfrom(ll,nm){ ST.p=null; ST.ll=[Math.round(ll[0]*100)/100,Math.round(ll[1]*100)/100]; recenter(true); toast((EN()?'Launch point: ':'Punto de lanzamiento: ')+(nm||launch().n)); }
+// ---------- buscador del punto de lanzamiento (puntos de referencia + cualquier ciudad) ----------
+function lsearch(){ var el=document.getElementById('alc-lpl'), qi=document.getElementById('alc-lq'); if(!el||!qi) return; var q=qi.value, n=nz(q), lx=document.getElementById('alc-lx'); if(lx) lx.hidden=!q;
+  if(!n){ el.hidden=true; el.innerHTML=''; return; }
+  var ps=D.p.filter(function(p){ return (' '+nz(p[1]+' '+p[2]+' '+p[0])).indexOf(' '+n)>=0||nz(p[1]+' '+p[2]).replace(/ /g,'').indexOf(n.replace(/ /g,''))>=0; }).slice(0,6);
+  var cs=cfind(q).slice(0,8);
+  var h=ps.map(function(p){ return '<button type="button" class="pr" role="option" data-lp="'+e(p[0])+'"><span class="nm">🎯 '+e(EN()?p[2]:p[1])+'<small>'+(EN()?'Reference launch point':'Punto de lanzamiento de referencia')+'</small></span></button>'; }).join('')+
+   cs.map(function(i){ var c=D.c[i]; return '<button type="button" class="pr" role="option" data-lc="'+i+'">'+fl(c[2])+'<span class="nm">'+e(cn(c))+'<small>'+e(cname(c[2]))+' · '+(EN()?'launch from this city':'lanzar desde esta ciudad')+'</small></span></button>'; }).join('');
+  el.innerHTML=h||'<p class="sub" style="padding:8px 10px;margin:0">'+(EN()?'No match. Tap the map to launch from any point.':'Sin coincidencias. Toca el mapa para lanzar desde cualquier punto.')+'</p>';
+  el.hidden=false; }
+function lpick(b){ var qi=document.getElementById('alc-lq'); if(!b) return;
+  if(b.hasAttribute('data-lp')){ ST.p=b.getAttribute('data-lp'); ST.ll=null; recenter(true); }
+  else if(b.hasAttribute('data-lc')){ var c=D.c[+b.getAttribute('data-lc')]; lfrom([c[3],c[4]],cn(c)); }
+  if(qi){ qi.value=''; qi.blur(); } lsearch(); }
 function fitAll(){ var mx=0; sel().forEach(function(m){ if(m.r[1]>mx) mx=m.r[1]; }); MAP.fit(mx||1000); }
 function recenter(fit){ var lp=launch(); MAP.center(lp.lat,lp.lon); update(fit!==false); var s=document.getElementById('alc-lp'); if(s) s.value=ST.p||'_c'; }
 function update(fit){
@@ -284,7 +360,7 @@ function update(fit){
   var pk2=document.getElementById('alc-pick'); if(pk2&&!pk2.hidden) pickRender(true);
   document.getElementById('alc-leg').textContent=(EN()?'Launch: ':'Lanzamiento: ')+lp.n;
   document.getElementById('alc-tip').style.opacity=0;
-  tgt(); summary(); cities(); nextc(); countries(); fichas();
+  tgt(); summary(); csearch(); cities(); nextc(); countries(); fichas();
 }
 // panel «¿Qué misiles llegan a…?» (viene de la pestaña Impacto) y tarjeta del paso 2
 function tgt(){ var el=document.getElementById('alc-tgt'); if(!el) return; var tp=tpos(); MAP.tgt=(ST.t&&ST.t.i!=null)?ST.t.i:null;
@@ -335,7 +411,7 @@ function cities(){ var el=document.getElementById('alc-cities'); if(!el) return;
   if(tab!=='es') idx=idx.filter(function(i){ return CUR.dist[i]<=mx; });
   idx.sort(function(a,b){ return CUR.dist[a]-CUR.dist[b]; });
   var tot=idx.length, lim=CUR.more?idx.length:(tab==='es'?60:40); var shown=idx.slice(0,lim);
-  var h='<h2>'+(EN()?'Cities in range':'Ciudades al alcance')+'</h2><div class="tabs"><button type="button" class="chip" data-tab="es" aria-pressed="'+(tab==='es')+'">🇪🇸 '+(EN()?'Spain (all)':'España (todas)')+'</button><button type="button" class="chip" data-tab="w" aria-pressed="'+(tab!=='es')+'">🌍 '+(EN()?'Rest of the world':'Resto del mundo')+'</button></div>';
+  var h='<div class="tabs"><button type="button" class="chip" data-tab="es" aria-pressed="'+(tab==='es')+'">🇪🇸 '+(EN()?'Spain (all)':'España (todas)')+'</button><button type="button" class="chip" data-tab="w" aria-pressed="'+(tab!=='es')+'">🌍 '+(EN()?'Rest of the world':'Resto del mundo')+'</button></div>';
   if(!tot) h+='<p class="sub">'+(EN()?'No major city falls within the selected ranges.':'Ninguna ciudad importante queda dentro de los alcances elegidos.')+'</p>';
   else h+='<table><thead><tr><th>'+(EN()?'City':'Ciudad')+'</th><th style="text-align:right">'+(EN()?'Distance':'Distancia')+'</th></tr></thead><tbody>'+shown.map(function(i){ var c=D.c[i], d=CUR.dist[i];
     var bs=M.map(function(m,j){ return badge(m,j,d); }).join('');

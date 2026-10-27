@@ -217,6 +217,7 @@ function render(app,X){
   var cb=R0.querySelector('#nu-cb'), pk=R0.querySelector('#nu-pick'), qi=R0.querySelector('#nu-q');
   cb.addEventListener('click',function(){ var o=pk.hidden; pk.hidden=!o; cb.setAttribute('aria-expanded',String(o)); if(o){ qi.value=''; plist(''); setTimeout(function(){ try{ qi.focus({preventScroll:true}); }catch(x){} },30); } });
   qi.addEventListener('input',function(){ plist(qi.value); });
+  qi.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ var f=R0.querySelector('#nu-pl [data-ci]'); if(f&&qi.value.trim()){ ev.preventDefault(); f.click(); } } else if(ev.key==='Escape'){ pk.hidden=true; cb.setAttribute('aria-expanded','false'); cb.focus(); } });
   R0.querySelector('#nu-pl').addEventListener('click',function(ev){ var b=ev.target.closest('[data-ci]'); if(!b) return; pickCity(+b.getAttribute('data-ci')); pk.hidden=true; cb.setAttribute('aria-expanded','false'); });
   R0.querySelector('#nu-qc').addEventListener('click',function(ev){ var b=ev.target.closest('[data-ci]'); if(b) pickCity(+b.getAttribute('data-ci')); });
   // potencia
@@ -244,14 +245,24 @@ function snapY(y){ var best=y,bd=1e9; D.fx.y.forEach(function(p){ var d=Math.abs
 function y2s(y){ return Math.round((Math.log10(y)+1)/(Math.log10(50000)+1)*1000); }
 function s2y(s){ var v=Math.pow(10,s/1000*(Math.log10(50000)+1)-1); return v<1?Math.round(v*100)/100:(v<10?Math.round(v*10)/10:(v<1000?Math.round(v):(v<10000?Math.round(v/10)*10:Math.round(v/100)*100))); }
 function plist(q){ var el=document.getElementById('nu-pl'); if(!el) return; var n=norm(q), L=[];
-  D.c.forEach(function(c,i){ if(!n||norm(c[0]).indexOf(n)>=0||norm(c[1]||'').indexOf(n)>=0||norm(cname(c[2])).indexOf(n)>=0) L.push(i); });
+  function row(i){ var c=D.c[i]; return '<button type="button" class="pr" data-ci="'+i+'">'+fl(c[2])+'<span>'+e(cn(c))+'</span><small>'+e(cname(c[2]))+'</small></button>'; }
+  if(n){ // búsqueda: sin acentos ni mayúsculas, nombre ES/EN y país en los dos idiomas; mejores coincidencias primero
+    var K=ckeys(), R=[];
+    D.c.forEach(function(c,i){ var sc=0; [norm(c[0]),norm(c[1]||'')].forEach(function(nm){ if(!nm) return; var v=nm===n?100:nm.indexOf(n)===0?80:nm.indexOf(n)>=0?50:0; if(v>sc) sc=v; }); if(!sc&&K[i].indexOf(n)>=0) sc=20; if(sc) R.push([i,sc]); });
+    R.sort(function(a,b){ var A=D.c[a[0]],B=D.c[b[0]]; return b[1]-a[1]||((B[2]==='es')-(A[2]==='es'))||((B[5]?1:0)-(A[5]?1:0))||cn(A).localeCompare(cn(B)); });
+    el.innerHTML=R.length?'<div class="pgh">🔎 '+(R.length===1?T2('1 resultado','1 result'):T2(R.length+' resultados',R.length+' results'))+'</div>'+R.map(function(x){ return row(x[0]); }).join(''):
+      '<p class="ds" style="padding:8px;line-height:1.45"><b>'+T2('No está en la lista de ciudades de M.A.T','Not in M.A.T’s city list')+'</b><br>'+T2('Cierra este buscador y toca el mapa en cualquier punto para elegirlo como objetivo.','Close this search and tap the map at any point to pick it as the target.')+'</p>';
+    return; }
+  D.c.forEach(function(c,i){ L.push(i); });
   function srt(a,b){ var A=D.c[a],B=D.c[b]; return cn(A).localeCompare(cn(B)); }
   var es=L.filter(function(i){ return D.c[i][2]==='es'; }).sort(srt), cap=L.filter(function(i){ return D.c[i][2]!=='es'&&D.c[i][5]; }).sort(srt), ot=L.filter(function(i){ return D.c[i][2]!=='es'&&!D.c[i][5]; }).sort(srt);
-  function row(i){ var c=D.c[i]; return '<button type="button" class="pr" data-ci="'+i+'">'+fl(c[2])+'<span>'+e(cn(c))+'</span><small>'+e(cname(c[2]))+'</small></button>'; }
   var h=''; if(es.length) h+='<div class="pgh">🇪🇸 '+T2('España','Spain')+' ('+es.length+')</div>'+es.map(row).join('');
   if(cap.length) h+='<div class="pgh">🏛 '+T2('Capitales del mundo','World capitals')+' ('+cap.length+')</div>'+cap.map(row).join('');
   if(ot.length) h+='<div class="pgh">🌍 '+T2('Otras ciudades','Other cities')+' ('+ot.length+')</div>'+ot.map(row).join('');
   el.innerHTML=h||'<p class="ds" style="padding:8px">'+T2('Sin resultados.','No results.')+'</p>'; }
+var CK=null, AKA={us:'usa eeuu estadosunidos unitedstates america',gb:'uk inglaterra england granbretana britain',ae:'emiratos uae',nl:'holanda holland'};
+function ckeys(){ if(CK) return CK; var DNs={}; function cnm(iso,l){ try{ if(!DNs[l]) DNs[l]=new Intl.DisplayNames([l],{type:'region'}); return DNs[l].of(String(iso).toUpperCase())||''; }catch(x){ return ''; } }
+  CK=D.c.map(function(c){ return norm(cnm(c[2],'es'))+'|'+norm(cnm(c[2],'en'))+'|'+(AKA[c[2]]||''); }); return CK; }
 function pickCity(i){ S.c=i; S.ll=null; upd(true); }
 // ---------- cálculo + interfaz ----------
 var CUR=null;
