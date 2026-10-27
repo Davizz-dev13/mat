@@ -393,8 +393,21 @@ function Map_(svg,D){
     function box(n){ var r=n.getBoundingClientRect(); return [r.left,r.top,r.right,r.bottom]; }
     function hit(b){ for(var i=0;i<placed.length;i++){ var c=placed[i]; if(b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]) return true; } return false; }
     function vis(g){ return !g.classList.contains('hide')&&!g.classList.contains('off')&&!(g.parentNode&&g.parentNode.classList&&g.parentNode.classList.contains('hide')); }
+    // audit 27-oct: on small maps, nudge overlapping unit symbols apart (a few px) so their labels stay readable
+    if(VB){ var sc=VB[2]/pxW(), vu=Object.keys(UN).map(function(id){return UN[id];}).filter(function(o){return vis(o.g);}), moved={};
+      for(var it=0;it<10;it++){ var any=false, bx=vu.map(function(o){return box(o.g);});
+        for(var i=0;i<vu.length;i++) for(var j=i+1;j<vu.length;j++){ var A=bx[i],B=bx[j], ox=Math.min(A[2],B[2])-Math.max(A[0],B[0])+2, oy=Math.min(A[3],B[3])-Math.max(A[1],B[1])+2; if(ox<=2||oy<=2) continue;
+          var dx=0,dy=0; if(oy<=ox){ dy=oy/2*((A[1]+A[3])<=(B[1]+B[3])?-1:1); } else { dx=ox/2*((A[0]+A[2])<=(B[0]+B[2])?-1:1); }
+          vu[i].x+=dx*sc; vu[i].y+=dy*sc; vu[j].x-=dx*sc; vu[j].y-=dy*sc; moved[i]=moved[j]=1; any=true;
+          A[0]+=dx;A[2]+=dx;A[1]+=dy;A[3]+=dy; B[0]-=dx;B[2]-=dx;B[1]-=dy;B[3]-=dy; }
+        Object.keys(moved).forEach(function(k){ var o=vu[k]; o.g.setAttribute('transform','translate('+o.x.toFixed(3)+','+o.y.toFixed(3)+') scale('+(sc*(WIDE?.8:1)).toFixed(5)+')'); });
+        if(!any) break; } }
     Object.keys(UN).forEach(function(id){ var g=UN[id].g; if(vis(g)) placed.push(box(g)); });
-    MKs.forEach(function(o){ placed.push(box(o.g)); });
+    MKs.forEach(function(o){ var t=o.g.querySelector('text'); if(t){ t.removeAttribute('transform'); t.style.display=''; var b=box(t);
+        if(hit(b)){ var h=b[3]-b[1]+2, w=b[2]-b[0], ok=false, tries=[[0,-h],[0,h],[0,-2*h],[0,2*h],[w/2+4,0],[-w/2-4,0]];
+          for(var q=0;q<tries.length&&!ok;q++){ var nb=[b[0]+tries[q][0],b[1]+tries[q][1],b[2]+tries[q][0],b[3]+tries[q][1]]; if(nb[0]>=sr.left&&nb[2]<=sr.right&&nb[1]>=sr.top&&nb[3]<=sr.bottom&&!hit(nb)){ t.setAttribute('transform','translate('+tries[q][0].toFixed(1)+','+tries[q][1].toFixed(1)+')'); ok=true; } }
+          if(!ok&&o.g.querySelectorAll('text').length===1&&!o.g.querySelector('path,circle,rect,use,polygon')) t.style.display='none'; } }
+      placed.push(box(o.g)); });
     function lab(list,all){ list.forEach(function(g){ var t=g.querySelector('text'); if(!t) return; t.style.display=''; if(all) g.style.display=''; if(!vis(g)) return; var b=box(t); var off=b[0]<sr.left-1||b[2]>sr.right+1||b[1]<sr.top-1||b[3]>sr.bottom+1; if(off||hit(b)){ if(all) g.style.display='none'; else t.style.display='none'; } else placed.push(b); }); }
     lab(Object.keys(BL).map(function(k){return BL[k].g;}));
     lab(DFc.filter(function(o){return o.d.k==='bat';}).map(function(o){return o.g;}));

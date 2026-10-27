@@ -346,7 +346,7 @@ function share(){ var url=location.href.split('#')[0]+qstr(), g=CUR.g, t=T2('Gue
   if(navigator.share){ navigator.share({title:t,text:t,url:url}).catch(function(){}); return; }
   function ok(){ toast(T2('Enlace copiado','Link copied')); }
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok,function(){ prompt(T2('Copia el enlace:','Copy the link:'),url); }); else prompt(T2('Copia el enlace:','Copy the link:'),url); }
-function how(){ var el=document.getElementById('nu-how'); if(!el) return; function li(s){ return '<li><a href="'+e(s.u)+'" target="_blank" rel="noopener">'+e(s.t)+'</a></li>'; }
+function how(){ var el=document.getElementById('nu-how'); if(!el) return; function li(s){ return '<li><a href="'+e(s.u)+'" target="_blank" rel="noopener">'+e(window.MAT_LANG==='en'&&s.te?s.te:s.t)+'</a></li>'; }
   el.innerHTML=
   (EN()?'<p><b>Blast.</b> Overpressure radii (20, 12, 5, 2 and 1 psi) come from the U.S. Congress OTA report <i>The Effects of Nuclear War</i> (1979, table 3 and figure 1) for 1 Mt and are scaled to other yields with the cube-root law (Glasstone & Dolan, ch. 3). For an air burst the height is the one that maximises the reach of each pressure, as in OTA.</p>'+
    '<p><b>Fireball.</b> Maximum radius from Glasstone & Dolan (1977, ch. 2).</p>'+
