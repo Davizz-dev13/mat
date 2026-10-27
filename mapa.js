@@ -61,10 +61,10 @@ window.MAT_MAPA=function(app,X){
     +FZ.custom().map(function(c){return '<button class="chip mpchip" data-s="c:'+esc(c.id)+'" aria-pressed="false">'+esc(c.n)+' <span class="mph">tuya</span></button>';}).join('')
     +'<a class="chip mpchip mpnew" href="#/fuerzas">+ Crear facción</a>';
   var h=X.crumbs([['Inicio','#/'],['Mapa del mundo']])+'<div class="mptop"><h1>Mapa del mundo</h1><p class="sub">Toca un país para ver su arsenal. Toca otro y se comparan. Arrastra para girar, pellizca para acercar.</p></div>'
-    +'<div class="mpbar"><div class="mpsearch"><input id="mpq" type="search" placeholder="Buscar país" autocomplete="off" aria-label="Buscar país"><div id="mpres" class="mpres" hidden></div></div><button class="btn mpbtog" id="mpbt" aria-pressed="false" data-noi18n><i></i><span></span></button><button class="btn mpreset" id="mpreset" hidden>Reiniciar</button></div>'
-    +'<div class="mpbrow" id="mpbrow" hidden data-noi18n></div>'
+    +'<div class="mpbar"><div class="mpsearch"><input id="mpq" type="search" placeholder="Buscar país" autocomplete="off" aria-label="Buscar país"><div id="mpres" class="mpres" hidden></div></div><button class="btn mpbtog" id="mpbt" aria-pressed="false" data-noi18n><i></i><span></span></button><button class="btn mpbtog mpstog" id="mpst" aria-pressed="false" data-noi18n><i></i><span></span></button><button class="btn mpreset" id="mpreset" hidden>Reiniciar</button></div>'
+    +'<div class="mpbrow" id="mpbrow" hidden data-noi18n></div><div class="mpbrow mpsrow" id="mpsrow" hidden data-noi18n></div>'
     +'<div class="mpchips" role="group" aria-label="Facciones"><span class="mpcl">Facciones</span>'+facChips+'</div>'
-    +'<div class="mpwrap"><div class="mpglobe" id="mpg"><canvas id="mpc" aria-label="Globo terráqueo interactivo"></canvas><div class="mptip" id="mptip" hidden></div><div class="mpbcard" id="mpbcard" hidden data-noi18n></div><div class="mplab" id="mplab0" hidden></div><div class="mplab b" id="mplab1" hidden></div><div class="mphint" id="mphint">Toca un país · toca dos para compararlos</div><div class="mpleg" id="mpleg"></div><div class="mpload" id="mpload">Cargando globo 3D…</div></div>'
+    +'<div class="mpwrap"><div class="mpglobe" id="mpg"><canvas id="mpc" aria-label="Globo terráqueo interactivo"></canvas><div class="mptip" id="mptip" hidden></div><div class="mpbcard" id="mpbcard" hidden data-noi18n></div><div class="mpbcard mpscard" id="mpscard" hidden data-noi18n></div><div class="mplab" id="mplab0" hidden></div><div class="mplab b" id="mplab1" hidden></div><div class="mphint" id="mphint">Toca un país · toca dos para compararlos</div><div class="mpleg" id="mpleg"></div><div class="mpload" id="mpload">Cargando globo 3D…</div></div>'
     +'<aside class="mppanel" id="mpp" aria-live="polite"></aside></div>'
     +'<p class="note" data-noi18n>'+(window.MAT_LANG==='en'?'Map: Natural Earth 1:50m (public domain), simplified. Colour intensity = units in service with a figure in Wikipedia\'s equipment tables ('+esc(DATA.fecha)+'); grey = no table loaded yet. Borders are illustrative.':'Mapa: Natural Earth 1:50m (dominio público), simplificado. Intensidad del color = unidades en servicio con cifra en las tablas de equipamiento de Wikipedia ('+esc(DATA.fecha)+'); gris = sin tabla cargada todavía. Las fronteras son ilustrativas.')+'</p>';
   X.set(h);
@@ -135,6 +135,17 @@ window.MAT_MAPA=function(app,X){
     if(t.dataset.bmore){ B.more[t.dataset.bmore]=1; renderPanel(); return; }
     var b=BD&&BD.L[+t.dataset.bq]; if(!b) return; if(isPhone()){ sheetOpen=false; pEl.classList.remove('big'); } bShow(b.i); if(R&&R.focusLL) R.focusLL(b.lon,b.lat,1.75); if(isPhone()) phoneScroll(); });
   bBtn(); bRow(); if(B.on) bLoad0();
+  // ---- capa SATÉLITES (solo datos públicos; carga perezosa de satelites.js + satellite.min.js + sat_tle.json.gz al activarla)
+  var SATL=null, SATP=null, satOn0=false; try{ satOn0=o.sat==='1'||(o.sat==null&&localStorage.getItem('mat_sat')==='1'); }catch(e){ satOn0=o.sat==='1'; }
+  var stEl=app.querySelector('#mpst'), srEl=app.querySelector('#mpsrow'), scEl=app.querySelector('#mpscard');
+  stEl.querySelector('span').innerHTML=LG('🛰️ Satélites <small>(datos públicos)</small>','🛰️ Satellites <small>(public data)</small>'); stEl.setAttribute('aria-pressed',satOn0);
+  function satCx(){ return {EN:EN,LG:LG,esc:esc,P:P,nf:nf,cname:cname,flagImg:flagImg,rowEl:srEl,cardEl:scEl,btnEl:stEl,pEl:pEl,initOn:satOn0,
+    focusLL:function(lo,la,d){ if(R&&R.focusLL) R.focusLL(lo,la,d||undefined); }, over:function(lo,la){ var c=WORLD&&pickLL(lo,la,0.6); return c?(EN&&window.MAT_T?window.MAT_T(c.n):c.n):LG('el mar o una zona sin país','the sea or an area with no country'); },
+    panel:function(){ if(!dead) renderPanel(); }, urlSync:function(){ if(!dead) update(false); }, afterPick:function(){ if(isPhone()){ sheetOpen=false; pEl.classList.remove('big'); phoneScroll(); } }}; }
+  function satLoad(){ if(SATP) return SATP; var sv=document.querySelector('script[data-v]'); SATP=(window.MAT_SATL?Promise.resolve():new Promise(function(ok,ko){ var s=document.createElement('script'); s.src='satelites.js?v='+(sv?sv.getAttribute('data-v'):''); s.onload=ok; s.onerror=function(){ SATP=null; ko(); }; document.head.appendChild(s); })).then(function(){ if(dead) return; SATL=window.MAT_SATL(satCx()); satHook(); }); return SATP; }
+  function satHook(){ if(!SATL||!R) return; if(R.is2d) SATL.set2d(R.refresh); else if(R.sat3d) R.sat3d(SATL); }
+  stEl.addEventListener('click',function(){ if(SATL) return; satOn0=true; stEl.setAttribute('aria-pressed','true'); srEl.hidden=false; srEl.innerHTML='<span class="mpsrc">'+LG('Cargando satélites…','Loading satellites…')+'</span>'; satLoad().then(function(){ if(!dead) update(false); }).catch(function(){ srEl.innerHTML='<span class="mpsrc">'+LG('No se pudieron cargar los satélites. Comprueba la conexión.','Could not load the satellites. Check your connection.')+'</span>'; }); });
+  if(satOn0) satLoad().catch(function(){});
   function bLoad0(){ loadBases().then(function(){ if(dead) return; bRow(); if(BR) BR.refresh(); renderPanel(); }).catch(function(){ if(!dead) brEl.innerHTML='<span class="mpsrc">'+LG('No se pudieron cargar las bases. Comprueba la conexión.','Could not load the bases. Check your connection.')+'</span>'; }); }
 
   // ---- texture (equirectangular) shared by 3D and 2D
@@ -171,7 +182,7 @@ window.MAT_MAPA=function(app,X){
       var SL=srcList(sd.m); if(SL.length) h+='<details class="mpsrcs"><summary>Fuentes ('+SL.length+')</summary><div>'+SL.join('<br>')+'</div></details>'; }
     if(sd.m.length===1&&window.MAT_GASTO) h+=window.MAT_GASTO.block(sd.m[0],'mph3');
     if(sd.m.length===1) h+=window.MAT_FZ.chg(sd.m[0],'mph3');
-    if(!B.on||!BD||sd.m.length>1) h+=bSec(sd.m);
+    if(!B.on||!BD||sd.m.length>1) h+=bSec(sd.m); if(SATL) h+=SATL.sec(sd.m);
     h+='<div class="btns mpbtns"><a class="btn pri" href="#/fuerzas?a='+encodeURIComponent(sd.s)+'">Ver arsenal completo</a><button class="btn" id="mpcmp">Comparar</button></div>';
     return h; }
   function twoSides(A,B){ var IA=FZ.inv(A.m), IB=FZ.inv(B.m), h='';
@@ -222,21 +233,21 @@ window.MAT_MAPA=function(app,X){
   function center(sd){ var v=[0,0,0], n=0; sd.m.forEach(function(k){ isosOf(k).forEach(function(iso){ var c=WORLD.byIso[iso]; if(!c||c.t) return; var la=c.l[1]*Math.PI/180, lo=c.l[0]*Math.PI/180; v[0]+=Math.cos(la)*Math.cos(lo); v[1]+=Math.cos(la)*Math.sin(lo); v[2]+=Math.sin(la); n++; }); });
     if(!n) return null; var L=Math.hypot(v[0],v[1],v[2]); if(L<1e-3){ var c0=WORLD.byIso[isosOf(sd.m[0])[0]]; return c0?c0.l:null; } return [Math.atan2(v[1],v[0])*180/Math.PI, Math.asin(v[2]/L)*180/Math.PI]; }
   function update(focus){ drawTex(); if(R) R.refresh(focus); if(BR) BR.refresh(); renderPanel();
-    var qa=sel.map(function(s,i){return (i?'b':'a')+'='+encodeURIComponent(s);}); if(force2d) qa.push('v=2d'); if(B.on) qa.push('capa=bases'); var q=qa.length?'?'+qa.join('&'):''; try{history.replaceState(null,'','#/mapa'+q);}catch(e){} }
+    var qa=sel.map(function(s,i){return (i?'b':'a')+'='+encodeURIComponent(s);}); if(force2d) qa.push('v=2d'); if(B.on) qa.push('capa=bases'); if(SATL&&SATL.on) qa.push('sat=1'); var q=qa.length?'?'+qa.join('&'):''; try{history.replaceState(null,'','#/mapa'+q);}catch(e){} }
   // ---- renderers
   function start2d(why){ ld.hidden=true; gEl.classList.add('flat'); var ctx=cv.getContext('2d'); var vw=0,vh=0;
     R={is2d:true, refresh:function(){draw();}, focusLL:function(){}, dispose:function(){ window.removeEventListener('resize',draw); BR=null; }};
     function draw(){ var w=gEl.clientWidth, hh=Math.round(w/2), dpr=Math.min(window.devicePixelRatio||1,2); cv.style.height=hh+'px'; cv.width=w*dpr; cv.height=hh*dpr; vw=w; vh=hh; ctx.drawImage(tcv,0,0,cv.width,cv.height);
       var S=memberSets(); ctx.save(); ctx.scale(cv.width/TW,cv.height/TH); ctx.lineWidth=2.5*TW/cv.width; WORLD.c.forEach(function(c){ if(S[0][c.i]||S[1][c.i]){ ctx.strokeStyle='#fff'; ctx.stroke(c.P2);} }); ctx.restore(); WORLD.c.forEach(function(c){ if(c.m&&(S[0][c.i]||S[1][c.i])) c.m.forEach(function(p){ ctx.beginPath(); ctx.arc((p[0]+180)/360*cv.width,(90-p[1])/180*cv.height,2.6*dpr,0,7); ctx.fillStyle=S[0][c.i]?COL.a:COL.b; ctx.fill(); ctx.lineWidth=1*dpr; ctx.strokeStyle='#fff'; ctx.stroke(); }); }); 
-      if(B.on&&BD){ var HK=bHiKeys(); BD.L.forEach(function(b){ if(!bvf(b)) return; var x=(b.lon+180)/360*cv.width, y=(90-b.lat)/180*cv.height, hi=HK[b.h]||b.i===B.cur; ctx.beginPath(); ctx.arc(x,y,(b.i===B.cur?4.5:hi?2.2:1.15)*dpr,0,7); ctx.globalAlpha=b.st===2?.5:1; ctx.fillStyle=BCOL[b.t]; ctx.fill(); if(b.f||hi){ ctx.lineWidth=1.1*dpr; ctx.strokeStyle=b.i===B.cur?'#fff':b.f?'#ee484d':'#f2f2f2'; ctx.stroke(); } ctx.globalAlpha=1; }); } }
+      if(B.on&&BD){ var HK=bHiKeys(); BD.L.forEach(function(b){ if(!bvf(b)) return; var x=(b.lon+180)/360*cv.width, y=(90-b.lat)/180*cv.height, hi=HK[b.h]||b.i===B.cur; ctx.beginPath(); ctx.arc(x,y,(b.i===B.cur?4.5:hi?2.2:1.15)*dpr,0,7); ctx.globalAlpha=b.st===2?.5:1; ctx.fillStyle=BCOL[b.t]; ctx.fill(); if(b.f||hi){ ctx.lineWidth=1.1*dpr; ctx.strokeStyle=b.i===B.cur?'#fff':b.f?'#ee484d':'#f2f2f2'; ctx.stroke(); } ctx.globalAlpha=1; }); } if(SATL) SATL.draw2d(ctx,cv.width,cv.height,dpr); }
     drawTex(); draw(); window.addEventListener('resize',draw);
-    cv.addEventListener('click',function(e){ var r=cv.getBoundingClientRect(); if(B.on&&BD){ var best=-1, bd=144; BD.L.forEach(function(b){ if(!bvf(b)) return; var x=r.left+(b.lon+180)/360*r.width, y=r.top+(90-b.lat)/180*r.height, d=(x-e.clientX)*(x-e.clientX)+(y-e.clientY)*(y-e.clientY); if(d<bd){bd=d;best=b.i;} }); if(best>=0){ bShow(best); return; } if(B.cur!=null) bHide(); } var lon=(e.clientX-r.left)/r.width*360-180, lat=90-(e.clientY-r.top)/r.height*180; tapCountry(pickLL(lon,lat,360/r.width*14)); });
-    BR={refresh:draw};
+    cv.addEventListener('click',function(e){ var r=cv.getBoundingClientRect(); if(SATL&&SATL.on){ var k2=cv.width/r.width, si2=SATL.pick2d((e.clientX-r.left)*k2,(e.clientY-r.top)*k2,cv.width,cv.height,13*k2); if(si2>=0){ SATL.show(si2); return; } } if(B.on&&BD){ var best=-1, bd=144; BD.L.forEach(function(b){ if(!bvf(b)) return; var x=r.left+(b.lon+180)/360*r.width, y=r.top+(90-b.lat)/180*r.height, d=(x-e.clientX)*(x-e.clientX)+(y-e.clientY)*(y-e.clientY); if(d<bd){bd=d;best=b.i;} }); if(best>=0){ bShow(best); return; } if(B.cur!=null) bHide(); } var lon=(e.clientX-r.left)/r.width*360-180, lat=90-(e.clientY-r.top)/r.height*180; tapCountry(pickLL(lon,lat,360/r.width*14)); });
+    BR={refresh:draw}; satHook();
     if(why) leg.insertAdjacentHTML('beforebegin','');
     var n=document.createElement('p'); n.className='mpsrc mp2dnote'; n.textContent=why||'Vista plana.'; gEl.appendChild(n);
   }
   function hasGL(){ try{ var c=document.createElement('canvas'); return !!(window.WebGLRenderingContext&&(c.getContext('webgl2')||c.getContext('webgl'))); }catch(e){return false;} }
-  CUR={dispose:function(){ dead=true; if(R) R.dispose(); R=null; window.removeEventListener('hashchange',onHash); }};
+  CUR={dispose:function(){ dead=true; if(SATL) SATL.dispose(); if(R) R.dispose(); R=null; window.removeEventListener('hashchange',onHash); }};
   function onHash(){ if(!/^#\/mapa/.test(location.hash)&&CUR){ CUR.dispose(); CUR=null; } }
   window.addEventListener('hashchange',onHash);
   renderPanel();
@@ -352,8 +363,8 @@ window.MAT_MAPA=function(app,X){
     var ray=new T.Raycaster(), ndc=new T.Vector2();
     function llAt(x,y){ var r=cv.getBoundingClientRect(); ndc.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1); ray.setFromCamera(ndc,cam); var hit=ray.intersectObject(sph,false)[0]; if(!hit) return null; var lp=globe.worldToLocal(hit.point.clone()); return v2ll(lp); }
     function tolDeg(){ var r=cv.getBoundingClientRect(), vf=cam.fov*Math.PI/180, rpx=(r.height/2)/Math.tan(vf/2)/Math.sqrt(Math.max(.01,dist*dist-1)); return Math.min(6,16*57.3/Math.max(rpx,1)); }
-    function tap(x,y){ if(B.on){ var bi=bPick(x,y,isPhone()?12:9); if(bi>=0){ bShow(bi); return; } if(B.cur!=null) bHide(); } var ll=llAt(x,y); if(!ll) return; var c=pickLL(ll[0],ll[1],tolDeg()); if(c) tapCountry(c,false); }
-    var hvT=0; function hover(e){ var now=performance.now(); if(now-hvT<60) return; hvT=now; if(B.on){ var bi=bPick(e.clientX,e.clientY,9); if(bi>=0){ var bb=BD.L[bi], rr=gEl.getBoundingClientRect(); tip.textContent=bname(bb)+' · '+(EN?BTN[bb.t][1]:BTN[bb.t][0])+(bb.f?' · '+LG('extranjera','foreign'):''); tip.style.left=(e.clientX-rr.left+14)+'px'; tip.style.top=(e.clientY-rr.top+10)+'px'; tip.hidden=false; cv.style.cursor='pointer'; return; } } var ll=llAt(e.clientX,e.clientY), c=ll&&pickLL(ll[0],ll[1],tolDeg()*.6); if(!c){tip.hidden=true; cv.style.cursor='grab'; return;} var r=gEl.getBoundingClientRect(); tip.textContent=c.n+(c.k&&TOT[c.k]!=null?' · '+nf(TOT[c.k])+' unidades':(c.k?' · sin tabla':' · sin datos')); tip.style.left=(e.clientX-r.left+14)+'px'; tip.style.top=(e.clientY-r.top+10)+'px'; tip.hidden=false; cv.style.cursor='pointer'; }
+    function tap(x,y){ if(SATL&&SATL.on){ var si=SATL.pick(x,y,isPhone()?15:10); if(si>=0){ SATL.show(si); return; } } if(B.on){ var bi=bPick(x,y,isPhone()?12:9); if(bi>=0){ bShow(bi); return; } if(B.cur!=null) bHide(); } var ll=llAt(x,y); if(!ll) return; var c=pickLL(ll[0],ll[1],tolDeg()); if(c) tapCountry(c,false); }
+    var hvT=0; function hover(e){ var now=performance.now(); if(now-hvT<60) return; hvT=now; if(SATL&&SATL.on){ var si=SATL.pick(e.clientX,e.clientY,10); if(si>=0){ var rr0=gEl.getBoundingClientRect(); tip.textContent=SATL.tip(si); tip.style.left=(e.clientX-rr0.left+14)+'px'; tip.style.top=(e.clientY-rr0.top+10)+'px'; tip.hidden=false; cv.style.cursor='pointer'; return; } } if(B.on){ var bi=bPick(e.clientX,e.clientY,9); if(bi>=0){ var bb=BD.L[bi], rr=gEl.getBoundingClientRect(); tip.textContent=bname(bb)+' · '+(EN?BTN[bb.t][1]:BTN[bb.t][0])+(bb.f?' · '+LG('extranjera','foreign'):''); tip.style.left=(e.clientX-rr.left+14)+'px'; tip.style.top=(e.clientY-rr.top+10)+'px'; tip.hidden=false; cv.style.cursor='pointer'; return; } } var ll=llAt(e.clientX,e.clientY), c=ll&&pickLL(ll[0],ll[1],tolDeg()*.6); if(!c){tip.hidden=true; cv.style.cursor='grab'; return;} var r=gEl.getBoundingClientRect(); tip.textContent=c.n+(c.k&&TOT[c.k]!=null?' · '+nf(TOT[c.k])+' unidades':(c.k?' · sin tabla':' · sin datos')); tip.style.left=(e.clientX-r.left+14)+'px'; tip.style.top=(e.clientY-r.top+10)+'px'; tip.hidden=false; cv.style.cursor='pointer'; }
     function onWheel(e){ e.preventDefault(); tdist=Math.max(1.28,Math.min(resize.fd*1.6,tdist*Math.exp(e.deltaY*0.0012))); lastAct=performance.now(); }
     cv.addEventListener('pointerdown',onDown); cv.addEventListener('pointermove',onMove); cv.addEventListener('pointerup',onUp); cv.addEventListener('pointercancel',onUp); cv.addEventListener('pointerleave',function(){tip.hidden=true;}); cv.addEventListener('wheel',onWheel,{passive:false});
     var offY=0;
@@ -372,16 +383,16 @@ window.MAT_MAPA=function(app,X){
         else if(A.k==='ping'){ var z=((et%1.6)+1.6)%1.6/1.6; A.m.scale.setScalar(1+z*2.2); A.m.material.opacity=et<0?0:1-z; } }
       var vo=viewOff(); offY+=(vo-offY)*Math.min(1,dt*8); if(Math.abs(offY)>0.5){ var cw=renderer.domElement.clientWidth, chh=renderer.domElement.clientHeight; cam.setViewOffset(cw,chh,0,offY,cw,chh); } else if(cam.view&&cam.view.enabled){ cam.clearViewOffset(); }
       for(var li=0;li<2;li++){ var lv=labV[li], le=labs[li]; if(!lv){ le.hidden=true; continue; } globe.updateMatrixWorld(); var wv=globe.localToWorld(lv.clone()), vis=wv.clone().normalize().dot(cam.position.clone().sub(wv).normalize())>0.05; if(!vis){ le.hidden=true; continue; } var pr=wv.clone().project(cam); le.hidden=false; le.style.transform='translate('+((pr.x+1)/2*cv.clientWidth).toFixed(1)+'px,'+((1-pr.y)/2*cv.clientHeight).toFixed(1)+'px) translate(-50%,-140%)'; }
-      if(bObj){ bMat.uniforms.uS.value=renderer.getPixelRatio()*Math.max(.85,Math.min(2.0,2.9/dist)); bMat.uniforms.uCut.value=bCut(); }
+      if(SATL) SATL.frame(); if(bObj){ bMat.uniforms.uS.value=renderer.getPixelRatio()*Math.max(.85,Math.min(2.0,2.9/dist)); bMat.uniforms.uCut.value=bCut(); }
       renderer.render(scene,cam);
       frames++; if(now-fpsT>2000){ frames=0; fpsT=now; }
     }
     raf=requestAnimationFrame(loop);
     ld.hidden=true;
     window.MAT_MAPA_DBG={xy:function(lo,la){ globe.updateMatrixWorld(); var v=globe.localToWorld(ll2v(T,lo,la,1)); var w=v.clone().project(cam); var r=cv.getBoundingClientRect(); var front=v.clone().sub(cam.position).dot(v)<0; return {x:r.left+(w.x+1)/2*r.width,y:r.top+(1-w.y)/2*r.height,front:front}; }, busy:function(){return !!tw;}, focus:function(lo,la,d){ focusLL(lo,la,d); }};
-    R={is2d:false, focusLL:function(lo,la,d){focusLL(lo,la,d);},
+    R={is2d:false, sat3d:function(SL){ SL.attach3d(T,globe,cam,cv,renderer,ll2v,function(){return dist;}); if(!R.satZ){ R.satZ=1; tdist=Math.max(tdist,Math.min(resize.fd*1.45,resize.fd*1.6)); } }, focusLL:function(lo,la,d){focusLL(lo,la,d);},
       refresh:function(focus){ tex.needsUpdate=true; var cen=build(); if(focus!==false){ if(cen.length===2){ var a=ll2v(T,cen[0][0],cen[0][1],1).normalize(), b=ll2v(T,cen[1][0],cen[1][1],1).normalize(), m=a.clone().add(b); var ang=a.angleTo(b); if(m.length()<1e-3) m=a; var ll=v2ll(m.normalize()); focusLL(ll[0],ll[1], Math.max(resize.fd*(ang>1.2?1.15:ang>0.6?1.0:0.85),1.6)); } else if(cen.length===1){ var sd=sideOf(sel[0]); focusLL(cen[0][0],cen[0][1], sd&&sd.m.length>1?resize.fd:Math.max(1.75,resize.fd*.8)); } } },
-      dispose:function(){ cancelAnimationFrame(raf); ro.disconnect(); clearOv(); bClear(); BR=null; try{ renderer.dispose(); renderer.forceContextLoss(); }catch(e){} }};
+      dispose:function(){ cancelAnimationFrame(raf); ro.disconnect(); clearOv(); bClear(); if(SATL) SATL.detach3d(); BR=null; try{ renderer.dispose(); renderer.forceContextLoss(); }catch(e){} }}; satHook();
     R.refresh(sel.length?true:false); if(sel.length) setTimeout(phoneScroll,400);
   }
 };
