@@ -128,6 +128,8 @@ function css(){ if(document.getElementById('nu-css')) return; var s=document.cre
  '.gn h1{margin-bottom:2px}.gn .subt{color:var(--mu);font-size:14px;margin:0 0 12px}'+
  '.gn-tabs{display:flex;align-items:stretch;gap:6px;margin:4px 0 14px;padding:2px 0}.gn-tabs a{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);color:var(--tx,#e8e6e1);text-decoration:none;min-height:54px}.gn-tabs a .n{flex:0 0 22px;height:22px;border-radius:50%;border:1px solid var(--mu);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--mu)}.gn-tabs a .i{font-size:20px}.gn-tabs a .t{display:flex;flex-direction:column;font-weight:700;font-size:15px;line-height:1.15;min-width:0}.gn-tabs a .t small{font-weight:400;font-size:11.5px;color:var(--mu);line-height:1.2;margin-top:1px}.gn-tabs a.on{border-color:#d6b25e;background:rgba(214,178,94,.12);box-shadow:inset 0 -3px 0 #d6b25e}.gn-tabs a.on .n{background:#d6b25e;border-color:#d6b25e;color:#111}.gn-tabs .ar{align-self:center;color:var(--mu);font-size:18px}'+
  '@media (max-width:420px){.gn-tabs a{padding:8px 7px;gap:6px}.gn-tabs a .i{font-size:17px}.gn-tabs a .t small{font-size:10.5px}}'+
+ '.gn-tabs .sp{flex:0 0 2px;align-self:stretch;margin:6px 2px;background:var(--line);border-radius:1px}.gn-tabs a.gn-df{border-color:#4d4224}.gn-tabs a.gn-df.on{border-color:#d6b25e}'+
+ '@media (max-width:560px){.gn-tabs{gap:4px}.gn-tabs .ar{font-size:14px}.gn-tabs .sp{margin:6px 0}.gn-tabs a{padding:7px 6px;gap:5px;min-height:58px}.gn-tabs a .n{flex:0 0 18px;height:18px;font-size:10.5px}.gn-tabs a .i{display:none}.gn-tabs a.gn-df .i{display:inline;font-size:16px}.gn-tabs a .t{font-size:13.5px}.gn-tabs a .t small{font-size:10px}}'+
  '.gn-how{margin-top:22px}.gn-how .gn-d>summary{font-weight:700;font-size:15px}'+
  '.nu .gno{position:relative;display:block;border:1px solid #6a2a24;background:rgba(162,64,47,.10);border-radius:var(--r);padding:10px 34px 10px 12px;margin:4px 0 12px;font-size:13.5px;line-height:1.45}.nu .gno[hidden]{display:none}.nu .gno .gno-t{font-size:15px}.nu .gno .gno-d{color:#e6d4cf;margin:2px 0 4px}.nu .gno .gno-ok{color:#7fd18b}.nu .gno .gno-mb{color:#f0c96a}.nu .gno .gno-ko{color:#ff8a7a}.nu .gno .gno-w{color:#d9d4cc}.nu .gno .gno-w a{color:var(--ac2)}.nu .gno .gno-w .chip{margin:4px 4px 0 0}.nu .gno .gno-b{display:inline-block;margin-top:8px;color:#ff9c8a;font-size:13px;border:0;background:none;padding:0}.nu .gno .gno-x{position:absolute;top:4px;right:4px;background:none;border:0;color:var(--mu);font-size:22px;cursor:pointer;line-height:1;padding:4px 8px}'+
  '.nu h1{margin-bottom:2px}.nu .subt{color:var(--mu);font-size:14px;margin:0 0 10px}'+
@@ -379,38 +381,44 @@ function how(){ var el=document.getElementById('nu-how'); if(!el) return; functi
   '<p class="ds">'+T2('Potencias de los preajustes: cifras públicas citadas en cada fuente; las de algunas cabezas son estimaciones.','Preset yields: public figures cited in each source; some warhead yields are estimates.')+' '+T2('Datos actualizados: ','Data updated: ')+e(D.upd)+'</p>'; }
 // ---------- contenedor «Guerra nuclear»: ① Alcance (alcance.js) + ② Impacto (este archivo) ----------
 var GN={q:{},seq:0,tab:null,lang:null,org:null};
-function gnTab(q){ if(q.tab==='alcance'||q.tab==='impacto') return q.tab; if(q.c||q.ll||q.y||q.b||q.fm) return 'impacto'; return 'alcance'; }
+function gnTab(q){ if(q.tab==='alcance'||q.tab==='impacto'||q.tab==='defensa') return q.tab; if(q.c||q.ll||q.y||q.b||q.fm) return 'impacto'; return 'alcance'; }
 function gnScript(id,src){ return new Promise(function(res,rej){ var s0=document.getElementById(id); if(s0){ if(s0.getAttribute('data-ok')) return res(); s0.addEventListener('load',function(){ res(); }); s0.addEventListener('error',rej); return; }
   var s=document.createElement('script'); s.id=id; s.src=src+'?v='+V(); s.onload=function(){ s.setAttribute('data-ok','1'); res(); }; s.onerror=function(){ s.remove(); rej(new Error('load '+src)); }; document.body.appendChild(s); }); }
 window.MAT_GN_Q=function(tab,h){ GN.q[tab]=h; var a=document.querySelector('#gn-tabs [data-gt="'+tab+'"]'); if(a) a.setAttribute('href',h); };
 function gnHref(tab){ return GN.q[tab]||('#/guerra-nuclear?tab='+tab); }
-function gnHow(which){ if(which==='a'){ var el=document.getElementById('alc-meta'); if(!el||el.getAttribute('data-ok')) return; gnScript('alc-js','alcance.js').then(function(){ return window.MAT_ALCANCE_META(); }).then(function(){ el.setAttribute('data-ok','1'); }).catch(function(){ el.innerHTML='<p class="sub">'+T2('No se pudo cargar.','Could not load.')+'</p>'; }); }
+function gnHow(which){ if(which==='d'){ var ed=document.getElementById('df-how'); if(!ed||ed.getAttribute('data-ok')) return; gnScript('df-js','defensa.js').then(function(){ return window.MAT_DEFENSA_META(ed); }).then(function(){ ed.setAttribute('data-ok','1'); }).catch(function(){ ed.innerHTML='<p class="sub">'+T2('No se pudo cargar.','Could not load.')+'</p>'; }); return; }
+  if(which==='a'){ var el=document.getElementById('alc-meta'); if(!el||el.getAttribute('data-ok')) return; gnScript('alc-js','alcance.js').then(function(){ return window.MAT_ALCANCE_META(); }).then(function(){ el.setAttribute('data-ok','1'); }).catch(function(){ el.innerHTML='<p class="sub">'+T2('No se pudo cargar.','Could not load.')+'</p>'; }); }
   else { var el2=document.getElementById('nu-how'); if(!el2||el2.getAttribute('data-ok')) return; load().then(function(){ how(); el2.setAttribute('data-ok','1'); }).catch(function(){}); } }
 function gnShell(app,X){
   var h='<div class="gn" id="gn-shell" data-noi18n>'+X.crumbs([[T2('Inicio','Home'),'#/'],[T2('Guerra nuclear','Nuclear war')]])+
-  '<h1>☢️ '+T2('Guerra nuclear','Nuclear war')+'</h1><p class="subt">'+T2('Alcance de misiles y efectos de una detonación nuclear — divulgativo','Missile ranges and the effects of a nuclear detonation — educational')+'</p>'+
+  '<h1>☢️ '+T2('Guerra nuclear','Nuclear war')+'</h1><p class="subt">'+T2('Alcance de misiles, efectos de una detonación nuclear y defensa aérea — divulgativo','Missile ranges, the effects of a nuclear detonation and air defence — educational')+'</p>'+
   '<nav class="gn-tabs" id="gn-tabs" aria-label="'+T2('Pasos','Steps')+'">'+
    '<a data-gt="alcance" href="'+gnHref('alcance')+'"><span class="n">1</span><span class="i" aria-hidden="true">🚀</span><span class="t">'+T2('Alcance','Range')+'<small>'+T2('Misil y lanzamiento','Missile and launch')+'</small></span></a>'+
    '<span class="ar" aria-hidden="true">›</span>'+
-   '<a data-gt="impacto" href="'+gnHref('impacto')+'"><span class="n">2</span><span class="i" aria-hidden="true">💥</span><span class="t">'+T2('Impacto','Impact')+'<small>'+T2('Efectos en la ciudad','Effects on the city')+'</small></span></a></nav>'+
+   '<a data-gt="impacto" href="'+gnHref('impacto')+'"><span class="n">2</span><span class="i" aria-hidden="true">💥</span><span class="t">'+T2('Impacto','Impact')+'<small>'+T2('Efectos en la ciudad','Effects on the city')+'</small></span></a>'+
+   '<span class="sp" aria-hidden="true"></span>'+
+   '<a data-gt="defensa" class="gn-df" href="'+gnHref('defensa')+'"><span class="i" aria-hidden="true">🛡️</span><span class="t">'+T2('Defensa aérea','Air defence')+'<small>'+T2('Simulador y escenarios reales','Simulator and real scenarios')+'</small></span></a></nav>'+
   '<div id="gn-body"></div>'+
   '<section class="gn-how" id="gn-how"><h2>'+T2('Cómo se calcula y fuentes','How it is calculated and sources')+'</h2>'+
    '<details class="mt gn-d" id="gn-ha"><summary>🚀 '+T2('Alcance de misiles: método y fuentes','Missile ranges: method and sources')+'</summary><div id="alc-meta"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
    '<details class="mt gn-d" id="gn-hi"><summary>💥 '+T2('Efectos de la detonación: método y fuentes','Detonation effects: method and sources')+'</summary><div id="nu-how"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
+   '<details class="mt gn-d" id="gn-hd"><summary>🛡️ '+T2('Defensa aérea: modelo y fuentes','Air defence: model and sources')+'</summary><div id="df-how"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
    '<p class="ds" style="margin-top:10px">'+T2('Contenido divulgativo basado en fuentes abiertas. No es una predicción ni una herramienta de designación de blancos.','Educational content based on open sources. It is neither a prediction nor a targeting tool.')+'</p></section></div>';
   X.set(h,T2('Guerra nuclear','Nuclear war'));
-  var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi');
-  ha.addEventListener('toggle',function(){ if(ha.open) gnHow('a'); }); hi.addEventListener('toggle',function(){ if(hi.open) gnHow('i'); });
+  var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi'), hd=document.getElementById('gn-hd');
+  ha.addEventListener('toggle',function(){ if(ha.open) gnHow('a'); }); hi.addEventListener('toggle',function(){ if(hi.open) gnHow('i'); }); hd.addEventListener('toggle',function(){ if(hd.open) gnHow('d'); });
 }
 function gnSet(tab,reuse){ var X=X0, prev=GN.tab; GN.tab=tab; var seq=++GN.seq;
   if(MAP){ try{ clear(); MAP.remove(); }catch(x){} MAP=null; }
+  if(window.MAT_DEFENSA_STOP) window.MAT_DEFENSA_STOP();
   [].forEach.call(document.querySelectorAll('#gn-tabs [data-gt]'),function(a){ var on=a.getAttribute('data-gt')===tab; a.classList.toggle('on',on); if(on) a.setAttribute('aria-current','step'); else a.removeAttribute('aria-current'); });
   var body=document.getElementById('gn-body'); body.innerHTML='<p class="sub" style="padding:24px 0">'+T2('Cargando…','Loading…')+'</p>';
   var SX={p:X.p,qs:X.qs,esc:X.esc,crumbs:function(){ return ''; },set:function(h,t){ body.innerHTML=h; document.title=(t?t+' · ':'')+'M.A.T'; },alive:function(){ return seq===GN.seq&&document.body.contains(body); }};
   if(reuse&&prev!==tab){ var tb=document.getElementById('gn-tabs'); if(tb){ var y=tb.getBoundingClientRect().top+(window.scrollY||0)-8; if((window.scrollY||0)>y) window.scrollTo(0,Math.max(0,y)); } }
-  var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi'); if(ha&&hi&&prev!==tab){ ha.open=(tab==='alcance'); hi.open=(tab==='impacto'); }
+  var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi'), hd=document.getElementById('gn-hd'); if(ha&&hi&&prev!==tab){ ha.open=(tab==='alcance'); hi.open=(tab==='impacto'); if(hd) hd.open=false; }
   var fail=function(err){ if(!SX.alive()) return; body.innerHTML='<p class="sub" style="padding:24px 0">'+T2('No se pudo cargar esta parte. Actualiza la página.','Could not load this part. Refresh the page.')+'</p>'; if(window.console) console.error(err); };
   if(tab==='alcance'){ gnScript('alc-js','alcance.js').then(function(){ if(!SX.alive()) return; window.MAT_ALCANCE(body,SX); }).catch(fail); }
+  else if(tab==='defensa'){ gnScript('df-js','defensa.js').then(function(){ if(!SX.alive()) return; window.MAT_DEFENSA(body,SX); }).catch(fail); }
   else { load().then(function(){ if(!SX.alive()) return; var q=X.qs(), old=S; S=readQ(SX); if(S.c==null&&!S.ll) S.c=0; if(q.fm&&!q.y&&!q.yi){ S.yid=null; } else if(old&&!q.y&&!q.yi){ S.y=old.y; S.yid=old.yid; if(!q.b) S.b=old.b; } GN.org=null; render(body,SX); }).catch(fail); }
 }
 window.MAT_NUCLEAR=function(app,X){ css(); X0=X; var q=X.qs(), tab=gnTab(q);
