@@ -419,46 +419,84 @@ function pickBtn(k,a,label){return '<div class="pick"><button class="btn pkbtn" 
 function catChips(cur,base,extra){return '<div class="chips" role="group" aria-label="Categoría">'+CATSEL.map(function(c){var n=catCount(c[0]); return '<button class="chip catc" data-c="'+c[0]+'" aria-pressed="'+(c[0]===cur)+'"'+(n?'':' disabled')+'>'+c[1]+(n?'':' · próximamente')+'</button>';}).join('')+'</div>';}
 function hashFor(base,o){return base+'?'+Object.keys(o).filter(function(k){return o[k];}).map(function(k){return k+'='+encodeURIComponent(o[k]);}).join('&');}
 function comparar(){
-  var o=qs(),A=BY[o.a],B=BY[o.b], C=o.c||catOf(A)||catOf(B)||'';
-  if(A&&A.cat!==C) A=null; if(B&&B.cat!==C) B=null;
-  if((A&&A.lz&&!A._full)||(B&&B.lz&&!B._full)){app.innerHTML='<p class="sub" style="padding:24px 0">Cargando fichas…</p>'; return ensure([A,B],comparar);}
-  var h=crumbs([['Inicio','#/'],['Comparar']])+'<h1>Comparar</h1><p class="sub">'+(C?'Dos modelos de '+CN[C].toLowerCase()+', ficha contra ficha.':'Primero elige la categoría.')+'</p>'+(window.MAT_FUERZAS?'<p class="note" style="margin:-4px 0 10px"><a href="#/fuerzas?cmp=1">¿Países o alianzas? Compáralos aquí ›</a></p>':'')+catChips(C);
+  var o=qs(), EN_=window.MAT_LANG==='en', KS=['a','b','m3','m4'];
+  function L(es,en){return EN_?en:es;}
+  var ids=KS.map(function(k){return o[k]||'';});
+  var C=o.c||catOf(BY[ids[0]])||catOf(BY[ids[1]])||'';
+  var S=ids.map(function(id){var x=BY[id]; return x&&x.cat===C?x:null;});
+  // extra slots (3rd/4th) only exist when filled; base slots A/B always shown
+  var X=S.slice(2).filter(Boolean), SL=[S[0],S[1]].concat(X), seen={};
+  SL=SL.map(function(x){if(x&&seen[x.id]) return null; if(x) seen[x.id]=1; return x;});
+  var F=SL.filter(Boolean), N=SL.length;
+  if(F.some(function(x){return x.lz&&!x._full;})){app.innerHTML='<p class="sub" style="padding:24px 0">Cargando fichas…</p>'; return ensure(F,comparar);}
+  var CNE={aviones:'aircraft',helicopteros:'helicopters',buques:'ships',submarinos:'submarines',tanques:'tanks',blindados:'armoured vehicles',logistica:'logistics & medical',armamento:'weapons'};
+  function go(list){var q={c:C}; list.forEach(function(x,i){if(x) q[KS[i]]=x.id;}); location.hash=hashFor('#/comparar',q);}
+  var h=crumbs([['Inicio','#/'],['Comparar']])+'<h1>Comparar</h1><p class="sub">'+(C?(EN_?'Up to four '+CNE[C]+', side by side.':'Hasta cuatro modelos de '+CN[C].toLowerCase()+', ficha contra ficha.'):'Primero elige la categoría.')+'</p>'+(window.MAT_FUERZAS?'<p class="note" style="margin:-4px 0 10px"><a href="#/fuerzas?cmp=1">¿Países o alianzas? Compáralos aquí ›</a></p>':'')+catChips(C);
   if(C){
-    h+='<div class="cmp" style="margin-top:12px">'+pickBtn('a',A,'Elegir modelo A')+pickBtn('b',B,'Elegir modelo B')+'</div>';
-    if(A&&B){
-      var rows;
-      if(GROUND[C]){var G=function(x,k){return (x.F||{})[k]||'—';};
-        rows=[['País',stateLbl(A),stateLbl(B)],['Tipo',TN[A.tipo],TN[B.tipo]],['Año',A.anio||'—',B.anio||'—',A.anio,B.anio],
-         ['Calibre principal',A.cal?A.cal+' mm':'—',B.cal?B.cal+' mm':'—',A.cal,B.cal],['Armamento principal',G(A,'arm_principal'),G(B,'arm_principal')],['Armamento secundario',G(A,'arm_secundario'),G(B,'arm_secundario')],
-         ['Blindaje máx. (cifra en la ficha)',A.blind?A.blind+' mm':'—',B.blind?B.blind+' mm':'—',A.blind,B.blind],['Blindaje',G(A,'blindaje'),G(B,'blindaje')],
-         ['Peso',A.peso?String(A.peso).replace('.',',')+' t':'—',B.peso?String(B.peso).replace('.',',')+' t':'—'],['Potencia',A.pot?fmt(A.pot)+' hp':'—',B.pot?fmt(B.pot)+' hp':'—',A.pot,B.pot],
-         ['Potencia/peso',(A.pw||A.pwc)?String(A.pw||A.pwc).replace('.',',')+' hp/t':'—',(B.pw||B.pwc)?String(B.pw||B.pwc).replace('.',',')+' hp/t':'—',A.pw||A.pwc,B.pw||B.pwc],
-         ['Velocidad máx.',A.vel?fmt(A.vel)+' km/h':'—',B.vel?fmt(B.vel)+' km/h':'—',A.vel,B.vel],['Autonomía',km(A.alc)||'—',km(B.alc)||'—',A.alc,B.alc],
-         ['Tripulación',A.trip||'—',B.trip||'—'],['Unidades',G(A,'unidades'),G(B,'unidades'),A.uni_n,B.uni_n],['Control de tiro',G(A,'control_tiro'),G(B,'control_tiro')]];
-        if(C!=='tanques'){rows.splice(3,0,['Tren de rodaje',[(A.F||{}).rodaje,(A.F||{}).configuracion].filter(Boolean).join(' · ')||'—',[(B.F||{}).rodaje,(B.F||{}).configuracion].filter(Boolean).join(' · ')||'—']); rows.push(['Pasajeros',A.pas||'—',B.pas||'—',A.pas,B.pas],['Carga útil',G(A,'carga_util'),G(B,'carga_util')],['Alcance de tiro',A.atir?String(A.atir).replace('.',',')+' km':'—',B.atir?String(B.atir).replace('.',',')+' km':'—',A.atir,B.atir]);}
-      } else if(C==='armamento'){var G=function(x,k){return (x.F||{})[k]||'—';};
-        rows=[['País',stateLbl(A),stateLbl(B)],['Tipo',TN[A.tipo],TN[B.tipo]],['Año',A.anio||'—',B.anio||'—'],['Alcance máx.',A.walc?fmt(A.walc)+' km':'—',B.walc?fmt(B.walc)+' km':'—',A.walc,B.walc],['Alcance',G(A,'alcance'),G(B,'alcance')],['Velocidad',G(A,'velocidad'),G(B,'velocidad')],['Peso',A.wkg?fmt(A.wkg)+' kg':'—',B.wkg?fmt(B.wkg)+' kg':'—',A.wkg,B.wkg],['Longitud',G(A,'longitud'),G(B,'longitud')],['Cabeza de guerra',G(A,'cabeza'),G(B,'cabeza')],['Potencia explosiva',G(A,'potencia_explosiva'),G(B,'potencia_explosiva')],['Guiado',G(A,'guiado'),G(B,'guiado')],['Propulsión',G(A,'propulsion'),G(B,'propulsion')],['Plataformas',G(A,'plataformas'),G(B,'plataformas')],['Unidades',G(A,'unidades'),G(B,'unidades'),A.uni_n,B.uni_n]];
-      } else if(C==='buques'||C==='submarinos'){var G=function(x,k){return (x.F||{})[k]||'—';};
-        rows=[['País',stateLbl(A),stateLbl(B)],['Tipo',TN[A.tipo],TN[B.tipo]],['Año',A.anio||'—',B.anio||'—',A.anio,B.anio],
-         ['Desplazamiento máx.',A.desp?fmt(A.desp)+' t':'—',B.desp?fmt(B.desp)+' t':'—',A.desp,B.desp],['Eslora',A.eslora?String(A.eslora).replace('.',',')+' m':'—',B.eslora?String(B.eslora).replace('.',',')+' m':'—',A.eslora,B.eslora],
-         ['Velocidad máx.',A.kn?String(A.kn).replace('.',',')+(window.MAT_LANG==='en'?' knots':' nudos'):'—',B.kn?String(B.kn).replace('.',',')+(window.MAT_LANG==='en'?' knots':' nudos'):'—',A.kn,B.kn],['Tripulación',A.trip_n||'—',B.trip_n||'—'],
-         ['Propulsión',G(A,'propulsion'),G(B,'propulsion')],['Armamento',(A.arm||[]).join(' · ')||'—',(B.arm||[]).join(' · ')||'—'],
-         ['Aeronaves',G(A,'aeronaves'),G(B,'aeronaves')],['Sensores',G(A,'sensores'),G(B,'sensores')],['Construidos',G(A,'construidos'),G(B,'construidos'),A.uni_n,B.uni_n]];
-      } else {
-        rows=[['País',stateLbl(A),stateLbl(B)],['Época',EN[A.era]||'—',EN[B.era]||'—'],['Entrada en servicio',A.es,B.es],
-        ['Velocidad máx.',spd(A),spd(B),sortSpeed(A),sortSpeed(B)],['Alcance',km(A.alc)||'—',km(B.alc)||'—',A.alc,B.alc],
-        ['Techo',A.techo?fmt(A.techo)+' m':'—',B.techo?fmt(B.techo)+' m':'—',A.techo,B.techo],['Empuje/peso',A.tw||'—',B.tw||'—',A.tw,B.tw],
-        ['Peso máx. despegue',A.mtow?fmt(A.mtow)+' kg':'—',B.mtow?fmt(B.mtow)+' kg':'—'],['Unidades',A.uni,B.uni,A.uni_n,B.uni_n],['Tripulación',A.trip,B.trip],['Rol',A.rol,B.rol]];
-      }
-      h+='<table class="ctab"><tbody>'+rows.map(function(r){var wa=r[3]!=null&&r[4]!=null&&r[3]>r[4],wb=r[3]!=null&&r[4]!=null&&r[4]>r[3];
-        return '<tr><th colspan="2">'+r[0]+'</th></tr><tr><td class="'+(wa?'w':'')+'">'+esc(r[1]||'—')+'</td><td class="'+(wb?'w':'')+'">'+esc(r[2]||'—')+'</td></tr>';}).join('')+'</tbody></table>';
-      h+='<p class="note">En verde el valor mayor. Datos de las fichas de Wikipedia enlazadas en cada modelo.</p>';
+    var rows=[], G=function(k){return function(x){return (x.F||{})[k]||'—';};}, V=function(k){return function(x){return x[k];};};
+    var dec=function(v){return String(v).replace('.',',');};
+    if(GROUND[C]){
+      rows=[['País',stateLbl],['Tipo',function(x){return TN[x.tipo];}],['Año',function(x){return x.anio||'—';},V('anio')],
+       ['Calibre principal',function(x){return x.cal?x.cal+' mm':'—';},V('cal')],['Armamento principal',G('arm_principal')],['Armamento secundario',G('arm_secundario')],
+       ['Blindaje máx. (cifra en la ficha)',function(x){return x.blind?x.blind+' mm':'—';},V('blind')],['Blindaje',G('blindaje')],
+       ['Peso',function(x){return x.peso?dec(x.peso)+' t':'—';}],['Potencia',function(x){return x.pot?fmt(x.pot)+' hp':'—';},V('pot')],
+       ['Potencia/peso',function(x){return (x.pw||x.pwc)?dec(x.pw||x.pwc)+' hp/t':'—';},function(x){return x.pw||x.pwc;}],
+       ['Velocidad máx.',function(x){return x.vel?fmt(x.vel)+' km/h':'—';},V('vel')],['Autonomía',function(x){return km(x.alc)||'—';},V('alc')],
+       ['Tripulación',function(x){return x.trip||'—';}],['Unidades',G('unidades'),V('uni_n')],['Control de tiro',G('control_tiro')]];
+      if(C!=='tanques'){rows.splice(3,0,['Tren de rodaje',function(x){return [(x.F||{}).rodaje,(x.F||{}).configuracion].filter(Boolean).join(' · ')||'—';}]);
+        rows.push(['Pasajeros',function(x){return x.pas||'—';},V('pas')],['Carga útil',G('carga_util')],['Alcance de tiro',function(x){return x.atir?dec(x.atir)+' km':'—';},V('atir')]);}
+    } else if(C==='armamento'){
+      rows=[['País',stateLbl],['Tipo',function(x){return TN[x.tipo];}],['Año',function(x){return x.anio||'—';}],['Alcance máx.',function(x){return x.walc?fmt(x.walc)+' km':'—';},V('walc')],['Alcance',G('alcance')],['Velocidad',G('velocidad')],['Peso',function(x){return x.wkg?fmt(x.wkg)+' kg':'—';},V('wkg')],['Longitud',G('longitud')],['Cabeza de guerra',G('cabeza')],['Potencia explosiva',G('potencia_explosiva')],['Guiado',G('guiado')],['Propulsión',G('propulsion')],['Plataformas',G('plataformas')],['Unidades',G('unidades'),V('uni_n')]];
+    } else if(C==='buques'||C==='submarinos'){
+      rows=[['País',stateLbl],['Tipo',function(x){return TN[x.tipo];}],['Año',function(x){return x.anio||'—';},V('anio')],
+       ['Desplazamiento máx.',function(x){return x.desp?fmt(x.desp)+' t':'—';},V('desp')],['Eslora',function(x){return x.eslora?dec(x.eslora)+' m':'—';},V('eslora')],
+       ['Velocidad máx.',function(x){return x.kn?dec(x.kn)+(EN_?' knots':' nudos'):'—';},V('kn')],['Tripulación',function(x){return x.trip_n||'—';}],
+       ['Propulsión',G('propulsion')],['Armamento',function(x){return (x.arm||[]).join(' · ')||'—';}],
+       ['Aeronaves',G('aeronaves')],['Sensores',G('sensores')],['Construidos',G('construidos'),V('uni_n')]];
+    } else {
+      rows=[['País',stateLbl],['Época',function(x){return EN[x.era]||'—';}],['Entrada en servicio',V('es')],
+       ['Velocidad máx.',spd,sortSpeed],['Alcance',function(x){return km(x.alc)||'—';},V('alc')],
+       ['Techo',function(x){return x.techo?fmt(x.techo)+' m':'—';},V('techo')],['Empuje/peso',function(x){return x.tw||'—';},V('tw')],
+       ['Peso máx. despegue',function(x){return x.mtow?fmt(x.mtow)+' kg':'—';}],['Unidades',V('uni'),V('uni_n')],['Tripulación',V('trip')],['Rol',V('rol')]];
     }
+    var num=function(v){if(v==null||v==='') return null; v=+v; return isFinite(v)?v:null;};
+    var LET=['A','B','C','D'];
+    var card=function(x,i){
+      if(!x) return '<div class="c4c" role="columnheader"><button class="c4em" data-i="'+i+'"><span class="c4plus" aria-hidden="true">+</span><span>Elegir modelo '+LET[i]+'</span></button></div>';
+      return '<div class="c4c" role="columnheader"><a class="c4im" href="#/a/'+x.id+'" aria-label="'+esc(x.n)+'">'+thumb(x)+'</a>'+'<button class="c4x" data-i="'+i+'" aria-label="'+L('Quitar','Remove')+' '+esc(x.n)+'" title="'+L('Quitar','Remove')+'">×</button>'+
+        '<a class="c4nm" href="#/a/'+x.id+'">'+esc(x.n)+'</a><div class="c4pa">'+flag(x.pais,'mini')+'<span>'+esc(stateLbl(x)||'')+'</span></div><button class="c4ch" data-i="'+i+'">'+L('Cambiar','Change')+'</button></div>';
+    };
+    if(F.length>=2) h+='<div class="c4bar">'+(N<4?'<button class="btn pri c4add">+ '+L('Añadir modelo','Add model')+' <span class="cnt" style="margin-left:6px">'+N+'/4</span></button>':'<span class="c4full">'+L('Máximo: 4 modelos','Maximum: 4 models')+'</span>')+'<button class="btn c4sh">'+L('Compartir','Share')+'</button></div>';
+    h+='<div class="c4 c4n'+N+'" style="--n:'+N+'" role="table" aria-label="'+L('Comparación','Comparison')+'">';
+    h+='<div class="c4r c4hd" role="row"><div class="c4l" role="rowheader"></div>'+SL.map(card).join('')+'</div>';
+    if(F.length>=2){
+      h+='<div class="c4r c4mini" role="row" aria-hidden="true"><div class="c4l"></div>'+SL.map(function(x){return '<div class="c4m">'+(x?flag(x.pais,'mini')+'<span>'+esc(x.n)+'</span>':'')+'</div>';}).join('')+'</div>';
+      h+=rows.map(function(r){
+        var vals=SL.map(function(x){return x&&r[2]?num(r[2](x)):null;}), nn=vals.filter(function(v){return v!=null;}), mx=nn.length>=2?Math.max.apply(null,nn):null, eq=nn.every(function(v){return v===mx;});
+        return '<div class="c4r c4row" role="row"><div class="c4l" role="rowheader">'+r[0]+'</div>'+SL.map(function(x,i){
+          if(!x) return '<div class="c4v c4e" role="cell"></div>';
+          var w=mx!=null&&!eq&&vals[i]===mx, d=r[1](x);
+          return '<div class="c4v'+(w?' w':'')+'" role="cell">'+esc(d==null||d===''?'—':String(d))+'</div>';}).join('')+'</div>';
+      }).join('');
+    }
+    h+='</div>';
+    if(F.length>=2) h+='<p class="note">En verde el valor mayor. Datos de las fichas de Wikipedia enlazadas en cada modelo.</p>';
+    else h+='<p class="note">'+L('Elige al menos dos modelos para ver la comparación. Puedes añadir hasta cuatro.','Choose at least two models to see the comparison. You can add up to four.')+'</p>';
   }
-  set(h,'Comparar');
+  set(h,F.length>=2?F.map(function(x){return x.n;}).join(' vs ')+' · '+L('Comparar','Compare'):L('Comparar','Compare'));
   Array.prototype.forEach.call(document.querySelectorAll('.catc'),function(b){b.addEventListener('click',function(){if(b.disabled) return; location.hash=hashFor('#/comparar',{c:b.getAttribute('data-c')});});});
-  Array.prototype.forEach.call(document.querySelectorAll('.pkbtn'),function(b){b.addEventListener('click',function(){var k=b.getAttribute('data-k');
-    openPicker(function(x){return x.cat===C;},'Elegir '+CN[C].toLowerCase(),function(id){var o=qs();o.c=C;o[k]=id;location.hash=hashFor('#/comparar',o);});});});
+  if(!C) return;
+  var tp=document.querySelector('.top'), tb=document.querySelector('.c4'); if(tb) tb.style.setProperty('--c4top',(tp&&getComputedStyle(tp).position==='sticky'?tp.offsetHeight:0)+'px');
+  var pick=function(i,title){var cur=SL[i]; openPicker(function(x){return x.cat===C&&(!seen[x.id]||(cur&&cur.id===x.id));},title||('Elegir '+CN[C].toLowerCase()),function(id){var L2=SL.slice(); L2[i]=BY[id]; go(L2);});};
+  Array.prototype.forEach.call(document.querySelectorAll('.c4em,.c4ch'),function(b){b.addEventListener('click',function(){pick(+b.getAttribute('data-i'));});});
+  Array.prototype.forEach.call(document.querySelectorAll('.c4x'),function(b){b.addEventListener('click',function(){var i=+b.getAttribute('data-i'), L2=SL.slice();
+    if(N>2){L2.splice(i,1);} else L2[i]=null; go(L2);});});
+  var ad=document.querySelector('.c4add'); if(ad) ad.addEventListener('click',function(){if(SL.length>=4) return; pick(SL.length);});
+  var sh=document.querySelector('.c4sh'); if(sh) sh.addEventListener('click',function(){var u=location.href, t=document.title;
+    var ok=function(){sh.textContent=L('Enlace copiado ✓','Link copied ✓'); setTimeout(function(){sh.textContent=L('Compartir','Share');},2200);};
+    if(navigator.share){navigator.share({title:t,url:u}).catch(function(){});}
+    else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(ok,function(){prompt(L('Copia el enlace:','Copy the link:'),u);});}
+    else prompt(L('Copia el enlace:','Copy the link:'),u);});
 }
 
 function notfound(){set(crumbs([['Inicio','#/']])+'<h1>No encontrado</h1><p class="sub"><a href="#/">Volver al inicio</a></p>');}
