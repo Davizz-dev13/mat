@@ -4,9 +4,9 @@
 var app=document.getElementById('app'); if(!app) return;
 function EN(){ return window.MAT_LANG==='en'; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-var ORDER=['#/mapa','#/batallas','#/guerras','#/guerra-nuclear','#/ejercito','#/modelos-3d','#/exterior','#/gasto','#/fyse','#/inteligencia','#/ceuta-melilla','#/onu','#/debate'];
+var ORDER=['#/mapa','#/batallas','#/guerras','#/radar','#/guerra-nuclear','#/ejercito','#/modelos-3d','#/exterior','#/gasto','#/fyse','#/inteligencia','#/ceuta-melilla','#/onu','#/debate'];
 var BIG={'#/mapa':'img/portada_mapa.webp','#/batallas':'img/portada_batallas.webp'};
-var PH={'#/guerras':'img/sec_guerras.webp','#/guerra-nuclear':'img/sec_nuclear.webp','#/ejercito':'img/sec_ejercito.webp','#/modelos-3d':'img/sec_m3d.webp','#/exterior':'img/sec_exterior.webp','#/gasto':'img/sec_gasto.webp','#/fyse':'img/sec_fyse.webp','#/inteligencia':'img/sec_intel.webp','#/ceuta-melilla':'img/sec_cym.webp','#/onu':'img/sec_onu.webp','#/debate':'img/sec_debate.webp'};
+var PH={'#/radar':'img/sec_radar.webp','#/guerras':'img/sec_guerras.webp','#/guerra-nuclear':'img/sec_nuclear.webp','#/ejercito':'img/sec_ejercito.webp','#/modelos-3d':'img/sec_m3d.webp','#/exterior':'img/sec_exterior.webp','#/gasto':'img/sec_gasto.webp','#/fyse':'img/sec_fyse.webp','#/inteligencia':'img/sec_intel.webp','#/ceuta-melilla':'img/sec_cym.webp','#/onu':'img/sec_onu.webp','#/debate':'img/sec_debate.webp'};
 var css=''
 +'.pn{margin:14px 0 8px;padding:2px 0 2px 12px;border-left:2px solid #c9a862;min-width:0}'
 +'.pn-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 9px}'
@@ -79,7 +79,7 @@ function grid(){
   var rest=[].slice.call(g.children).filter(function(a){ return ORDER.indexOf(a.getAttribute('href'))<0; });
   ORDER.forEach(function(k){ var a=by[k]; if(!a) return; a.classList.remove('pg-big','pg-wide','pg-s');
     if(BIG[k]){ a.classList.add('pg-big','pg-ph'); a.style.backgroundImage='url('+BIG[k]+')'; }
-    else { a.classList.add(k==='#/guerras'?'pg-wide':'pg-s'); if(PH[k]){ a.classList.add('pg-ph'); lazy(a,PH[k]); } }
+    else { a.classList.add((k==='#/guerras'||k==='#/radar')?'pg-wide':'pg-s'); if(PH[k]){ a.classList.add('pg-ph'); lazy(a,PH[k]); } }
     g.appendChild(a); });
   rest.forEach(function(a){ a.classList.add('pg-s'); g.appendChild(a); });
   g.classList.add('pg');
