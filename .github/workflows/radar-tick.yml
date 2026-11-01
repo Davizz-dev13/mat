@@ -1,0 +1,14 @@
+name: Radar M.A.T
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Registrar posiciones del Radar militar (datos públicos adsb.lol, ODbL)
+        run: |
+          for i in 1 2 3 4 5; do curl -s -m 20 https://mat-radar.sites.tab.bot/api/tick > /dev/null || true; sleep 55; done
