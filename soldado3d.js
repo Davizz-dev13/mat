@@ -12,6 +12,7 @@ const U2M=1/1.18;                // unidades del Armero -> metros (0,00118 unida
 const CX=-0.5405;                // eje central de la figura en el archivo
 /* empuñadura (unidades del Armero) medida por M.A.T sobre cada modelo */
 const GRIP={'m4a1':[-0.03,-0.02],'scar-l':[-0.03,-0.01],'scar-h':[-0.03,-0.01],'mp7a1':[-0.02,-0.05],'sr-25':[-0.02,0.0],'m82a1':[-0.03,0.0],'p90':[-0.03,0.02],'aug':[0.05,-0.05],'l85a2':[0.02,-0.05],'m16a4':[-0.065,0.01],'g18c':[0.02,0.01],'m9':[0.015,0.02],'m24':[-0.10,0.0],'awm':[-0.07,0.04],'hk416':[-0.13,-0.04],'hk417':[-0.28,-0.05],'g36':[-0.25,-0.03],'ak74':[-0.21,-0.04],'ak12':[-0.25,-0.06],'famas':[-0.03,-0.05],'tavor':[0.04,-0.05],'mp5':[-0.08,-0.06],'m249':[-0.27,-0.05],'m240':[-0.36,-0.07],'pkm':[-0.33,-0.04]};
+const GRIP_PISTOL=[-0.045,-0.035];   // pistolas: empuñadura aproximada respecto al centro del modelo
 /* dirección del arma en la pose (eje del FN SCAR original del modelo base) */
 const AX=new THREE.Vector3(0.9176,-0.3595,-0.1695).normalize(), UPV=new THREE.Vector3(0.3384,0.9303,-0.1413);
 const FABV=`attribute float _fab; varying float vFab; varying vec3 vCP;`;
@@ -41,7 +42,7 @@ export async function mount(stage,st,D,M,opt){
   function palm(){ const h=bone('DEF-handR'); const p=h.getWorldPosition(new THREE.Vector3()); const a=h.localToWorld(new THREE.Vector3(0,1,0)).sub(p).normalize(); return body.worldToLocal(p.add(a.multiplyScalar(0.075))); }
   async function setWeapon(){ const b=st.arma; const key=b?JSON.stringify([b.id,b.v||0,b.on||{}]):''; if(key===wkey) return; wkey=key;
     if(wpn){ body.remove(wpn); wpn=null; } if(!b) { V.recenter(); return; }
-    try{ const r=await M.buildWeapon(b,UW,UA); if(key!==wkey) return; const o=r.o; const vid=r.v.id; const gp=GRIP[vid]||GRIP[r.w.id]||[0,0];
+    try{ const r=await M.buildWeapon(b,UW,UA); if(key!==wkey) return; const o=r.o; const vid=r.v.id; const gp=GRIP[vid]||GRIP[r.w.id]||(r.w.cat==='pistol'?GRIP_PISTOL:[0,0]);
       const z=AX.clone(), y=UPV.clone().sub(z.clone().multiplyScalar(UPV.dot(z))).normalize(), x=new THREE.Vector3().crossVectors(y,z);
       const R=new THREE.Matrix4().makeBasis(x,y,z); o.quaternion.setFromRotationMatrix(R);
       body.updateMatrixWorld(true); o.userData.gp=gp; o.userData.P=palm(); body.add(o); wpn=o; placeW(); o.traverse(q=>{ if(q.isMesh) q.castShadow=true; }); V.recenter(); credits(r); }catch(e){ console.warn('soldado arma',e); }

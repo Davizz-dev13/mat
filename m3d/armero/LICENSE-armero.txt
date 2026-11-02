@@ -50,3 +50,18 @@ All CC BY 4.0. Changes by M.A.T: meshopt compression, scale and origin set from 
 - m249.glb: "Low-Poly M249 SAW" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-m249-saw-76011c365636451c90a8e3a46c2d8ca5, CC BY 4.0
 - m240.glb: "Low-Poly M240B" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-m240b-657a3b8ce0194aae9c7c9036c18c54b9, CC BY 4.0
 - pkm.glb: "Low-Poly PKM" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-pkm-626082c669c740efa06e03c63b7bc2d9, CC BY 4.0
+
+Pistolas (tanda 3b), modified by M.A.T (loose parts removed, rescaled to real length, materials converted, meshopt):
+- g17.glb: "Glock" by 4NIK4 (https://sketchfab.com/4NIK4), https://sketchfab.com/3d-models/glock-376c1dbf859e49f2b0976c4139e0c325, CC BY 4.0
+- m1911.glb: "M1911 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/m1911-low-poly-6d6b8c42091847569d15426ec1896956, CC BY 4.0
+- p226.glb: "Low-Poly Sig P226" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-sig-p226-0d90f858e9f74c418ce3aae61cef9f4e, CC BY 4.0
+- m17.glb: "SIG- Sauer M17 (Low Poly)" by HELLBRAD (https://sketchfab.com/HELLBRAD), https://sketchfab.com/3d-models/sig-sauer-m17-low-poly-53c53a78fde9448cb1a5495bab61d484, CC BY 4.0 — re-tinted by M.A.T
+- usp.glb: "Low-Poly HK USP" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-hk-usp-fea998682de9465087c108ae6bee56fc, CC BY 4.0
+- ppk.glb: "Walther PPK (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/walther-ppk-low-poly-2bdd4d65334c4df3985fc5aa4d0d7d7c, CC BY 4.0
+- deagle.glb: "Desert Eagle (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/desert-eagle-low-poly-175b0a0c2c4345cbbc1119f72fa1a0b8, CC BY 4.0 — re-tinted by M.A.T
+- fn57.glb: "FN Five-seveN (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/fn-five-seven-low-poly-a3e0074425064359a57ad749a7eee346, CC BY 4.0
+- makarov.glb: "Low-Poly Makarov" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-makarov-fb34fb6cb83a45a989f8b02c130de857, CC BY 4.0
+- cz75.glb: "Low-Poly CZ-75 SP-01" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-cz-75-sp-01-7cf2a3a662d344ee989e343ccaee56e9, CC BY 4.0
+- hipower.glb: "Low-Poly Browning Hi-Power" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-browning-hi-power-e9701eeba3904caa81bed0a4a0fe9eeb, CC BY 4.0
+- tt33.glb: "Low-Poly TT-33 Tokarev" by notcplkerry (https://sketchfab.com/notcplkerry), https://sketchfab.com/3d-models/low-poly-tt-33-tokarev-5f53b93c2bab46beb6a1b83d9146ca4c, CC BY 4.0
+- p99.glb: "Walther P99" by tel-roman (https://sketchfab.com/tel-roman), https://sketchfab.com/3d-models/walther-p99-8b8153f8d1594f598961b2345f47da9b, CC BY 4.0
