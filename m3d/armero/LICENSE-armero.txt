@@ -1,0 +1,22 @@
+M.A.T — Armero 3D (#/armero): licence notice for the 3D models in this folder
+
+All models by GoldbergR (https://sketchfab.com/GoldbergR), licensed under Creative Commons Attribution 4.0 International (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/).
+Changes by M.A.T: meshopt compression (gltf-transform), origin moved (accessories), placement on each weapon. No other changes.
+
+- "Colt M4A1 (Low-Poly)" — https://sketchfab.com/3d-models/colt-m4a1-low-poly-82302ecfa6c148329ffe1f488ae23f1f
+- "FN SCAR-L (Low-Poly)" — https://sketchfab.com/3d-models/fn-scar-l-low-poly-3eef0e192978435ba636f3d3ae54dda5
+- "FN SCAR-H (Low-Poly)" — https://sketchfab.com/3d-models/fn-scar-h-low-poly-5429d05df204438a9761ee0931209bd9
+- "HK MP7A1 (Low-Poly)" — https://sketchfab.com/3d-models/hk-mp7a1-low-poly-3c85ff79f3c448668fe3ab72f7e48d09
+- "SR-25 (Low-Poly)" — https://sketchfab.com/3d-models/sr-25-low-poly-e66b6868673743cfaa5ede6b31d8f0cc
+- "Barrett M82 (Low-Poly)" — https://sketchfab.com/3d-models/barrett-m82-low-poly-65b629b6e75541b9b88de571aeda24fa
+- "EOTech HWS XPS2 Sight (Low-Poly)" — https://sketchfab.com/3d-models/eotech-hws-xps2-sight-low-poly-5c8f29d9895e48e183a085fefabf0e14
+- "TA33 ACOG (Low-Poly)" — https://sketchfab.com/3d-models/ta33-acog-low-poly-6dad7e9976264d4cb8354c5cfe639a7e
+- "ATPIAL AN/PEQ-15 (Low-Poly)" — https://sketchfab.com/3d-models/atpial-anpeq-15-low-poly-3758001408b0404592e7e80e7d5b3072
+- "Magpul AFG (Low-Poly)" — https://sketchfab.com/3d-models/magpul-afg-low-poly-7a617ccf7a244bf28f4c7bc3dbe44325
+- "M203 Grenade Launcher Rail Mounted (Low-Poly)" — https://sketchfab.com/3d-models/m203-grenade-launcher-rail-mounted-low-poly-782a36ecfe2e47c1bde4e7c72e02b610
+- "SilencerCo Velos LBP 5.56 Suppressor (Low-Poly)" — https://sketchfab.com/3d-models/silencerco-velos-lbp-556-suppressor-low-poly-f0eb0ba747d5448299ba6f82ceed169d
+- "Harris Bipod (Low-Poly)" — https://sketchfab.com/3d-models/harris-bipod-low-poly-daa7dd1e247e453496974a5d252396f4
+- "Leupold Mk 4 LRT M1 10×40mm Scope (Low-Poly)" — https://sketchfab.com/3d-models/leupold-mk-4-lrt-m1-1040mm-scope-low-poly-bf0e3597985940408d24669297d15509
+- "Leupold Mark 4 Scope (Low-Poly)" — https://sketchfab.com/3d-models/leupold-mark-4-scope-low-poly-f49c7d0b9613492ca19e327528d8fad0
+
+File map: m4a1.glb, scar-l.glb, scar-h.glb, mp7a1.glb, sr-25.glb, m82a1.glb (weapons, in that order above); eotech_xps2, acog_ta33, peq15, magpul_afg, m203, velos_lbp556, harris_sbrm, leupold_lrt10x40, leupold_mk4 (.glb, accessories).

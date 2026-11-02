@@ -86,6 +86,7 @@ function prowA(a,k,s){ var fav=X().isFav&&X().isFav(a); var o=a.ops[k]; var m=EN
 function home(){
  var A=all(), M=byPais(A), KS=korder(M);
  var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms')]])+'<h1>'+L('Armas ligeras','Small arms')+'</h1><p class="sub">'+L(A.length+' armas de la Primera Guerra Mundial a hoy en '+KS.length+' países. Elige un tipo y después un país.',A.length+' weapons from World War I to today across '+KS.length+' countries. Pick a type, then a country.')+'</p>';
+ h+='<a class="maptile" href="#/armero" style="margin:10px 0 14px"><svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" style="flex:0 0 48px"><circle cx="24" cy="24" r="17" fill="none" stroke="#8f9a6a" stroke-width="1.6"/><circle cx="24" cy="24" r="3" fill="none" stroke="#d6b25e" stroke-width="1.6"/><path d="M24 3v10M24 35v10M3 24h10M35 24h10" stroke="#b3bd8c" stroke-width="1.6"/></svg><div><div class="t">'+L('Armero 3D','3D Gunsmith')+'</div><div class="d">'+L('Gira armas modernas en 3D y monta accesorios reales (miras, silenciador, láser, bípode) con sus datos de fabricante','Spin modern weapons in 3D and mount real accessories (optics, suppressor, laser, bipod) with their maker data')+'</div></div><div class="ch" style="margin-left:auto;color:var(--dim);font-size:20px">›</div></a>';
  h+='<div class="ctrl"><input class="inp" id="gq" type="search" placeholder="'+L('Buscar arma o país, p. ej. Thompson, AK-47, España','Search a weapon or country, e.g. Thompson, AK-47, Spain')+'" autocomplete="off" value="'+esc(st.q)+'"></div><div id="gres"></div><div id="gcats"><div class="list">';
  TY.forEach(function(t){ var n=A.filter(function(a){return hasT(a,t[0]);}).length; if(!n) return; var BY=X().BY||{}; var pic=BY[t[5]]&&BY[t[5]].img?BY[t[5]]:A.filter(function(a){return a.tipo===t[0]&&a.img;})[0];
   h+='<a class="row" href="#/armas/'+slOf(t[0])+'"><div class="th">'+(pic?th(pic):'')+'</div><div class="m"><div class="nm">'+L(t[1],t[2])+'</div><div class="ds">'+L(t[3],t[4])+'</div></div><div class="rt">'+n+'</div><div class="ch">›</div></a>'; });
@@ -194,12 +195,14 @@ function lista(tid){
 function sp(k,v){return v?'<div class="sp"><span class="k">'+k+'</span><span class="v">'+esc(v)+'</span></div>':'';}
 function blk(title,rows){ var r=rows.map(function(x){return sp(x[0],x[1]);}).join(''); return r?'<h2>'+title+'</h2><div class="specs">'+r+'</div>':''; }
 function bl(arr){return arr&&arr.length?'<ul class="bul">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'';}
+var ARM3D={'g-m4-carbine':'m4a1','g-fn-scar':'scar','g-heckler-koch-mp7':'mp7','g-sr-25':'sr-25','g-barrett-m82':'m82'};
 function ficha(a){
  css(); var F=a.F||{}, t=TYM[a.tipo]||['', 'Armas','Weapons'], tn=L(t[1],t[2]), sl=a.tipo.slice(2).replace(/_/g,'-');
  var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[tn,'#/armas/'+sl],[a.n]]);
  h+='<div class="dwrap"><div>';
  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+esc(a.img.src)+'" alt="'+esc(a.n)+'"></figure><div class="gcred">'+L('Foto','Photo')+': <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">'+esc((a.img.au?a.img.au+' · ':'')+(EN()?(a.img.lic_en||a.img.lic):a.img.lic)+' · Wikimedia Commons')+'</a></div>';
  else h+='<figure class="dhero" style="margin-bottom:0"><div class="gph" style="height:180px">'+ICO+'</div></figure><div class="gcred">'+L('Sin foto libre en Wikimedia Commons por ahora (silueta genérica, no es el arma).','No free photo on Wikimedia Commons yet (generic silhouette, not the weapon).')+'</div>';
+ if(ARM3D[a.id]) h+='<p style="margin:10px 0 0"><a class="btn" href="#/armero/'+ARM3D[a.id]+'">'+L('Ver en el Armero 3D','Open in the 3D Gunsmith')+' ›</a></p>';
  h+='</div><div><div class="kicker">'+esc(tn)+(a.era&&ERAM[a.era]?' · '+L(ERAM[a.era][0],ERAM[a.era][1]):'')+'</div><h1>'+esc(a.n)+'</h1>';
  var m=EN()?(a.mun_en||a.mun):a.mun;
  h+='<div class="tags"><span class="tag on">'+flag(a.pais)+esc(orgLbl(a))+'</span><span class="tag">'+svc(a)+'</span>'+(m?'<span class="tag">'+esc(m)+'</span>':'')+(a.anio?'<span class="tag">'+a.anio+'</span>':'')+'</div>';
