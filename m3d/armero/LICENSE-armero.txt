@@ -1,6 +1,6 @@
 M.A.T — Armero 3D (#/armero): licence notice for the 3D models in this folder
 
-All models by GoldbergR (https://sketchfab.com/GoldbergR), licensed under Creative Commons Attribution 4.0 International (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/).
+3D models downloaded: all by GoldbergR (https://sketchfab.com/GoldbergR), licensed under Creative Commons Attribution 4.0 International (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/).
 Changes by M.A.T: meshopt compression (gltf-transform), origin moved (accessories), placement on each weapon. No other changes.
 
 - "Colt M4A1 (Low-Poly)" — https://sketchfab.com/3d-models/colt-m4a1-low-poly-82302ecfa6c148329ffe1f488ae23f1f
@@ -20,3 +20,9 @@ Changes by M.A.T: meshopt compression (gltf-transform), origin moved (accessorie
 - "Leupold Mark 4 Scope (Low-Poly)" — https://sketchfab.com/3d-models/leupold-mark-4-scope-low-poly-f49c7d0b9613492ca19e327528d8fad0
 
 File map: m4a1.glb, scar-l.glb, scar-h.glb, mp7a1.glb, sr-25.glb, m82a1.glb (weapons, in that order above); eotech_xps2, acog_ta33, peq15, magpul_afg, m203, velos_lbp556, harris_sbrm, leupold_lrt10x40, leupold_mk4 (.glb, accessories).
+
+
+--- Batch 2 (tanda 2) ---
+Accessories marked "MAT" in the viewer are NOT downloaded models: they are approximate low-poly models generated in code by M.A.T (armero_kit.js) from the official dimensions published by each manufacturer (sources linked on each accessory in armero.js). They are M.A.T's own work.
+Lighting: env_studio.rgbe = "Studio Small 09" HDRI by Sergej Majboroda, Poly Haven (https://polyhaven.com/a/studio_small_09), CC0 1.0 (public domain); downscaled by M.A.T to 256x128 RGBE.
+Camouflages: procedural patterns generated in the shader by M.A.T (no pattern files).
