@@ -254,6 +254,7 @@ const CSS=`
 .arm-chip.dis{opacity:.4;cursor:not-allowed}
 .arm-sw{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-2px;border:1px solid #5a6066}
 .arm-tg{display:inline-flex;align-items:center;gap:6px;margin:8px 0 0;font-size:13px;color:#d5d8db;cursor:pointer}
+.arm-soldtile{display:block;margin:6px 0 14px;padding:12px 14px;border:1px solid var(--line,#2c333b);border-radius:10px;background:rgba(120,140,90,.12);text-decoration:none;color:inherit}.arm-soldtile b{display:block;font-size:16px;margin-bottom:3px}.arm-soldtile span{font-size:13px;opacity:.85}
 `;
 
 const CACHE={};
@@ -273,7 +274,7 @@ let ACTIVE=null;
 function stop(){ if(ACTIVE){ ACTIVE.destroy(); ACTIVE=null; } }
 window.addEventListener('hashchange',()=>{ if(!/^#\/armero\/./.test(location.hash)) stop(); });
 
-function viewer(stage){
+function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0=opt.pitch!=null?opt.pitch:0.14, ZK=opt.zoom||1;
   const canvas=document.createElement('canvas'); stage.appendChild(canvas);
   let R; try{ R=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'}); R.setClearColor(0x000000,0); }catch(e){ return null; }
   const mob=Math.min(screen.width,screen.height)<700;
@@ -292,7 +293,7 @@ function viewer(stage){
   const cam=new THREE.PerspectiveCamera(28,1,0.01,50);
   const pivot=new THREE.Group(); scene.add(pivot); const holder=new THREE.Group(); pivot.add(holder);
   const inv=[]; // uniformes uInv que siguen al soporte
-  let yaw=-1.4, pitch=0.14, dist=2, fitD=2, auto=true, idleT=0, dirty=true, raf=0, visible=true, last=performance.now();
+  let yaw=Y0, pitch=P0, dist=2, fitD=2, auto=true, idleT=0, dirty=true, raf=0, visible=true, last=performance.now();
   function size(){ const w=stage.clientWidth||360, h=stage.clientHeight||270; R.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); dirty=true; }
   const ro=new ResizeObserver(size); ro.observe(stage); size();
   const io=new IntersectionObserver(es=>{ visible=es[0].isIntersecting; if(visible) loop(); },{threshold:0.01}); io.observe(stage);
@@ -313,16 +314,16 @@ function viewer(stage){
   stage.addEventListener('pointerup',up); stage.addEventListener('pointercancel',up);
   stage.addEventListener('wheel',e=>{ e.preventDefault(); idleT=0; dist=Math.max(fitD*0.35,Math.min(fitD*1.8,dist*(1+Math.sign(e.deltaY)*0.1))); dirty=true; loop(); },{passive:false});
   let lastTap=0; stage.addEventListener('pointerup',e=>{ const t=performance.now(); if(t-lastTap<300){ reset(); } lastTap=t; });
-  function reset(){ yaw=-1.4; pitch=0.14; dist=fitD; idleT=0; dirty=true; loop(); }
+  function reset(){ yaw=Y0; pitch=P0; dist=fitD; idleT=0; dirty=true; loop(); }
   const _b=new THREE.Box3(), _c=new THREE.Vector3(), _s=new THREE.Vector3();
   function shade(){ holder.updateMatrixWorld(true); _b.setFromObject(holder); if(_b.isEmpty()) return; _b.getCenter(_c); _b.getSize(_s); const Lm=Math.max(_s.x,_s.z,_s.y);
     ground.position.set(_c.x,_b.min.y-0.004,_c.z); ground.scale.set(Lm*2.2,Lm*2.2,1);
     sun.position.set(_c.x+Lm*0.08,_c.y+Lm*2,_c.z+Lm*0.12); sun.target.position.copy(_c); const sc=sun.shadow.camera; sc.left=-Lm*0.75; sc.right=Lm*0.75; sc.top=Lm*0.75; sc.bottom=-Lm*0.75; sc.near=0.01; sc.far=Lm*4; sc.updateProjectionMatrix(); sun.target.updateMatrixWorld();
     const im=holder.matrixWorld.clone().invert(); inv.forEach(u=>u.value.copy(im)); R.shadowMap.needsUpdate=true; dirty=true; loop(); }
   function fit(obj){ holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(obj); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
-     const tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)); const len=Math.max(s.x,s.y,s.z); fitD=Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08; dist=fitD; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
+     const tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)); const len=Math.max(s.x,s.y,s.z); fitD=(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
   function recenter(){ holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(holder); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
-     const ratio=dist/fitD, tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), len=Math.max(s.x,s.y,s.z); fitD=Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08; dist=fitD*ratio; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
+     const ratio=dist/fitD, tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), len=Math.max(s.x,s.y,s.z); fitD=(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD*ratio; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
   function dispose(o){ o.traverse(q=>{ if(q.geometry) q.geometry.dispose(); }); }
   return { scene, holder, fit, recenter, reset, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?4:0; loop(); },
     destroy(){ alive=false; if(raf) cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); dispose(scene); envRT.dispose(); pm.dispose(); R.dispose(); try{R.forceContextLoss();}catch(e){} } };
@@ -335,17 +336,44 @@ function hub(app,ctx){
   const own=Object.values(ACC).filter(a=>a.own).length, total=Object.keys(ACC).length;
   const h=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[L('Armero 3D','3D Gunsmith')]])+
   '<h1>'+L('Armero 3D','3D Gunsmith')+'</h1><p class="sub">'+L('Gira el arma en 3D, monta accesorios reales que existen para ella (miras, magnificador, silenciador, culata, empuñadura, láser, linterna, bípode) y prueba camuflajes. Los datos cambian solo con cifras publicadas por el fabricante; si no hay dato, no se inventa.','Spin the weapon in 3D, mount real accessories that exist for it (optics, magnifier, suppressor, stock, grip, laser, light, bipod) and try camouflages. Figures only change with numbers published by the maker; no data, no number.')+'</p>'+
+  '<a class="arm-soldtile" href="#/soldado"><b>'+L('Crea tu soldado','Build your soldier')+' →</b><span>'+L('Elige equipo real (chaleco, placas NIJ, casco, mochila y un arma del Armero), calcula el peso total, el % de tu peso corporal y la movilidad según doctrina publicada, y equípalo en 3D.','Pick real gear (vest, NIJ plates, helmet, pack and a weapon from the Gunsmith), work out the total load, its % of your body weight and mobility per published doctrine, and equip it in 3D.')+'</span></a>'+
   CATS.map(([c,t])=>{ const ws=W.filter(w=>(w.cat||CAT0[w.id]||'rifle')===c); return ws.length?'<h2 class="arm-cat">'+LL(t)+' <span>('+ws.length+')</span></h2><div class="arm-hub">'+ws.map(w=>{ const n=allAcc(w).length; return '<a class="arm-card" href="#/armero/'+w.id+'"><img src="'+DIR+(w.img||w.id)+'.jpg?v='+VER+'" alt="'+esc(w.n)+'" loading="lazy" width="800" height="320"><div class="t">'+esc(w.n)+'</div><div class="d">'+esc(LL(w.kind))+' · '+(n?n+' '+L('accesorios','accessories'):L('solo camuflajes','camouflages only'))+'</div></a>'; }).join('')+'</div>':''; }).join('')+
   '<p class="arm-note">'+L(W.length+' armas y '+total+' accesorios ('+own+' modelados por M.A.T). Seguiremos añadiendo armas y accesorios por tandas.',W.length+' weapons and '+total+' accessories ('+own+' modelled by M.A.T). More weapons and accessories will be added in batches.')+'</p>'+
   '<p class="arm-note">'+L('Modelos 3D de las armas: '+AUTH()+' en Sketchfab, licencia CC BY 4.0 (autor en cada arma). Los accesorios marcados «MAT» son modelos aproximados hechos por M.A.T a partir de las medidas oficiales de cada fabricante (fuente en cada uno). Nada sacado de videojuegos ni generado con IA.','Weapon 3D models: '+AUTH()+' on Sketchfab, CC BY 4.0 licence (author on each weapon). Accessories marked "MAT" are approximate models built by M.A.T from each maker\'s official dimensions (source on each). Nothing taken from video games or generated with AI.')+'</p>';
   ctx.set(h,L('Armero 3D','3D Gunsmith'));
 }
 
+/* Colocación de accesorios (compartida con «Crea tu soldado») */
+function whereAt(v,s,a,on){ const pl=v.pl&&v.pl[a]; if(pl) return Array.isArray(pl)?{p:pl}:pl; const m=mt(v), x=ACC[a];
+    if(s==='optic'&&m.top!=null) return {p:[0,m.top,(on.mag&&m.oz2!=null)?m.oz2:m.oz]};
+    if(s==='mag'&&m.top!=null&&on.optic){ const o=ACC[on.optic]; return {p:[0,m.top,(m.oz2!=null?m.oz2:m.oz)-((o.mm||100)/2+(x.mm||100)/2+6)*0.00118]}; }
+    if(s==='muzzle'&&m.muz!=null) return {p:[0,m.bore,(x.add&&m.me!=null)?m.me-(x.mm-x.add)*0.00118:m.muz]};
+    if(s==='under'&&m.uy!=null) return {p:[0,m.uy,m.uz]};
+    if(s==='laser'&&m.lz!=null) return {p:[0,m.top,m.lz]};
+    if(s==='light'&&m.sx!=null) return {p:[m.sx,m.sy,m.sz]};
+    if(s==='bipod'&&m.uy!=null) return {p:[0,m.uy,m.bz]};
+    if(s==='stock'&&m.stz!=null) return {p:[0,m.sty,m.stz]};
+    return null; }
+async function makeAcc(a,s,on){ const x=ACC[a];
+    if(x.own){ const K=await kit(); let d=x.d; if(s==='mag'&&on.optic) d=Object.assign({},d,{ay:ACC[on.optic].ay||d.ay}); return K.build(x.b,d,x.fde); }
+    const g=await getGLB(x.f); return g.scene.clone(true); }
+/* Arma completa con accesorios para otros visores (#/soldado). b={id,v,on,camo,ca}. Devuelve {o,w,v,acc,kg} */
+export async function buildWeapon(b,UW,UA){ const w=W.find(x=>x.id===b.id)||W[0]; const v=w.V[Math.min(b.v||0,w.V.length-1)]; const on={};
+  Object.entries(b.on||{}).forEach(([s,a])=>{ if(ACC[a]&&accs(v,s).includes(a)) on[s]=a; });
+  const g=await getGLB(v.file); const o=new THREE.Group(); const wp=g.scene.clone(true); const MW=new Map(), MA=new Map(); prep(wp,UW,MW); o.add(wp);
+  for(const [s,a] of Object.entries(on)){ const P=whereAt(v,s,a,on); if(!P) continue; try{ const q=await makeAcc(a,s,on); q.position.set(...P.p); if(P.r) q.rotation.set(...P.r);
+    if(P.sub){ q.updateMatrixWorld(true); for(const [nm,d] of Object.entries(P.sub)){ let hit=null; q.traverse(z=>{ if(!hit&&z.name&&z.name.includes(nm)) hit=z; }); if(hit){ const p2=hit.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(...d)); hit.parent.worldToLocal(p2); hit.position.copy(p2); } } }
+    prep(q,UA,MA); o.add(q); }catch(e){ console.warn('soldado acc',a,e); } }
+  const m=mt(v), hasOptic=!!on.optic; (w.hideOptic||[]).forEach(n=>wp.traverse(z=>{ if(z.name&&z.name.includes(n)) z.visible=!hasOptic; })); if(m.stockNode) wp.traverse(z=>{ if(z.name&&z.name.includes(m.stockNode)) z.visible=!on.stock; });
+  const list=Object.values(on).map(a=>ACC[a]), addG=list.filter(x=>x.slot!=='stock').reduce((s,x)=>s+(x.g||0),0);
+  return {o,w,v,acc:list,kg:v.w?v.w+addG/1000:null,addG}; }
+export function lastBuild(){ try{ return JSON.parse(localStorage.getItem('mat_armero_build')||'null'); }catch(e){ return null; } }
+export {viewer,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,GHEAD,GCOL};
 function page(app,ctx,w){
   const st={v:0,on:{},camo:'orig',ca:false};
   const sv=new URLSearchParams((location.hash.split('?')[1]||''));
   const shell=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[L('Armero 3D','3D Gunsmith'),'#/armero'],[w.n]])+
-   '<h1>'+esc(w.n)+'</h1><p class="sub">'+esc(LL(w.kind))+' · <a href="#/a/'+w.ficha+'">'+L('Ver ficha completa','Full data sheet')+'</a></p>'+
+   '<h1>'+esc(w.n)+'</h1><p class="sub">'+esc(LL(w.kind))+' · <a href="#/a/'+w.ficha+'">'+L('Ver ficha completa','Full data sheet')+'</a> · <a href="#/soldado?arma='+w.id+'" class="arm-sold">'+L('Equipar en «Crea tu soldado» →','Equip in “Build your soldier” →')+'</a></p>'+
    '<div class="arm-wrap"><div><div class="arm-stage" id="armst"><div class="arm-load">'+L('Cargando modelo 3D…','Loading 3D model…')+'</div><div class="arm-btns"><button type="button" id="armrot">'+L('Pausar giro','Pause spin')+'</button><button type="button" id="armrs">'+L('Centrar','Reset')+'</button></div><div class="arm-hint">'+L('Arrastra para girar · pellizca o rueda para zoom','Drag to rotate · pinch or scroll to zoom')+'</div></div>'+
    '<div id="armsum" class="arm-sum"></div><div id="armui"></div></div><div><div class="arm-stats" id="armstats"></div><div id="armacc"></div></div></div>'+
    '<div id="armcred"></div>';
@@ -401,6 +429,7 @@ function page(app,ctx,w){
     a+='<p class="arm-note">'+L('El peso total es la suma del peso del arma de su ficha y los pesos publicados por cada fabricante. No hay estadísticas de juego: solo datos reales.','Total weight is the weapon\'s weight from its data sheet plus each maker\'s published weight. No game stats: real data only.')+'</p>';
     document.getElementById('armacc').innerHTML=a;
     credits();
+    try{ localStorage.setItem('mat_armero_build',JSON.stringify({id:w.id,v:st.v,on:st.on,camo:st.camo,ca:st.ca})); }catch(e){}
   }
   function credits(){
     const used=allAcc(w), gb=used.filter(a=>!ACC[a].own), ow=used.filter(a=>ACC[a].own);
@@ -414,19 +443,8 @@ function page(app,ctx,w){
   function setVis(){ if(!weapon) return; const v=cur(), m=mt(v); const hasOptic=!!st.on.optic;
     (w.hideOptic||[]).forEach(n=>weapon.traverse(o=>{ if(o.name&&o.name.includes(n)) o.visible=!hasOptic; }));
     if(m.stockNode) weapon.traverse(o=>{ if(o.name&&o.name.includes(m.stockNode)) o.visible=!st.on.stock; }); }
-  function where(v,s,a){ const pl=v.pl&&v.pl[a]; if(pl) return Array.isArray(pl)?{p:pl}:pl; const m=mt(v), x=ACC[a];
-    if(s==='optic'&&m.top!=null) return {p:[0,m.top,(st.on.mag&&m.oz2!=null)?m.oz2:m.oz]};
-    if(s==='mag'&&m.top!=null&&st.on.optic){ const o=ACC[st.on.optic]; return {p:[0,m.top,(m.oz2!=null?m.oz2:m.oz)-((o.mm||100)/2+(x.mm||100)/2+6)*0.00118]}; }
-    if(s==='muzzle'&&m.muz!=null) return {p:[0,m.bore,(x.add&&m.me!=null)?m.me-(x.mm-x.add)*0.00118:m.muz]};
-    if(s==='under'&&m.uy!=null) return {p:[0,m.uy,m.uz]};
-    if(s==='laser'&&m.lz!=null) return {p:[0,m.top,m.lz]};
-    if(s==='light'&&m.sx!=null) return {p:[m.sx,m.sy,m.sz]};
-    if(s==='bipod'&&m.uy!=null) return {p:[0,m.uy,m.bz]};
-    if(s==='stock'&&m.stz!=null) return {p:[0,m.sty,m.stz]};
-    return null; }
-  async function make(a,s){ const x=ACC[a];
-    if(x.own){ const K=await kit(); let d=x.d; if(s==='mag'&&st.on.optic) d=Object.assign({},d,{ay:ACC[st.on.optic].ay||d.ay}); return K.build(x.b,d,x.fde); }
-    const g=await getGLB(x.f); return g.scene.clone(true); }
+  function where(v,s,a){ return whereAt(v,s,a,st.on); }
+  function make(a,s){ return makeAcc(a,s,st.on); }
   async function sync(){
     if(!V||!weapon) return; const my=token; const v=cur();
     const keyOf=s=>st.on[s]?st.on[s]+(s==='mag'?'@'+(st.on.optic||''):'')+(s==='optic'&&st.on.mag?'+m':''):null;
