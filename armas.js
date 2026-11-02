@@ -42,11 +42,11 @@ function css(){ if(document.getElementById('gcss')) return; var s=document.creat
  '.grt{font-size:12.5px;color:var(--mu,#9aa0a6);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}'+
  '.gusr{display:flex;flex-direction:column;gap:0}.gusr .row{min-height:44px}.gusr .nm{font-size:14.5px}'+
  'details.gfold{margin:8px 0}details.gfold>summary{cursor:pointer;color:var(--mu,#9aa0a6);font-size:14px;padding:6px 0}'+
- '.gkpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.gkpis>div{background:rgba(255,255,255,.04);border-radius:10px;padding:8px 9px;min-width:0}.gkpis .kv{font-weight:700;font-size:14px;line-height:1.25;overflow-wrap:anywhere}.gkpis .kk{font-size:11.5px;color:var(--mu,#9aa0a6);margin-top:2px}'+
+ '.gkpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}.gkpis>div{background:rgba(255,255,255,.04);border-radius:10px;padding:9px 10px;min-width:0}.gkpis .kv{font-weight:700;font-size:14px;line-height:1.3;overflow-wrap:break-word;word-break:normal;hyphens:none}.tk .specs .sp .v{overflow-wrap:break-word;word-break:normal}.gkpis .kk{font-size:11.5px;color:var(--mu,#9aa0a6);margin-top:2px}'+
  '.gcred{font-size:11.5px;color:var(--dim,#6b7177);margin:4px 0 0;line-height:1.35;overflow-wrap:anywhere}.gcred a{color:var(--mu,#9aa0a6)}'+
- '.gdiv{font-size:12px;color:var(--mu,#9aa0a6)}'+
+ '.gdiv{font-size:12px;color:var(--mu,#9aa0a6)}.gsv1{font-size:12px;color:#7cc48a;font-weight:600}'+
  '#app .row .ds img.mini{width:16px!important;height:11px!important;max-width:none;object-fit:cover;display:inline-block;vertical-align:-1px;margin:0 5px 0 0;border-radius:0}'+
- '@media (min-width:700px){.gctl{grid-template-columns:2fr 1fr 1fr 1fr}.gctl .inp,.gctl #gmu{grid-column:auto}.gkpis{grid-template-columns:repeat(6,minmax(0,1fr))}}';
+ '@media (min-width:700px){.gctl{grid-template-columns:2fr 1fr 1fr 1fr}.gctl .inp,.gctl #gmu{grid-column:auto}.gkpis{grid-template-columns:repeat(3,minmax(0,1fr))}}';
  document.head.appendChild(s); }
 function first(s,n){ if(!s) return ''; var x=String(s).split(/\s*;\s*/)[0]; n=n||48; return x.length>n?x.slice(0,n-1)+'…':x; }
 function crumbs(list){return X().crumbs(list);}
@@ -63,26 +63,91 @@ function sorter(s){ return {
  alc:function(a,b){return (b.alc||0)-(a.alc||0);},
  ligera:function(a,b){return (a.peso||1e9)-(b.peso||1e9);},
  az:function(a,b){return a.n.localeCompare(b.n);} }[s]||function(){return 0;}; }
+var AORDER=['espana','us','urss','rusia','imperio_ruso','uk','francia','alemania','italia','china','israel','ucrania','japon','corea_sur','corea_norte','turquia','iran','india','pakistan','brasil','mexico','argentina','chile','colombia','peru','venezuela','canada','australia','polonia','suecia','finlandia','noruega','belgica','paises_bajos','austria','suiza','rep_checa','checoslovaquia','portugal','grecia','sudafrica','egipto','arabia_saudi','emiratos'];
+function hasT(a,tid){return !tid||a.tipo===tid||(a.alt&&a.alt.indexOf(tid)>=0);}
+function slOf(tid){return tid.slice(2).replace(/_/g,'-');}
+function byPais(A){ var m={}; A.forEach(function(a){ Object.keys(a.ops||{}).forEach(function(k){ if(k==='multi') return; (m[k]=m[k]||[]).push(a); }); }); return m; }
+function korder(m){ var P=X().P||{}; var ks=Object.keys(m).filter(function(k){return P[k];}); var a=AORDER.filter(function(k){return m[k];}); var rest=ks.filter(function(k){return a.indexOf(k)<0;}).sort(function(x,y){return m[y].length-m[x].length||pn(x).localeCompare(pn(y));}); return a.concat(rest); }
+function yr(L2){ var ys=L2.map(function(a){return a.anio;}).filter(Boolean); return ys.length?Math.min.apply(null,ys)+'–'+Math.max.apply(null,ys):''; }
+function isCur(o){return o&&o.l==='Usuario actual';}
+function nCur(L2,k){return L2.filter(function(a){return isCur(a.ops[k]);}).length;}
+function prow(k,L2,href){ var c=nCur(L2,k), r=yr(L2); return '<a class="row" href="'+href+'">'+flag(k)+'<div class="m"><div class="nm">'+esc(pn(k))+'</div><div class="ds">'+L2.length+' '+L(L2.length===1?'arma':'armas',L2.length===1?'weapon':'weapons')+(c?' · '+c+' '+L('en servicio','in service'):'')+(r?' · '+r:'')+'</div></div><div class="ch">›</div></a>'; }
+function stLbl(o){ if(!o) return ''; var s=o.s?' · '+o.s:'';
+ if(o.l==='Usuario actual') return '<span class="gsv1">'+L('En servicio','In service')+'</span>'+esc(s);
+ if(o.l==='Antiguo usuario') return '<span class="gdiv">'+L('Retirada','Retired')+'</span>'+esc(s);
+ if(o.l==='Uso policial') return '<span class="gdiv">'+L('Solo uso policial','Police use only')+'</span>'+esc(s);
+ if(o.l==='Uso esporádico') return '<span class="gdiv">'+L('Uso esporádico de existencias antiguas (no cuenta como en servicio)','Sporadic use of old stocks (not counted as in service)')+'</span>'+esc(s);
+ if(o.l==='Fabricación propia') return '<span class="gdiv">'+L('País de origen','Country of origin')+'</span>';
+ return esc(o.l); }
+function prowA(a,k,s){ var fav=X().isFav&&X().isFav(a); var o=a.ops[k]; var m=EN()?(a.mun_en||a.mun):a.mun; var r=rt(a,s);
+ var org=(a.pais!==k)?'<span class="org">'+flag(a.pais,'mini')+'</span>'+esc(orgLbl(a))+' · ':'';
+ return '<a class="row" href="#/a/'+a.id+'"><div class="th">'+th(a)+'</div><div class="m"><div class="nm">'+esc(a.n)+(fav?' <span class="favs">★</span>':'')+'</div><div class="ds">'+(a.anio||'—')+' · '+org+(m?esc(m)+' · ':'')+stLbl(o)+'</div></div>'+(r?'<div class="grt">'+r+'</div>':'')+'<div class="ch">›</div></a>'; }
 function home(){
- var A=all(), npais={}; A.forEach(function(a){Object.keys(a.ops||{}).forEach(function(k){npais[k]=1;});});
- var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms')]])+'<h1>'+L('Armas ligeras','Small arms')+'</h1><p class="sub">'+L(A.length+' armas de la Primera Guerra Mundial a hoy: pistolas, subfusiles, fusiles, ametralladoras y escopetas. Cada ficha con munición, cadencia, alcance, peso, guerras y los países que la usan.',A.length+' weapons from World War I to today: pistols, submachine guns, rifles, machine guns and shotguns. Each entry has ammunition, rate of fire, range, weight, wars and the countries that use it.')+'</p>';
- h+='<div class="ctrl"><input class="inp" id="gq" type="search" placeholder="'+L('Buscar arma, p. ej. Thompson, AK-47, G36','Search, e.g. Thompson, AK-47, G36')+'" autocomplete="off" value="'+esc(st.q)+'"></div><div id="gres"></div><div id="gcats"><div class="list">';
- TY.forEach(function(t){ var n=A.filter(function(a){return a.tipo===t[0]||(a.alt&&a.alt.indexOf(t[0])>=0);}).length; if(!n) return; var BY=X().BY||{}; var pic=BY[t[5]]&&BY[t[5]].img?BY[t[5]]:A.filter(function(a){return a.tipo===t[0]&&a.img;})[0];
-  h+='<a class="row" href="#/armas/'+t[0].slice(2).replace(/_/g,'-')+'"><div class="th">'+(pic?th(pic):'')+'</div><div class="m"><div class="nm">'+L(t[1],t[2])+'</div><div class="ds">'+L(t[3],t[4])+'</div></div><div class="rt">'+n+'</div><div class="ch">›</div></a>'; });
- h+='<a class="row" href="#/armas/todas"><div class="th">'+(X().BY&&X().BY['g-m16-rifle']?th(X().BY['g-m16-rifle']):'')+'</div><div class="m"><div class="nm">'+L('Todas las armas','All weapons')+'</div><div class="ds">'+L('Con filtros por época, país, calibre y en servicio','With filters by era, country, calibre and in service')+'</div></div><div class="rt">'+A.length+'</div><div class="ch">›</div></a></div></div>';
- h+='<p class="note">'+L('Datos traducidos de Wikipedia (ficha técnica y texto de cada artículo, enlazado en cada ficha); si la fuente no da un dato, no aparece. Fotos libres de Wikimedia Commons con su autor y licencia en cada ficha.','Data from Wikipedia (infobox and text of each article, linked on every entry); if the source does not give a figure, it is left out. Free photos from Wikimedia Commons, with author and licence on each entry.')+'</p>';
+ var A=all(), M=byPais(A), KS=korder(M);
+ var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms')]])+'<h1>'+L('Armas ligeras','Small arms')+'</h1><p class="sub">'+L(A.length+' armas de la Primera Guerra Mundial a hoy en '+KS.length+' países: pistolas, subfusiles, fusiles, ametralladoras y escopetas. Elige un país para ver todas las que han tenido sus fuerzas armadas, o un tipo de arma.',A.length+' weapons from World War I to today across '+KS.length+' countries: pistols, submachine guns, rifles, machine guns and shotguns. Pick a country to see every weapon its armed forces have had, or a weapon type.')+'</p>';
+ h+='<div class="ctrl"><input class="inp" id="gq" type="search" placeholder="'+L('Buscar arma o país, p. ej. Thompson, AK-47, España','Search a weapon or country, e.g. Thompson, AK-47, Spain')+'" autocomplete="off" value="'+esc(st.q)+'"></div><div id="gres"></div><div id="gcats">';
+ h+='<h2>'+L('Por país','By country')+' <span class="cnt">· '+KS.length+'</span></h2><div class="list">'+KS.slice(0,12).map(function(k){return prow(k,M[k],'#/armas/pais/'+k);}).join('')+'<a class="row" href="#/armas/pais"><div class="m"><div class="nm">'+L('Ver todos los países','See all countries')+'</div><div class="ds">'+KS.length+' '+L('países con armas en la fuente','countries with weapons in the source')+'</div></div><div class="ch">›</div></a></div>';
+ h+='<h2>'+L('Por tipo de arma','By weapon type')+'</h2><div class="list">';
+ TY.forEach(function(t){ var n=A.filter(function(a){return hasT(a,t[0]);}).length; if(!n) return; var BY=X().BY||{}; var pic=BY[t[5]]&&BY[t[5]].img?BY[t[5]]:A.filter(function(a){return a.tipo===t[0]&&a.img;})[0];
+  h+='<a class="row" href="#/armas/'+slOf(t[0])+'"><div class="th">'+(pic?th(pic):'')+'</div><div class="m"><div class="nm">'+L(t[1],t[2])+'</div><div class="ds">'+L(t[3],t[4])+'</div></div><div class="rt">'+n+'</div><div class="ch">›</div></a>'; });
+ h+='<a class="row" href="#/armas/todas"><div class="th">'+(X().BY&&X().BY['g-m16-rifle']?th(X().BY['g-m16-rifle']):'')+'</div><div class="m"><div class="nm">'+L('Todas las armas','All weapons')+'</div><div class="ds">'+L('Lista completa con filtros por época, país, calibre y en servicio','Full list with filters by era, country, calibre and in service')+'</div></div><div class="rt">'+A.length+'</div><div class="ch">›</div></a></div></div>';
+ h+='<p class="note">'+L('Datos traducidos de Wikipedia (ficha técnica, texto y sección de usuarios de cada artículo, y las listas de equipamiento de cada ejército); si la fuente no da un dato, no aparece. «En servicio» solo cuenta el uso actual por las fuerzas armadas de un estado según la fuente: museos, coleccionistas, almacenes, policía, milicias o uso ceremonial no cuentan. Fotos libres de Wikimedia Commons con su autor y licencia en cada ficha.','Data from Wikipedia (infobox, text and users section of each article, plus each army\'s equipment list); if the source does not give a figure, it is left out. “In service” only counts current use by a state\'s armed forces per the source: museums, collectors, storage, police, militias or ceremonial use do not count. Free photos from Wikimedia Commons, with author and licence on each entry.')+'</p>';
  setp(h,L('Armas ligeras','Small arms'));
  var q=document.getElementById('gq'), res=document.getElementById('gres'), cats=document.getElementById('gcats');
  function draw(){ var s=norm(q.value); st.q=q.value; if(s.length<2){res.innerHTML='';cats.style.display='';return;} cats.style.display='none';
+  var C=KS.filter(function(k){var P=X().P||{}; return norm(pn(k)).indexOf(s)>=0||(P[k]&&norm(P[k].n).indexOf(s)>=0);});
   var R=A.filter(function(a){return [a.n].concat(a.k||[]).some(function(x){return norm(x).indexOf(s)>=0;});}).sort(sorter('crono'));
-  res.innerHTML=R.length?'<div class="list" style="margin-top:10px">'+R.map(function(a){return row(a,'');}).join('')+'</div>':'<p class="empty">'+L('Sin resultados.','No results.')+'</p>'; }
+  var o='';
+  if(C.length) o+='<h2>'+L('Países','Countries')+'</h2><div class="list">'+C.slice(0,8).map(function(k){return prow(k,M[k],'#/armas/pais/'+k);}).join('')+'</div>';
+  if(R.length) o+=(C.length?'<h2>'+L('Armas','Weapons')+'</h2>':'')+'<div class="list" style="margin-top:10px">'+R.slice(0,150).map(function(a){return row(a,'');}).join('')+'</div>';
+  res.innerHTML=o||'<p class="empty">'+L('Sin resultados.','No results.')+'</p>'; }
  q.addEventListener('input',draw); draw();
+}
+function paises(tid){
+ var t=tid?TYM[tid]:null, A=all().filter(function(a){return hasT(a,tid);}), M=byPais(A), KS=korder(M);
+ var title=t?L(t[1],t[2]):L('Todos los países','All countries');
+ var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[title]])+'<h1>'+esc(title)+'</h1><p class="sub">'+(t?L(t[3],t[4])+'. ':'')+L('Elige un país: verás todas las que han tenido sus fuerzas armadas, actuales e históricas.','Pick a country to see every one its armed forces have had, current and historical.')+'</p>';
+ h+='<div class="ctrl"><input class="inp" id="gpq" type="search" placeholder="'+L('Buscar país','Search country')+'" autocomplete="off"></div><div class="list" id="gpl">';
+ if(t) h+='<a class="row" href="#/armas/'+slOf(tid)+'/todos"><div class="m"><div class="nm">'+L('Todos los países','All countries')+'</div><div class="ds">'+A.length+' '+L('modelos','models')+'</div></div><div class="ch">›</div></a>';
+ h+=KS.map(function(k){return prow(k,M[k],t?'#/armas/'+slOf(tid)+'/'+k:'#/armas/pais/'+k).replace('<a class="row"','<a class="row" data-k="'+esc(norm(pn(k)))+'"');}).join('')+'</div>';
+ setp(h,title);
+ var q=document.getElementById('gpq'); q.addEventListener('input',function(){ var s=norm(q.value); Array.prototype.forEach.call(document.querySelectorAll('#gpl .row[data-k]'),function(r){ r.style.display=(!s||r.getAttribute('data-k').indexOf(s)>=0)?'':'none'; }); });
+}
+var pst={q:'',sort:'crono',sv:'',era:''};
+function paisPage(k,tid){
+ var P=X().P||{}; if(!P[k]) return X().notfound();
+ var t=tid?TYM[tid]:null, A=all().filter(function(a){return a.ops&&a.ops[k]&&hasT(a,tid);});
+ if(!A.length) return X().notfound();
+ var cr=[[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas']]; cr.push(t?[L(t[1],t[2]),'#/armas/'+slOf(tid)]:[L('Países','Countries'),'#/armas/pais']); cr.push([pn(k)]);
+ var nc=nCur(A,k);
+ var h=crumbs(cr)+'<h1 style="display:flex;align-items:center;gap:12px">'+flag(k)+'<span>'+esc(pn(k))+'</span></h1><p class="sub">'+(t?L(t[1],t[2])+' · ':L('Armas ligeras','Small arms')+' · ')+A.length+' '+L(A.length===1?'arma':'armas',A.length===1?'weapon':'weapons')+(nc?' · '+nc+' '+L('en servicio','in service'):'')+(yr(A)?' · '+yr(A):'')+'</p>';
+ var nr=A.filter(function(a){return a.ops[k].l==='Antiguo usuario';}).length;
+ h+='<div class="gctl"><input class="inp" id="gq" type="search" placeholder="'+L('Filtrar por nombre','Filter by name')+'" value="'+esc(pst.q)+'" autocomplete="off"><select class="sel" id="gso" aria-label="'+L('Ordenar','Sort')+'">'+SORTS.map(function(s){return '<option value="'+s[0]+'">'+L(s[1],s[2])+'</option>';}).join('')+'</select></div>';
+ h+='<div class="gchips" role="group" aria-label="'+L('Estado','Status')+'"><button class="chip gst" data-s="" aria-pressed="'+(!pst.sv)+'">'+L('Todas','All')+' ('+A.length+')</button><button class="chip gst" data-s="cur" aria-pressed="'+(pst.sv==='cur')+'">'+L('En servicio','In service')+' ('+nc+')</button><button class="chip gst" data-s="ret" aria-pressed="'+(pst.sv==='ret')+'">'+L('Retiradas','Retired')+' ('+nr+')</button></div>';
+ var eras=ERA.filter(function(e){return A.some(function(a){return inEra(a,e[0]);});});
+ if(eras.length>1) h+='<div class="gchips" role="group" aria-label="'+L('Época','Era')+'"><button class="chip gera" data-e="" aria-pressed="'+(!pst.era)+'">'+L('Todas las épocas','All eras')+'</button>'+eras.map(function(e){return '<button class="chip gera" data-e="'+e[0]+'" aria-pressed="'+(pst.era===e[0])+'">'+L(e[1],e[2])+'</button>';}).join('')+'</div>';
+ h+='<div id="gres"></div><p class="note">'+L('«En servicio»: uso actual por las fuerzas armadas de '+pn(k)+' según la fuente (sección de usuarios del artículo de cada arma o la lista de equipamiento de su ejército en Wikipedia). «Retirada»: la fuente la da como antiguo usuario o uso histórico. Los años aparecen solo si la fuente los da.','“In service”: current use by the armed forces of '+pn(k)+' per the source (the users section of each weapon\'s article or the army\'s equipment list on Wikipedia). “Retired”: the source lists it as a former user or historical use. Years appear only where the source gives them.')+'</p>';
+ setp(h,pn(k)+' · '+L('Armas ligeras','Small arms'));
+ var q=document.getElementById('gq'), so=document.getElementById('gso'), res=document.getElementById('gres'); so.value=pst.sort;
+ function draw(){ var s=norm(pst.q);
+  var R=A.filter(function(a){var o=a.ops[k]; return (!pst.era||inEra(a,pst.era))&&(!pst.sv||(pst.sv==='cur'?isCur(o):o.l==='Antiguo usuario'))&&(!s||[a.n].concat(a.k||[]).some(function(x){return norm(x).indexOf(s)>=0;}));});
+  R.sort(sorter(pst.sort));
+  if(!R.length){res.innerHTML='<p class="empty">'+L('Sin resultados.','No results.')+'</p>';return;}
+  var o='';
+  if(t) o='<div class="list" style="margin-top:8px">'+R.map(function(a){return prowA(a,k,pst.sort);}).join('')+'</div>';
+  else TY.forEach(function(ty){ var G=R.filter(function(a){return a.tipo===ty[0];}); if(!G.length) return; o+='<h2>'+L(ty[1],ty[2])+' <span class="cnt">· '+G.length+'</span></h2><div class="list">'+G.map(function(a){return prowA(a,k,pst.sort);}).join('')+'</div>'; });
+  res.innerHTML=o; }
+ q.addEventListener('input',function(){pst.q=q.value;draw();});
+ so.addEventListener('change',function(){pst.sort=so.value;draw();});
+ Array.prototype.forEach.call(document.querySelectorAll('.gst'),function(c){c.addEventListener('click',function(){pst.sv=c.getAttribute('data-s');Array.prototype.forEach.call(document.querySelectorAll('.gst'),function(x){x.setAttribute('aria-pressed',String(x===c));});draw();});});
+ Array.prototype.forEach.call(document.querySelectorAll('.gera'),function(c){c.addEventListener('click',function(){pst.era=c.getAttribute('data-e');Array.prototype.forEach.call(document.querySelectorAll('.gera'),function(x){x.setAttribute('aria-pressed',String(x===c));});draw();});});
+ draw();
 }
 function slugT(s){ return 'g_'+s.replace(/-/g,'_'); }
 function lista(tid){
  var t=TYM[tid], A=all(), base=t?A.filter(function(a){return a.tipo===tid||(a.alt&&a.alt.indexOf(tid)>=0);}):A;
  var title=t?L(t[1],t[2]):L('Todas las armas','All weapons');
- var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[title]])+'<h1>'+esc(title)+'</h1><p class="sub">'+(t?L(t[3],t[4])+'. ':'')+base.length+' '+L('armas','weapons')+'.</p>';
+ var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas']].concat(t?[[title,'#/armas/'+slOf(tid)],[L('Todos los países','All countries')]]:[[title]]))+'<h1>'+esc(title)+'</h1><p class="sub">'+(t?L(t[3],t[4])+'. ':'')+base.length+' '+L('armas','weapons')+'.</p>';
  var pc={}, mc={}; base.forEach(function(a){ pc[a.pais]=(pc[a.pais]||0)+1; var m=a.mun; if(m) mc[m]=(mc[m]||0)+1; });
  var PS=Object.keys(pc).sort(function(x,y){return pn(x).localeCompare(pn(y));});
  var MS=Object.keys(mc).sort(function(x,y){return mc[y]-mc[x]||x.localeCompare(y);});
@@ -134,22 +199,23 @@ function ficha(a){
  h+=blk(L('Disparo y munición','Firing and ammunition'),[[L('Munición','Cartridge'),F.municion],[L('Mecanismo','Action'),F.mecanismo],[L('Cadencia de tiro','Rate of fire'),F.cadencia],[L('Velocidad de boca','Muzzle velocity'),F.velocidad_boca],[L('Alcance eficaz','Effective firing range'),F.alcance_eficaz],[L('Alcance máximo','Maximum firing range'),F.alcance_max],[L('Retroceso','Recoil'),F.retroceso],[L('Alimentación','Feed system'),F.alimentacion]]);
  h+=blk(L('Dimensiones y miras','Dimensions and sights'),[[L('Peso','Weight'),F.peso],[L('Longitud','Length'),F.longitud],[L('Longitud del cañón','Barrel length'),F.canon],[L('Miras','Sights'),F.miras]]);
  h+=blk(L('Historia y producción','History and production'),[[L('Tipo','Type'),F.tipo],[L('Origen','Place of origin'),F.origen],[L('Diseñador','Designer'),F.diseno],[L('Fecha de diseño','Designed'),F.fecha_diseno],[L('Fabricante','Manufacturer'),F.fabricante],[L('Producción','Produced'),F.produccion],[L('Unidades fabricadas','Number built'),F.unidades],[L('Coste unitario','Unit cost'),F.coste],[a.serv?L('En servicio','In service'):L('Servicio según Wikipedia','Service per Wikipedia'),F.servicio],[L('Estado','Status'),F.estado||svc(a)]]);
- var ops=a.ops||{}, cur=[], old=[];
- Object.keys(ops).forEach(function(k){ (ops[k].f?old:cur).push(k); });
+ var ops=a.ops||{}, cur=[], old=[], pol=[];
+ Object.keys(ops).forEach(function(k){ var l=ops[k].l; (l==='Usuario actual'?cur:(l==='Uso policial'||l==='Uso esporádico')?pol:old).push(k); });
  function byN(x,y){return (x==='espana'?-1:y==='espana'?1:0)||pn(x).localeCompare(pn(y));}
- cur.sort(byN); old.sort(byN);
- function ur(k){ var n=ops[k].t||''; return '<a class="row" href="#/fuerzas?a=p:'+k+'">'+flag(k)+'<div class="m"><div class="nm">'+esc(pn(k))+'</div>'+(n?'<div class="ds">'+esc(n)+'</div>':'')+'</div><div class="ch">›</div></a>'; }
- h+='<h2>'+L('Países que la usan','Users')+'</h2>'+(cur.length?'<p class="sub" style="margin:0 0 6px">'+L('Usuarios actuales','Current users')+': '+cur.length+'</p><div class="list gusr">'+cur.map(ur).join('')+'</div>':'<p class="sub">'+L('Ningún usuario actual en la fuente.','No current users in the source.')+'</p>')+
-  (old.length?'<details class="gfold"><summary>'+L('Antiguos usuarios','Former users')+' · '+old.length+'</summary><div class="list gusr">'+old.map(ur).join('')+'</div></details>':'');
+ cur.sort(byN); old.sort(byN); pol.sort(byN);
+ function ur(k){ var o=ops[k], dn=(a.opn||{})[k]||{}, n=dn.t||''; var su=dn.u?' · '+L('fuente','source')+': Wikipedia, «'+dn.u+'»':''; return '<a class="row" href="#/armas/pais/'+k+'">'+flag(k)+'<div class="m"><div class="nm">'+esc(pn(k))+'</div><div class="ds">'+stLbl(o)+(n?' · '+esc(n):'')+esc(su)+'</div></div><div class="ch">›</div></a>'; }
+ h+='<h2>'+L('Países que la usan o la usaron','Users, current and former')+'</h2>'+(cur.length?'<p class="sub" style="margin:0 0 6px">'+L('En servicio hoy','In service today')+': '+cur.length+'</p><div class="list gusr">'+cur.map(ur).join('')+'</div>':'<p class="sub">'+L('Ningún ejército la usa hoy según la fuente.','No armed forces use it today per the source.')+'</p>')+
+  (old.length?'<details class="gfold"'+(cur.length?'':' open')+'><summary>'+L('Antiguos usuarios y país de origen','Former users and country of origin')+' · '+old.length+'</summary><div class="list gusr">'+old.map(ur).join('')+'</div></details>':'')+
+  (pol.length?'<details class="gfold"><summary>'+L('Uso policial o esporádico (no cuenta como en servicio)','Police or sporadic use (not counted as in service)')+' · '+pol.length+'</summary><div class="list gusr">'+pol.map(ur).join('')+'</div></details>':'');
  h+='<h2>'+L('Conflictos','Conflicts')+'</h2>'+(bl(a.conf)||'<p class="sub">'+L('Sin conflictos en la fuente','No conflicts in the source')+'</p>');
  if(a.vars&&a.vars.length) h+='<h2>'+L('Variantes','Variants')+'</h2>'+bl(a.vars);
  if(a.cur&&a.cur.length) h+='<h2>'+L('Curiosidades','Did you know?')+'</h2>'+bl(a.cur);
  h+='<div class="btns"><a class="btn pri" href="#/armas/'+sl+'">'+L('Más','More')+' '+esc(tn.toLowerCase())+'</a><a class="btn" href="'+esc(a.src)+'" target="_blank" rel="noopener">'+L('Fuente: Wikipedia (inglés)','Source: Wikipedia')+'</a>'+(a.src_es?'<a class="btn" href="'+esc(a.src_es)+'" target="_blank" rel="noopener">Wikipedia '+L('en español','(Spanish)')+'</a>':'')+'</div>';
- h+='<p class="note">'+L('Datos traducidos del artículo de Wikipedia enlazado (ficha técnica y texto). Los países enlazan a su página de fuerzas armadas. Si la fuente no da un dato (por ejemplo, el retroceso), no aparece: nada inventado.','Data from the linked Wikipedia article (infobox and text). Countries link to their armed forces page. If the source does not give a figure (for example recoil), it is left out: nothing invented.')+'</p>';
+ h+='<p class="note">'+L('Datos traducidos del artículo de Wikipedia enlazado (ficha técnica y texto). Cada país enlaza a todas sus armas ligeras. Si la fuente no da un dato (por ejemplo, el retroceso), no aparece: nada inventado.','Data from the linked Wikipedia article (infobox and text). Each country links to all its small arms. If the source does not give a figure (for example recoil), it is left out: nothing invented.')+'</p>';
  setp('<div class="tk">'+h+'</div>',a.n);
 }
 window.MAT_ARMAS={
- route:function(app,ax){ window.MAT_AX=ax; css(); var p=ax.p; if(p.length<2) return home(); var tid=p[1]==='todas'?'':slugT(p[1]); if(tid&&!TYM[tid]) return ax.notfound(); return lista(tid); },
+ route:function(app,ax){ window.MAT_AX=ax; css(); var p=ax.p; if(p.length<2) return home(); if(p[1]==='todas') return lista(''); if(p[1]==='pais'){ if(p[2]){pst.q='';pst.sv='';pst.era='';} return p[2]?paisPage(p[2],''):paises(''); } var tid=slugT(p[1]); if(!TYM[tid]) return ax.notfound(); if(!p[2]) return paises(tid); if(p[2]==='todos') return lista(tid); pst.q='';pst.sv='';pst.era=''; return paisPage(p[2],tid); },
  ficha:function(a,ax){ window.MAT_AX=ax; return ficha(a); },
  TY:TY
 };
