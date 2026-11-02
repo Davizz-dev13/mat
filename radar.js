@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-// M.A.T · Radar militar (#/radar). Aviones militares que emiten ADS-B ahora, su recorrido desde que encendieron el
+// M.A.T · Radar aéreo (#/radar). Aviones militares que emiten ADS-B ahora, su recorrido desde que encendieron el
 // transpondedor, y lo más destacado de los últimos días. Datos: adsb.lol (https://adsb.lol), licencia ODbL 1.0.
 // API propia (caché + registro de recorridos): MAT_RADAR_API. Mapa: Leaflet + teselas © OpenStreetMap.
 var API=(window.MAT_RADAR_API||'https://mat-radar.sites.tab.bot').replace(/\/+$/,'');
@@ -168,8 +168,8 @@ function fetchJSON(u,ms){ var c=('AbortController' in window)?new AbortControlle
 function shell(tab){
   var en=EN();
   return '<div class="rd" data-noi18n>'
-  +'<div class="rd-top">'+S.ctx.crumbs([[en?'Home':'Inicio','#/'],[en?'Military radar':'Radar militar']])
-  +'<h1><span class="rd-scope" aria-hidden="true"></span>'+(en?'Military radar':'Radar militar')+'</h1>'
+  +'<div class="rd-top">'+S.ctx.crumbs([[en?'Home':'Inicio','#/'],[en?'Air radar':'Radar aéreo']])
+  +'<h1><span class="rd-scope" aria-hidden="true"></span>'+(en?'Air radar':'Radar aéreo')+'</h1>'
   +'<p class="sub">'+(en?'Military aircraft broadcasting their position right now, the route each one has flown since switching on its transponder, and the longest missions of recent days.':'Aviones militares que están emitiendo su posición ahora mismo, el recorrido de cada uno desde que encendió el transpondedor y las misiones más largas de los últimos días.')+'</p></div>'
   +'<nav class="rd-tabs"><a href="#/radar" class="'+(tab==='live'?'on':'')+'">'+(en?'● Live':'● En directo')+'</a><a href="#/radar/dias" class="'+(tab==='dias'?'on':'')+'">'+(en?'Recent days':'Últimos días')+'</a></nav>'
   +'<div id="rd-main"></div></div>';
@@ -285,7 +285,7 @@ function trackBox(){ var el=document.getElementById('rd-trkbox'); if(!el||!S.trk
   var b1=document.getElementById('rd-tfit'); if(b1) b1.onclick=fitTrack;
   var b2=document.getElementById('rd-theat'); if(b2) b2.onclick=function(){ S.heatOn=!S.heatOn; drawTrack(S.trk.cur); trackBox(); };
   var b3=document.getElementById('rd-tfol'); if(b3) b3.onclick=function(){ S.follow=!S.follow; b3.classList.toggle('on',S.follow); var x=find(t.h); if(S.follow&&x&&x._m) S.map.setView(x._m.getLatLng(),Math.max(S.map.getZoom(),7)); };
-  var b4=document.getElementById('rd-share'); if(b4) b4.onclick=function(){ var u=location.origin+location.pathname+'#/radar?h='+t.h, ttl=(a&&(a.flight||a.reg))||t.h.toUpperCase(); if(navigator.share){ navigator.share({title:'M.A.T · '+T('Radar militar','Military radar')+' · '+ttl,url:u}).catch(function(){}); } else if(navigator.clipboard){ navigator.clipboard.writeText(u).then(function(){ b4.textContent=T('Enlace copiado ✓','Link copied ✓'); }).catch(function(){}); } };
+  var b4=document.getElementById('rd-share'); if(b4) b4.onclick=function(){ var u=location.origin+location.pathname+'#/radar?h='+t.h, ttl=(a&&(a.flight||a.reg))||t.h.toUpperCase(); if(navigator.share){ navigator.share({title:'M.A.T · '+T('Radar aéreo','Air radar')+' · '+ttl,url:u}).catch(function(){}); } else if(navigator.clipboard){ navigator.clipboard.writeText(u).then(function(){ b4.textContent=T('Enlace copiado ✓','Link copied ✓'); }).catch(function(){}); } };
   [].slice.call(el.querySelectorAll('.rd-oldss')).forEach(function(x){ x.onclick=function(e){ e.preventDefault(); var s=S.trk.ss[+x.getAttribute('data-k')]; if(!s) return; S.trk.cur=s; drawTrack(s); fitTrack(); trackBox(); }; });
 }
 function profile(cur){ var W=320,H=64; var t0=cur[0][0], t1=cur[cur.length-1][0], d=Math.max(1,t1-t0), mx=1; cur.forEach(function(p){ if(p[3]>mx) mx=p[3]; }); mx=Math.max(mx,5000);
@@ -399,7 +399,7 @@ function showMission(m){ var L=S.L, H=S.hist; if(!m||!S.map) return; var cur=m.t
 }
 window.MAT_RADAR=function(app,ctx){ addCss(); stop(); S.ctx=ctx; var p=(ctx&&ctx.p)||[]; var tab=p[1]==='dias'?'dias':'live';
   if(S.map){ try{ S.map.remove(); }catch(e){} } S.map=null; S.mk={}; S.base=null; S.fitted=false; S.sel=null; S.trk=null; S.heat=null; S.hheat=null; TRL=null; S.data=S.data||null;
-  if(ctx&&ctx.set) ctx.set(shell(tab),T('Radar militar','Military radar')); else app.innerHTML=shell(tab); S.root=app.querySelector('.rd');
+  if(ctx&&ctx.set) ctx.set(shell(tab),T('Radar aéreo','Air radar')); else app.innerHTML=shell(tab); S.root=app.querySelector('.rd');
   if(tab==='dias') dias(); else live();
 };
 window.MAT_RADAR_DBG={S:S,info:info,iso:iso,select:function(h){ select(h,false); }};
