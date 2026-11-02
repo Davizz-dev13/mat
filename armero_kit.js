@@ -172,6 +172,9 @@ function can(d,P){ const G=new THREE.Group(); const L=d.len, R=d.dia/2, st=d.sty
     lathe(G,P.body,[[R*0.62,0],[R+0.8,0],[R+0.8,L*0.12],[R,L*0.13],[R,L-3],[R-1.5,L],[R*0.3,L],[R*0.28,L-2]],22);
     const gs=[]; for(let i=0;i<14;i++){ const a=i/14*Math.PI*2; const g=new THREE.BoxGeometry(2,1.6,L*0.1); g.translate(Math.cos(a)*(R+1),Math.sin(a)*(R+1),L*0.06); gs.push(g);} add(G,merge(gs),P.dark);
     for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; bx(G,P.dark,2.5,1.2,2,Math.cos(a)*R*0.75,Math.sin(a)*R*0.75,L-0.2,0); }
+  } else if(st==='osprey'){ // SilencerCo Osprey: sección ovalada excéntrica (la mayor parte por debajo del ánima). d.dia = ancho, d.hgt = alto
+    const Hh=d.hgt||d.dia, dy=-(Hh-d.dia)/2-1; const g=new THREE.CylinderGeometry(1,1,L,24,1); g.rotateX(Math.PI/2); g.scale(R,Hh/2,1); add(G,g,P.body,0,dy,L/2);
+    const c=new THREE.CircleGeometry(1,24); c.scale(R*0.85,Hh/2*0.85,1); add(G,c,P.dark,0,dy,L+0.2); xcyl(G,P.dark,1.6,4,R,dy+Hh*0.2,L*0.12,8);
   } else if(st==='nt4'){ // KAC NT4: manguito perforado con hoyuelos en casi toda su longitud, anillo trasero con pestillo
     lathe(G,P.body,[[R*0.6,0],[R*0.95,0],[R*0.95,L*0.14],[R,L*0.16],[R,L-2.5],[R-1.5,L],[R*0.28,L],[R*0.26,L-2]],22);
     dimples(G,P.dark,R,L*0.2,L*0.96,11,10,2.2); bx(G,P.dark,4,4,12,0,-R-1,L*0.07,1);
@@ -256,6 +259,21 @@ function atlas(d,P){ const G=new THREE.Group(); const Hh=d.hmin||122;
     const hub=new THREE.Mesh(new THREE.CylinderGeometry(8,8,10,10),P.dark); hub.rotation.z=Math.PI/2; leg.add(hub); G.add(leg); }
   return G; }
 
-const B={aimpoint,micro,hs510,eotech,acog,rmr,elcan,lpvo,magnifier,can,stock,grip,light,laser,atlas};
+/* ===== Linternas de pistola bajo el raíl del armazón (origen: cara inferior del raíl, centro; cuelga en -Y, lente en +Z). d={len,bez,w,h,style}
+   Medidas oficiales: largo y bisel (SureFire) o largo × ancho × alto (Streamlight); el resto de la forma es aproximada. */
+function plight(d,P){ const G=new THREE.Group(); const L=d.len, st=d.style||'x300';
+  const W=d.w||(d.bez+4), H=d.h||(d.bez+7), rb=(d.bez||Math.min(W,H)-4)/2, cy=-H+rb+1;
+  bx(G,P.dark,W*0.62,5,L*0.42,0,-2.5,-L*0.12,1);                                                              // garra del raíl
+  if(st==='tlr1'){ bx(G,P.body,W,H-5,L*0.7,0,-5-(H-5)/2,-L*0.15,4);                                           // cuerpo cuadrado de aluminio
+    lathe(G,P.body,[[0,L*0.2],[rb+1,L*0.2],[rb+2,L*0.32],[rb+2,L/2],[0,L/2]],18,cy);
+    add(G,new THREE.CircleGeometry(rb+0.5,18),P.lightlens,0,cy,L/2+0.3);
+  } else { bx(G,P.body,W,H*0.55,L*0.62,0,-H*0.3,-L*0.18,3);                                                   // cuerpo (X300)
+    lathe(G,P.body,[[0,-L/2],[rb-1.5,-L/2],[rb-1,-L*0.15],[rb,L*0.08],[rb,L/2],[0,L/2]],18,cy);              // tubo y bisel
+    const gs=[]; for(let i=0;i<4;i++){ const g=new THREE.TorusGeometry(rb+0.2,0.8,4,18); g.translate(0,0,L/2-6-i*4); gs.push(g); } add(G,merge(gs),P.dark,0,cy,0);
+    add(G,new THREE.CircleGeometry(rb-2,18),P.lightlens,0,cy,L/2+0.3); }
+  for(const s of [-1,1]) bx(G,P.dark,3,9,14,s*(W/2+1),-H*0.45,-L/2+9,1);                                    // interruptores ambidiestros
+  return G; }
+
+const B={aimpoint,micro,hs510,eotech,acog,rmr,elcan,lpvo,magnifier,can,stock,grip,light,laser,atlas,plight};
 export function build(kind,dims,fde){ const P=marks(mats(fde)); const g=B[kind](dims,P); const root=new THREE.Group(); g.scale.setScalar(K); root.add(g);
   root.traverse(o=>{ if(o.isMesh){ o.castShadow=true; } }); root.userData.kit=kind; return root; }
