@@ -1,14 +1,29 @@
 name: Radar M.A.T
+# Graba posiciones del Radar militar (datos públicos adsb.lol, ODbL) llamando a /api/tick cada minuto.
+# GitHub retrasa o se salta muchos cron en repos pequeños, así que cada ejecución se queda en marcha
+# ~5 h 40 min registrando cada 60 s; las ejecuciones nuevas esperan en cola (concurrency) y toman el relevo.
 on:
   schedule:
     - cron: '*/5 * * * *'
+    - cron: '3-58/15 * * * *'
+    - cron: '41 */2 * * *'
   workflow_dispatch:
 permissions: {}
+concurrency:
+  group: radar-tick
+  cancel-in-progress: false
 jobs:
   tick:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 350
     steps:
       - name: Registrar posiciones del Radar militar (datos públicos adsb.lol, ODbL)
         run: |
-          for i in 1 2 3 4 5; do curl -s -m 20 https://mat-radar.sites.tab.bot/api/tick > /dev/null || true; sleep 55; done
+          fin=$(( $(date +%s) + 340*60 ))
+          n=0
+          while [ "$(date +%s)" -lt "$fin" ]; do
+            curl -s -m 20 https://mat-radar.sites.tab.bot/api/tick > /dev/null || true
+            n=$((n+1))
+            sleep 60
+          done
+          echo "Ticks enviados: $n"
