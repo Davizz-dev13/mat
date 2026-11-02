@@ -5,7 +5,7 @@ function QT(s){s=String(s);return /^\d+( \d+)+$/.test(s.trim())?s.trim().split('
 // ======================= M.A.T · PAÍSES Y FACCIONES =======================
 var IC=[['aviones_combate','Aviones de combate'],['aviones_otros','Otros aviones y drones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['artilleria','Artillería'],['antiaereos','Defensa antiaérea'],['armamento','Armamento aéreo'],['buques_portaaviones','Portaaviones'],['buques_destructores','Destructores'],['buques_cruceros','Cruceros'],['buques_fragatas','Fragatas'],['buques_corbetas','Corbetas'],['buques_anfibios','Anfibios'],['buques_patrulleros','Patrulleros'],['buques_minas','Guerra de minas'],['submarinos','Submarinos'],['buques_auxiliares','Auxiliares'],['buques_menores','Embarcaciones menores y de puerto']];
 var ICN={}; IC.forEach(function(c){ICN[c[0]]=c[1];});
-var MC=[['aviones','Aviones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['buques','Buques'],['submarinos','Submarinos'],['logistica','Logística y Sanidad'],['armamento','Armamento'],['espacio','Carrera espacial']];
+var MC=[['aviones','Aviones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['buques','Buques'],['submarinos','Submarinos'],['logistica','Logística y Sanidad'],['armamento','Armamento'],['armas','Armas ligeras'],['espacio','Carrera espacial']];
 var DATA=null, DP=null;
 function load(){ if(DP) return DP; DP=window.MAT_GET('fuerzas.json.gz').then(function(d){DATA=d;return d;}); return DP; }
 function custom(){try{return JSON.parse(localStorage.getItem('mat_fac')||'[]');}catch(e){return [];}}
