@@ -195,7 +195,7 @@ function lista(tid){
 function sp(k,v){return v?'<div class="sp"><span class="k">'+k+'</span><span class="v">'+esc(v)+'</span></div>':'';}
 function blk(title,rows){ var r=rows.map(function(x){return sp(x[0],x[1]);}).join(''); return r?'<h2>'+title+'</h2><div class="specs">'+r+'</div>':''; }
 function bl(arr){return arr&&arr.length?'<ul class="bul">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'';}
-var ARM3D={'g-m4-carbine':'m4a1','g-fn-scar':'scar','g-heckler-koch-mp7':'mp7','g-sr-25':'sr-25','g-barrett-m82':'m82'};
+var ARM3D={'g-m4-carbine':'m4a1','g-fn-scar':'scar','g-heckler-koch-mp7':'mp7','g-sr-25':'sr-25','g-barrett-m82':'m82','g-fn-p90':'p90','g-steyr-aug':'aug','g-sa80':'l85a2','g-m16-rifle':'m16a4','g-glock':'g18c','g-beretta-m9':'m9','g-m24-sniper-weapon-system':'m24','g-accuracy-international-awm':'awm','g-heckler-koch-hk416':'hk416','g-heckler-koch-hk417':'hk417','g-heckler-koch-g36':'g36','g-ak-74':'ak74','g-ak-12':'ak12','g-famas':'famas','g-iwi-tavor':'tavor','g-heckler-koch-mp5':'mp5','g-m249-squad-automatic-weapon':'m249','g-m240-machine-gun':'m240','g-pk-machine-gun':'pkm'};
 function ficha(a){
  css(); var F=a.F||{}, t=TYM[a.tipo]||['', 'Armas','Weapons'], tn=L(t[1],t[2]), sl=a.tipo.slice(2).replace(/_/g,'-');
  var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[tn,'#/armas/'+sl],[a.n]]);

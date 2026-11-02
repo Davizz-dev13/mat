@@ -26,3 +26,27 @@ File map: m4a1.glb, scar-l.glb, scar-h.glb, mp7a1.glb, sr-25.glb, m82a1.glb (wea
 Accessories marked "MAT" in the viewer are NOT downloaded models: they are approximate low-poly models generated in code by M.A.T (armero_kit.js) from the official dimensions published by each manufacturer (sources linked on each accessory in armero.js). They are M.A.T's own work.
 Lighting: env_studio.rgbe = "Studio Small 09" HDRI by Sergej Majboroda, Poly Haven (https://polyhaven.com/a/studio_small_09), CC0 1.0 (public domain); downscaled by M.A.T to 256x128 RGBE.
 Camouflages: procedural patterns generated in the shader by M.A.T (no pattern files).
+
+
+== TANDA 2b (noviembre 2026): armas nuevas / new weapons ==
+Todos CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Cambios de M.A.T: compresión meshopt, escala y origen ajustados a la longitud real, materiales retocados, algunas piezas separadas (miras, asas), puntos de montaje medidos.
+All CC BY 4.0. Changes by M.A.T: meshopt compression, scale and origin set from real length, materials adjusted, some parts split (sights, handles), mount points measured.
+- p90.glb: "FN P90 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/fn-p90-low-poly-3f3be324baeb4e59b355fdee702dbf64, CC BY 4.0
+- aug.glb: "Steyr AUG A1 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/steyr-aug-a1-low-poly-9fd2690307d54414ade4dbe9a045fb3d, CC BY 4.0
+- l85a2.glb: "L85A2 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/l85a2-low-poly-7e1397979bf7404fa495059ebedf22b7, CC BY 4.0
+- m16a4.glb: "M16A4 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/m16a4-low-poly-9d6fd861cfbe4134939393d0500adc83, CC BY 4.0
+- g18c.glb: "G18C (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/g18c-low-poly-369384a591d0406a96d945dd5ff81708, CC BY 4.0
+- m9.glb: "Beretta M9 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/beretta-m9-low-poly-0738a010879c4622858e738751c02b19, CC BY 4.0
+- m24.glb: "M24A2 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/m24a2-low-poly-b448a98c6a3e46a7b0e00e2a9be0d038, CC BY 4.0
+- awm.glb: "AWM (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/awm-low-poly-00f1e5c30fb7453a8d429848ec893c6f, CC BY 4.0
+- hk416.glb: "Low-Poly HK416" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-hk416-059e968f6f764357880807c62c117ab7, CC BY 4.0
+- hk417.glb: "Low-Poly HK417" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-hk417-36acd0c829574d72a42faff85e2e9944, CC BY 4.0
+- g36.glb: "Low-Poly HK G36" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-hk-g36-526ae321f20c4d62a0fddd5c93783a79, CC BY 4.0
+- ak74.glb: "Low-Poly AK-74" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-ak-74-b27f9003622a4c7499bfd8d2a06dc47b, CC BY 4.0
+- ak12.glb: "Low-Poly SDM AK-12s" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-sdm-ak-12s-5863ca00985f40c8a0fcef6b5f106413, CC BY 4.0
+- famas.glb: "Low-Poly Famas F1" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-famas-f1-bbd20712667e49088f5c9960b97c3d83, CC BY 4.0
+- tavor.glb: "Low-Poly Tavor Tar-21" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-tavor-tar-21-42ce28f1f3594cc58c80ae276e337eb5, CC BY 4.0
+- mp5.glb: "Low-Poly HK MP5" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-hk-mp5-80980f757c2c463ebc73460a31611652, CC BY 4.0
+- m249.glb: "Low-Poly M249 SAW" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-m249-saw-76011c365636451c90a8e3a46c2d8ca5, CC BY 4.0
+- m240.glb: "Low-Poly M240B" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-m240b-657a3b8ce0194aae9c7c9036c18c54b9, CC BY 4.0
+- pkm.glb: "Low-Poly PKM" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-pkm-626082c669c740efa06e03c63b7bc2d9, CC BY 4.0
