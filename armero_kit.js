@@ -274,6 +274,130 @@ function plight(d,P){ const G=new THREE.Group(); const L=d.len, st=d.style||'x30
   for(const s of [-1,1]) bx(G,P.dark,3,9,14,s*(W/2+1),-H*0.45,-L/2+9,1);                                    // interruptores ambidiestros
   return G; }
 
-const B={aimpoint,micro,hs510,eotech,acog,rmr,elcan,lpvo,magnifier,can,stock,grip,light,laser,atlas,plight};
+/* ===== Tanda 3 (MAT): accesorios del Pacto de Varsovia, lanzagranadas, bayoneta y montura MP5 =====
+   Medidas oficiales en ACC (armero.js) con su fuente. Forma de detalle aproximada.
+   Añadir a B: wpscope, wpref, p87, gpl, bayo, btnar, ag36 */
+
+// Montura lateral «cola de milano» del Pacto de Varsovia. Origen = centro del raíl lateral IZQUIERDO del cajón (cara exterior),
+// +X hacia fuera (izquierda del tirador). La óptica queda sobre el cajón, en x = xa (negativo = hacia el eje del arma).
+function wpmount(G,P,len,bot,top,xa,lever){   // lever = alcance exterior (mm) del tornillo de apriete
+  bx(G,P.dark,9,22,len,4.5,0,0,1.5);                                   // mordaza sobre la cola de milano
+  bx(G,P.dark,7,top-bot,len*0.8,9.5,(top+bot)/2,0,1.5);                 // placa vertical del soporte
+  bx(G,P.dark,9.5-xa+8,8,len*0.7,(9.5+xa-8)/2+2,top-4,0,1.5);           // brazo superior hacia el eje
+  if(lever){ const lx=Math.max(18,lever); bx(G,P.dark,5,8,len*0.55,11.5,-6,-len*0.1,1); xcyl(G,P.dark,4.5,lx-9,(lx+9)/2,-6,len*0.32,10); bx(G,P.dark,4,-bot,10,11.5,bot/2,len*0.3,1); }  // palanca y tornillo de apriete
+  return G; }
+
+// Visores ópticos rusos con montura lateral (ПСО-1, 1П29 «Тюльпан», 1П78 «Каштан»).
+// d={L (largo total), L0 (largo sin parasol/ocular de goma), H (alto total), W (ancho total), ay (eje óptico sobre el raíl), xa, ro (radio objetivo), rb (radio cuerpo), style}
+function wpscope(d,P){ const G=new THREE.Group(); const L=d.L, ay=d.ay, xa=d.xa, rb=d.rb, ro=d.ro, z0=-L/2;
+  const bot=d.H>0? (ay+(d.top||rb+18))-d.H : -30;
+  const re=xa-(d.style==='pso'?18:rb)-(d.kl||0);                         // borde derecho
+  wpmount(G,P,d.ml||100,bot,ay-rb+2,xa,d.W?d.W+re:18);
+  const O=new THREE.Group(); O.position.x=xa; G.add(O);
+  if(d.style==='pso'){                                                   // ПСО-1: tubo largo, tambores arriba e izquierda, parasol y ocular de goma
+    lathe(O,P.rubber,[[0.01,z0],[19,z0],[19,z0+8],[17,z0+30],[15,z0+38],[0.01,z0+38]],16,ay);
+    lathe(O,P.body,[[0.01,z0+38],[15,z0+38],[15,z0+70],[12.5,z0+92],[12.5,z0+L-112],[16,z0+L-80],[17,z0+L-40],[0.01,z0+L-40]],18,ay);
+    cyl(O,P.body,17.5,18.5,40,z0+L-40,ay);                               // parasol
+    add(O,new THREE.CircleGeometry(12,16),P.lens,0,ay,z0+L-28);
+    bx(O,P.body,36,32,92,0,ay+2,-12,4);                                   // cuerpo central con el soporte
+    vcyl(O,P.body,13,20,0,ay+18+10,-14,16); vcyl(O,P.dark,13.5,4,0,ay+18+18,-14,16);   // tambor de alzas (arriba)
+    xcyl(O,P.body,12,18,24,ay,-14,16); xcyl(O,P.dark,12.5,4,31,ay,-14,16);              // tambor de derivas (izquierda)
+    xcyl(O,P.dark,6,10,20,ay+6,30,10);                                    // portapilas de la iluminación
+  } else {                                                               // 1П29 / 1П78: cuerpo de prismas alto, objetivo grande y ocular de goma
+    const bl=d.L0||L*0.7;
+    lathe(O,P.rubber,[[0.01,z0],[d.re||22,z0],[d.re||22,z0+10],[(d.re||22)-3,z0+(L-bl)],[0.01,z0+(L-bl)]],16,ay);
+    bx(O,P.body,rb*2,rb*2+10,bl*0.62,0,ay+3,z0+(L-bl)+bl*0.31,5);          // cuerpo
+    lathe(O,P.body,[[0.01,z0+(L-bl)+bl*0.55],[rb*0.9,z0+(L-bl)+bl*0.55],[ro,z0+L-14],[ro+1.5,z0+L],[0.01,z0+L]],18,ay);   // tubo del objetivo
+    add(O,new THREE.CircleGeometry(ro-2,18),P.lens,0,ay,z0+L+0.3);
+    vcyl(O,P.dark,11,12,0,ay+rb+10,z0+(L-bl)+bl*0.3,14);                  // mando de distancias
+    if(d.kl) xcyl(O,P.dark,9,d.kl,-rb-d.kl/2,ay,z0+(L-bl)+bl*0.3,12);   // mando lateral (derecha)
+  }
+  return G; }
+
+// Visores colimadores rusos (Кобра ЭКП-1С-03, 1П63 «Обзор»): cuerpo con ventana rectangular sobre montura lateral.
+// d={L,W,H,ay (centro de ventana sobre el raíl), xa, ww/wh (ventana exterior), style}
+function wpref(d,P){ const G=new THREE.Group(); const L=d.L, ay=d.ay, xa=d.xa, ww=d.ww, wh=d.wh, bot=ay+wh/2+4-d.H;
+  const by=ay-wh/2-8;                                                    // cara inferior del cuerpo
+  wpmount(G,P,d.ml||70,bot,by+2,xa,d.W?d.W+xa-ww/2-12:18);
+  const O=new THREE.Group(); O.position.x=xa; G.add(O);
+  bx(O,P.body,ww,10,L,0,by+5,0,2);                                       // base del cuerpo
+  const f=4, zf=L/2-(d.fl||L*0.38);                                      // marco de la ventana (delante)
+  bx(O,P.body,ww,f,d.fl||L*0.38,0,ay+wh/2-f/2,zf+(d.fl||L*0.38)/2,1); bx(O,P.body,f,wh,d.fl||L*0.38,ww/2-f/2,ay,zf+(d.fl||L*0.38)/2,1); bx(O,P.body,f,wh,d.fl||L*0.38,-ww/2+f/2,ay,zf+(d.fl||L*0.38)/2,1);
+  bx(O,P.glassA||P.glass,ww-2*f,wh-f,1.5,0,ay-f/2,L/2-3);                // cristal semirreflectante
+  bx(O,P.red,1.6,1.6,1,0,ay,zf+2);
+  bx(O,P.body,ww*0.8,wh*0.55,L-(d.fl||L*0.38),0,by+10+wh*0.27,-(d.fl||L*0.38)/2,3);   // cuerpo trasero (electrónica / emisor)
+  vcyl(O,P.dark,8,8,0,by+10+wh*0.55+4,-L*0.25,12);                       // selector de retícula / brillo
+  if(d.style==='obzor'){ bx(O,P.body,ww,wh*0.35,L*0.45,0,ay+wh/2+wh*0.12,-L*0.2,3); }  // capota alta del 1П63
+  else xcyl(O,P.dark,7,12,-ww/2-6,by+16,-L*0.3,12);                      // portapilas lateral (Kobra)
+  return G; }
+
+// 1П87 (raíl Picatinny superior del AK-12). Origen = cara superior del raíl. d={L,W,H,ay}
+function p87(d,P){ const G=new THREE.Group(); const L=d.L, W=d.W, H=d.H, ay=d.ay;
+  clamp(G,P.dark,L*0.5,W*0.5,8,0,-1);
+  bx(G,P.body,W*0.62,10,L,0,13,0,2);                                     // base
+  const f=4, fl=L*0.42, wh=H-22;                                         // ventana delantera
+  bx(G,P.body,W*0.62,f,fl,0,H-f/2,L/2-fl/2,1); bx(G,P.body,f,wh,fl,W*0.31-f/2,18+wh/2,L/2-fl/2,1); bx(G,P.body,f,wh,fl,-W*0.31+f/2,18+wh/2,L/2-fl/2,1);
+  bx(G,P.glassA||P.glass,W*0.62-2*f,wh-f,1.5,0,18+wh/2-f/2,L/2-3); bx(G,P.red,1.5,1.5,1,0,ay,L/2-fl+3);
+  bx(G,P.body,W*0.55,H*0.55,L-fl,0,18+H*0.2,-fl/2,4);                     // cuerpo trasero
+  xcyl(G,P.dark,9,W*0.19,-(W*0.31+W*0.095),24,-L*0.18,14);               // portapilas lateral (derecha)
+  bx(G,P.dark,8,6,14,0,18+H*0.48,-L*0.3,1.5);                             // botones de brillo
+  return G; }
+
+// Lanzagranadas bajo el cañón de 40 mm (ГП-25 «Костёр», ГП-34). Origen = eje del ánima del fusil, z=0 en la boca del lanzagranadas.
+// d={L (largo total), bl (cañón), gy (eje del lanzagranadas bajo el ánima), r (radio exterior del cañón)}
+function gpl(d,P){ const G=new THREE.Group(); const L=d.L, bl=d.bl, gy=-d.gy, r=d.r||25;
+  cyl(G,P.body,r,r,bl,-bl,gy,0,20);                                      // cañón
+  add(G,new THREE.RingGeometry(18,r-1,20),P.dark,0,gy,0.3);  add(G,new THREE.CircleGeometry(18,20),P.dark,0,gy,-6);
+  bx(G,P.body,26,-gy+8-r+6,bl*0.42,0,(gy+r-6+8)/2,-bl*0.28,3);        // bloque de anclaje sobre el cañón del fusil
+  xcyl(G,P.steel,4,40,0,4,-bl*0.2,10);                                   // pasador de anclaje
+  side(G,P.body,[[-bl,gy+r-4],[-bl,gy-r+2],[-L+70,gy-r+2],[-L+30,gy-r+12],[-L,gy-r+18],[-L,gy+r-10],[-L+40,gy+r-6]],40,0,2);   // cajón y recámara
+  side(G,P.poly,[[-L+150,gy-r+4],[-L+124,gy-r-74],[-L+92,gy-r-78],[-L+108,gy-r+4]],26,0,3);   // empuñadura
+  side(G,P.dark,[[-L+190,gy-r+4],[-L+190,gy-r-20],[-L+170,gy-r-36],[-L+146,gy-r-36],[-L+150,gy-r-26],[-L+174,gy-r-24],[-L+178,gy-r+4]],8,0,0);   // guardamonte
+  bx(G,P.steel,4,14,4,0,gy-r-10,-L+164,1);                               // disparador
+  bx(G,P.dark,6,30,40,25,gy+8,-bl+6,1.5); bx(G,P.dark,4,26,6,28,gy+22,-bl+20,1);   // alza de cuadrante (izquierda)
+  if(d.style==='gp34') bx(G,P.dark,6,16,50,-24,gy,-L+70,1.5);            // seguro ambidiestro del ГП-34
+  return G; }
+
+// Bayoneta 6Х5. Origen = centro de la anilla (sobre el eje del ánima). Hoja hacia +Z bajo el cañón; mango hacia -Z.
+// d={L (total), bl (hoja), bw (ancho de hoja), ri (diámetro interior de la anilla)}
+function bayo(d,P){ const G=new THREE.Group(); const L=d.L, bl=d.bl, bw=d.bw, ri=d.ri/2, hl=L-bl;
+  const ty=-(ri+3);                                                      // canto superior (lomo) de la hoja
+  add(G,new THREE.TorusGeometry(ri+2,2.2,6,18),P.steel,0,0,0);
+  bx(G,P.steel,8,-ty+bw+6,6,0,(ty-bw-6)/2,0,1);                           // guarda
+  side(G,P.steel,[[3,ty],[bl*0.72,ty],[bl,ty-bw*0.62],[bl*0.86,ty-bw],[3,ty-bw]],3.6,0,0.6);   // hoja (punta de recazo)
+  for(let i=0;i<8;i++) bx(G,P.steel,3.6,2,3,0,ty+0.6,bl*0.2+i*6,0);      // dientes de sierra en el lomo
+  side(G,P.poly,[[-3,ty-1],[-hl+18,ty-1],[-hl+18,ty-bw-8],[-3,ty-bw-4]],22,0,4);   // mango
+  side(G,P.steel,[[-hl+18,ty+1],[-hl,ty+1],[-hl,ty-bw-9],[-hl+18,ty-bw-9]],22,0,2);  // pomo con la ranura del tetón
+  bx(G,P.dark,6,3,18,0,ty+2,-hl+9,0);
+  return G; }
+
+// Montura B&T NAR de perfil bajo (garras HK del MP5) + óptica encima. Origen = parte alta del cajón del MP5.
+// d={L,W,H,opt:'micro'|'aimpoint',od:{datos del visor}}
+function btnar(d,P){ const G=new THREE.Group(); const L=d.L, W=d.W, H=d.H;
+  bx(G,P.body,W*0.62,H-6,L,0,(H-6)/2,0,2);                                // cuerpo
+  for(const s of [-1,1]) for(const z of [-L*0.32,L*0.32]) side(G,P.steel,[[z-7,2],[z+7,2],[z+7,-7],[z-7,-7]],4,s*(W*0.31-1),0);   // garras
+  bx(G,P.dark,6,10,30,W*0.5,H*0.35,0,1.5); xcyl(G,P.dark,4,10,W*0.55,H*0.35,L*0.3,10);   // palanca de cierre
+  bx(G,P.body,21,3,L,0,H-4.5,0,0.8); for(let i=0;i<Math.floor(L/10);i++) bx(G,P.body,21,3,5.2,0,H-1.5,-L/2+5+i*10,0.4);   // raíl Picatinny
+  const o=(d.opt==='aimpoint'?aimpoint:micro)(d.od,P); o.position.y=H; G.add(o);
+  return G; }
+
+// HK AG36 (sustituye al guardamanos del G36). Origen = eje del ánima del fusil, z=0 en la boca del lanzagranadas.
+// d={L,bl,W,H,gy (eje del cañón de 40 mm bajo el ánima), st (techo de la carcasa sobre el ánima)}
+function ag36(d,P){ const G=new THREE.Group(); const L=d.L, bl=d.bl, W=d.W, gy=-d.gy, st=d.st, r=24;
+  const hz=d.hz||L*0.72;                                                  // largo de la carcasa-guardamanos
+  side(G,P.poly,[[-L+30,st],[-L+hz+30,st],[-L+hz+30,gy+r-2],[-L+30,gy+r-8]],d.sw*2,0,4);   // carcasa = nuevo guardamanos
+  for(let i=0;i<6;i++) bx(G,P.dark,d.sw*2+0.6,4,10,0,st-14,-L+60+i*hz/7,0); // ranuras de ventilación
+  cyl(G,P.body,r,r,bl,-bl,gy,0,20); add(G,new THREE.RingGeometry(20,r-1,20),P.dark,0,gy,0.3); add(G,new THREE.CircleGeometry(20,20),P.dark,0,gy,-6);
+  side(G,P.poly,[[-L,gy+r],[-L+40,gy+r],[-L+40,gy-r-6],[-L,gy-r+4]],W*0.5,0,3);          // recámara trasera
+  const gb=st-d.H; side(G,P.poly,[[-L+72,gy-r-2],[-L+44,gb],[-L+10,gb+4],[-L+38,gy-r-2]],30,0,4);   // empuñadura (alto total = H)
+  side(G,P.poly,[[-L+130,gy-r-2],[-L+130,gy-r-22],[-L+104,gy-r-38],[-L+62,gy-r-38],[-L+66,gy-r-28],[-L+100,gy-r-26],[-L+118,gy-r-2]],10,0,1);  // guardamonte
+  bx(G,P.steel,4,14,4,0,gy-r-10,-L+92,1);   // disparador
+  bx(G,P.dark,6,22,60,W/2-3,gy+r-2,-bl*0.5,1.5); bx(G,P.dark,4,24,4,W/2-2,gy+r+12,-bl*0.35,1);   // alza escalonada (izquierda)
+  return G; }
+
+// Add to B:  wpscope, wpref, p87, gpl, bayo, btnar, ag36
+// e.g. const B={wpscope,wpref,p87,gpl,bayo,btnar,ag36,aimpoint,micro,...};  (btnar calls the existing micro()/aimpoint() builders)
+
+const B={aimpoint,micro,hs510,eotech,acog,rmr,elcan,lpvo,magnifier,can,stock,grip,light,laser,atlas,plight,wpscope,wpref,p87,gpl,bayo,btnar,ag36};
 export function build(kind,dims,fde){ const P=marks(mats(fde)); const g=B[kind](dims,P); const root=new THREE.Group(); g.scale.setScalar(K); root.add(g);
   root.traverse(o=>{ if(o.isMesh){ o.castShadow=true; } }); root.userData.kit=kind; return root; }
