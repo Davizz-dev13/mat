@@ -348,7 +348,7 @@ window.MAT_DUELO=function(app,X){
       R3=m.create(d3el,{mode:MODE,units:[mk(A,1),mk(B,-1)]});
       if(!R3){ stop3(); rnote.textContent='No se pudo iniciar el 3D: se usa 2D.'; return; }
       R3hud(); rnote.textContent=''; tipEl.hidden=false; setTimeout(function(){tipEl.hidden=true;},3500);
-      if(!explicit&&!lsg('mat_r')){ setTimeout(function(){ if(!R3) return; var f=R3.fps(); if(f!=null&&f<22){ lss('mat_r_auto','2d'); stop3(); rnote.textContent='El 3D iba lento en este dispositivo ('+Math.round(f)+' fps): se usa 2D. Puedes activarlo con el botón 3D.'; } },4500); }
+      if(!explicit&&!lsg('mat_r')){ setTimeout(function(){ if(!R3) return; var f=R3.fps(); if(f!=null&&f<22&&R3.lite&&R3.lite()){ setTimeout(function(){ if(!R3) return; var f2=R3.fps(); if(f2!=null&&f2<22){ lss('mat_r_auto','2d'); stop3(); rnote.textContent='El 3D iba lento en este dispositivo ('+Math.round(f2)+' fps): se usa 2D. Puedes activarlo con el botón 3D.'; } },3500); return; } if(f!=null&&f<22){ lss('mat_r_auto','2d'); stop3(); rnote.textContent='El 3D iba lento en este dispositivo ('+Math.round(f)+' fps): se usa 2D. Puedes activarlo con el botón 3D.'; } },4500); }
     }).catch(function(e){ stop3(); rnote.textContent='No se pudo cargar el 3D: se usa 2D.'; });
   }
   Array.prototype.forEach.call(document.querySelectorAll('.rch'),function(b){b.addEventListener('click',function(){ var v=b.getAttribute('data-r'); lss('mat_r',v); if(v==='3d'){ if(!R3&&!anim) start3(true);} else { if(!anim) stop3(); } });});
