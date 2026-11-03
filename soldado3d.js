@@ -65,7 +65,7 @@ export async function mount(stage,st,D,M,opt){
     const back=(pist?AXDP:AXD).clone().multiplyScalar(-1);
     ik('R',G.clone().addScaledVector(back,0.045).add(new THREE.Vector3(-0.025,0.035,0)),new THREE.Vector3(-0.6,-0.7,-0.3)); handTo('R',new THREE.Vector3(0,-0.6,0.3));
     const ex=new THREE.Vector3().setFromMatrixColumn(R,0), ey=new THREE.Vector3().setFromMatrixColumn(R,1), ez=new THREE.Vector3().setFromMatrixColumn(R,2);
-    let Hl; if(pist){ /* agarre a dos manos: la mano de apoyo envuelve la mano del tirador por la izquierda, pulgares hacia delante */ Hl=G.clone().addScaledVector(ex,0.036).addScaledVector(ey,-0.045).addScaledVector(ez,-0.012); } else { /* mano de apoyo sobre el guardamanos: el punto más adelantado que el brazo alcanza (adelantando un poco el hombro, como se hace al encarar), nunca en el aire */
+    let Hl; if(pist){ /* agarre a dos manos: la mano de apoyo envuelve la mano del tirador por la izquierda, pulgares hacia delante */ Hl=G.clone().addScaledVector(ex,0.022).addScaledVector(ey,-0.058).addScaledVector(ez,0.0); } else { /* mano de apoyo sobre el guardamanos: el punto más adelantado que el brazo alcanza (adelantando un poco el hombro, como se hace al encarar), nunca en el aire */
       const m=M.mt(wi.v)||{}; const uz=(m.uz!=null?m.uz:(gp[0]+0.3)), uy=(m.uy!=null?m.uy:gp[1]); const MW=new THREE.Matrix4().compose(wpn.position,wpn.quaternion,wpn.scale); const OFF=new THREE.Vector3(0.035,-0.045,-0.04);
       const at=s=>new THREE.Vector3(0,uy-0.012,s).applyMatrix4(MW).add(OFF); const zMax=Math.min(uz,gp[0]+0.4), zMin=gp[0]+0.11;
       const U=B('L_Upperarm'), F=B('L_Forearm'), H=B('L_Hand'), C=B('L_Clavicle'); const reach=()=>wp(F).distanceTo(wp(U))+wp(H).distanceTo(wp(F));
@@ -73,7 +73,7 @@ export async function mount(stage,st,D,M,opt){
       let s=zMax; if(U&&F&&H){ const R0=reach()*0.985; for(; s>zMin; s-=0.01){ if(body.localToWorld(at(s)).distanceTo(wp(U))<=R0) break; } }
       Hl=at(s).sub(OFF); }
     DBGH.t=Hl.clone(); DBGH.g=G.clone();
-    if(pist){ ik('L',Hl,new THREE.Vector3(0.8,-0.6,-0.1)); handTo('L',ex.clone().multiplyScalar(-0.6).addScaledVector(ez,0.6).addScaledVector(ey,-0.35)); }
+    if(pist){ ik('L',Hl,new THREE.Vector3(0.8,-0.6,-0.1)); handTo('L',ex.clone().multiplyScalar(-0.55).addScaledVector(ez,0.75).addScaledVector(ey,-0.15)); }
     else { ik('L',Hl.clone().add(new THREE.Vector3(0.035,-0.045,-0.04)),new THREE.Vector3(0.7,-0.7,-0.1)); handTo('L',new THREE.Vector3(-0.4,0.6,0.5)); }
   }
   async function setWeapon(){ const b=st.arma; const key=b?JSON.stringify([b.id,b.v||0,b.on||{}]):''; if(key===wkey) return; wkey=key;
