@@ -98,7 +98,7 @@ export async function mount(stage,st,D,M,opt){
     let ang=Math.acos(Math.max(-1,Math.min(1,n.dot(want)))); if(new THREE.Vector3().crossVectors(n,want).dot(f)<0) ang=-ang;
     const qa=new THREE.Quaternion().setFromAxisAngle(f,ang); const bw=H.getWorldQuaternion(new THREE.Quaternion()), pw=H.parent.getWorldQuaternion(new THREE.Quaternion()); H.quaternion.copy(pw.invert().multiply(qa.multiply(bw))); H.updateMatrixWorld(true); }
 /* ---- posturas (Fase 5b): «pie» (preparado bajo), «apunta» (apuntando de pie), «rodilla» (rodilla derecha en tierra, apuntando), «tumbado» (cuerpo a tierra, apuntando) ---- */
-  const PKEY='mat_soldado_pose', POSES_ON=false; let PO='pie', PRR=30; try{ PO=localStorage.getItem(PKEY)||'pie'; }catch(e){} if(!POSES_ON||!['pie','apunta','rodilla','tumbado'].includes(PO)) PO='pie';
+  const PKEY='mat_soldado_pose', POSES_ON=true; let PO='pie', PRR=30; try{ PO=localStorage.getItem(PKEY)||'pie'; }catch(e){} if(!POSES_ON||!['pie','apunta','rodilla','tumbado'].includes(PO)) PO='pie';
   const HB=B('Hip'), HIP0=HB?HB.position.clone():null; if(HB) REST.Hip=locM(HB);
   const toW=v=>body.localToWorld(v.clone()).sub(body.localToWorld(new THREE.Vector3()));
   function moveHip(dL){ if(!HB) return; HB.position.copy(HB.parent.worldToLocal(wp(HB).add(toW(dL)))); HB.updateMatrixWorld(true); }
@@ -110,25 +110,26 @@ export async function mount(stage,st,D,M,opt){
   function footTo(side,toeL){ const Fo=B(side+'_Foot'), Tb=B(side+'_ToeBase'); if(Fo&&Tb) aim(Fo,wp(Tb),body.localToWorld(toeL)); }
   function kneel(){ moveHip(new THREE.Vector3(0,-0.43,-0.06));
     { const T=lp('R_Thigh'), Lt=lp('R_Calf').distanceTo(T), Lc=lp('R_Foot').distanceTo(lp('R_Calf')); const ky=0.075, dy=T.y-ky; const K=new THREE.Vector3(T.x-0.015,ky,T.z+Math.sqrt(Math.max(0.0004,Lt*Lt-dy*dy-0.0002)));
-      const A=new THREE.Vector3(K.x-0.01,0.115,K.z-Math.sqrt(Math.max(0.01,Lc*Lc-0.0016))); ikB(B('R_Thigh'),B('R_Calf'),B('R_Foot'),A,K.clone().sub(T.clone().add(A).multiplyScalar(0.5))); footTo('R',A.clone().add(new THREE.Vector3(0,-0.1,0.035))); }
+      const A=new THREE.Vector3(K.x-0.01,0.115,K.z-Math.sqrt(Math.max(0.01,Lc*Lc-0.0016))); ikB(B('R_Thigh'),B('R_Calf'),B('R_Foot'),A,K.clone().sub(T.clone().add(A).multiplyScalar(0.5))); footTo('R',A.clone().add(new THREE.Vector3(0,-0.08,0.12))); } /* pie derecho apoyado en la punta, sin hundirse en el suelo */
     { const T=lp('L_Thigh'); const A=new THREE.Vector3(T.x+0.05,0.125,T.z+0.43); ikB(B('L_Thigh'),B('L_Calf'),B('L_Foot'),A,new THREE.Vector3(0.1,0.8,1)); footTo('L',A.clone().add(new THREE.Vector3(0.02,-0.08,0.15))); } }
-  function prone(){ if(!HB) return; rotBody(HB,AX,88*D2R); moveHip(new THREE.Vector3(0,0.17-lp('Hip').y,-0.35));
+  function prone(){ if(!HB) return; rotBody(HB,AX,88*D2R); moveHip(new THREE.Vector3(0,0.2-lp('Hip').y,-0.35));
     TWB.forEach(([n,w])=>rotBody(B(n),AX,-PRR*w*D2R));
     rotBody(B('R_Thigh'),AY,10*D2R); rotBody(B('L_Thigh'),AY,-10*D2R);
     ['R','L'].forEach(sd=>{ const Fo=lp(sd+'_Foot'); footTo(sd,Fo.clone().add(new THREE.Vector3((sd==='R'?-1:1)*0.06,-0.06,-0.1))); }); }
   function stance(){ if(PO==='rodilla') kneel(); else if(PO==='tumbado') prone(); }
   /* apuntar: cabeza sobre la culata. Busca inclinación, giro y ladeo de cuello/cabeza que llevan el ojo derecho a la línea de mira */
   const EYE=B('R_Eye'), NK=[B('NeckTwist01'),B('NeckTwist02'),B('Head')].filter(Boolean);
+  let EL0r=null; if(EYE&&B('Head')){ body.updateMatrixWorld(true); const v=body.worldToLocal(wp(EYE)).sub(body.worldToLocal(wp(B('Head')))); EL0r=Math.atan2(v.y,Math.hypot(v.x,v.z)); }
   function lineDist(p,a,d){ const v=p.clone().sub(a); return v.sub(d.clone().multiplyScalar(v.dot(d))).length(); }
   function headSolve(a0,dW,yawB,c0){ c0=c0||0; if(!EYE||NK.length<2) return 9; const sv=NK.map(b=>b.quaternion.clone()), fw=new THREE.Vector3(Math.sin(yawB),0,Math.cos(yawB)), lat=new THREE.Vector3(Math.cos(yawB),0,-Math.sin(yawB)), Hd=B('Head'), N1=NK[0];
     const app=(a,b,c)=>{ NK.forEach((bn,i)=>bn.quaternion.copy(sv[i])); body.updateMatrixWorld(true); rotBody(N1,AY,c*0.5*D2R); rotBody(Hd,AY,c*0.5*D2R); rotBody(N1,lat,a*0.5*D2R); rotBody(Hd,lat,a*0.5*D2R); rotBody(Hd,fw,b*D2R); body.updateMatrixWorld(true); };
     const cost=(a,b,c)=>{ app(a,b,c); return lineDist(wp(EYE),a0,dW)+0.0004*(Math.abs(a)+Math.abs(b)+Math.abs(c)); };
     let bb=[0,0,0], bc=cost(0,0,0);
-    for(let a=-40;a<=70;a+=6) for(let b=-6;b<=30;b+=6) for(let c=c0-30;c<=c0+30;c+=10){ const v=cost(a,b,c); if(v<bc){ bc=v; bb=[a,b,c]; } }
+    for(let a=(PO==='tumbado'?-64:-12);a<=(PO==='tumbado'?16:32);a+=4) for(let b=-6;b<=24;b+=6) for(let c=c0-30;c<=c0+30;c+=10){ const v=cost(a,b,c); if(v<bc){ bc=v; bb=[a,b,c]; } }
     for(let st_=3; st_>=1; st_-=1){ const [a1,b1,c1]=bb; for(let a=a1-2*st_;a<=a1+2*st_;a+=st_) for(let b=b1-2*st_;b<=b1+2*st_;b+=st_) for(let c=c1-2*st_;c<=c1+2*st_;c+=st_){ const v=cost(a,b,c); if(v<bc){ bc=v; bb=[a,b,c]; } } }
     app(bb[0],bb[1],bb[2]); return lineDist(wp(EYE),a0,dW); }
   /* mirar al frente (pistola, y tumbado): gira cuello y cabeza hasta que la cara mira hacia fw (marco del cuerpo) */
-  function headLook(fwL){ if(!EYE||NK.length<2) return; const Hd=B('Head'); for(let it=0;it<3;it++){ const hp=wp(Hd), f=wp(EYE).sub(hp).normalize(); const t=body.localToWorld(fwL.clone().multiplyScalar(0.8).add(new THREE.Vector3(0,0.6,0)).normalize()).sub(body.localToWorld(new THREE.Vector3())).normalize();
+  let EL0=null; function headLook(fwL){ if(!EYE||NK.length<2) return; const Hd=B('Head'); if(EL0==null){ EL0=EL0r!=null?EL0r:0.6; } for(let it=0;it<3;it++){ const hp=wp(Hd), f=wp(EYE).sub(hp).normalize(); const t=body.localToWorld(fwL.clone().setY(0).normalize().multiplyScalar(Math.cos(EL0)).add(new THREE.Vector3(0,Math.sin(EL0),0))).sub(body.localToWorld(new THREE.Vector3())).normalize();
       const q=new THREE.Quaternion().setFromUnitVectors(f,t); const ang=2*Math.acos(Math.min(1,Math.abs(q.w))); if(ang<0.01) break; const ax=new THREE.Vector3(q.x,q.y,q.z).normalize(); const axL=ax.clone().applyQuaternion(body.getWorldQuaternion(new THREE.Quaternion()).invert());
       rotBody(NK[0],axL,ang*0.5); rotBody(Hd,axL,ang*0.5); body.updateMatrixWorld(true); } }
   function axis(yaw,pitch){ return new THREE.Vector3(Math.sin(yaw*D2R)*Math.cos(pitch*D2R),-Math.sin(pitch*D2R),Math.cos(yaw*D2R)*Math.cos(pitch*D2R)).normalize(); }
@@ -136,13 +137,15 @@ export async function mount(stage,st,D,M,opt){
   const SHH0=new THREE.Vector3(-0.17,1.12,0.02);
   function base(){ resetBones(); if(HB&&HIP0){ HB.position.copy(HIP0); } body.updateMatrixWorld(true); stance(); body.updateMatrixWorld(true); }
   const AIM=()=>PO!=='pie';
+  function skinBounds(){ body.updateMatrixWorld(true); body.traverse(m=>{ if(m.isSkinnedMesh){ m.skeleton&&m.skeleton.update(); m.boundingBox=null; m.boundingSphere=null; } }); } /* la caja y la esfera de las mallas con piel siguen a la postura (encuadre de la cámara y recorte) */
   function pose(){ body.rotation.y=0; body.updateMatrixWorld(true); base(); TWS={tw:0,lean:0};
     if(!wpn){ const C=chestM(); ik('R',new THREE.Vector3(-0.21,0.93,0.02).applyMatrix4(C),new THREE.Vector3(-0.3,0,-1)); ik('L',new THREE.Vector3(0.2,0.93,0.02).applyMatrix4(C),new THREE.Vector3(0.3,0,-1)); if(PO==='tumbado') headLook(new THREE.Vector3(0,0,1)); follow(); return; }
     const pist=wi&&wi.w.cat==='pistol'; const s=holder.scale.x||1, k=U2M/s; const gp=wpn.userData.gp; wpn.scale.setScalar(k);
-    if(pist){ let R,q,G; const pb=new THREE.Box3().setFromObject(wpn); const ytop=wpn.worldToLocal(pb.max.clone()).y;
+    if(pist){ let R,q,G; wpn.updateMatrixWorld(true); let ytop=-1e9; { const inv=new THREE.Matrix4().copy(wpn.matrixWorld).invert(); wpn.traverse(z=>{ if(z.isMesh&&z.visible){ z.geometry.computeBoundingBox(); const bb=z.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv,z.matrixWorld)); ytop=Math.max(ytop,bb.max.y); } }); }
       if(AIM()){ /* pistola apuntada: brazos extendidos, alza y punto en línea con el ojo derecho */
         headLook(new THREE.Vector3(0,0,1)); const E=body.worldToLocal(wp(EYE)); const dir=new THREE.Vector3(0,0,1); R=basis(dir); q=new THREE.Quaternion().setFromRotationMatrix(R); wpn.quaternion.copy(q);
-        const S_=E.clone().add(new THREE.Vector3(0,0,0.5)); wpn.position.copy(S_).sub(new THREE.Vector3(0,ytop-0.004/k,gp[0]).multiplyScalar(k).applyQuaternion(q)); wpn.updateMatrixWorld(true);
+        ['R','L'].forEach(sd=>{ const C=B(sd+'_Clavicle'), U=B(sd+'_Upperarm'); if(!C||!U) return; const pc=wp(C), pu=wp(U), L0=pu.distanceTo(pc); const tW=body.localToWorld(E.clone().add(new THREE.Vector3(0,-0.1,0.6))); const a1=pu.clone().sub(pc).normalize(), a2=tW.sub(pc).normalize(); aim(C,pu,pc.clone().add(a1.multiplyScalar(0.6).add(a2.multiplyScalar(0.4)).normalize().multiplyScalar(L0))); }); body.updateMatrixWorld(true); /* hombros adelantados, como al extender los brazos */
+        const sh=body.worldToLocal(wp(B('R_Upperarm'))), rr=wp(B('R_Forearm')).distanceTo(wp(B('R_Upperarm')))+wp(B('R_Hand')).distanceTo(wp(B('R_Forearm'))); let dz=0.5; for(;dz>0.25;dz-=0.01){ const g=E.clone().add(new THREE.Vector3(0,-0.07,dz)); if(g.distanceTo(sh)<rr*0.93) break; } const S_=E.clone().add(new THREE.Vector3(0,0,dz)); /* tan lejos del ojo como lleguen los brazos casi extendidos */ wpn.position.copy(S_).sub(new THREE.Vector3(0,ytop-0.004/k,gp[0]).multiplyScalar(k).applyQuaternion(q)); wpn.updateMatrixWorld(true);
         G=new THREE.Vector3(0,gp[1],gp[0]).multiplyScalar(k).applyQuaternion(q).add(wpn.position); }
       else { R=basis(AXDP); q=new THREE.Quaternion().setFromRotationMatrix(R); wpn.quaternion.copy(q); G=new THREE.Vector3(-0.03,1.16,0.45).applyMatrix4(chestM()); wpn.position.copy(G).sub(new THREE.Vector3(0,gp[1],gp[0]).multiplyScalar(k).applyQuaternion(q)); }
       const ax=new THREE.Vector3().setFromMatrixColumn(R,2), back=ax.clone().multiplyScalar(-1);
@@ -166,6 +169,10 @@ export async function mount(stage,st,D,M,opt){
     const place=(yaw)=>{ R=basis(axis(yaw,AIM()?-1:(hip?RP.hipPitch:RP.pitch))); const q=new THREE.Quaternion().setFromRotationMatrix(R); wpn.quaternion.copy(q);
       ex=new THREE.Vector3().setFromMatrixColumn(R,0); ey=new THREE.Vector3().setFromMatrixColumn(R,1); ez=new THREE.Vector3().setFromMatrixColumn(R,2);
       const SH=(hip?SHH0:SH0).clone().add(AIM()?new THREE.Vector3(0.01,0.035,0):new THREE.Vector3()).applyMatrix4(chestM()); wpn.position.copy(SH).sub(new THREE.Vector3(0,sb[1],sb[0]).multiplyScalar(k).applyQuaternion(q)); wpn.updateMatrixWorld(true); body.updateMatrixWorld(true);
+      if(AIM()&&EYE){ /* apuntando: el arma sube hasta que la línea de mira pasa 2 cm bajo el ojo y se acerca a él de lado (culata más alta en el hombro, hacia dentro) */
+        const oid=st.arma&&st.arma.on&&st.arma.on.optic; let oo=null; if(oid) wpn.children.forEach(c=>{ if(c.userData&&c.userData.acc===oid) oo=c; }); const ob=oo?lbox(oo):null; const sy=ob?(ob.min.y+ob.max.y)/2:bore+0.062/k;
+        const E=body.worldToLocal(wp(EYE)), a=new THREE.Vector3(0,sy,gp[0]).multiplyScalar(k).applyQuaternion(q).add(wpn.position), d=new THREE.Vector3(0,0,1).applyQuaternion(q); const cp=a.clone().addScaledVector(d,E.clone().sub(a).dot(d));
+        const dy=THREE.MathUtils.clamp(E.y-0.02-cp.y,0,0.1), dx=THREE.MathUtils.clamp((E.x-cp.x)*0.6,-0.05,0.05); wpn.position.add(new THREE.Vector3(dx,dy,0)); wpn.updateMatrixWorld(true); body.updateMatrixWorld(true); }
       MW=new THREE.Matrix4().compose(wpn.position,wpn.quaternion,wpn.scale); };
     /* muñeca respecto al punto de contacto: por debajo (guardamanos), detrás (AFG) o por encima (al asalto) */
     const OFFW=()=>hip?ex.clone().multiplyScalar(0.035).addScaledVector(ey,0.05).addScaledVector(ez,-0.035):grip?ex.clone().multiplyScalar(0.03).addScaledVector(ey,-0.01).addScaledVector(ez,-0.055):ex.clone().multiplyScalar(0.03).addScaledVector(ey,-0.05).addScaledVector(ez,-0.035);
@@ -211,9 +218,9 @@ export async function mount(stage,st,D,M,opt){
     else { handTo('L',ex.clone().multiplyScalar(-0.55).addScaledVector(ey,0.55).addScaledVector(ez,0.45)); handRoll('L',ey.clone().addScaledVector(ex,-0.3)); }
     follow(); /* postura perfilada: los pies giran con el cuerpo para que el arma apunte al frente (apuntando: exactamente al frente) */ body.rotation.y=-best.yaw*(AIM()?1:0.75)*D2R; body.updateMatrixWorld(true); }
   async function setWeapon(){ const b=st.arma; const key=b?JSON.stringify([b.id,b.v||0,b.on||{}]):''; if(key===wkey) return; wkey=key;
-    if(wpn){ body.remove(wpn); wpn=null; wi=null; } if(bc){ bc.dispose(); bc=null; } beamUI(); if(!b){ pose(); rebuildGear(); V.recenter(); return; }
+    if(wpn){ body.remove(wpn); wpn=null; wi=null; } if(bc){ bc.dispose(); bc=null; } beamUI(); if(!b){ pose(); rebuildGear(); skinBounds(); V.recenter(); return; }
     try{ const r=await M.buildWeapon(b,UW,UA); if(key!==wkey) return; const o=r.o; o.userData.gp=GRIP[r.v.id]||GRIP[r.w.id]||(r.w.cat==='pistol'?GRIP_PISTOL:[0,0]); { const bb=new THREE.Box3().setFromObject(o); const m=M.mt(r.v)||{}; o.userData.bmin=bb.min.y; o.userData.stock=[bb.min.z+0.01,(m.sty!=null?m.sty:(m.bore!=null?m.bore-0.02:(bb.min.y+bb.max.y)/2))]; } o.traverse(q=>{ if(q.isMesh) q.castShadow=true; });
-      wpn=o; wi=r; body.add(o); pose(); rebuildGear(); V.recenter(); credits(r);
+      wpn=o; wi=r; body.add(o); pose(); rebuildGear(); skinBounds(); V.recenter(); credits(r);
       if(M.beamCtl){ bc=M.beamCtl(o,o.children.filter(c=>c.userData&&c.userData.acc).map(c=>({a:c.userData.acc,o:c}))); if(!bc.has()) bc=null; } beamUI(); }catch(e){ console.warn('soldado arma',e); }
   }
   function credits(r){ if(!opt.cred) return; const w=r?r.w:null; opt.cred.innerHTML=L('Figura: «','Figure: “')+'<a href="https://sketchfab.com/3d-models/soldier-full-tactical-gear-lowpolygameready-850593a8c7114c188395ba1849a66eb9" target="_blank" rel="noopener">Soldier Full Tactical Gear</a>'+L('» de ','” by ')+'<a href="https://sketchfab.com/1799danly" target="_blank" rel="noopener">DanlyVostok</a> (Sketchfab, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>); '+L('visor nocturno «','night vision “')+'<a href="https://sketchfab.com/3d-models/anpvs-14-nvd-ed14bb49bdf94cd7b572daf206f1ccfb" target="_blank" rel="noopener">AN/PVS-14 NVD</a>'+L('» de knolp (CC BY 4.0). M.A.T ha optimizado los modelos, recolocado los brazos para sujetar el arma y añadido los camuflajes.','” by knolp (CC BY 4.0). M.A.T optimized the models, re-posed the arms to hold the weapon and added the camouflages.')+' <b>'+L('Mochilas, cantimploras, pala y lanzador: modelo aproximado hecho por MAT a partir de medidas oficiales','Packs, canteens, shovel and launcher: approximate model made by MAT from official dimensions')+'</b>.'+(w?' '+L('Arma: modelo del Armero 3D','Weapon: 3D Gunsmith model')+' (<a href="#/armero/'+w.id+'">'+w.n+'</a>), '+L('a escala real','at real scale')+'.':'')+' <a href="#/license">'+L('Licencias','Licences')+'</a>'; }
@@ -312,7 +319,7 @@ export async function mount(stage,st,D,M,opt){
           new V3(sx(1.08)+s*0.012,1.08,-0.03), new V3(s*0.15,bot+0.07,zb-0.012)];
         gearC.add(strap(pts.slice(0,6),w,t,gmT,ctr)); gearC.add(strap(pts.slice(5),w*0.45,t*0.6,gmT,ctr)); const b=buckle(0,0,0); b.position.copy(pts[5]); b.lookAt(pts[5].clone().add(new V3(0,0,1))); gearC.add(b); }); }
     let rD=0.22; if(ruck){ const zb=backZ(1.22); const rp=null, r=ruckMesh(ap); rD=r.userData.depth; const ry=1.41-r.userData.h/2; r.position.set(-0.01,ry,zb+0.014); r.rotation.x=0.07; /* la parte alta se apoya en los omóplatos, como con los tensores de carga */ gearG.add(r); straps(1.43,0.91,zb,0.062,0.013);
-      if(has('sbag')||has('pad')){ const yb=ry-r.userData.h/2-0.066, zc=zb+0.01-0.135;
+      if(has('sbag')||has('pad')){ const yb=ry-r.userData.h/2-0.05, zc=zb+0.01-0.125; /* pegada a la base de la mochila */
         const gmR=gmP; /* esterilla/saco enrollado, mismo tono que la mochila y pegado a su base */
         const sb=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,0.42,20,1),gmR); sb.castShadow=true; sb.rotation.z=Math.PI/2; sb.position.set(-0.01,yb,zc); gearG.add(sb);
         [-1,1].forEach(s=>{ const rg=new THREE.Mesh(new THREE.TorusGeometry(0.078,0.006,6,24),gmS); rg.rotation.y=Math.PI/2; rg.position.set(-0.01+s*0.12,yb,zc); gearG.add(rg); }); } }
@@ -326,12 +333,13 @@ export async function mount(stage,st,D,M,opt){
     nvg(hel&&(visTag('nvg')||visTag('nvg2')),visTag('nvg2')); }
   async function nvg(on,two){ if(pvs){ body.remove(pvs); pvs=null; } if(!on) return;
     try{ if(!PVSP) PVSP=load('m3d/soldado/pvs14.glb'); const g2=await PVSP; const one=()=>{ const o=g2.scene.clone(true); const bb=new THREE.Box3().setFromObject(o); const sz=bb.getSize(new THREE.Vector3()); const k=PVS_LEN/Math.max(sz.x,sz.y,sz.z); o.scale.setScalar(k); const c=bb.getCenter(new THREE.Vector3()).multiplyScalar(k); o.position.sub(c); const w=new THREE.Group(); w.add(o); return w; };
-      const f=hit([mesh.helmet1_2],new THREE.Vector3(-0.02,1.74,1),new THREE.Vector3(0,0,-1))||new THREE.Vector3(-0.02,1.74,0.16);
+      const HMc=headM(), HMi=HMc.clone().invert(); /* el visor se coloca en el marco de la cabeza en reposo (sirve de pie, de rodillas y tumbado) */
+      const fc=hit([mesh.helmet1_2],new THREE.Vector3(-0.02,1.74,1).applyMatrix4(HMc),new THREE.Vector3(0,0,-1).transformDirection(HMc)); const f=fc?fc.applyMatrix4(HMi):new THREE.Vector3(-0.02,1.74,0.16);
       const grp=new THREE.Group(); const n=two?2:1; for(let i=0;i<n;i++){ const w=one(); w.position.set(two?(i?0.034:-0.034):0.0,0,0); grp.add(w); }
       const mnt=rbox(0.05,0.03,0.025,gm.k); mnt.position.set(0,-0.005,-0.06); grp.add(mnt);
-      grp.position.set(f.x-0.01,f.y+0.005,f.z+0.065); body.add(grp); pvs=grp; grp.updateMatrix(); grp.userData.hm=headM().invert().multiply(grp.matrix.clone()); grp.traverse(q=>{ if(q.isMesh) q.castShadow=true; }); V.recenter(); }catch(e){ console.warn('pvs',e); } }
+      grp.position.set(f.x-0.01,f.y+0.005,f.z+0.065); body.add(grp); pvs=grp; grp.updateMatrix(); grp.userData.hm=grp.matrix.clone(); headM().multiply(grp.userData.hm).decompose(grp.position,grp.quaternion,grp.scale); grp.traverse(q=>{ if(q.isMesh) q.castShadow=true; }); skinBounds(); V.recenter(); }catch(e){ console.warn('pvs',e); } }
   function camos(){ M.setU(UF,st.ucamo||'orig'); M.setU(UG,st.gcamo||'orig'); M.setU(UW,(st.arma&&st.arma.camo)||'orig'); M.setU(UA,(st.arma&&st.arma.ca)?(st.arma.camo||'orig'):'orig'); V.redraw(); }
-  function scale(){ const s=Math.max(140,Math.min(215,+st.h||175))/100/BASE_H; holder.scale.setScalar(s); body.updateMatrixWorld(true); pose(); V.recenter(); }
+  function scale(){ const s=Math.max(140,Math.min(215,+st.h||175))/100/BASE_H; holder.scale.setScalar(s); body.updateMatrixWorld(true); pose(); skinBounds(); V.recenter(); }
   function camUI(){ if(!opt.cam) return; const C=M.CAMO; const row=(id,lab,cur)=>'<div class="sd-src" style="margin-top:6px"><b>'+lab+'</b></div><div class="sd-cam" data-k="'+id+'">'+C.map(c=>'<button type="button" title="'+LL(c[1])+'" aria-label="'+LL(c[1])+'" data-c="'+c[0]+'" class="'+(c[0]===(cur||'orig')?'on':'')+'" style="background:'+(c[0]==='orig'?(id==='ucamo'?'#6d6a55':'#4d5240'):M.sw(c[2]))+'"></button>').join('')+'</div>';
     opt.cam.innerHTML=row('ucamo',L('Camuflaje del uniforme','Uniform camouflage'),st.ucamo)+row('gcamo',L('Camuflaje del equipo','Gear camouflage'),st.gcamo)+'<div class="sd-src">'+L('Patrones genéricos generados por M.A.T (sin archivos de patrones con marca). El camuflaje del arma se elige en el Armero.','Generic patterns generated by M.A.T (no trademarked pattern files). The weapon camouflage is chosen in the Gunsmith.')+'</div>'; }
   if(opt.cam) opt.cam.addEventListener('click',e=>{ const b=e.target.closest('button[data-c]'); if(!b) return; st[b.parentNode.dataset.k]=b.dataset.c; camUI(); camos(); opt.save&&opt.save(); });
@@ -341,7 +349,7 @@ export async function mount(stage,st,D,M,opt){
   const pr=document.createElement('div'); pr.className='sd-chips sd-pose'; pr.style.margin='8px 0 2px';
   function poseUI(){ pr.innerHTML=POS.map(p=>'<button type="button" class="sd-chip'+(PO===p[0]?' on':'')+'" data-po="'+p[0]+'" aria-pressed="'+(PO===p[0])+'">'+L(p[1],p[2])+'</button>').join(''); }
   poseUI(); if(POSES_ON&&stage.parentNode) stage.parentNode.insertBefore(pr,stage.nextSibling);
-  pr.addEventListener('click',e=>{ const b=e.target.closest('button[data-po]'); if(!b||b.dataset.po===PO) return; PO=b.dataset.po; try{ localStorage.setItem(PKEY,PO); }catch(_){} poseUI(); pose(); V.recenter(); V.redraw&&V.redraw(); });
+  pr.addEventListener('click',e=>{ const b=e.target.closest('button[data-po]'); if(!b||b.dataset.po===PO) return; PO=b.dataset.po; try{ localStorage.setItem(PKEY,PO); }catch(_){} poseUI(); pose(); skinBounds(); V.recenter(); V.redraw&&V.redraw(); });
   const bt=document.createElement('div'); bt.className='arm-btns'; bt.innerHTML='<button type="button" data-x="rot">'+L('Pausar giro','Pause spin')+'</button><button type="button" data-x="rs">'+L('Vista inicial','Reset view')+'</button>'; stage.appendChild(bt);
   let spin=true; bt.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; e.stopPropagation(); if(b.dataset.x==='rot'){ spin=!spin; V.setAuto(spin); b.textContent=spin?L('Pausar giro','Pause spin'):L('Girar','Spin'); } else V.reset(); });
   bt.addEventListener('pointerdown',e=>e.stopPropagation());
