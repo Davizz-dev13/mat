@@ -398,6 +398,83 @@ function ag36(d,P){ const G=new THREE.Group(); const L=d.L, bl=d.bl, W=d.W, gy=-
 // Add to B:  wpscope, wpref, p87, gpl, bayo, btnar, ag36
 // e.g. const B={wpscope,wpref,p87,gpl,bayo,btnar,ag36,aimpoint,micro,...};  (btnar calls the existing micro()/aimpoint() builders)
 
-const B={aimpoint,micro,hs510,eotech,acog,rmr,elcan,lpvo,magnifier,can,stock,grip,light,laser,atlas,plight,wpscope,wpref,p87,gpl,bayo,btnar,ag36};
+/* ===== Tanda 4d (MAT): bípode del FAMAS F1, bayonetas KCB-77 M1 (AUG) y L3A1 (L85A2), SUSAT L9A1 (L85A2), Mepro 21 y MOR PRO (Tavor), ELCAN M145 (M249/M240) =====
+   Medidas oficiales en ACC (armero.js) con su fuente. Forma de detalle aproximada.
+   Añadir a B: famasbip, sockbayo, susat, mepro, m145
+   (la KCB-77 M1 usa el builder bayo ya existente; el Gemtech SP90 usa can) */
+
+// varilla cilíndrica de a hasta b (mm)
+function rod4(G,m,r,a,b,seg=8){ const v=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]); const L=v.length(); const g=new THREE.CylinderGeometry(r,r,L,seg,1); g.translate(0,L/2,0);
+  const me=add(G,g,m,a[0],a[1],a[2]); me.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize()); return me; }
+
+// Bípode integrado del FAMAS F1: dos patas independientes con base de plástico, articuladas a ambos lados bajo la poignée garde-main.
+// Origen = punto medio entre las dos articulaciones. d={L (largo de pata), sp (semiseparación de las articulaciones), r (radio varilla), dr (radio tambor), fa (º hacia delante), sa (º de apertura), fold (1 = posición de transporte, patas hacia atrás)}
+function famasbip(d,P){ const G=new THREE.Group(); const L=d.L, sp=d.sp, r=d.r||3.5, dr=d.dr||11, fa=(d.fa||15)*D2R, sa=(d.sa||14)*D2R;
+  for(const s of [-1,1]){
+    xcyl(G,P.body,dr,8,s*(sp+4),0,0,14); xcyl(G,P.dark,dr*0.42,10,s*(sp+5),0,0,8);                  // tambor de articulación y eje
+    const a=[s*(sp+8),0,0], k=[s*(sp+11),-9,0]; rod4(G,P.steel,r+0.8,a,k);                           // codo de salida
+    const l=L-dr-14; let e, fd;
+    if(d.fold){ e=[k[0],k[1]+1,-l]; fd=[0,0,-1]; }
+    else { e=[k[0]+s*Math.sin(sa)*l, k[1]-Math.cos(sa)*Math.cos(fa)*l, k[2]+Math.cos(sa)*Math.sin(fa)*l]; fd=[0,-1,0]; }
+    rod4(G,P.steel,r,k,e);
+    const f=d.fold? [e[0],e[1],e[2]-7] : [e[0],e[1]-5,e[2]];                                            // base de plástico
+    if(d.fold) bx(G,P.poly,9,12,20,f[0],f[1],f[2],2); else bx(G,P.poly,13,9,24,f[0],f[1],f[2],2);
+  }
+  return G; }
+
+// Bayoneta de manguito L3A1 (SA80): la empuñadura es un tubo hueco que entra por el apagallamas; la hoja va desplazada por debajo del ánima.
+// Origen = boca del arma (eje del ánima). d={L (total), bl (hoja), bw (ancho hoja), sr (radio exterior del manguito)}
+function sockbayo(d,P){ const G=new THREE.Group(); const L=d.L, bl=d.bl, hl=L-bl, R=d.sr||15, bw=d.bw||25, ty=-6;
+  cyl(G,P.poly,R-1,R,hl-14,-hl+4,0,0,16);                                                            // empuñadura-manguito
+  cyl(G,P.steel,R-2,R-2,4,-hl,0,0,16);                                                               // casquillo trasero
+  for(let i=0;i<5;i++) cyl(G,P.dark,R+0.6,R+0.6,3,-hl+18+i*12,0,0,16);                                // anillos de agarre
+  cyl(G,P.steel,R,R+1,10,-10,0,0,16);                                                                // casquillo delantero
+  add(G,new THREE.CircleGeometry(R*0.5,14),P.dark,0,0,0.3);                                          // boca (el disparo sale por el manguito)
+  bx(G,P.steel,6,bw*0.6,8,0,ty-bw*0.3,4,1);                                                          // unión hoja-manguito
+  side(G,P.steel,[[2,ty],[bl*0.72,ty],[bl,ty-bw*0.6],[bl*0.86,ty-bw],[2,ty-bw]],3.6,0,0.6);           // hoja
+  bx(G,P.dark,5,8,16,0,-R-2,-hl+30,1);                                                               // pestillo al tetón
+  return G; }
+
+// SUSAT L9A1 (4×) con su montura. Origen = cara superior del raíl/base del cajón. d={L,W,H (del visor), ml (largo montura), mh (alto montura), ro (radio objetivo)}
+function susat(d,P){ const G=new THREE.Group(); const L=d.L, W=d.W, H=d.H, ml=d.ml, mh=d.mh||20, ro=d.ro||14, ay=mh+H*0.42, z0=-L/2;
+  bx(G,P.dark,32,7,ml,0,3.5,0,1.5); bx(G,P.dark,22,mh-4,ml*0.55,0,(mh+3)/2,0,2);                     // montura (base y pie)
+  xcyl(G,P.dark,5,14,-22,6,ml*0.18,10); bx(G,P.dark,5,20,8,-23,8,-ml*0.15,1);                        // palanca de la montura (derecha)
+  bx(G,P.body,W-18,H*0.62,L*0.6,0,mh+H*0.31,-L*0.06,5);                                              // carcasa central
+  lathe(G,P.body,[[0.01,L*0.12],[ro+3,L*0.12],[ro+5,L*0.3],[ro+6,L/2],[0.01,L/2]],18,ay);             // tubo del objetivo
+  add(G,new THREE.CircleGeometry(ro,16),P.lens,0,ay,L/2-2.5);
+  lathe(G,P.rubber,[[0.01,z0],[19,z0],[20,z0+6],[16,z0+26],[0.01,z0+26]],16,ay);                       // ocular de goma
+  add(G,new THREE.CircleGeometry(11,14),P.lens,0,ay,z0+3,{ry:Math.PI});
+  xcyl(G,P.body,9,9,W/2-4.5,ay-2,-L*0.05,12);                                                        // mando de la iluminación Trilux (izquierda)
+  bx(G,P.body,8,7,6,0,mh+H*0.62+3.5,L*0.3,1); bx(G,P.body,12,6,6,0,mh+H*0.62+3,-L*0.3,1);            // alza y punto de mira de emergencia (arriba)
+  bx(G,P.dark,2.5,6,3,0,mh+H*0.62+9,L*0.3,0);
+  return G; }
+
+// Meprolight Mepro 21 / MOR PRO (visores réflex del Tavor). Origen = cara superior del raíl. d={L,W,H,style:'m21'|'mor'}
+function mepro(d,P){ const G=new THREE.Group(); const L=d.L, W=d.W, H=d.H, mor=d.style==='mor';
+  clamp4(G,P,L*0.55,W*0.62);
+  const b0=10, b1=mor?36:24, fw=W*(mor?0.86:0.78);
+  bx(G,P.body,fw,b1-b0,L*(mor?0.97:0.88),0,(b0+b1)/2,0,3);                                          // cuerpo inferior (MOR: láseres y pilas)
+  for(const s of [-1,1]) side(G,P.body,[[-L*0.44,b1-1],[L*0.4,b1-1],[L*0.34,H-6],[L*0.2,H],[-L*0.36,H],[-L*0.44,H-8]],5,s*(fw/2-2.5),1);   // laterales de la ventana
+  bx(G,P.body,fw,6,L*0.62,0,H-3,-L*0.05,2);                                                          // techo
+  const g=new THREE.PlaneGeometry(fw-10,H-b1-8); const m=add(G,g,mor?P.glass:P.glassA,0,(H+b1)/2,L*0.12); m.rotation.x=-0.18;   // ventana
+  if(mor){ for(const [x,y,r] of [[-10,23,5],[6,23,5],[18,17,3.5]]) add(G,new THREE.CircleGeometry(r,12),P.lens,x,y,L*0.485+0.3);   // láser visible, IR e iluminador
+           xcyl(G,P.dark,9,10,fw/2+5,22,-L*0.2,12); }                                                // tapa de pilas
+  else { bx(G,P.fiber,8,3,L*0.42,0,H+1.5,-L*0.05,0.5); xcyl(G,P.dark,6,8,fw/2+4,b0+8,-L*0.2,10); }  // colector de fibra óptica (arriba) y mando lateral
+  return G; }
+function clamp4(G,P,len,w){ bx(G,P.dark,w,7,len,0,3.5,0,1.5); bx(G,P.dark,6,10,len*0.5,w/2+2,2,0,1.5); xcyl(G,P.steel,4,10,w/2+5,3,len*0.18,10); }
+
+// ELCAN M145 Machine Gun Optic (3,4×28) con montura de palancas. Origen = cara superior del raíl. d={L,W,H,ay}
+function m145(d,P){ const G=new THREE.Group(); const L=d.L, W=d.W, H=d.H, ay=d.ay, z0=-L/2;
+  bx(G,P.body,32,9,L*0.55,0,4.5,0,1.5); bx(G,P.body,38,3,L*0.5,0,1.5,0,0.6);                         // base y abrazadera
+  for(const z of [-L*0.17,L*0.17]){ bx(G,P.dark,7,9,12,22,6,z,1.5); xcyl(G,P.dark,3,12,28,9,z,8); }  // palancas de apriete (derecha)
+  side(G,P.body,[[-L*0.3,9],[L*0.28,9],[L*0.22,ay-12],[-L*0.26,ay-12]],34,0,3);                      // pie
+  bx(G,P.body,44,40,L*0.5,0,ay+2,-L*0.04,8);                                                         // carcasa de prismas
+  lathe(G,P.body,[[0.01,z0],[17,z0],[18,z0+4],[16,z0+L*0.25],[16,z0+L*0.68],[20,z0+L*0.8],[21,z0+L-2],[20,z0+L],[0.01,z0+L]],18,ay);
+  vcyl(G,P.body,13,12,0,ay+(H-ay)-10,-L*0.02,14); vcyl(G,P.dark,13.5,4,0,ay+(H-ay)-3,-L*0.02,14);   // tambor de alcances (arriba)
+  xcyl(G,P.body,10,10,W/2-5,ay+4,-L*0.02,12);                                                        // mando de iluminación (izquierda)
+  lens(G,P,17,z0+L,ay,false); lens(G,P,12,z0,ay,true);
+  return G; }
+
+const B={aimpoint,micro,hs510,eotech,acog,rmr,elcan,lpvo,magnifier,can,stock,grip,light,laser,atlas,plight,wpscope,wpref,p87,gpl,bayo,btnar,ag36,famasbip,sockbayo,susat,mepro,m145};
 export function build(kind,dims,fde){ const P=marks(mats(fde)); const g=B[kind](dims,P); const root=new THREE.Group(); g.scale.setScalar(K); root.add(g);
   root.traverse(o=>{ if(o.isMesh){ o.castShadow=true; } }); root.userData.kit=kind; return root; }
