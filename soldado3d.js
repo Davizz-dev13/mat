@@ -38,6 +38,9 @@ export async function mount(stage,st,D,M,opt){
   const bones={}, mesh={};
   body.traverse(o=>{ if(o.isBone) bones[o.name]=o; if(o.isMesh){ mesh[o.name]=o; o.castShadow=true; o.receiveShadow=true; o.frustumCulled=false;
     if(!o.userData.orig) o.userData.orig=o.material; o.material=o.userData.orig.clone();
+    if(/^(kitel|pants|plate|pouches|helmet|gloves)/.test(o.name)&&o.material.isMeshStandardMaterial&&!o.material.isMeshPhysicalMaterial){ /* tela: brillo de tejido (sheen) en el contorno y relieve de la tela algo más marcado */
+      const s=o.material, p=new THREE.MeshPhysicalMaterial(); THREE.MeshStandardMaterial.prototype.copy.call(p,s); p.defines={STANDARD:'',PHYSICAL:''};
+      p.sheen=/^gloves/.test(o.name)?0.4:0.6; p.sheenRoughness=0.92; p.sheenColor=new THREE.Color(0x9aa08c).multiplyScalar(0.3); if(p.normalMap) p.normalScale.multiplyScalar(1.25); p.envMapIntensity=0.85; o.material=p; }
     if(/^(kitel|pants)/.test(o.name)) camoTex(o.material,UF,M); else if(/^(plate|pouches|helmet)/.test(o.name)) camoTex(o.material,UG,M); } });
   if(!body.userData.rest){ body.userData.rest={}; Object.values(bones).forEach(b=>body.userData.rest[b.name]=b.quaternion.clone()); }
   Object.values(bones).forEach(b=>{ const q=body.userData.rest[b.name]; if(q) b.quaternion.copy(q); });
@@ -46,7 +49,35 @@ export async function mount(stage,st,D,M,opt){
   const gearG=new THREE.Group(); body.add(gearG); const gearH=new THREE.Group(); body.add(gearH); const gearC=new THREE.Group(); body.add(gearC); /* gearC: hombreras, siguen al pecho al 100 % */
   const gm={ k:new THREE.MeshStandardMaterial({color:0x26282a,roughness:0.6,metalness:0.1}), p:new THREE.MeshStandardMaterial({color:0x4a4d3b,roughness:0.95}), d:new THREE.MeshStandardMaterial({color:0x3b3d30,roughness:0.95}) };
   [gm.p,gm.d].forEach(m=>M.camoPatch(m,UG));
-  let wpn=null, wkey='', wi=null, pvs=null, bc=null; const DBGH={};
+  let wpn=null, wkey='', wi=null, pvs=null, bc=null, gmRE=null; const DBGH={};
+  /* sombra de contacto suave bajo el soldado (de pie, rodilla y tumbado): se pinta la cercanía al suelo vista desde abajo y se desenfoca */
+  const CS=(()=>{ if(!V.pre||!V.R||!V.ground) return null; const N=256, R=V.R, gr=V.ground;
+    const mk=()=>{ const t=new THREE.WebGLRenderTarget(N,N,{depthBuffer:false}); t.texture.generateMipmaps=false; return t; }; const rtA=mk(), rtB=mk(), rtD=new THREE.WebGLRenderTarget(N,N); rtD.texture.generateMipmaps=false;
+    const dm=new THREE.MeshDepthMaterial(); dm.depthTest=false; dm.depthWrite=false; dm.side=THREE.DoubleSide;
+    dm.onBeforeCompile=sh=>{ sh.fragmentShader=sh.fragmentShader.replace('gl_FragColor = vec4( vec3( 1.0 - fragCoordZ ), opacity );','float k=1.0-fragCoordZ; gl_FragColor = vec4( vec3( 0.0 ), k*k*0.55 );'); };
+    const camC=new THREE.OrthographicCamera(-1,1,1,-1,0,1); camC.rotation.x=Math.PI/2;
+    const bs=new THREE.ShaderMaterial({uniforms:{t:{value:null},d:{value:new THREE.Vector2()}},depthTest:false,depthWrite:false,
+      vertexShader:'varying vec2 u; void main(){ u=uv; gl_Position=vec4(position.xy,0.0,1.0); }',
+      fragmentShader:'uniform sampler2D t; uniform vec2 d; varying vec2 u; void main(){ vec4 s=texture2D(t,u)*0.2270270270; s+=(texture2D(t,u+d*1.3846153846)+texture2D(t,u-d*1.3846153846))*0.3162162162; s+=(texture2D(t,u+d*3.2307692308)+texture2D(t,u-d*3.2307692308))*0.0702702703; gl_FragColor=s; }'});
+    const qs=new THREE.Scene(), qc=new THREE.OrthographicCamera(-1,1,1,-1,0,1); qs.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),bs));
+    const pm=new THREE.MeshBasicMaterial({map:rtA.texture,transparent:true,opacity:0.85,depthWrite:false,toneMapped:false,side:THREE.DoubleSide,color:0x000000});
+    pm.onBeforeCompile=sh=>{ sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','vec4 sm=texture2D(map,vMapUv); diffuseColor=vec4(0.0,0.0,0.0,sm.a*opacity);'); };
+    const plane=new THREE.Mesh(new THREE.PlaneGeometry(1,1),pm); plane.rotation.x=Math.PI/2; plane.renderOrder=-1; plane.frustumCulled=false; V.scene.add(plane);
+    let key='', on=true; const kv=new THREE.Vector3();
+    function sig(){ let s=gr.position.x.toFixed(3)+gr.position.y.toFixed(3)+gr.position.z.toFixed(3)+gr.scale.x.toFixed(3); ['Hip','Head','L_Hand','R_Hand','L_Foot','R_Foot','L_Calf','R_Calf','Spine02'].forEach(n=>{ const b=bones['CC_Base_'+n]; if(b){ b.getWorldPosition(kv); s+=kv.x.toFixed(3)+kv.y.toFixed(3)+kv.z.toFixed(3); } }); s+=gearG.children.length+'/'+gearG.visible+'/'+(wpn?wpn.uuid:''); return s; }
+    function blur(src,dst,dx,dy){ bs.uniforms.t.value=src.texture; bs.uniforms.d.value.set(dx/N,dy/N); R.setRenderTarget(dst); R.render(qs,qc); }
+    V.pre((R_,scene)=>{ plane.visible=on&&gr.visible; if(!plane.visible) return; const k=sig(); if(k===key) return; key=k;
+      const w=gr.scale.x*0.62, H=Math.max(0.05,gr.scale.x/2.2*0.32); plane.scale.set(w,w,1); plane.position.set(gr.position.x,gr.position.y+0.0015,gr.position.z);
+      camC.left=-w/2; camC.right=w/2; camC.top=w/2; camC.bottom=-w/2; camC.near=0; camC.far=H; camC.position.set(gr.position.x,gr.position.y-0.002,gr.position.z); camC.updateProjectionMatrix(); camC.updateMatrixWorld();
+      const gv=gr.visible, bg=scene.background, ov=scene.overrideMaterial, sa=R.shadowMap.autoUpdate, sn=R.shadowMap.needsUpdate, cc=R.getClearColor(new THREE.Color()), ca=R.getClearAlpha(), rt=R.getRenderTarget();
+      gr.visible=false; plane.visible=false; scene.background=null; scene.overrideMaterial=dm; R.shadowMap.autoUpdate=false; R.shadowMap.needsUpdate=false; R.setClearColor(0x000000,0);
+      R.setRenderTarget(rtD); R.clear(); R.render(scene,camC); scene.overrideMaterial=ov;
+      blur(rtD,rtB,1.6,0); blur(rtB,rtA,0,1.6); blur(rtA,rtB,3.2,0); blur(rtB,rtA,0,3.2);
+      R.setRenderTarget(rt); R.setClearColor(cc,ca); scene.background=bg; gr.visible=gv; plane.visible=true; R.shadowMap.autoUpdate=sa; R.shadowMap.needsUpdate=sn; });
+    gr.material.opacity=0.2;
+    return { set(v){ on=v; key=''; V.redraw(); }, dirty(){ key=''; }, dispose(){ [rtA,rtB,rtD].forEach(t=>t.dispose()); dm.dispose(); bs.dispose(); pm.dispose(); } };
+  })();
+
   /* ---- cinemática inversa de dos huesos ---- */
   const wp=o=>o.getWorldPosition(new THREE.Vector3());
   function aim(bone,childPos,newPos){ const p=wp(bone); const v1=childPos.clone().sub(p).normalize(), v2=newPos.clone().sub(p).normalize(); if(v1.lengthSq()<1e-8||v2.lengthSq()<1e-8) return;
@@ -287,13 +318,14 @@ export async function mount(stage,st,D,M,opt){
   const EYE=B('R_Eye'), NK=[B('NeckTwist01'),B('NeckTwist02'),B('Head')].filter(Boolean);
   let EL0r=null; if(EYE&&B('Head')){ body.updateMatrixWorld(true); const v=body.worldToLocal(wp(EYE)).sub(body.worldToLocal(wp(B('Head')))); EL0r=Math.atan2(v.y,Math.hypot(v.x,v.z)); }
   function lineDist(p,a,d){ const v=p.clone().sub(a); return v.sub(d.clone().multiplyScalar(v.dot(d))).length(); }
-  function headSolve(a0,dW,yawB,c0){ c0=c0||0; if(!EYE||NK.length<2) return 9; const sv=NK.map(b=>b.quaternion.clone()), fw=new THREE.Vector3(Math.sin(yawB),0,Math.cos(yawB)), lat=new THREE.Vector3(Math.cos(yawB),0,-Math.sin(yawB)), Hd=B('Head'), N1=NK[0];
+  let HPX=12; function headSolve(a0,dW,yawB,c0){ c0=c0||0; if(!EYE||NK.length<2) return 9; const sv=NK.map(b=>b.quaternion.clone()), fw=new THREE.Vector3(Math.sin(yawB),0,Math.cos(yawB)), lat=new THREE.Vector3(Math.cos(yawB),0,-Math.sin(yawB)), Hd=B('Head'), N1=NK[0];
     const app=(a,b,c)=>{ NK.forEach((bn,i)=>bn.quaternion.copy(sv[i])); body.updateMatrixWorld(true); rotBody(N1,AY,c*0.5*D2R); rotBody(Hd,AY,c*0.5*D2R); rotBody(N1,lat,a*0.5*D2R); rotBody(Hd,lat,a*0.5*D2R); rotBody(Hd,fw,b*D2R); body.updateMatrixWorld(true); };
     const cost=(a,b,c)=>{ app(a,b,c); return lineDist(wp(EYE),a0,dW)+0.0004*(Math.abs(a)+Math.abs(b)+Math.abs(c)); };
     let bb=[0,0,0], bc=cost(0,0,0);
-    for(let a=(PO==='tumbado'?-8:-12);a<=(PO==='tumbado'?20:32);a+=4) for(let b=-6;b<=24;b+=6) for(let c=c0-30;c<=c0+30;c+=10){ const v=cost(a,b,c); if(v<bc){ bc=v; bb=[a,b,c]; } }
-    for(let st_=3; st_>=1; st_-=1){ const [a1,b1,c1]=bb; for(let a=a1-2*st_;a<=a1+2*st_;a+=st_) for(let b=b1-2*st_;b<=b1+2*st_;b+=st_) for(let c=c1-2*st_;c<=c1+2*st_;c+=st_){ const v=cost(a,b,c); if(v<bc){ bc=v; bb=[a,b,c]; } } }
-    app(bb[0],bb[1],bb[2]); return lineDist(wp(EYE),a0,dW); }
+    for(let a=(PO==='tumbado'?-8:-12);a<=(PO==='tumbado'?HPX:32);a+=4) for(let b=-6;b<=24;b+=6) for(let c=c0-30;c<=c0+30;c+=10){ const v=cost(a,b,c); if(v<bc){ bc=v; bb=[a,b,c]; } }
+    const AMN=PO==='tumbado'?-8:-12, AMX=PO==='tumbado'?HPX:32; /* tumbado: la cabeza no se hunde sobre el arma (cara visible, casco sin tocar la mira) */
+    for(let st_=3; st_>=1; st_-=1){ const [a1,b1,c1]=bb; for(let a=Math.max(AMN,a1-2*st_);a<=Math.min(AMX,a1+2*st_);a+=st_) for(let b=b1-2*st_;b<=b1+2*st_;b+=st_) for(let c=c1-2*st_;c<=c1+2*st_;c+=st_){ const v=cost(a,b,c); if(v<bc){ bc=v; bb=[a,b,c]; } } }
+    app(bb[0],bb[1],bb[2]); DBGH.hs=bb.slice(); return lineDist(wp(EYE),a0,dW); }
   /* mirar al frente (pistola, y tumbado): gira cuello y cabeza hasta que la cara mira hacia fw (marco del cuerpo) */
   let EL0=null; function headLook(fwL){ if(!EYE||NK.length<2) return; const Hd=B('Head'); if(EL0==null){ EL0=EL0r!=null?EL0r:0.6; } for(let it=0;it<3;it++){ const hp=wp(Hd), f=wp(EYE).sub(hp).normalize(); const t=body.localToWorld(fwL.clone().setY(0).normalize().multiplyScalar(Math.cos(EL0)).add(new THREE.Vector3(0,Math.sin(EL0),0))).sub(body.localToWorld(new THREE.Vector3())).normalize();
       const q=new THREE.Quaternion().setFromUnitVectors(f,t); const ang=2*Math.acos(Math.min(1,Math.abs(q.w))); if(ang<0.01) break; const ax=new THREE.Vector3(q.x,q.y,q.z).normalize(); const axL=ax.clone().applyQuaternion(body.getWorldQuaternion(new THREE.Quaternion()).invert());
@@ -506,10 +538,15 @@ export async function mount(stage,st,D,M,opt){
           new V3(sx(1.08)+s*0.012,1.08,-0.03), new V3(s*0.15,bot+0.07,zb-0.012)];
         gearC.add(strap(pts.slice(0,6),w,t,gmT,ctr)); gearC.add(strap(pts.slice(5),w*0.45,t*0.6,gmT,ctr)); const b=buckle(0,0,0); b.position.copy(pts[5]); b.lookAt(pts[5].clone().add(new V3(0,0,1))); gearC.add(b); }); }
     let rD=0.22; if(ruck){ const zb=backZ(1.22); const rp=null, r=ruckMesh(ap); rD=r.userData.depth; const ry=1.41-r.userData.h/2; r.position.set(-0.01,ry,zb+0.014); r.rotation.x=0.07; /* la parte alta se apoya en los omóplatos, como con los tensores de carga */ gearG.add(r); straps(1.43,0.91,zb,0.062,0.013);
-      if(has('sbag')||has('pad')){ const yb=ry-r.userData.h/2-0.05, zc=zb+0.01-0.125; /* pegada a la base de la mochila */
-        const gmR=gmP; /* esterilla/saco enrollado, mismo tono que la mochila y pegado a su base */
-        const sb=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,0.42,20,1),gmR); sb.castShadow=true; sb.rotation.z=Math.PI/2; sb.position.set(-0.01,yb,zc); gearG.add(sb);
-        [-1,1].forEach(s=>{ const rg=new THREE.Mesh(new THREE.TorusGeometry(0.078,0.006,6,24),gmS); rg.rotation.y=Math.PI/2; rg.position.set(-0.01+s*0.12,yb,zc); gearG.add(rg); }); } }
+      if(has('sbag')||has('pad')){ /* esterilla/saco enrollado: hijo de la mochila (sigue su inclinación), metido contra la base y sujeto con dos cinchas de compresión con hebilla — mismo tono que la mochila */
+        if(!gmRE){ const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d'); x.strokeStyle='rgba(12,13,9,.6)'; x.lineWidth=2.2; x.beginPath(); for(let t=0;t<7.5*Math.PI*2;t+=0.08){ const rr_=4+t*2.6; x.lineTo(64+Math.cos(t)*rr_,64+Math.sin(t)*rr_); } x.stroke(); /* espiral del rollo */
+          const tx=new THREE.CanvasTexture(c); tx.colorSpace=THREE.SRGBColorSpace; gmRE=new THREE.MeshStandardMaterial({map:tx,roughness:0.95,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}); }
+        const Hh=r.userData.h, Dd=0.27, rr=0.075, yb=-Hh/2-rr+0.032, zc=-Dd/2+0.006;
+        const sb=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,0.42,22,1),gmP); sb.castShadow=true; sb.receiveShadow=true; sb.rotation.z=Math.PI/2; sb.position.set(0,yb,zc); r.add(sb);
+        [-1,1].forEach(s=>{ const ec=new THREE.Mesh(new THREE.CircleGeometry(rr*0.99,22),gmP); ec.rotation.y=s*Math.PI/2; ec.position.set(s*0.2102,yb,zc); r.add(ec); const sp=new THREE.Mesh(new THREE.CircleGeometry(rr*0.97,22),gmRE); sp.rotation.y=s*Math.PI/2; sp.position.set(s*0.2112,yb,zc); r.add(sp); /* tapas del rollo */
+          const band=new THREE.Mesh(new THREE.CylinderGeometry(rr+0.004,rr+0.004,0.024,24,1,true),gmB); band.rotation.z=Math.PI/2; band.position.set(s*0.125,yb,zc); r.add(band);
+          const up=rbox(0.024,0.06,0.005,gmB); up.position.set(s*0.125,yb+rr*0.55,zc-rr-0.002); up.rotation.x=-0.5; r.add(up); /* la cincha sube a la base de la mochila */
+          const bk=buckle(s*0.125,yb-rr*0.2,zc-rr-0.006); bk.rotation.z=Math.PI/2; r.add(bk); }); } }
     if(ap){ const zb=backZ(1.25); const apo=null, a=apMesh(ruck?true:(PO==='tumbado'?0.12:false)); a.position.set(-0.01,ruck?1.2:1.2,ruck?zb+0.01-rD+0.004:zb+0.012); gearG.add(a); if(!ruck) straps(1.41,1.03,zb,0.05,0.011); }
     if(has('medbag')){ const zb=backZ(1.0); const mb=soft(0.36,0.26,0.18,0.05,gmP,{bulge:0.02}); mb.position.set(-0.01,ruck?0.8:1.0,zb-0.09-(ruck?0.13:0)); gearG.add(mb); }
     if(visTag('at4')){ const zb=backZ(1.25); const t=cyl(0.042,1.0,gm.d,14); t.position.set(0.04,1.28,zb-(ruck?0.27:0.06)); t.rotation.z=0.45; gearG.add(t); }
@@ -576,6 +613,6 @@ export async function mount(stage,st,D,M,opt){
     const cv=stage.querySelector('canvas'); if(cv) cv.style.filter=bc.on()&&bc.ir()?M.NVG_FILTER:''; bn.textContent=bc.on()?bc.note(EN()):''; }
   camUI(); camos(); scale(); rebuildGear(); V.fit(holder); credits(null); beamUI(); await setWeapon();
   if(window.MAT_DEV) window.MAT_DEV_K={hd:()=>{ PO='rodilla'; pose(); const a=lp('L_Upperarm').y, hy=lp('Hip').y; handsDown(); return [a,hy,lp('L_Upperarm').y,lp('Hip').y,lp('Spine02').y,lp('L_Hand').y,lp('L_Calf').y]; },lowY,THREE,body,B,bones,mesh,wpn:()=>wpn,wi:()=>wi,pose,V,lp,st,holder,gearG,gearH,gearC,skinBounds,setPO:v=>{PO=v;}, PR, transition, animSeek, stopAnim, fk:()=>FK, zoom:(f,dx,dy,dz)=>{ const p=V.holder.parent; p.scale.setScalar(f); p.position.set(dx||0,dy||0,dz||0); V.redraw(); }};
-  window.MAT_SOLDADO_DBG={ w:()=>wpn&&[wpn.position.toArray(),wpn.userData.stock,wpn.userData.gp,wpn.scale.x,new THREE.Box3().setFromObject(wpn).min.toArray(),wp(B('R_Hand')).toArray(),wp(B('R_Upperarm')).toArray()], still:(y,p)=>{ V.setAuto(false); V.reset(); if(y!=null) V.look(y,p==null?undefined:p); }, gear:()=>gearG.children.length,    weapon:()=>!!wpn, ground:()=>{ const s=holder.scale.x||1, g=lowY(1); return {legL:+(g[4]*s).toFixed(3),legR:+(g[5]*s).toFixed(3),lof:LOF.map(x=>+x.toFixed(3)),torso:+(g[0]*s).toFixed(3),armL:+(g[1]*s).toFixed(3),armR:+(g[2]*s).toFixed(3),head:+(g[3]*s).toFixed(3),gearG:+(objLow(gearG)*s).toFixed(3),gearH:+(objLow(gearH)*s).toFixed(3),gearC:+(objLow(gearC)*s).toFixed(3),wpn:+(objLow(wpn)*s).toFixed(3),prr:+PRR.toFixed(1),phy:+PHY.toFixed(3)}; }, helmet:()=>!!(mesh.helmet1_2&&mesh.helmet1_2.visible), scale:()=>holder.scale.x, hands:()=>{ body.updateMatrixWorld(true); const l=body.worldToLocal(wp(B('L_Hand'))), r=body.worldToLocal(wp(B('R_Hand'))); return {t:DBGH.t&&DBGH.t.toArray(),g:DBGH.g&&DBGH.g.toArray(),L:l.toArray(),R:r.toArray(),Lu:body.worldToLocal(wp(B('L_Upperarm'))).toArray(), mt:wi&&M.mt(wi.v), gp:wpn&&wpn.userData.gp, p:DBGH.p}; } };
-  return { update(s){ stopAnim(); scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ if(FK){ FK.dispose(); FK=null; } stopAnim(); if(bc) bc.dispose(); body.remove(gearG); body.remove(gearH); body.remove(gearC); pr.remove(); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
+  window.MAT_SOLDADO_DBG={ w:()=>wpn&&[wpn.position.toArray(),wpn.userData.stock,wpn.userData.gp,wpn.scale.x,new THREE.Box3().setFromObject(wpn).min.toArray(),wp(B('R_Hand')).toArray(),wp(B('R_Upperarm')).toArray()], still:(y,p)=>{ V.setAuto(false); V.reset(); if(y!=null) V.look(y,p==null?undefined:p); }, gear:()=>gearG.children.length,    weapon:()=>!!wpn, ground:()=>{ const s=holder.scale.x||1, g=lowY(1); return {legL:+(g[4]*s).toFixed(3),legR:+(g[5]*s).toFixed(3),lof:LOF.map(x=>+x.toFixed(3)),torso:+(g[0]*s).toFixed(3),armL:+(g[1]*s).toFixed(3),armR:+(g[2]*s).toFixed(3),head:+(g[3]*s).toFixed(3),gearG:+(objLow(gearG)*s).toFixed(3),gearH:+(objLow(gearH)*s).toFixed(3),gearC:+(objLow(gearC)*s).toFixed(3),wpn:+(objLow(wpn)*s).toFixed(3),prr:+PRR.toFixed(1),phy:+PHY.toFixed(3)}; }, helmet:()=>!!(mesh.helmet1_2&&mesh.helmet1_2.visible), scale:()=>holder.scale.x, hands:()=>{ body.updateMatrixWorld(true); const l=body.worldToLocal(wp(B('L_Hand'))), r=body.worldToLocal(wp(B('R_Hand'))); return {t:DBGH.t&&DBGH.t.toArray(),g:DBGH.g&&DBGH.g.toArray(),L:l.toArray(),R:r.toArray(),Lu:body.worldToLocal(wp(B('L_Upperarm'))).toArray(), mt:wi&&M.mt(wi.v), gp:wpn&&wpn.userData.gp, p:DBGH.p, hs:DBGH.hs}; } };
+  return { update(s){ stopAnim(); scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ if(CS) CS.dispose(); }catch(e){} try{ if(FK){ FK.dispose(); FK=null; } stopAnim(); if(bc) bc.dispose(); body.remove(gearG); body.remove(gearH); body.remove(gearC); pr.remove(); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
 }

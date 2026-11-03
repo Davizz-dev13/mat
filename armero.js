@@ -319,12 +319,13 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
     const rt=pm.fromEquirectangular(t); t.dispose(); envRT.dispose(); envRT=rt; scene.environment=rt.texture; scene.environmentIntensity=0.78; scene.environmentRotation.set(0,0.6,0); dirty=true; loop(); }).catch(()=>{});
   const key=new THREE.DirectionalLight(0xffffff,1.05); key.position.set(-3,5,4); scene.add(key);
   scene.add(new THREE.HemisphereLight(0xe6ecf5,0x2a2c30,0.4));
-  const sun=new THREE.DirectionalLight(0xffffff,0.55); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024); sun.shadow.bias=-0.0004; sun.shadow.radius=5; sun.shadow.blurSamples=12; sun.shadow.normalBias=0.002; scene.add(sun); scene.add(sun.target);
+  const sun=new THREE.DirectionalLight(0xffffff,0.55); sun.castShadow=true; sun.shadow.mapSize.set(mob?1024:2048,mob?1024:2048); sun.shadow.bias=-0.0004; sun.shadow.radius=5; sun.shadow.blurSamples=12; sun.shadow.normalBias=0.002; scene.add(sun); scene.add(sun.target);
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.ShadowMaterial({opacity:0.28,transparent:true,depthWrite:false})); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
   const cam=new THREE.PerspectiveCamera(28,1,0.01,50); scene.add(cam);
   { /* luz de contorno que sigue a la cámara: separa las armas oscuras del fondo */ const rim=new THREE.DirectionalLight(0xdfe8ff,opt.rim!=null?opt.rim:1.1); rim.position.set(1.4,2.2,-8); cam.add(rim); const rt=new THREE.Object3D(); cam.add(rt); rim.target=rt; }
   const pivot=new THREE.Group(); scene.add(pivot); const holder=new THREE.Group(); pivot.add(holder);
   const inv=[]; // uniformes uInv que siguen al soporte
+  const PRE=[]; /* ganchos antes de cada render (sombra de contacto del soldado) */
   let yaw=Y0, pitch=P0, dist=2, fitD=2, auto=true, idleT=0, dirty=true, raf=0, visible=true, last=performance.now();
   function size(){ const w=stage.clientWidth||360, h=stage.clientHeight||270; R.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); dirty=true; }
   const ro=new ResizeObserver(size); ro.observe(stage); size();
@@ -333,7 +334,7 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
   function loop(){
     if(!alive||raf) return; raf=requestAnimationFrame(t=>{ raf=0; if(!alive) return; const dt=Math.min(0.05,(t-last)/1000); last=t;
       if(auto){ idleT+=dt; if(idleT>3.5){ yaw+=dt*0.35; dirty=true; } }
-      if(dirty){ place(); R.render(scene,cam); dirty=false; }
+      if(dirty){ place(); for(const f of PRE) f(R,scene,cam); R.render(scene,cam); dirty=false; }
       if(visible&&!document.hidden&&(auto||dirty)) loop(); }); }
   const P=new Map(); let pd0=0, d0=0;
   stage.addEventListener('pointerdown',e=>{ stage.setPointerCapture&&stage.setPointerCapture(e.pointerId); P.set(e.pointerId,{x:e.clientX,y:e.clientY}); idleT=0; if(P.size===2){ const a=[...P.values()]; pd0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); d0=dist; } });
@@ -363,7 +364,7 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
   function recenter(){ holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(holder); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
      const ratio=dist/fitD, tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), len=Math.max(s.x,s.y,s.z); fitD=FA?fitAllD(FP!=null?FP:pitch):(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD*ratio; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
   function dispose(o){ o.traverse(q=>{ if(q.geometry) q.geometry.dispose(); }); }
-  return { scene, holder, fit, recenter, reset, fitK(k){ ZK=ZK0*(k||1); recenter(); }, fitAll(m,p){ FA=m||0; FP=m?(p!=null?p:null):null; recenter(); }, dbg(){ return {dist,fitD,aspect:cam.aspect,fov:cam.fov,yaw,pitch,cw:stage.clientWidth,ch:stage.clientHeight}; }, look(y,p){ yaw=y; if(p!=null) pitch=p; dirty=true; loop(); }, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?4:0; loop(); },
+  return { scene, holder, R, ground, sun, cam, pre(f){ PRE.push(f); }, fit, recenter, reset, fitK(k){ ZK=ZK0*(k||1); recenter(); }, fitAll(m,p){ FA=m||0; FP=m?(p!=null?p:null):null; recenter(); }, dbg(){ return {dist,fitD,aspect:cam.aspect,fov:cam.fov,yaw,pitch,cw:stage.clientWidth,ch:stage.clientHeight}; }, look(y,p){ yaw=y; if(p!=null) pitch=p; dirty=true; loop(); }, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?4:0; loop(); },
     destroy(){ alive=false; if(raf) cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); dispose(scene); envRT.dispose(); pm.dispose(); R.dispose(); try{R.forceContextLoss();}catch(e){} } };
 }
 
