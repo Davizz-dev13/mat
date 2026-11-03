@@ -450,6 +450,7 @@ function page(app,ctx,w){
   const shell=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[L('Armero 3D','3D Gunsmith'),'#/armero'],[w.n]])+
    '<h1>'+esc(w.n)+'</h1><p class="sub">'+esc(LL(w.kind))+' · <a href="#/a/'+w.ficha+'">'+L('Ver ficha completa','Full data sheet')+'</a> · <a href="#/soldado?arma='+w.id+'" class="arm-sold">'+L('Equipar en «Crea tu soldado» →','Equip in “Build your soldier” →')+'</a></p>'+
    '<div class="arm-wrap"><div><div class="arm-stage" id="armst"><div class="arm-load">'+L('Cargando modelo 3D…','Loading 3D model…')+'</div><div class="arm-btns"><button type="button" id="armrot">'+L('Pausar giro','Pause spin')+'</button><button type="button" id="armrs">'+L('Centrar','Reset')+'</button></div><div class="arm-hint">'+L('Arrastra para girar · pellizca o rueda para zoom','Drag to rotate · pinch or scroll to zoom')+'</div></div>'+
+   '<div class="arm-lrow" id="armxrow" hidden><button type="button" class="arm-lb" id="armx" aria-pressed="false"></button><div class="arm-bnote" id="armxn" hidden></div></div>'+
    '<div class="arm-lrow" id="armlrow" hidden><button type="button" class="arm-lb" id="armbeam" aria-pressed="false"></button><button type="button" class="arm-lb" id="armir" hidden aria-pressed="false"></button><div class="arm-bnote" id="armbn" hidden></div></div>'+
    '<div id="armsum" class="arm-sum"></div><div id="armui"></div></div><div><div class="arm-stats" id="armstats"></div><div id="armacc"></div></div></div>'+
    '<div id="armcred"></div>';
@@ -537,11 +538,38 @@ function page(app,ctx,w){
     stage.querySelector('.arm-load')&&(stage.querySelector('.arm-load').style.display='flex');
     try{ const g=await getGLB(v.file); if(my!==token) return;
       if(weapon){ V.holder.remove(weapon); } Object.keys(mounted).forEach(s=>{ V.holder.remove(mounted[s].o); delete mounted[s]; }); BC.detach();
-      weapon=g.scene.clone(true); prep(weapon,UW,MCW); V.holder.add(weapon); V.fit(weapon);
+      weapon=g.scene.clone(true); prep(weapon,UW,MCW); V.holder.add(weapon); V.fit(weapon); xSetup(weapon);
       const ld=stage.querySelector('.arm-load'); if(ld) ld.style.display='none';
       await sync();
     }catch(e){ const ld=stage.querySelector('.arm-load'); if(ld) ld.textContent=L('No se pudo cargar el modelo. Comprueba la conexión.','The model could not be loaded. Check your connection.'); }
   }
+  /* despiece: separa las piezas que el modelo 3D trae como objetos con nombre propio (cargador, cerrojo, tapa…); el orden importa: el nombre compuesto gana */
+  const XP=[[/carry[ _]?handle/i,'Asa de transporte','Carry handle',[0,1,0]],[/bolt[ _]?carrier/i,'Portacerrojo','Bolt carrier',[0,0.3,-1]],[/bolt[ _]?(catch|release)|boltrelease/i,'Retén del cerrojo','Bolt catch',[1,0.2,0]],
+    [/charging/i,'Palanca de carga','Charging handle',[0,1,-0.7]],[/mag(azine)?[ _]?(release|latch|catch)/i,'Retén del cargador','Magazine release',[1,-0.3,0]],[/bullet[ _]?door|ammo[ _]?door/i,'Tapa de la caja de munición','Ammo box door',[1,-0.2,0]],
+    [/bullet|round|cartridge/i,'Cartuchos','Cartridges',[0,-1,0.45]],[/slide[ _]?(lock|stop)/i,'Retén de la corredera','Slide stop',[1,0.3,0]],[/\bbolt|(^|_)bolt/i,'Cerrojo','Bolt',[0,0.4,-1]],[/magbox|ammo[ _]?box/i,'Caja de munición','Ammo box',[0.3,-1,0]],
+    [/(^|[^a-z])mag/i,'Cargador','Magazine',[0,-1,0]],[/dust[ _]?cover/i,'Tapa guardapolvo','Dust cover',[-1,0.1,0]],[/top[ _]?cover/i,'Tapa de alimentación','Feed cover',[0,1,0.35]],
+    [/stock/i,'Culata','Stock',[0,0,-1]],[/selector|safety/i,'Selector de tiro','Fire selector',[1,0,0]],[/front[ _]?sight/i,'Punto de mira','Front sight',[0,1,0.3]],[/rear[ _]?sight/i,'Alza','Rear sight',[0,1,-0.3]],
+    [/forward[ _]?assist/i,'Asistente de cierre','Forward assist',[-1,0.3,0]],[/trigger/i,'Disparador','Trigger',[0,-1,0]],[/slide/i,'Corredera','Slide',[0,0.7,-1]],[/hammer/i,'Martillo','Hammer',[0,0.6,-1]],
+    [/handguard/i,'Guardamanos','Handguard',[0,-0.3,1]],[/swivel/i,'Anilla portafusil','Sling swivel',[0,-1,0]]];
+  const XMG={'m249':1,'m240':1,'pkm':1};
+  const XS={parts:[],t:0,on:false,raf:0};
+  const bX=document.getElementById('armx'), bXN=document.getElementById('armxn');
+  function xUI(){ const ok=XS.parts.length>=3; document.getElementById('armxrow').hidden=!ok; if(!ok) return;
+    bX.textContent=XS.on?L('Montar el arma','Reassemble'):L('Ver despiece','Exploded view'); bX.setAttribute('aria-pressed',XS.on?'true':'false'); bX.classList.toggle('on',XS.on);
+    const labs=[...new Set(XS.parts.filter(p=>p.n.visible).map(p=>L(p.es,p.en)))]; bXN.hidden=!XS.on;
+    bXN.textContent=L('Piezas separadas: ','Parts shown apart: ')+labs.join(', ')+'. '+L('Despiece simplificado: solo se separan las piezas que el modelo 3D trae como objetos aparte; posiciones orientativas.','Simplified exploded view: only the parts the 3D model has as separate objects are moved apart; positions are indicative.'); }
+  function xSetup(o){ cancelAnimationFrame(XS.raf); XS.parts=[]; XS.t=0; XS.on=false; o.updateMatrixWorld(true);
+    const bb=new THREE.Box3().setFromObject(o), L0=Math.max(...bb.getSize(new THREE.Vector3()).toArray()), seen={};
+    const walk=n=>{ if(n!==o&&n.name&&n.visible){ const r=XP.find(x=>x[0].test(n.name)); if(r){ let has=false; n.traverse(q=>{ if(q.isMesh) has=true; }); if(has){ let es=r[1], en=r[2]; if(XMG[w.id]&&es==='Cargador'){ es='Caja de munición'; en='Ammo box'; } if(XMG[w.id]&&es==='Retén del cargador'){ es='Retén de la caja de munición'; en='Ammo box latch'; } const key=es, grp=(es==='Cartuchos'||es==='Culata'); seen[key]=(seen[key]||0)+1;
+          const k=0.2*(1+(grp?0:0.35*(seen[key]-1)))*(es==='Cartuchos'?1.5:1); const dW=new THREE.Vector3(...r[3]).normalize().transformDirection(o.matrixWorld).multiplyScalar(k*L0*(o.matrixWorld.getMaxScaleOnAxis()));
+          const pw=n.getWorldPosition(new THREE.Vector3()); const a1=n.parent.worldToLocal(pw.clone()), a2=n.parent.worldToLocal(pw.clone().add(dW));
+          XS.parts.push({n,b:n.position.clone(),d:a2.sub(a1),es,en}); return; } } }
+      n.children.forEach(walk); };
+    walk(o); xUI(); }
+  function xApply(t){ XS.parts.forEach(p=>p.n.position.copy(p.b).addScaledVector(p.d,t)); if(V) V.redraw(); }
+  function xAnim(to){ cancelAnimationFrame(XS.raf); const t0=performance.now(), from=XS.t;
+    const step=now=>{ const k=Math.min(1,(now-t0)/650), e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2; XS.t=from+(to-from)*e; xApply(XS.t); if(k<1) XS.raf=requestAnimationFrame(step); else if(V) V.recenter(); }; XS.raf=requestAnimationFrame(step); }
+  if(bX) bX.addEventListener('click',()=>{ XS.on=!XS.on; xAnim(XS.on?1:0); xUI(); });
   /* linterna / láser: botón Encender-Apagar y modo IR */
   const BC=V?beamCtl(V.holder,[]):{has:()=>false,detach(){},items(){},set(){},on:()=>false,ir:()=>false,hasIR:()=>false,hasLight:()=>false,hasLaser:()=>false,note:()=>''};
   const bB=document.getElementById('armbeam'), bI=document.getElementById('armir'), bN=document.getElementById('armbn');
@@ -561,7 +589,7 @@ function page(app,ctx,w){
   pre.forEach(a=>{ if(accs(cur(),ACC[a].slot).includes(a)) st.on[ACC[a].slot]=a; }); if(!isDot(st.on.optic)) delete st.on.mag;
   if(CAMO.some(c=>c[0]===sv.get('camo'))) st.camo=sv.get('camo'); st.ca=sv.get('ca')==='1';
   renderUI(); stats(); camo(); load();
-  window.MAT_ARMERO_DBG={st,mounted:()=>Object.keys(mounted),view:()=>V&&V.dbg()};
+  window.MAT_ARMERO_DBG={xparts:()=>XS.parts.map(p=>p.es+':'+p.n.name), xon:()=>XS.on, st,mounted:()=>Object.keys(mounted),view:()=>V&&V.dbg()};
 }
 
 export function route(app,ctx,p){

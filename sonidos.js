@@ -1,6 +1,7 @@
 (function(){
 "use strict";
 // M.A.T · sonidos reales en las fichas (#/a/<id>). Datos: sonidos.json; audio en snd/ (se carga solo al tocar).
+var ARM_SKIP={'g17':'g-glock'}; /* la grabación de la ficha Glock es una Glock 18 en ráfaga: solo se enlaza desde la G18C */
 var DATA=null, LOADING=false, AU=null, CUR=null, EN=function(){return window.MAT_LANG==='en';};
 var V=(document.currentScript&&document.currentScript.getAttribute('data-v'))||'1';
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -41,6 +42,11 @@ function inject(){
  if(m){ var id=decodeURIComponent(m[1]); if(app.querySelector('.sndbox[data-sid="'+id+'"]')) return; var old=app.querySelector('.sndbox'); if(old) old.remove();
    if(!DATA){ load(inject); return; } var h1=app.querySelector('h1'); if(!h1) return; var b=box(id); if(!b) return;
    var t=h1.nextElementSibling; var after=(t&&t.classList&&t.classList.contains('tags'))?t:h1; after.parentNode.insertBefore(b,after.nextSibling); return; }
+ var ma=h.match(/^#\/armero\/([^?&#\/]+)/);
+ if(ma){ /* Armero 3D: el mismo sonido real de la ficha enlazada (si lo hay), bajo el título */
+   var sub=app.querySelector('p.sub'); var fa=sub&&sub.querySelector('a[href^="#/a/"]'); if(!fa) return; var fid=decodeURIComponent(fa.getAttribute('href').slice(4)); if(ARM_SKIP[ma[1]]===fid) return;
+   if(app.querySelector('.sndbox[data-sid="'+fid+'"]')) return; var old2=app.querySelector('.sndbox'); if(old2) old2.remove();
+   if(!DATA){ load(inject); return; } var b2=box(fid); if(!b2) return; sub.parentNode.insertBefore(b2,sub.nextSibling); return; }
  if(/^#\/license/.test(h)){ var lp=app.querySelector('.licpage'); if(!lp||lp.querySelector('.licsnd')) return; if(!DATA){ load(inject); return; }
    var ids=Object.keys(DATA.items||{}); if(!ids.length) return; var rows=[];
    ids.forEach(function(id){ DATA.items[id].forEach(function(s){ rows.push('<a href="'+esc(s.src)+'" target="_blank" rel="noopener">'+esc(s.t||L2(s.l))+'</a> ('+esc(L2(s.a))+'; '+(s.lu?'<a href="'+esc(s.lu)+'" target="_blank" rel="noopener">'+esc(L2(s.lic))+'</a>':esc(L2(s.lic)))+(s.mod?'; '+(EN()?'trimmed to an excerpt':'recortado a un fragmento'):'')+')'); }); });
