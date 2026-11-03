@@ -1,7 +1,7 @@
 /* M.A.T — visor 3D de «Crea tu soldado».
    Figura: «Soldier Full Tactical Gear (LowPolyGameReady)» de DanlyVostok (Sketchfab), CC BY 4.0 — optimizada por M.A.T (texturas reducidas, meshopt).
    Visor nocturno: «AN/PVS-14 NVD» de knolp (Sketchfab), CC BY 4.0, a escala con la longitud oficial.
-   Mochilas, cantimploras y similares: modelos aproximados hechos por M.A.T en código; el arma es el modelo del Armero 3D a escala real.
+   Mochilas: modelos «Military Backpack» de Levi Giovani (CC BY 4.0). Cantimploras y similares: modelos aproximados hechos por M.A.T en código; el arma es el modelo del Armero 3D a escala real.
    Pose: M.A.T recoloca los brazos con cinemática inversa para que las manos sujeten el arma elegida. */
 import * as THREE from './three.module.min.js';
 const EN=()=>window.MAT_LANG==='en';
@@ -43,7 +43,7 @@ export async function mount(stage,st,D,M,opt){
   Object.values(bones).forEach(b=>{ const q=body.userData.rest[b.name]; if(q) b.quaternion.copy(q); });
   body.updateMatrixWorld(true);
   const B=n=>bones['CC_Base_'+n];
-  const gearG=new THREE.Group(); body.add(gearG); const gearH=new THREE.Group(); body.add(gearH);
+  const gearG=new THREE.Group(); body.add(gearG); const gearH=new THREE.Group(); body.add(gearH); const gearC=new THREE.Group(); body.add(gearC); /* gearC: hombreras, siguen al pecho al 100 % */
   const gm={ k:new THREE.MeshStandardMaterial({color:0x26282a,roughness:0.6,metalness:0.1}), p:new THREE.MeshStandardMaterial({color:0x4a4d3b,roughness:0.95}), d:new THREE.MeshStandardMaterial({color:0x3b3d30,roughness:0.95}) };
   [gm.p,gm.d].forEach(m=>M.camoPatch(m,UG));
   let wpn=null, wkey='', wi=null, pvs=null, bc=null; const DBGH={};
@@ -71,13 +71,21 @@ export async function mount(stage,st,D,M,opt){
   function locM(bone){ body.updateMatrixWorld(true); return new THREE.Matrix4().copy(body.matrixWorld).invert().multiply(bone.matrixWorld); }
   const REST={}; function restM(n){ return REST[n]; }
   function resetBones(){ Object.values(bones).forEach(b=>{ const q=body.userData.rest[b.name]; if(q) b.quaternion.copy(q); }); body.updateMatrixWorld(true); }
-  resetBones(); ['Spine02','Head'].forEach(n=>{ if(B(n)) REST[n]=locM(B(n)); });
+  resetBones(); ['Spine01','Spine02','Head'].forEach(n=>{ if(B(n)) REST[n]=locM(B(n)); });
   let TWS={tw:0,lean:0};
   function torso(tw,lean){ TWS={tw,lean}; TWB.forEach(([n,w])=>{ rotBody(B(n),AY,-tw*w*D2R); rotBody(B(n),AX,lean*w*D2R); }); }
   function chestM(){ const b=B('Spine02'); return (b&&REST.Spine02)?locM(b).multiply(REST.Spine02.clone().invert()):new THREE.Matrix4(); }
   function headM(){ const b=B('Head'); return (b&&REST.Head)?locM(b).multiply(REST.Head.clone().invert()):new THREE.Matrix4(); }
   /* el equipo de espalda (mochilas, correas, AT4) sigue al pecho; el visor nocturno sigue a la cabeza */
-  function follow(){ const C=chestM(); C.decompose(gearG.position,gearG.quaternion,gearG.scale);
+  function backM(){ /* la espalda de la malla gira algo menos que el hueso del pecho: el equipo de espalda sigue a Spine01-Spine02 a medias */ const a=chestM(), b=B('Spine01')&&REST.Spine01?locM(B('Spine01')).multiply(REST.Spine01.clone().invert()):a; const pa=new THREE.Vector3(),qa=new THREE.Quaternion(),sa=new THREE.Vector3(),pb=new THREE.Vector3(),qb=new THREE.Quaternion(),sb=new THREE.Vector3(); a.decompose(pa,qa,sa); b.decompose(pb,qb,sb); return new THREE.Matrix4().compose(pa.lerp(pb,0.5),qa.slerp(qb,0.5),sa); }
+  /* marco de la espalda medido sobre la malla con piel (no sobre los huesos): centro y giro de la zona de la espalda del chaleco/chaqueta */
+  let BF0=null; function backFrame(){ const m=(mesh.plate_1&&mesh.plate_1.visible)?mesh.plate_1:mesh.kitel_1; if(!m||!m.geometry) return null; body.updateMatrixWorld(true); if(m.skeleton) m.skeleton.update();
+    const pos=m.geometry.attributes.position, v=new THREE.Vector3(); let n=0,sx=0,sz=0,sxx=0,sxz=0,sy=0; const st_=Math.max(1,Math.floor(pos.count/4000));
+    for(let i=0;i<pos.count;i+=st_){ m.getVertexPosition(i,v); m.localToWorld(v); body.worldToLocal(v); if(v.y>1.08&&v.y<1.36&&v.z<-0.1&&Math.abs(v.x)<0.2){ n++; sx+=v.x; sz+=v.z; sy+=v.y; sxx+=v.x*v.x; sxz+=v.x*v.z; } }
+    if(n<8) return null; const mx=sx/n, mz=sz/n, b=(sxz/n-mx*mz)/Math.max(1e-6,(sxx/n-mx*mx)); return {c:new THREE.Vector3(mx,sy/n,mz), a:Math.atan(b), m:m.name}; }
+  function skinM(){ const now=backFrame(); if(!now||!BF0||now.m!==BF0.m) return null; const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),-(now.a-BF0.a)); const p=now.c.clone().sub(BF0.c.clone().applyQuaternion(q)); p.y=now.c.y-BF0.c.y; return new THREE.Matrix4().compose(p,q,new THREE.Vector3(1,1,1)); }
+  function follow(){ /* mochilas y hombreras siguen la espalda medida sobre la malla; si no se puede medir, el hueso del pecho */
+    const S_=skinM()||backM(); S_.decompose(gearG.position,gearG.quaternion,gearG.scale); S_.decompose(gearC.position,gearC.quaternion,gearC.scale);
     if(pvs&&pvs.userData.hm){ const m=headM().multiply(pvs.userData.hm); m.decompose(pvs.position,pvs.quaternion,pvs.scale); } }
   function handRoll(side,palmL){ /* gira la mano sobre el eje de los dedos para que la palma mire hacia palmL (cuerpo) */
     const H=B(side+'_Hand'), m=B(side+'_Mid1'), i1=B(side+'_Index1'), p1=B(side+'_Pinky1'); if(!H||!m||!i1||!p1) return;
@@ -155,10 +163,11 @@ export async function mount(stage,st,D,M,opt){
       wpn=o; wi=r; body.add(o); pose(); rebuildGear(); V.recenter(); credits(r);
       if(M.beamCtl){ bc=M.beamCtl(o,o.children.filter(c=>c.userData&&c.userData.acc).map(c=>({a:c.userData.acc,o:c}))); if(!bc.has()) bc=null; } beamUI(); }catch(e){ console.warn('soldado arma',e); }
   }
-  function credits(r){ if(!opt.cred) return; const w=r?r.w:null; opt.cred.innerHTML=L('Figura: «','Figure: “')+'<a href="https://sketchfab.com/3d-models/soldier-full-tactical-gear-lowpolygameready-850593a8c7114c188395ba1849a66eb9" target="_blank" rel="noopener">Soldier Full Tactical Gear</a>'+L('» de ','” by ')+'<a href="https://sketchfab.com/1799danly" target="_blank" rel="noopener">DanlyVostok</a> (Sketchfab, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>); '+L('visor nocturno «','night vision “')+'<a href="https://sketchfab.com/3d-models/anpvs-14-nvd-ed14bb49bdf94cd7b572daf206f1ccfb" target="_blank" rel="noopener">AN/PVS-14 NVD</a>'+L('» de knolp (CC BY 4.0). M.A.T ha optimizado los modelos, recolocado los brazos para sujetar el arma y añadido los camuflajes.','” by knolp (CC BY 4.0). M.A.T optimized the models, re-posed the arms to hold the weapon and added the camouflages.')+' <b>'+L('Mochilas, cantimploras, pala y lanzador: modelo aproximado hecho por MAT a partir de medidas oficiales','Packs, canteens, shovel and launcher: approximate model made by MAT from official dimensions')+'</b>.'+(w?' '+L('Arma: modelo del Armero 3D','Weapon: 3D Gunsmith model')+' (<a href="#/armero/'+w.id+'">'+w.n+'</a>), '+L('a escala real','at real scale')+'.':'')+' <a href="#/license">'+L('Licencias','Licences')+'</a>'; }
+  function credits(r){ if(!opt.cred) return; const w=r?r.w:null; opt.cred.innerHTML=L('Figura: «','Figure: “')+'<a href="https://sketchfab.com/3d-models/soldier-full-tactical-gear-lowpolygameready-850593a8c7114c188395ba1849a66eb9" target="_blank" rel="noopener">Soldier Full Tactical Gear</a>'+L('» de ','” by ')+'<a href="https://sketchfab.com/1799danly" target="_blank" rel="noopener">DanlyVostok</a> (Sketchfab, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>); '+L('visor nocturno «','night vision “')+'<a href="https://sketchfab.com/3d-models/anpvs-14-nvd-ed14bb49bdf94cd7b572daf206f1ccfb" target="_blank" rel="noopener">AN/PVS-14 NVD</a>'+L('» de knolp (CC BY 4.0). M.A.T ha optimizado los modelos, recolocado los brazos para sujetar el arma y añadido los camuflajes.','” by knolp (CC BY 4.0). M.A.T optimized the models, re-posed the arms to hold the weapon and added the camouflages.')+' '+L('Mochilas «','Packs “')+'<a href="https://sketchfab.com/levigiovani" target="_blank" rel="noopener">Military Backpack</a>'+L('» de Levi Giovani (CC BY 4.0, tamaño aproximado). ','” by Levi Giovani (CC BY 4.0, approximate size). ')+'<b>'+L('Cantimploras, pala y lanzador: modelo aproximado hecho por MAT a partir de medidas oficiales','Canteens, shovel and launcher: approximate model made by MAT from official dimensions')+'</b>.'+(w?' '+L('Arma: modelo del Armero 3D','Weapon: 3D Gunsmith model')+' (<a href="#/armero/'+w.id+'">'+w.n+'</a>), '+L('a escala real','at real scale')+'.':'')+' <a href="#/license">'+L('Licencias','Licences')+'</a>'; }
   const has=id=>(st.q[id]||0)>0, anyOf=c=>Object.keys(st.q).some(k=>st.q[k]>0&&D.items[k]&&D.items[k].c===c), visTag=t=>Object.keys(st.q).some(k=>st.q[k]>0&&D.items[k]&&D.items[k].vis===t);
   const ray=new THREE.Raycaster();
-  function hit(objs,o,d){ body.updateMatrixWorld(true); ray.set(body.localToWorld(o.clone()),d.clone().normalize()); ray.far=3; const h=ray.intersectObjects(objs.filter(Boolean),false)[0]; return h?body.worldToLocal(h.point.clone()):null; }
+  function hitF(objs,o,d,ok){ body.updateMatrixWorld(true); objs.forEach(m=>{ if(m&&m.isSkinnedMesh&&m.skeleton) m.skeleton.update(); }); ray.set(body.localToWorld(o.clone()),d.clone().transformDirection(body.matrixWorld)); ray.far=3; for(const h of ray.intersectObjects(objs.filter(Boolean),false)){ const p=body.worldToLocal(h.point.clone()); if(ok(p)) return p; } return null; }
+  function hit(objs,o,d){ body.updateMatrixWorld(true); objs.forEach(m=>{ if(m&&m.isSkinnedMesh&&m.skeleton) m.skeleton.update(); }); /* las mallas con piel se prueban con la postura actual de los huesos, no con la del último fotograma */ ray.set(body.localToWorld(o.clone()),d.clone().transformDirection(body.matrixWorld)); /* la dirección también en el marco del cuerpo (gira en la postura perfilada) */ ray.far=3; const h=ray.intersectObjects(objs.filter(Boolean),false)[0]; return h?body.worldToLocal(h.point.clone()):null; }
   const vestMeshes=Object.values(mesh).filter(m=>m.name==='plate_1'||(/^pouches/.test(m.name)&&(()=>{ const bb=new THREE.Box3().setFromObject(m); const c=(bb.min.y+bb.max.y)/2; return c>1.05&&c<1.56; })()));
 
   /* mochilas: bloques redondeados con tela y cinchas MOLLE generadas en código (modelo aproximado de M.A.T) */
@@ -189,6 +198,13 @@ export async function mount(stage,st,D,M,opt){
     const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(P,3)); g.setIndex(I); g.computeVertexNormals(); const s=new THREE.Mesh(g,m); s.castShadow=true; return s; }
   function buckle(x,y,z){ const b=rbox(0.045,0.022,0.012,gmB); b.position.set(x,y,z); return b; }
   /* mochila principal MOLLE: cuerpo, armazón, tapa, bolsillos laterales de sostenimiento, bolsillo frontal, cinchas de compresión y saco de dormir debajo */
+  /* mochilas reales: «Military Backpack» y «Large Military Backpack» de levigiovani (Sketchfab), CC BY 4.0 — optimizadas por M.A.T; tamaño aproximado.
+     Se cargan al pedirlas; mientras, se ve la forma aproximada en código. Origen: centro de la cara que apoya en la espalda, la mochila hacia -z. */
+  const PK={}, PKF={big:['mochila_grande.glb',[0.44,0.6,0.3],0],ap:['mochila_asalto.glb',[0.34,0.45,0.22],0]}; /* caja máxima ancho×alto×fondo (m), escala uniforme */
+  function packObj(kind){ const e=PKF[kind]; if(PK[kind]==='err') return null; if(!PK[kind]){ PK[kind]='loading'; load('m3d/soldado/'+e[0]).then(g=>{ g.scene.traverse(q=>{ if(q.isMesh){ q.castShadow=true; q.receiveShadow=true; if(q.material&&q.material.color) q.material.color.setRGB(kind==='big'?0.55:0.74,kind==='big'?0.56:0.73,kind==='big'?0.5:0.64); /* algo más oscuro, a juego con el uniforme */ } }); PK[kind]=g.scene; rebuildGear(); V.redraw(); }).catch(()=>{ PK[kind]='err'; }); return null; }
+    if(PK[kind]==='loading') return null; const o=PK[kind].clone(true); o.rotation.y=e[2]; const w=new THREE.Group(); w.add(o); w.updateMatrixWorld(true);
+    let bb=new THREE.Box3().setFromObject(o,true); const sz=bb.getSize(new THREE.Vector3()); o.scale.multiplyScalar(Math.min(e[1][0]/sz.x,e[1][1]/sz.y,e[1][2]/sz.z)); w.updateMatrixWorld(true);
+    bb=new THREE.Box3().setFromObject(o,true); const c=bb.getCenter(new THREE.Vector3()); o.position.sub(new THREE.Vector3(c.x,c.y,bb.max.z)); w.userData.depth=bb.max.z-bb.min.z; w.userData.h=bb.max.y-bb.min.y; return w; }
   function ruckMesh(noFP){ const G=new THREE.Group(), W=0.34, Hh=0.52, Dd=0.22;
     const body=soft(W,Hh,Dd,0.055,gmP,{bulge:0.035,taper:0.06}); body.position.set(0,0,-Dd/2); G.add(body);
     const frame=soft(W-0.03,Hh-0.03,0.045,0.015,gmS); frame.position.set(0,0,-0.01); G.add(frame);
@@ -206,12 +222,12 @@ export async function mount(stage,st,D,M,opt){
     const h=new THREE.Mesh(new THREE.TorusGeometry(0.03,0.007,6,12,Math.PI),gmS); h.position.set(0,Hh/2+0.03,-0.03); G.add(h);
     [-1,1].forEach(s=>{ const z=rbox(0.006,Hh*0.7,0.02,gmS); z.position.set(s*(W/2-0.008),0.0,-Dd*0.55); G.add(z); });
     return G; }
-  function rebuildGear(){ gearG.clear(); gearH.clear();
+  function rebuildGear(){ gearG.clear(); gearH.clear(); gearC.clear();
     /* el equipo se construye con el torso en reposo y después sigue al pecho (follow) */
     const svq={}; ['Waist','Spine01','Spine02','NeckTwist01','NeckTwist02','Head'].forEach(n=>{ const b=B(n); if(b){ svq[n]=b.quaternion.clone(); b.quaternion.copy(body.userData.rest[b.name]); } }); body.updateMatrixWorld(true);
-    gearG.position.set(0,0,0); gearG.quaternion.identity(); gearG.scale.set(1,1,1); gearG.updateMatrixWorld(true);
+    gearG.position.set(0,0,0); gearG.quaternion.identity(); gearG.scale.set(1,1,1); gearC.position.set(0,0,0); gearC.quaternion.identity(); gearC.scale.set(1,1,1); body.updateMatrixWorld(true);
     const vest=anyOf('vest')||Object.keys(st.q).some(k=>D.items[k]&&D.items[k].c==='plate'&&st.q[k]>0);
-    vestMeshes.forEach(m=>m.visible=vest);
+    vestMeshes.forEach(m=>m.visible=vest); BF0=backFrame();
     const hel=anyOf('helmet'); ['helmet1','helmet1_2'].forEach(n=>{ if(mesh[n]) mesh[n].visible=hel; });
     if(mesh.sunglusses_glus) mesh.sunglusses_glus.visible=true; /* gafas balísticas siempre: con el visor nocturno levantado se siguen llevando */
     const torso=[mesh.plate_1&&mesh.plate_1.visible?mesh.plate_1:null,mesh.kitel_1];
@@ -220,14 +236,14 @@ export async function mount(stage,st,D,M,opt){
     const tor=()=>[mesh.plate_1&&mesh.plate_1.visible?mesh.plate_1:null,mesh.kitel_1].concat(vestMeshes.filter(m=>m.visible));
     function straps(top,bot,zb,w,t){ const T=tor(), V3=THREE.Vector3, ctr=q=>new V3(0,Math.min(q.y,1.36),-0.04);
       [-1,1].forEach(s=>{ const tp=hit(T,new V3(s*0.1,2.2,-0.04),new V3(0,-1,0)); const sy=tp?tp.y:1.46;
-        const fz=y=>{ const p=hit(T,new V3(s*0.11,y,1),new V3(0,0,-1)); return p?p.z:0.13; }, bz=y=>{ const p=hit(T,new V3(s*0.1,y,-1),new V3(0,0,1)); return p?p.z:-0.15; }, sx=y=>{ const p=hit(T,new V3(s,y,-0.04),new V3(-s,0,0)); return p?p.x:s*0.19; };
+        const fz=y=>{ const p=hitF(T,new V3(s*0.11,y,1),new V3(0,0,-1),q=>q.z<0.2); return p?p.z:0.13; }, bz=y=>{ const p=hit(T,new V3(s*0.1,y,-1),new V3(0,0,1)); return p?p.z:-0.15; }, sx=y=>{ const p=hitF(T,new V3(s,y,-0.04),new V3(-s,0,0),q=>Math.abs(q.x)<0.24); return p?p.x:s*0.19; }; /* hitF ignora el brazo que cruza por delante del pecho */
         const pts=[new V3(s*0.085,top-0.05,zb-0.012), new V3(s*0.095,sy-0.035,bz(sy-0.035)-t), new V3(s*0.1,sy+t*0.6,-0.035), new V3(s*0.105,sy-0.07,fz(sy-0.07)+t), new V3(s*0.11,1.30,fz(1.30)+t), new V3(s*0.125,1.17,fz(1.17)+t*0.8),
           new V3(sx(1.08)+s*0.012,1.08,-0.03), new V3(s*0.15,bot+0.07,zb-0.012)];
-        gearG.add(strap(pts.slice(0,6),w,t,gmT,ctr)); gearG.add(strap(pts.slice(5),w*0.45,t*0.6,gmT,ctr)); const b=buckle(0,0,0); b.position.copy(pts[5]); b.lookAt(pts[5].clone().add(new V3(0,0,1))); gearG.add(b); }); }
-    if(ruck){ const zb=backZ(1.22); const r=ruckMesh(ap); r.position.set(-0.01,1.17,zb+0.012); gearG.add(r); straps(1.43,0.91,zb,0.062,0.013);
-      if(has('sbag')||has('pad')){ const sb=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.36,20,1),gmP); sb.castShadow=true; sb.rotation.z=Math.PI/2; sb.position.set(-0.01,0.84,zb-0.12); gearG.add(sb);
+        gearC.add(strap(pts.slice(0,6),w,t,gmT,ctr)); gearC.add(strap(pts.slice(5),w*0.45,t*0.6,gmT,ctr)); const b=buckle(0,0,0); b.position.copy(pts[5]); b.lookAt(pts[5].clone().add(new V3(0,0,1))); gearC.add(b); }); }
+    let rD=0.22; if(ruck){ const zb=backZ(1.22); const rp=packObj('big'), r=rp||ruckMesh(ap); if(rp) rD=rp.userData.depth; r.position.set(-0.01,rp?1.16:1.17,zb+(rp?0.042:0.012)); gearG.add(r); straps(1.43,0.91,zb,0.062,0.013);
+      if(has('sbag')||has('pad')){ const sb=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.36,20,1),gmP); sb.castShadow=true; sb.rotation.z=Math.PI/2; sb.position.set(-0.01,0.84,zb-Math.min(0.12,rD*0.45)); gearG.add(sb);
         [-1,1].forEach(s=>{ const rg=new THREE.Mesh(new THREE.TorusGeometry(0.083,0.006,6,24),gmS); rg.rotation.y=Math.PI/2; rg.position.set(-0.01+s*0.1,0.84,zb-0.12); gearG.add(rg); }); } }
-    if(ap){ const zb=backZ(1.25); const a=apMesh(); a.position.set(-0.01,ruck?1.18:1.22,ruck?zb-0.235:zb+0.01); gearG.add(a); if(!ruck) straps(1.41,1.03,zb,0.05,0.011); }
+    if(ap){ const zb=backZ(1.25); const apo=packObj('ap'), a=apo||apMesh(); a.position.set(-0.01,ruck?1.2:1.22,ruck?zb+0.042-rD+0.01:zb+(apo?0.024:0.01)); gearG.add(a); if(!ruck) straps(1.41,1.03,zb,0.05,0.011); }
     if(has('medbag')){ const zb=backZ(1.0); const mb=soft(0.36,0.26,0.18,0.05,gmP,{bulge:0.02}); mb.position.set(-0.01,ruck?0.8:1.0,zb-0.09-(ruck?0.13:0)); gearG.add(mb); }
     if(visTag('at4')){ const zb=backZ(1.25); const t=cyl(0.042,1.0,gm.d,14); t.position.set(0.04,1.28,zb-(ruck?0.27:0.06)); t.rotation.z=0.45; gearG.add(t); }
     if(has('cant')&&!ruck){ /* el cinturón del modelo ya lleva bolsas; las cantimploras van detrás, en la cadera */ for(let i=0;i<Math.min(2,st.q.cant);i++){ const s=i?1:-1; const p=hit([mesh.pants_1,mesh.pouches_1],new THREE.Vector3(s*0.12,0.97,-0.8),new THREE.Vector3(0,0,1)); if(!p) continue; const c=cyl(0.042,0.17,gm.d,14); c.position.set(s*0.12,0.95,p.z-0.04); gearH.add(c); } }
@@ -261,6 +277,6 @@ export async function mount(stage,st,D,M,opt){
     b2.style.display=bc.on()&&bc.hasIR()?'':'none'; b2.textContent=bc.ir()?L('Ver láser visible','Show visible laser'):L('Ver en IR (visor nocturno)','View in IR (night vision)');
     const cv=stage.querySelector('canvas'); if(cv) cv.style.filter=bc.on()&&bc.ir()?M.NVG_FILTER:''; bn.textContent=bc.on()?bc.note(EN()):''; }
   camUI(); camos(); scale(); rebuildGear(); V.fit(holder); credits(null); beamUI(); await setWeapon();
-  window.MAT_SOLDADO_DBG={ w:()=>wpn&&[wpn.position.toArray(),wpn.userData.stock,wpn.userData.gp,wpn.scale.x,new THREE.Box3().setFromObject(wpn).min.toArray(),wp(B('R_Hand')).toArray(),wp(B('R_Upperarm')).toArray()], still:(y)=>{ V.setAuto(false); V.reset(); if(y!=null) V.look(y); }, gear:()=>gearG.children.length, weapon:()=>!!wpn, helmet:()=>!!(mesh.helmet1_2&&mesh.helmet1_2.visible), scale:()=>holder.scale.x, hands:()=>{ body.updateMatrixWorld(true); const l=body.worldToLocal(wp(B('L_Hand'))), r=body.worldToLocal(wp(B('R_Hand'))); return {t:DBGH.t&&DBGH.t.toArray(),g:DBGH.g&&DBGH.g.toArray(),L:l.toArray(),R:r.toArray(),Lu:body.worldToLocal(wp(B('L_Upperarm'))).toArray(), mt:wi&&M.mt(wi.v), gp:wpn&&wpn.userData.gp, p:DBGH.p}; } };
-  return { update(s){ scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ if(bc) bc.dispose(); body.remove(gearG); body.remove(gearH); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
+  window.MAT_SOLDADO_DBG={ w:()=>wpn&&[wpn.position.toArray(),wpn.userData.stock,wpn.userData.gp,wpn.scale.x,new THREE.Box3().setFromObject(wpn).min.toArray(),wp(B('R_Hand')).toArray(),wp(B('R_Upperarm')).toArray()], still:(y)=>{ V.setAuto(false); V.reset(); if(y!=null) V.look(y); }, gear:()=>gearG.children.length,    weapon:()=>!!wpn, helmet:()=>!!(mesh.helmet1_2&&mesh.helmet1_2.visible), scale:()=>holder.scale.x, hands:()=>{ body.updateMatrixWorld(true); const l=body.worldToLocal(wp(B('L_Hand'))), r=body.worldToLocal(wp(B('R_Hand'))); return {t:DBGH.t&&DBGH.t.toArray(),g:DBGH.g&&DBGH.g.toArray(),L:l.toArray(),R:r.toArray(),Lu:body.worldToLocal(wp(B('L_Upperarm'))).toArray(), mt:wi&&M.mt(wi.v), gp:wpn&&wpn.userData.gp, p:DBGH.p}; } };
+  return { update(s){ scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ if(bc) bc.dispose(); body.remove(gearG); body.remove(gearH); body.remove(gearC); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
 }
