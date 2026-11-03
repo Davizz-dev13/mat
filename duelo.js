@@ -334,7 +334,7 @@ window.MAT_DUELO=function(app,X){
   var VV=(document.querySelector('script[data-v]')||{getAttribute:function(){return '';}}).getAttribute('data-v');
   function lsg(k){try{return localStorage.getItem(k)||'';}catch(e){return '';}} function lss(k,v){try{localStorage.setItem(k,v);}catch(e){}}
   function markChips(on){Array.prototype.forEach.call(document.querySelectorAll('.rch'),function(b){b.setAttribute('aria-pressed',String((b.getAttribute('data-r')==='3d')===on));});}
-  function R3hud(){ if(!R3) return; hudEl.hidden=false; hudEl.innerHTML=[0,1].map(function(i){var u=U[i];return '<div class="hh'+(i?' r':'')+'"><div class="hn">'+X.esc(short(u.a.n,28))+'</div><div class="hb"><i style="width:'+Math.max(0,Math.round(u.hp*100))+'%"></i></div></div>';}).join('');}
+  function R3hud(){ if(!R3) return; hudEl.hidden=false; if(R3.hp){ R3.hp(0,U[0].hp); R3.hp(1,U[1].hp); } hudEl.innerHTML=[0,1].map(function(i){var u=U[i];return '<div class="hh'+(i?' r':'')+'"><div class="hn">'+X.esc(short(u.a.n,28))+'</div><div class="hb"><i style="width:'+Math.max(0,Math.round(u.hp*100))+'%"></i></div></div>';}).join('');}
   function R3ban(t){ if(!t){banEl.hidden=true;return;} banEl.textContent=t; banEl.hidden=false; banEl.classList.remove('go'); void banEl.offsetWidth; banEl.classList.add('go'); }
   function stop3(){ if(R3){R3.dispose();R3=null;} R3P=null; d3el.hidden=true; hudEl.hidden=true; banEl.hidden=true; tipEl.hidden=true; cvEl.hidden=false; markChips(false); }
   function mod3(){ return import('./duelo3d.js?v='+VV).then(function(m){M3=m; return m;}); }
@@ -343,12 +343,12 @@ window.MAT_DUELO=function(app,X){
     rnote.textContent='Cargando escena 3D…'; markChips(true);
     R3P=Promise.all([mod3(),loadSil(MODE)]).then(function(r){ var m=r[0];
       if(!m.webglOK()){ stop3(); rnote.textContent='Este navegador no tiene WebGL: se usa 2D.'; return; }
-      var mk=function(a,dir){var s=SIL&&SIL[a.id]; return {sil:s||null, img:ALT[a.id]||(a.img&&a.img.src), face:s?s[6]:1, dir:dir};};
+      var mk=function(a,dir){var s=SIL&&SIL[a.id]; return {id:a.id, sil:s||null, img:ALT[a.id]||(a.img&&a.img.src), face:s?s[6]:1, dir:dir};};
       d3el.hidden=false; cvEl.hidden=true;
       R3=m.create(d3el,{mode:MODE,units:[mk(A,1),mk(B,-1)]});
       if(!R3){ stop3(); rnote.textContent='No se pudo iniciar el 3D: se usa 2D.'; return; }
       R3hud(); rnote.textContent=''; tipEl.hidden=false; setTimeout(function(){tipEl.hidden=true;},3500);
-      if(!explicit&&!lsg('mat_r')){ setTimeout(function(){ if(!R3) return; var f=R3.fps(); if(f!=null&&f<28){ lss('mat_r_auto','2d'); stop3(); rnote.textContent='El 3D iba lento en este dispositivo ('+Math.round(f)+' fps): se usa 2D. Puedes activarlo con el botón 3D.'; } },2800); }
+      if(!explicit&&!lsg('mat_r')){ setTimeout(function(){ if(!R3) return; var f=R3.fps(); if(f!=null&&f<22){ lss('mat_r_auto','2d'); stop3(); rnote.textContent='El 3D iba lento en este dispositivo ('+Math.round(f)+' fps): se usa 2D. Puedes activarlo con el botón 3D.'; } },4500); }
     }).catch(function(e){ stop3(); rnote.textContent='No se pudo cargar el 3D: se usa 2D.'; });
   }
   Array.prototype.forEach.call(document.querySelectorAll('.rch'),function(b){b.addEventListener('click',function(){ var v=b.getAttribute('data-r'); lss('mat_r',v); if(v==='3d'){ if(!R3&&!anim) start3(true);} else { if(!anim) stop3(); } });});
@@ -388,7 +388,7 @@ window.MAT_DUELO=function(app,X){
       }
       setTimeout(next,600);
       function finish(){ if(!anim) return; anim=null;
-        var win=sim.win, Wn=win===0?A:B, Ls=win===0?B:A, pct=Math.round((win===0?wins:N-wins)/N*100);
+        var win=sim.win; if(R3&&R3.result) R3.result(win); var Wn=win===0?A:B, Ls=win===0?B:A, pct=Math.round((win===0?wins:N-wins)/N*100);
         var dec=sim.dead?Wn.n+' deja fuera de combate a '+Ls.n+' con '+(win===0?wa:wb).n+'.':'Ninguno queda destruido; '+Wn.n+' termina con más integridad ('+Math.round(sim.hp[win]*100)+' % frente a '+Math.round(sim.hp[1-win]*100)+' %).';
         var th=function(a,wn){return '<div class="rv'+(wn?' win':'')+'">'+(a.img?'<img src="'+a.img.th+'" alt="">':window.MAT_PH(a))+'<div class="rvn">'+X.esc(a.n)+'</div><div class="rvh">'+(wn?'VENCEDOR':'Integridad '+Math.max(0,Math.round(sim.hp[a===A?0:1]*100))+' %')+'</div></div>';};
         var r='<div class="result"><div class="kicker">Resultado de esta simulación</div><div class="rvs">'+th(A,win===0)+'<div class="rvx">VS</div>'+th(B,win===1)+'</div><h2 style="margin-top:4px">Gana '+X.esc(Wn.n)+'</h2><p class="lead" style="margin:6px 0">'+X.esc(dec)+'</p>';
