@@ -42,6 +42,10 @@ var css=''
 +' body.r-home .hgrid.pg>a.pg-wide{grid-column:span 2}'
 +' .hgrid.pg>a.pg-big .t{font-size:26px!important}.hgrid.pg>a.pg-big .d{font-size:13.5px!important}'
 +' .hgrid.pg>a.pg-big svg.hic{width:52px!important;height:52px!important;max-height:52px!important}}'
++'.pg-now{display:inline-flex;align-items:center;gap:7px;max-width:100%;box-sizing:border-box;margin:0 0 7px;padding:4px 10px 4px 8px;border-radius:999px;background:rgba(8,10,12,.72);border:1px solid rgba(61,220,132,.55);color:#e9f7ee;font-size:12.5px;line-height:1.25;font-weight:600;text-shadow:none;overflow-wrap:anywhere}'
++'.pg-now b{color:#fff;font-weight:800}.pg-now i{flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#3ddc84;box-shadow:0 0 0 0 rgba(61,220,132,.6);animation:pgnow 1.8s infinite}'
++'@keyframes pgnow{70%{box-shadow:0 0 0 7px rgba(61,220,132,0)}100%{box-shadow:0 0 0 0 rgba(61,220,132,0)}}@media (prefers-reduced-motion:reduce){.pg-now i{animation:none}}'
++'.pg-now[hidden]{display:none}'
 +'@media (min-width:980px){body.r-home .hgrid.pg{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}}';
 var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
@@ -84,11 +88,25 @@ function grid(){
   rest.forEach(function(a){ a.classList.add('pg-s'); g.appendChild(a); });
   g.classList.add('pg');
 }
+// Contador en directo en la tarjeta del Radar: aviones militares en el aire ahora (misma API que #/radar; datos adsb.lol, ODbL).
+var LIVE=null, LIVEP=null, LIVEAT=0;
+function liveLoad(){ if(LIVE&&Date.now()-LIVEAT<60000) return Promise.resolve(LIVE); if(LIVEP) return LIVEP;
+  var api=(window.MAT_RADAR_API||'https://mat-radar.sites.tab.bot').replace(/\/+$/,''), ctl=('AbortController' in window)?new AbortController():null, to=setTimeout(function(){ if(ctl) ctl.abort(); },12000);
+  LIVEP=fetch(api+'/api/mil?t='+Math.floor(Date.now()/10000),ctl?{signal:ctl.signal}:{}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(j){ clearTimeout(to); LIVEP=null; if(!j||!j.ac) throw new Error('bad');
+    var ia=(j.f||[]).indexOf('alt'), air=0; j.ac.forEach(function(r){ var al=ia>=0?r[ia]:null; if(al==null||al>=0) air++; }); LIVE={air:air,n:j.ac.length,now:j.now}; LIVEAT=Date.now(); return LIVE; })
+    .catch(function(e){ clearTimeout(to); LIVEP=null; throw e; });
+  return LIVEP; }
+function liveHTML(L){ return '<i aria-hidden="true"></i><span>'+(EN()?'Right now: <b>'+L.air.toLocaleString('en-GB')+'</b> military aircraft in the air':'Ahora mismo: <b>'+L.air.toLocaleString('es-ES')+'</b> aviones militares en el aire')+'</span>'; }
+function liveTile(){ var a=app.querySelector('.hgrid a[href="#/radar"]'); if(!a) return; var t=a.querySelector('.t'); if(!t||!t.parentNode) return;
+  var box=a.querySelector('.pg-now'); if(!box){ box=document.createElement('div'); box.className='pg-now'; box.hidden=true; t.parentNode.insertBefore(box,t); }
+  function paint(){ if(!LIVE||!box.isConnected) return; var h=liveHTML(LIVE); if(box.innerHTML!==h) box.innerHTML=h; if(box.hidden) box.hidden=false; }
+  paint(); if(LIVE&&Date.now()-LIVEAT<60000) return;
+  liveLoad().then(paint).catch(function(){ /* sin datos: la tarjeta queda como siempre */ }); }
 var busy=false, tm=null;
 function run(){ if(busy) return; var h=location.hash.replace(/^#\/?/,''); if(h.split('?')[0].replace(/\/+$/,'')) return;
-  busy=true; try{ grid(); news(); }catch(e){ if(window.console) console.warn('portada',e); } finally{ busy=false; } }
+  busy=true; try{ grid(); news(); liveTile(); }catch(e){ if(window.console) console.warn('portada',e); } finally{ busy=false; } }
 new MutationObserver(function(){ if(busy) return; clearTimeout(tm); tm=setTimeout(run,60); }).observe(app,{childList:true,subtree:true});
 window.addEventListener('hashchange',function(){ clearTimeout(tm); tm=setTimeout(run,60); });
 setTimeout(run,0);
-window.MAT_PORTADA={run:run,load:loadNews};
+window.MAT_PORTADA={run:run,load:loadNews,live:liveLoad};
 })();

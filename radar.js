@@ -47,7 +47,7 @@ function shapeOf(cat,typ){ var s=(CAT[cat]||CAT.otro).s; if((cat==='transporte'|
 function svgIcon(cat,typ,size,rot,extra){ var k=CAT[cat]||CAT.otro;
   return '<svg viewBox="0 0 32 32" width="'+size+'" height="'+size+'" style="color:'+k.c+';fill:'+k.c+';transform:rotate('+(rot||0)+'deg)'+(extra||'')+'" aria-hidden="true">'+SH[shapeOf(cat,typ)]+'</svg>'; }
 var DBP=null, DB={};
-function loadDB(){ if(DBP) return DBP; DBP=window.MAT_GET('radar_db.json.gz').then(function(d){ DB=d||{}; return DB; }).catch(function(){ DBP=null; return DB; }); return DBP; }
+function loadDB(){ if(DBP) return DBP; DBP=window.MAT_GET('radar_db.json.gz').then(function(d){ DB=d||{}; DBOK=true; return DB; }).catch(function(){ DBP=null; DBOK=true; return DB; }); return DBP; }
 var BYID=null;
 function byId(id){ if(!BYID){ BYID={}; ((window.MAT_DATA&&window.MAT_DATA.items)||[]).forEach(function(x){ BYID[x.id]=x; }); } return BYID[id]; }
 function prettyDesc(s){ if(!s) return ''; return String(s).split(' ').map(function(w){ return (w.length>=3&&/^[A-Z]+$/.test(w)&&!/^(MRTT|AEWC|AEW|VIP|USAF|RAF|NATO|ISR|SAR|BAE)$/.test(w))?w.charAt(0)+w.slice(1).toLowerCase():w; }).join(' ').replace(/Mcdonnell-douglas/i,'McDonnell Douglas').replace(/Mcdonnell/,'McDonnell'); }
@@ -180,6 +180,9 @@ function legend(){ return '<div class="rd-leg" id="rd-leg"><div>'+T('Altitud','A
 function liveHTML(){
   return '<div class="rd-live" id="rd-live"><span class="rd-dot" id="rd-dot"></span><span id="rd-cnt">'+T('Conectando con el radar…','Connecting to the radar…')+'</span></div>'
   +'<div class="rd-emg" id="rd-emg"></div>'
+  +'<div class="rd-avl" id="rd-avl" role="status" aria-live="polite"></div>'
+  +'<div class="rd-acts"><button type="button" class="rd-btn rd-act" id="rd-avb" aria-expanded="false" aria-controls="rd-av">🔔 '+T('Avisos de avistamientos','Sighting alerts')+'</button><button type="button" class="rd-btn rd-act" id="rd-shb">📤 '+T('Compartir','Share')+'</button></div>'
+  +'<div class="rd-av" id="rd-av" hidden></div>'
   +'<div class="rd-bar"><input id="rd-q" type="search" enterkeyhint="search" autocomplete="off" placeholder="'+T('Indicativo, matrícula, tipo…','Callsign, registration, type…')+'" aria-label="'+T('Buscar','Search')+'"><select id="rd-pais" aria-label="'+T('País','Country')+'"><option value="">'+T('Todos los países','All countries')+'</option></select></div>'
   +'<div class="rd-chips" id="rd-chips"></div>'
   +'<div class="rd-two"><div class="rd-wrap"><div class="rd-map dark" id="rd-map"></div>'
@@ -209,20 +212,21 @@ function render(){ if(!S.data||!S.map) return; var L=S.L, seen={}, cnt={}, n=0, 
   var ch=document.getElementById('rd-chips'); if(ch){ ch.innerHTML=CORDER.filter(function(k){ return cnt[k]; }).map(function(k){ return '<button type="button" class="rd-chip'+(S.filt[k]===false?' off':'')+'" data-c="'+k+'"><i style="background:'+CAT[k].c+'"></i>'+(EN()?CAT[k].en:CAT[k].es)+' <span class="n">'+cnt[k]+'</span></button>'; }).join(''); }
   var ps=document.getElementById('rd-pais'); if(ps&&document.activeElement!==ps){ var cur=S.pais; var arr=Object.keys(pais).map(function(c){ return [c,cname(c),pais[c]]; }).sort(function(x,y){ return y[2]-x[2]||x[1].localeCompare(y[1]); });
     ps.innerHTML='<option value="">'+T('Todos los países','All countries')+' ('+S.data.length+')</option>'+arr.map(function(r){ return '<option value="'+r[0]+'"'+(r[0]===cur?' selected':'')+'>'+esc(r[1])+' ('+r[2]+')</option>'; }).join(''); }
-  var cn=document.getElementById('rd-cnt'); if(cn) cn.innerHTML='<b>'+nf(S.data.length)+'</b> '+T('aviones militares emitiendo ahora','military aircraft broadcasting now')+(n!==S.data.length?' <span class="u">· '+nf(n)+' '+T('con tus filtros','with your filters')+'</span>':'')+' <span class="u" id="rd-age"></span>';
+  var cn=document.getElementById('rd-cnt'); if(cn) cn.innerHTML='<b>'+nf(S.data.length)+'</b> '+T('aviones militares emitiendo ahora','military aircraft broadcasting now')+' <span class="u">· '+nf(S.data.filter(function(a){ return a.alt==null||a.alt>=0; }).length)+' '+T('en el aire','in the air')+'</span>'+(n!==S.data.length?' <span class="u">· '+nf(n)+' '+T('con tus filtros','with your filters')+'</span>':'')+' <span class="u" id="rd-age"></span>';
   ageTxt();
   var dot=document.getElementById('rd-dot'); if(dot) dot.className='rd-dot'+(S.err>2?' off':'');
   var em=S.data.filter(function(a){ return /^(7500|7600|7700)$/.test(a.sq||''); }), ee=document.getElementById('rd-emg');
   if(ee){ if(em.length){ ee.style.display='block'; ee.innerHTML='⚠ '+em.map(function(a){ var w={7700:T('emergencia','emergency'),7600:T('fallo de radio','radio failure'),7500:T('interferencia ilícita','unlawful interference')}[a.sq]; return '<a href="#" data-h="'+a.hex+'" style="color:#fff">'+esc(a.flight||a.reg||a.hex.toUpperCase())+'</a> '+T('transmite el código','is squawking')+' '+a.sq+' ('+w+')'; }).join(' · '); } else ee.style.display='none'; }
   list();
   if(S.sel) panelLive(false);
+  try{ if(!AV.ct||AV.ctDone) avCheck(); if(AV.open&&S.sel!==AV.lsel){ AV.lsel=S.sel; avPanel(); } }catch(e){ if(window.console) console.warn('avisos',e); }
 }
 function ageTxt(){ var ag=document.getElementById('rd-age'); if(!ag||!S.at) return; var age=Math.max(0,Math.round(Date.now()/1000-S.at)); ag.textContent='· '+T('actualizado ','updated ')+(age<90?T('hace '+age+' s',age+' s ago'):T('a las ','at ')+hhmm(S.at)); }
 function list(){ var ul=document.getElementById('rd-list'); if(!ul||!S.data) return; var v=S.data.filter(visible).sort(function(x,y){ return (y.alt==null?-2:y.alt)-(x.alt==null?-2:x.alt); });
   var lc=document.getElementById('rd-lcnt'); if(lc) lc.textContent=nf(v.length)+' '+T('aviones','aircraft');
   ul.innerHTML=v.slice(0,S.list).map(function(a){ var i=a._i; return '<li><a href="#" data-h="'+a.hex+'"><span class="i">'+svgIcon(i.cat,a.type,22,45)+'</span><span class="m"><b>'+esc(a.flight||a.reg||a.hex.toUpperCase())+'</b><span>'+cflag(a._c)+' '+esc(i.name)+'</span></span><span class="v">'+(a.alt!=null&&a.alt<0?T('En tierra','On ground'):(a.alt==null?'—':nf(a.alt)+' ft'))+'<small>'+(a.gs==null?'':nf(a.gs*1.852)+' km/h')+'</small></span></a></li>'; }).join('')||'<li class="rd-wait">'+T('Ningún avión con estos filtros.','No aircraft match these filters.')+'</li>';
   var mo=document.getElementById('rd-lmore'); if(mo) mo.innerHTML=v.length>S.list?'<button type="button" class="rd-more" id="rd-more">'+T('Ver más','Show more')+' ('+(v.length-S.list)+')</button>':''; }
-function poll(){ if(!alive()){ stop(); return; } if(document.hidden&&S.data) return;
+function poll(){ if(!alive()){ stop(); return; } if(document.hidden&&S.data&&!avActive()) return;
   fetchJSON(API+'/api/mil?t='+Math.floor(Date.now()/10000),15000).then(function(j){ if(!alive()) return; if(!j||!j.ac) throw new Error('bad');
     var prev={}; (S.data||[]).forEach(function(a){ prev[a.hex]=a; });
     S.data=j.ac.map(function(r){ var a=F(r); a._c=iso(a.hex,a.reg); var p=prev[a.hex]; if(p&&p._i&&p.type===a.type) a._i=p._i; a._t=j.now-(a.seen||0); a._pts=(p&&p._pts)||[]; var last=a._pts[a._pts.length-1]; if(!last||last[1]!==a.lat||last[2]!==a.lon) a._pts.push([a._t,a.lat,a.lon,a.alt,a.gs]); if(a._pts.length>3000) a._pts.shift(); return a; });
@@ -313,7 +317,7 @@ function loadHoy(){ fetchJSON(API+'/api/hoy',15000).then(function(j){ if(!alive(
       return '<li><a href="#" data-h="'+r[0]+'"><span class="i">'+svgIcon(i.cat,i.typ,22,45)+'</span><span class="m"><b>'+esc(r[1]||i.reg||r[0].toUpperCase())+'</b><span>'+cflag(c)+' '+esc(i.name)+'</span></span><span class="v"><b>'+hm(r[5]-r[4])+'</b><small>'+(on?T('sigue en el aire','still airborne'):hhmm(r[4])+'–'+hhmm(r[5]))+'</small></span></a></li>'; }).join(''); });
   }).catch(function(){ var ul=document.getElementById('rd-hoy'); if(ul) ul.innerHTML='<li class="rd-wait">'+T('No disponible ahora mismo.','Not available right now.')+'</li>'; }); }
 function setBase(){ var L=S.L; if(S.base) S.map.removeLayer(S.base); var m=document.getElementById('rd-map'), sat=!S.dark;
-  S.base=sat?L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Imagery © <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics · '+T('Datos','Data')+': <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (ODbL)'}):L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · '+T('Datos','Data')+': <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (ODbL)'});
+  S.base=sat?L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,crossOrigin:'anonymous',attribution:'Imagery © <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics · '+T('Datos','Data')+': <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (ODbL)'}):L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,crossOrigin:'anonymous',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · '+T('Datos','Data')+': <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (ODbL)'});
   S.base.addTo(S.map); if(m) m.classList.toggle('dark',!sat); var b=document.getElementById('rd-sat'); if(b) b.classList.toggle('on',sat); }
 function initMap(id,center,zoom){ var L=S.L; var map=L.map(id,{zoomControl:true,worldCopyJump:true,minZoom:window.innerWidth>=700?2:1,maxZoom:18}).setView(center,zoom);
   map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>'); return map; }
@@ -326,6 +330,7 @@ function live(){ var main=document.getElementById('rd-main'); main.innerHTML=liv
     var q=document.getElementById('rd-q'); q.oninput=function(){ S.q=q.value.trim().toLowerCase(); render(); };
     document.getElementById('rd-pais').onchange=function(e){ S.pais=e.target.value; render(); };
     document.getElementById('rd-chips').onclick=function(e){ var b=e.target.closest('.rd-chip'); if(!b) return; var c=b.getAttribute('data-c'); var only=Object.keys(S.filt).length===0; if(only){ CORDER.forEach(function(k){ S.filt[k]=(k===c); }); } else { S.filt[c]=S.filt[c]===false; if(CORDER.every(function(k){ return S.filt[k]!==false; })||CORDER.every(function(k){ return S.filt[k]===false; })) S.filt={}; } render(); };
+    xCss(); avInit(); document.getElementById('rd-shb').onclick=shOpen;
     document.getElementById('rd-list').onclick=pickFromList; document.getElementById('rd-hoy').onclick=pickFromList; document.getElementById('rd-emg').onclick=pickFromList;
     document.getElementById('rd-lmore').onclick=function(e){ if(e.target.id==='rd-more'){ S.list+=30; list(); } };
     loadDB().then(function(){ if(S.data){ S.data.forEach(function(a){ a._i=null; }); render(); } });
@@ -397,7 +402,221 @@ function showMission(m){ var L=S.L, H=S.hist; if(!m||!S.map) return; var cur=m.t
   document.getElementById('rd-tfit').onclick=fitTrack; document.getElementById('rd-mheat').onclick=function(){ S.heatOn=!S.heatOn; this.classList.toggle('on',S.heatOn); drawTrack(cur); };
   fitTrack(); if(window.innerWidth<980){ var mp=document.getElementById('rd-map'); if(mp) mp.scrollIntoView({behavior:'smooth',block:'start'}); }
 }
-window.MAT_RADAR=function(app,ctx){ addCss(); stop(); S.ctx=ctx; var p=(ctx&&ctx.p)||[]; var tab=p[1]==='dias'?'dias':'live';
+
+// ── Avisos de avistamientos (solo con la página abierta) y Compartir (PNG del mapa) · 3 nov 2026 ──
+var AVK='mat_radar_avisos_v1', AVSN='mat_radar_avisos_vistos_v1', AVLG='mat_radar_avisos_log_v1', DBOK=false;
+// España: contorno aproximado de la península + cajas para Baleares, Canarias, Ceuta y Melilla ([lon,lat]).
+var ES_POLY=[[-9.35,43.25],[-8.4,43.45],[-7.0,43.62],[-5.8,43.68],[-3.8,43.52],[-1.79,43.39],[-1.4,43.05],[-0.7,42.86],[0.7,42.86],[1.45,42.6],[1.72,42.5],[3.2,42.45],[3.35,42.32],[3.2,41.9],[2.2,41.3],[0.9,41.0],[0.5,40.5],[-0.3,39.45],[0.25,38.75],[-0.5,38.3],[-0.75,37.6],[-1.6,37.2],[-2.1,36.7],[-3.4,36.7],[-4.4,36.68],[-5.3,36.1],[-5.62,36.0],[-6.05,36.2],[-6.42,36.8],[-7.0,37.15],[-7.42,37.18],[-7.5,37.5],[-7.25,38.2],[-7.05,38.9],[-7.5,39.65],[-6.9,40.25],[-6.8,41.0],[-6.2,41.6],[-6.6,41.95],[-7.5,41.85],[-8.2,41.9],[-8.9,41.88],[-9.3,42.4]];
+var ES_BOX=[[38.55,40.2,1.1,4.45],[27.5,29.5,-18.3,-13.3],[35.82,35.96,-5.45,-5.22],[35.24,35.34,-3.02,-2.88]];
+function inPoly(x,y,P){ var c=false; for(var i=0,j=P.length-1;i<P.length;j=i++){ var xi=P[i][0],yi=P[i][1],xj=P[j][0],yj=P[j][1]; if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) c=!c; } return c; }
+function overES(a){ if(a.lat==null||a.lon==null) return false; if(inPoly(a.lon,a.lat,ES_POLY)) return true; for(var i=0;i<ES_BOX.length;i++){ var b=ES_BOX[i]; if(a.lat>=b[0]&&a.lat<=b[1]&&a.lon>=b[2]&&a.lon<=b[3]) return true; } return false; }
+function lsGet(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v; }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+var AV={cfg:null,seen:null,log:null,open:false,tm:null};
+function avCfg(){ if(!AV.cfg){ var c=lsGet(AVK,null)||{}; AV.cfg={on:c.on!==false,cats:Array.isArray(c.cats)?c.cats.filter(function(k){ return CAT[k]; }):[],all:!!c.all,terms:Array.isArray(c.terms)?c.terms.slice(0,20):[],zona:c.zona==='es'?'es':'',notif:!!c.notif}; } return AV.cfg; }
+function avSave(){ lsSet(AVK,AV.cfg); avBtn(); }
+function avRules(){ var c=avCfg(); return (c.all?1:0)+c.cats.length+c.terms.length; }
+function avActive(){ return avCfg().on&&avRules()>0; }
+function acLbl(a){ return a.flight||a.reg||String(a.hex).toUpperCase(); }
+function avMatch(a){ var c=avCfg(), i=a._i||(a._i=info(a)), why=null;
+  if(c.zona==='es'&&!overES(a)) return null;
+  var hay=[a.flight,a.reg,a.hex,a.type,i.name,i.desc].join(' ').toLowerCase();
+  for(var t=0;t<c.terms.length;t++){ var q=String(c.terms[t]).toLowerCase(); if(q&&hay.indexOf(q)>=0){ why='«'+c.terms[t]+'»'; break; } }
+  if(!why&&c.cats.indexOf(i.cat)>=0) why=EN()?CAT[i.cat].en:CAT[i.cat].es;
+  if(!why&&c.all) why=T('Cualquier avión militar','Any military aircraft');
+  if(why&&c.zona==='es') why+=T(' · sobre España',' · over Spain');
+  return why; }
+function avCheck(){ if(!S.data||!DBOK||!avActive()) return; var now=Date.now()/1000, fresh=[]; if(!AV.seen) AV.seen=lsGet(AVSN,{});
+  S.data.forEach(function(a){ var w=avMatch(a); if(!w) return; var last=AV.seen[a.hex]; if(!last||now-last>7200) fresh.push([a,w]); AV.seen[a.hex]=Math.round(now); });
+  Object.keys(AV.seen).forEach(function(h){ if(now-AV.seen[h]>43200) delete AV.seen[h]; }); lsSet(AVSN,AV.seen);
+  if(fresh.length) avFire(fresh); }
+function avFire(L){ var now=Math.floor(Date.now()/1000); AV.log=AV.log||lsGet(AVLG,[]);
+  L.forEach(function(p){ var a=p[0], i=a._i||info(a); AV.log.unshift({h:a.hex,f:acLbl(a),n:i.name,c:i.cat,k:a._c||'',w:p[1],t:now}); }); AV.log=AV.log.slice(0,20); lsSet(AVLG,AV.log);
+  avBanner(L); avToast(L,false); avNotify(L); if(AV.open) avPanel(); }
+function avLine(a,w,link){ var i=a._i||info(a); return (link?'<a href="#" data-h="'+esc(a.hex)+'">'+esc(acLbl(a))+'</a>':'<b>'+esc(acLbl(a))+'</b>')+' · '+esc(i.name)+(a._c?' · '+cflag(a._c)+' '+esc(cname(a._c)):'')+' <span class="u">('+esc(w)+')</span>'; }
+function avBanner(L){ var el=document.getElementById('rd-avl'); if(!el) return; var max=5;
+  el.innerHTML='<button type="button" class="rd-avlx" aria-label="'+T('Cerrar','Close')+'">×</button><b class="rd-avlt">🔔 '+(L.length>1?T(L.length+' avistamientos',L.length+' sightings'):T('Avistamiento','Sighting'))+' · '+hhmm(Date.now()/1000)+'</b>'
+   +L.slice(0,max).map(function(p){ return '<div class="rd-avli">'+avLine(p[0],p[1],true)+'</div>'; }).join('')+(L.length>max?'<div class="rd-avli u">'+T('y '+(L.length-max)+' más (lista en «Avisos»)','and '+(L.length-max)+' more (list under «Alerts»)')+'</div>':'');
+  el.style.display='block'; }
+function toastEl(){ var t=document.getElementById('rd-toast'); if(!t){ t=document.createElement('div'); t.id='rd-toast'; t.className='rd-toast'; t.setAttribute('role','status'); t.setAttribute('aria-live','polite'); t.setAttribute('data-noi18n',''); document.body.appendChild(t);
+    t.onclick=function(e){ var h=t.getAttribute('data-h'); if(e.target.closest('.rd-tx')||!h||!alive()){ t.classList.remove('on'); return; } t.classList.remove('on'); var x=find(h); select(h,false); if(x&&S.map) S.map.setView([x.lat,x.lon],Math.max(S.map.getZoom(),6)); var m=document.getElementById('rd-map'); if(m) m.scrollIntoView({behavior:'smooth',block:'start'}); }; } return t; }
+function avToast(L,test){ var t=toastEl();
+  var a=L[0][0];
+  t.innerHTML='<button type="button" class="rd-tx" aria-label="'+T('Cerrar','Close')+'">×</button><b>🔔 '+(test?T('Aviso de prueba','Test alert'):(L.length>1?T(L.length+' avistamientos nuevos',L.length+' new sightings'):T('Avistamiento','Sighting')))+'</b><span>'+avLine(a,L[0][1],false)+(L.length>1?' <span class="u">'+T('y '+(L.length-1)+' más','and '+(L.length-1)+' more')+'</span>':'')+'</span>'+(test?'':'<small>'+T('Toca para verlo en el mapa','Tap to see it on the map')+'</small>');
+  if(test) t.removeAttribute('data-h'); else t.setAttribute('data-h',a.hex);
+  t.classList.add('on'); clearTimeout(AV.tm); AV.tm=setTimeout(function(){ t.classList.remove('on'); },test?6000:10000); }
+var TTL0=null;
+function avNotify(L){ var c=avCfg(); if(!c.notif||!('Notification' in window)||Notification.permission!=='granted'||!document.hidden) return;
+  if(TTL0==null) TTL0=document.title; document.title='🔔 '+TTL0;
+  var a=L[0][0], i=a._i||info(a), title=T('M.A.T · Avistamiento','M.A.T · Sighting')+(L.length>1?' ('+L.length+')':''), body=acLbl(a)+' · '+i.name+(a._c?' · '+cname(a._c):'')+(L.length>1?T(' y '+(L.length-1)+' más',' and '+(L.length-1)+' more'):''), opt={body:body,icon:'favicon-192.png',tag:'mat-radar-'+a.hex,data:{h:a.hex}};
+  var reg=null; try{ if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration('./').then(function(r){ if(r&&r.showNotification) return r.showNotification(title,opt); throw new Error('noreg'); }).catch(function(){ try{ var n=new Notification(title,opt); n.onclick=function(){ window.focus(); n.close(); }; }catch(e){} }); else { var n=new Notification(title,opt); n.onclick=function(){ window.focus(); n.close(); }; } }catch(e){} }
+document.addEventListener('visibilitychange',function(){ if(!document.hidden&&TTL0!=null){ if(document.title.indexOf('🔔 ')===0) document.title=document.title.slice(3); TTL0=null; } });
+function avBtn(){ var b=document.getElementById('rd-avb'); if(!b) return; var n=avRules(), on=avActive(); b.classList.toggle('on',on); b.setAttribute('aria-expanded',AV.open?'true':'false');
+  b.innerHTML='🔔 '+T('Avisos de avistamientos','Sighting alerts')+(on?' <span class="rd-avbn">'+n+'</span>':(n?' <span class="u">('+T('en pausa','paused')+')</span>':'')); }
+function notifState(){ if(!('Notification' in window)) return ['no',T('Este navegador no permite avisos del navegador. Verás el aviso solo en la página.','This browser does not support browser notifications. You will only see the alert on the page.')];
+  var p=Notification.permission, c=avCfg(); if(p==='denied') return ['deny',T('Bloqueados en este navegador. Puedes permitirlos en los ajustes del sitio; mientras tanto, el aviso sale en la página.','Blocked in this browser. You can allow them in the site settings; meanwhile the alert shows on the page.')];
+  if(p==='granted'&&c.notif) return ['on',T('Activado: te avisará aunque estés en otra pestaña (con esta página abierta).','On: it will alert you even in another tab (with this page open).')];
+  return ['off',T('Opcional. Solo se pide permiso si pulsas el botón.','Optional. Permission is only asked if you tap the button.')]; }
+function avPanel(){ var el=document.getElementById('rd-av'); if(!el) return; var c=avCfg(), sel=S.sel?find(S.sel):null, ns=notifState(); AV.log=AV.log||lsGet(AVLG,[]);
+  var h='<div class="rd-avh"><b>🔔 '+T('Avisos de avistamientos','Sighting alerts')+'</b><button type="button" class="rd-avx" data-a="close" aria-label="'+T('Cerrar','Close')+'">×</button></div>'
+  +'<p class="rd-avn">'+T('Elige qué quieres vigilar y, cuando aparezca, verás un aviso en esta página. <b>Solo funciona mientras tengas abierta la página del Radar</b> (puede estar en otra pestaña) y <b>solo aparecen los aviones que emiten su posición</b>: muchos vuelos militares no lo hacen. Se guarda en este navegador.','Choose what to watch and, when it shows up, you will see an alert on this page. <b>It only works while the Radar page is open</b> (it can be in another tab) and <b>only aircraft broadcasting their position show up</b>: many military flights do not. Saved in this browser.')+'</p>'
+  +'<div class="rd-avs">'+T('Tipos de avión','Aircraft types')+'</div><div class="rd-avc">'
+  +'<button type="button" class="rd-chip'+(c.all?' on':'')+'" data-a="all" aria-pressed="'+c.all+'"><i style="background:#d6b25e"></i>'+T('Cualquier avión militar','Any military aircraft')+'</button>'
+  +CORDER.map(function(k){ var on=c.cats.indexOf(k)>=0; return '<button type="button" class="rd-chip'+(on?' on':'')+'" data-a="cat" data-c="'+k+'" aria-pressed="'+on+'"><i style="background:'+CAT[k].c+'"></i>'+(EN()?CAT[k].en:CAT[k].es)+'</button>'; }).join('')+'</div>'
+  +'<div class="rd-avs">'+T('Un avión concreto','A specific aircraft')+'</div>'
+  +'<form class="rd-avf" id="rd-avf"><input id="rd-avi" type="text" maxlength="24" autocomplete="off" enterkeyhint="done" placeholder="'+T('Indicativo, matrícula, hex o tipo','Callsign, registration, hex or type')+'" aria-label="'+T('Indicativo, matrícula, código hex o tipo','Callsign, registration, hex code or type')+'"><button type="submit" class="rd-btn">'+T('Añadir','Add')+'</button></form>'
+  +(sel?'<button type="button" class="rd-btn rd-avsel" data-a="sel">+ '+T('Vigilar el avión seleccionado','Watch the selected aircraft')+' ('+esc(acLbl(sel))+')</button>':'')
+  +'<div class="rd-avt">'+(c.terms.length?c.terms.map(function(t,ix){ return '<span class="rd-avtg">'+esc(t)+'<button type="button" data-a="rm" data-i="'+ix+'" aria-label="'+T('Quitar','Remove')+' '+esc(t)+'">×</button></span>'; }).join(''):'<span class="u">'+T('Ejemplos: RCH (indicativo de transportes de EE. UU.), K35R (tipo KC-135), un código hex como ae1234.','Examples: RCH (US airlift callsign), K35R (KC-135 type), a hex code like ae1234.')+'</span>')+'</div>'
+  +'<div class="rd-avs">'+T('Zona','Area')+'</div><div class="rd-avz">'
+  +'<label><input type="radio" name="rd-avz" value=""'+(c.zona?'':' checked')+'> '+T('Todo el mundo','Anywhere')+'</label>'
+  +'<label><input type="radio" name="rd-avz" value="es"'+(c.zona==='es'?' checked':'')+'> '+T('Solo sobre España','Only over Spain')+'</label></div>'
+  +'<p class="rd-avsm">'+T('España con un contorno aproximado: península, Baleares, Canarias, Ceuta y Melilla.','Spain with an approximate outline: mainland, Balearic and Canary Islands, Ceuta and Melilla.')+'</p>'
+  +'<div class="rd-avs">'+T('Aviso del navegador (opcional)','Browser notification (optional)')+'</div>'
+  +(ns[0]==='off'?'<button type="button" class="rd-btn" data-a="notif">'+T('Activar aviso del navegador','Turn on browser notification')+'</button>':(ns[0]==='on'?'<button type="button" class="rd-btn on" data-a="notifoff">'+T('Desactivar aviso del navegador','Turn off browser notification')+'</button>':''))
+  +'<p class="rd-avsm">'+ns[1]+'</p>'
+  +'<div class="rd-avrow"><label class="rd-avsw"><input type="checkbox" id="rd-avon"'+(c.on?' checked':'')+'> '+T('Avisos activados','Alerts on')+'</label><button type="button" class="rd-btn" data-a="test">'+T('Ver un aviso de prueba','Show a test alert')+'</button></div>'
+  +(avRules()&&c.on?'<p class="rd-avsm">'+T('Vigilando','Watching')+': <b>'+avRules()+'</b> '+T(avRules()===1?'regla':'reglas',avRules()===1?'rule':'rules')+'. '+T('Cada avión avisa una vez; vuelve a avisar si desaparece más de 2 horas.','Each aircraft alerts once; it alerts again if it disappears for more than 2 hours.')+'</p>':'')
+  +'<div class="rd-avs">'+T('Últimos avistamientos','Latest sightings')+'</div>'
+  +(AV.log.length?'<ul class="rd-avlog">'+AV.log.slice(0,10).map(function(r){ return '<li><span class="u">'+dshort(r.t)+' '+hhmm(r.t)+'</span> <a href="#" data-h="'+esc(r.h)+'">'+esc(r.f)+'</a> · '+esc(r.n)+(r.k?' · '+esc(cname(r.k)):'')+'</li>'; }).join('')+'</ul><button type="button" class="rd-btn rd-avclr" data-a="clr">'+T('Borrar la lista','Clear the list')+'</button>':'<p class="rd-avsm">'+T('Todavía ninguno.','None yet.')+'</p>');
+  el.innerHTML=h; el.hidden=!AV.open; avBtn(); }
+function avChanged(){ avSave(); AV.seen=AV.seen||lsGet(AVSN,{}); avPanel(); clearTimeout(AV.ct); AV.ctDone=false; AV.ct=setTimeout(function(){ AV.ctDone=true; if(alive()) avCheck(); },2500); }
+function avInit(){ avCfg(); avBtn(); var b=document.getElementById('rd-avb'), el=document.getElementById('rd-av'), bl=document.getElementById('rd-avl'); if(!b||!el) return;
+  b.onclick=function(){ AV.open=!AV.open; avPanel(); if(AV.open) el.scrollIntoView({behavior:'smooth',block:'nearest'}); };
+  if(bl) bl.onclick=function(e){ if(e.target.closest('.rd-avlx')){ bl.style.display='none'; return; } pickFromList(e); };
+  el.onclick=function(e){ var t=e.target.closest('[data-a],a[data-h]'); if(!t) return; var c=avCfg(), a=t.getAttribute('data-a');
+    if(!a){ pickFromList(e); return; }
+    if(a==='close'){ AV.open=false; avPanel(); b.focus(); return; }
+    if(a==='all'){ c.all=!c.all; if(c.all) c.on=true; avChanged(); return; }
+    if(a==='cat'){ var k=t.getAttribute('data-c'), ix=c.cats.indexOf(k); if(ix>=0) c.cats.splice(ix,1); else { c.cats.push(k); c.on=true; } avChanged(); return; }
+    if(a==='rm'){ c.terms.splice(+t.getAttribute('data-i'),1); avChanged(); return; }
+    if(a==='sel'){ var s=S.sel?find(S.sel):null; if(s){ var v=s.flight||s.reg||s.hex; if(c.terms.indexOf(v)<0) c.terms.push(v); c.on=true; avChanged(); } return; }
+    if(a==='test'){ var x=(S.data||[]).filter(function(q){ return q.alt==null||q.alt>=0; })[0]; if(x) avToast([[x,T('prueba','test')]],true); return; }
+    if(a==='clr'){ AV.log=[]; lsSet(AVLG,[]); avPanel(); return; }
+    if(a==='notifoff'){ c.notif=false; avSave(); avPanel(); return; }
+    if(a==='notif'){ if(!('Notification' in window)) return; var done=function(p){ c.notif=(p==='granted'); if(c.notif){ c.on=true; try{ if(navigator.serviceWorker&&navigator.serviceWorker.register) navigator.serviceWorker.register('radar-sw.js').catch(function(){}); }catch(er){} } avSave(); avPanel(); };
+      try{ var pr=Notification.requestPermission(done); if(pr&&pr.then) pr.then(done); }catch(er){ done(Notification.permission); } return; } };
+  el.onchange=function(e){ var c=avCfg(); if(e.target.name==='rd-avz'){ c.zona=e.target.value==='es'?'es':''; avChanged(); } else if(e.target.id==='rd-avon'){ c.on=e.target.checked; avChanged(); } };
+  el.onsubmit=function(e){ e.preventDefault(); var i=document.getElementById('rd-avi'), v=(i&&i.value||'').trim().replace(/[<>"]/g,''); if(!v) return; var c=avCfg(); if(c.terms.map(function(x){ return x.toLowerCase(); }).indexOf(v.toLowerCase())<0&&c.terms.length<20) c.terms.push(v); c.on=true; avChanged(); var i2=document.getElementById('rd-avi'); if(i2) i2.focus(); };
+  if(AV.open) avPanel(); }
+
+// ── Compartir: PNG del mapa actual + resumen ──
+function tileFilter(g,W,H){ // .rd-map.dark img.leaflet-tile{filter:invert(1) hue-rotate(185deg) brightness(.82) contrast(.92) saturate(.35)}
+  var d=g.getImageData(0,0,W,H), p=d.data, a=185*Math.PI/180, co=Math.cos(a), si=Math.sin(a), s=0.35;
+  var h=[0.213+co*0.787-si*0.213,0.715-co*0.715-si*0.715,0.072-co*0.072+si*0.928,0.213-co*0.213+si*0.143,0.715+co*0.285+si*0.140,0.072-co*0.072-si*0.283,0.213-co*0.213-si*0.787,0.715-co*0.715+si*0.715,0.072+co*0.928+si*0.072];
+  var m=[0.213+0.787*s,0.715-0.715*s,0.072-0.072*s,0.213-0.213*s,0.715+0.285*s,0.072-0.072*s,0.213-0.213*s,0.715-0.715*s,0.072+0.928*s];
+  function cl(v){ return v<0?0:v>1?1:v; }
+  for(var i=0;i<p.length;i+=4){ var r=1-p[i]/255, gg=1-p[i+1]/255, b=1-p[i+2]/255;
+    var r1=cl(h[0]*r+h[1]*gg+h[2]*b), g1=cl(h[3]*r+h[4]*gg+h[5]*b), b1=cl(h[6]*r+h[7]*gg+h[8]*b);
+    r1=cl(cl(r1*0.82)*0.92+0.04); g1=cl(cl(g1*0.82)*0.92+0.04); b1=cl(cl(b1*0.82)*0.92+0.04);
+    p[i]=cl(m[0]*r1+m[1]*g1+m[2]*b1)*255; p[i+1]=cl(m[3]*r1+m[4]*g1+m[5]*b1)*255; p[i+2]=cl(m[6]*r1+m[7]*g1+m[8]*b1)*255; }
+  g.putImageData(d,0,0); }
+var PD={};
+function pathOf(s){ if(!PD[s]){ var ds=[]; String(SH[s]||SH.prop).replace(/<path d="([^"]+)"/g,function(_,d){ ds.push(d); }); PD[s]=ds; } return PD[s]; }
+function drawAc(g,x,y,sz,cat,typ,rot,sel){ var k=CAT[cat]||CAT.otro, s=shapeOf(cat,typ), ds=pathOf(s), sc=sz/32;
+  g.save(); g.translate(x,y); g.rotate((rot||0)*Math.PI/180); g.scale(sc,sc); g.translate(-16,-16);
+  g.shadowColor=sel?'rgba(214,178,94,.95)':'rgba(0,0,0,.85)'; g.shadowBlur=(sel?7:2.5)*sc*2; g.fillStyle=k.c; g.strokeStyle=k.c;
+  if(typeof Path2D==='undefined'){ g.beginPath(); g.arc(16,16,7,0,Math.PI*2); g.fill(); g.restore(); return; }
+  if(s==='heli'){ g.lineWidth=1.1; g.setLineDash([3,2.2]); g.beginPath(); g.arc(16,13,11,0,Math.PI*2); g.stroke(); g.setLineDash([]); g.beginPath(); g.ellipse(16,13.2,3.6,5.8,0,0,Math.PI*2); g.fill(); g.fillRect(15.2,17.5,1.6,10.5); g.fillRect(12.4,26.4,7.2,1.7); g.restore(); return; }
+  g.fill(new Path2D(ds[0]));
+  if(s==='prop'&&ds[1]){ g.shadowBlur=0; g.lineWidth=1.6; g.stroke(new Path2D(ds[1])); }
+  if(s==='awacs'){ g.shadowBlur=0; g.beginPath(); g.arc(16,17.6,4.6,0,Math.PI*2); g.fillStyle='#0b0c0d'; g.fill(); g.lineWidth=1.8; g.stroke(); g.lineWidth=1.2; g.beginPath(); g.moveTo(11.6,17.6); g.lineTo(20.4,17.6); g.stroke(); }
+  g.restore(); }
+function svgImg(svg,w,h){ return new Promise(function(res){ try{ var c=svg.cloneNode(true); c.setAttribute('xmlns','http://www.w3.org/2000/svg'); c.setAttribute('width',w); c.setAttribute('height',h); var u='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c)); var im=new Image(); im.onload=function(){ res(im); }; im.onerror=function(){ res(null); }; im.src=u; }catch(e){ res(null); } }); }
+function wrapTxt(g,t,maxW){ var ws=String(t).split(' '), out=[], cur=''; ws.forEach(function(w){ var n=cur?cur+' '+w:w; if(g.measureText(n).width>maxW&&cur){ out.push(cur); cur=w; } else cur=n; }); if(cur) out.push(cur); return out; }
+function fitTxt(g,t,maxW){ t=String(t); if(g.measureText(t).width<=maxW) return t; while(t.length>2&&g.measureText(t+'…').width>maxW) t=t.slice(0,-1); return t+'…'; }
+function shStats(){ var d=S.data||[], air=0, gr=0, cnt={}, vis=0; d.forEach(function(a){ var i=a._i||(a._i=info(a)); if(a.alt!=null&&a.alt<0) gr++; else air++; cnt[i.cat]=(cnt[i.cat]||0)+1; if(visible(a)) vis++; }); return {n:d.length,air:air,gr:gr,cnt:cnt,vis:vis,filt:vis!==d.length}; }
+function shWhen(){ var ts=S.at||Date.now()/1000; try{ return new Date(ts*1000).toLocaleString(EN()?'en-GB':'es-ES',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZoneName:'short'}); }catch(e){ return dshort(ts)+' '+hhmm(ts); } }
+function shPNG(){ var map=S.map, el=document.getElementById('rd-map'); if(!map||!el||!S.data) return Promise.reject(new Error('nomap'));
+  var cr=el.getBoundingClientRect(), w=Math.round(cr.width), hh=Math.round(cr.height), k=Math.min(3,Math.max(2,window.devicePixelRatio||1)); if(w*k>2000) k=2000/w;
+  var W=Math.round(w*k), HM=Math.round(hh*k), tc=document.createElement('canvas'); tc.width=W; tc.height=HM; var g=tc.getContext('2d'), tiles=0, taint=false;
+  [].forEach.call(el.querySelectorAll('.leaflet-tile-pane img.leaflet-tile'),function(im){ if(!im.complete||!im.naturalWidth) return; var r=im.getBoundingClientRect(); if(r.right<cr.left||r.left>cr.right||r.bottom<cr.top||r.top>cr.bottom) return; try{ g.drawImage(im,(r.left-cr.left)*k,(r.top-cr.top)*k,r.width*k+0.6,r.height*k+0.6); tiles++; }catch(e){} });
+  try{ g.getImageData(0,0,1,1); }catch(e){ taint=true; tc=document.createElement('canvas'); tc.width=W; tc.height=HM; g=tc.getContext('2d'); tiles=0; }
+  var out=document.createElement('canvas'), o=out.getContext('2d');
+  // capa del mapa (con el mismo filtro oscuro que en pantalla)
+  var mc=document.createElement('canvas'); mc.width=W; mc.height=HM; var m=mc.getContext('2d'); m.fillStyle=S.dark?'#283136':'#0b0e11'; m.fillRect(0,0,W,HM);
+  if(tiles&&S.dark){ var fs='invert(1) hue-rotate(185deg) brightness(.82) contrast(.92) saturate(.35)', ok=false; try{ m.filter=fs; ok=(m.filter===fs); }catch(e){}
+    if(ok){ m.drawImage(tc,0,0); m.filter='none'; } else { try{ tileFilter(g,W,HM); }catch(e){} m.drawImage(tc,0,0); } }
+  else if(tiles) m.drawImage(tc,0,0);
+  [].forEach.call(el.querySelectorAll('.leaflet-pane canvas'),function(cv){ var r=cv.getBoundingClientRect(); try{ m.drawImage(cv,(r.left-cr.left)*k,(r.top-cr.top)*k,r.width*k,r.height*k); }catch(e){} });
+  var svgs=[].slice.call(el.querySelectorAll('.leaflet-overlay-pane svg'));
+  return Promise.all(svgs.map(function(sv){ var r=sv.getBoundingClientRect(); return svgImg(sv,r.width,r.height).then(function(im){ if(im) try{ m.drawImage(im,(r.left-cr.left)*k,(r.top-cr.top)*k,r.width*k,r.height*k); }catch(e){} }); })).then(function(){
+    var z=map.getZoom(), selA=null;
+    S.data.forEach(function(a){ if(!a._m) return; var ll=a._m.getLatLng(), p=map.latLngToContainerPoint(ll); if(p.x<-20||p.y<-20||p.x>w+20||p.y>hh+20) return; var i=a._i||info(a), sel=S.sel===a.hex; if(sel){ selA=[a,p]; return; }
+      var sz=(i.cat==='helicoptero'||i.cat==='entrenamiento'||i.cat==='vip'||i.cat==='otro')?20:(i.cat==='caza'||i.cat==='ataque')?21:24; if(z>=7) sz+=4; drawAc(m,p.x*k,p.y*k,sz*k,i.cat,a.type,a.trk==null?0:a.trk,false);
+      if(z>=6){ m.font='700 '+(10.5*k)+'px -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif'; m.textBaseline='top'; m.lineWidth=3*k; m.strokeStyle='rgba(0,0,0,.85)'; m.fillStyle='#e9e9e6'; var tx=acLbl(a); m.strokeText(tx,(p.x+sz/2+3)*k,(p.y-sz/2)*k); m.fillText(tx,(p.x+sz/2+3)*k,(p.y-sz/2)*k); } });
+    if(selA){ var a=selA[0], p=selA[1], i=a._i||info(a), sz=((i.cat==='helicoptero'||i.cat==='entrenamiento'||i.cat==='vip'||i.cat==='otro')?20:(i.cat==='caza'||i.cat==='ataque')?21:24)+(z>=7?4:0)+6; drawAc(m,p.x*k,p.y*k,sz*k,i.cat,a.type,a.trk==null?0:a.trk,true);
+      m.font='700 '+(12*k)+'px -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif'; m.textBaseline='top'; m.lineWidth=3.5*k; m.strokeStyle='rgba(0,0,0,.9)'; m.fillStyle='#fff'; m.strokeText(acLbl(a),(p.x+sz/2+3)*k,(p.y-sz/2)*k); m.fillText(acLbl(a),(p.x+sz/2+3)*k,(p.y-sz/2)*k); }
+    // panel de resumen
+    var u=W/640, pad=22*u, F='-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif', st=shStats(), cw=W-2*pad;
+    var cats=CORDER.filter(function(c){ return st.cnt[c]; }), cols=3, rows=Math.ceil(cats.length/cols), lh=21*u;
+    o.font='400 '+(12.5*u)+'px '+F; var nl=wrapTxt(o,T('Solo aparecen los aviones que emiten su posición (ADS-B o multilateración) y que capta la red pública de adsb.lol. Muchos vuelos militares no la emiten, así que esto no es todo lo que vuela.','Only aircraft broadcasting their position (ADS-B or multilateration) and picked up by the public adsb.lol network appear. Many military flights do not broadcast, so this is not everything in the air.'),cw);
+    var sa=S.sel?find(S.sel):null, PH=pad+28*u+10*u+50*u+22*u+(st.filt?20*u:0)+(sa?24*u:0)+14*u+rows*lh+12*u+nl.length*17*u+10*u+20*u+pad;
+    out.width=W; out.height=HM+Math.round(PH); o=out.getContext('2d'); o.drawImage(mc,0,0);
+    o.fillStyle='#0e1114'; o.fillRect(0,HM,W,PH); o.fillStyle='#c9a862'; o.fillRect(0,HM,W,Math.max(2,3*u));
+    var y=HM+pad; o.textBaseline='top';
+    o.fillStyle='#d6b25e'; o.font='800 '+(24*u)+'px '+F; o.fillText('M.A.T',pad,y); var mw=o.measureText('M.A.T').width;
+    o.font='700 '+(13*u)+'px '+F; o.fillStyle='#e9e4d4'; o.fillText('  ·  '+T('RADAR AÉREO','AIR RADAR'),pad+mw,y+8*u);
+    o.font='400 '+(13*u)+'px '+F; o.fillStyle='#aab0b5'; o.textAlign='right'; o.fillText(shWhen(),W-pad,y+8*u); o.textAlign='left';
+    y+=28*u+10*u; o.font='800 '+(44*u)+'px '+F; o.fillStyle='#ffffff'; var big=nf(st.air); o.fillText(big,pad,y); var bw=o.measureText(big).width;
+    o.font='700 '+(19*u)+'px '+F; o.fillStyle='#f1ead6'; o.fillText(fitTxt(o,T('aviones militares en el aire','military aircraft in the air'),cw-bw-12*u),pad+bw+12*u,y+20*u);
+    y+=50*u; o.font='400 '+(13.5*u)+'px '+F; o.fillStyle='#aab0b5'; o.fillText(fitTxt(o,T(nf(st.n)+' emitiendo su posición ahora · '+nf(st.gr)+' en tierra',nf(st.n)+' broadcasting their position now · '+nf(st.gr)+' on the ground'),cw),pad,y); y+=22*u;
+    if(st.filt){ o.fillStyle='#d6b25e'; o.fillText(fitTxt(o,T('Vista con filtros: '+nf(st.vis)+' aviones en el mapa','Filtered view: '+nf(st.vis)+' aircraft on the map'),cw),pad,y); y+=20*u; }
+    if(sa){ var si2=sa._i||info(sa); o.font='700 '+(14.5*u)+'px '+F; o.fillStyle='#d6b25e'; o.fillText(fitTxt(o,'▶ '+acLbl(sa)+' · '+si2.name+(sa._c?' · '+cname(sa._c):''),cw),pad,y); y+=24*u; }
+    y+=14*u; var colW=cw/cols; o.font='600 '+(12.5*u)+'px '+F;
+    cats.forEach(function(c,ix){ var cx=pad+(ix%cols)*colW, cy=y+Math.floor(ix/cols)*lh; o.fillStyle=CAT[c].c; o.beginPath(); o.arc(cx+5*u,cy+7.5*u,4.5*u,0,Math.PI*2); o.fill(); o.fillStyle='#e9e4d4'; var lab=(EN()?CAT[c].en:CAT[c].es), num=' '+nf(st.cnt[c]); var nw=o.measureText(num).width; var lt=fitTxt(o,lab,colW-16*u-nw-6*u); o.fillText(lt,cx+14*u,cy); o.fillStyle='#aab0b5'; o.fillText(num,cx+14*u+o.measureText(lt).width,cy); });
+    y+=rows*lh+12*u; o.font='400 '+(12.5*u)+'px '+F; o.fillStyle='#9aa0a6'; nl.forEach(function(l){ o.fillText(l,pad,y); y+=17*u; });
+    y+=10*u; o.font='700 '+(12.5*u)+'px '+F; o.fillStyle='#d6b25e'; var cred=T('Datos: adsb.lol (ODbL)','Data: adsb.lol (ODbL)')+' · '+(S.dark?T('Mapa: © OpenStreetMap','Map: © OpenStreetMap'):T('Imagen: Esri, Maxar, Earthstar Geographics','Imagery: Esri, Maxar, Earthstar Geographics'));
+    o.font='800 '+(13*u)+'px '+F; var url='matmilitar.es/#/radar', uw=o.measureText(url).width; o.fillStyle='#f1ead6'; o.textAlign='right'; o.fillText(url,W-pad,y); o.textAlign='left';
+    o.font='700 '+(12.5*u)+'px '+F; o.fillStyle='#d6b25e'; o.fillText(fitTxt(o,cred,cw-uw-14*u),pad,y);
+    if(taint||!tiles){ o.font='400 '+(10*u)+'px '+F; o.fillStyle='#aab0b5'; o.fillText(T('(sin fondo de mapa: no se pudo copiar)','(no map background: it could not be copied)'),pad,8*u); }
+    return new Promise(function(res,rej){ try{ out.toBlob(function(b){ b?res({blob:b,w:out.width,h:out.height}):rej(new Error('blob')); },'image/png'); }catch(e){ rej(e); } }); }); }
+function shText(){ var st=shStats(), sa=S.sel?find(S.sel):null;
+  var t=T('Radar M.A.T, '+shWhen()+': '+nf(st.air)+' aviones militares en el aire ahora mismo (solo los que emiten su posición). Datos: adsb.lol (ODbL).','M.A.T radar, '+shWhen()+': '+nf(st.air)+' military aircraft in the air right now (only those broadcasting their position). Data: adsb.lol (ODbL).');
+  if(sa){ var i=sa._i||info(sa); t+=T(' Siguiendo a ',' Following ')+acLbl(sa)+' ('+i.name+').'; }
+  return {text:t,url:'https://matmilitar.es/#/radar'+(sa?'?h='+sa.hex:'')}; }
+function shClose(){ var d=document.getElementById('rd-shm'); if(d){ var im=d.querySelector('img'); if(im&&im.src.indexOf('blob:')===0) try{ URL.revokeObjectURL(im.src); }catch(e){} d.parentNode.removeChild(d); } document.removeEventListener('keydown',shKey); var b=document.getElementById('rd-shb'); if(b) b.focus(); }
+function shKey(e){ if(e.key==='Escape') shClose(); }
+function shOpen(){ var b=document.getElementById('rd-shb'); if(!S.data||!S.map){ avToastMsg(T('Espera a que cargue el radar.','Wait for the radar to load.')); return; } if(b){ b.disabled=true; b.textContent='⏳ '+T('Preparando imagen…','Preparing image…'); }
+  shPNG().then(function(r){ if(b){ b.disabled=false; b.innerHTML='📤 '+T('Compartir','Share'); }
+    var tx=shText(), ts=new Date((S.at||Date.now()/1000)*1000), pz=function(n){ return (n<10?'0':'')+n; }, name='mat_radar_'+ts.getFullYear()+pz(ts.getMonth()+1)+pz(ts.getDate())+'_'+pz(ts.getHours())+pz(ts.getMinutes())+'.png';
+    var file=null; try{ file=new File([r.blob],name,{type:'image/png'}); }catch(e){}
+    var canFiles=!!(file&&navigator.canShare&&navigator.share&&(function(){ try{ return navigator.canShare({files:[file]}); }catch(e){ return false; } })());
+    var url=URL.createObjectURL(r.blob), wa='https://wa.me/?text='+encodeURIComponent(tx.text+' '+tx.url);
+    shClose(); var d=document.createElement('div'); d.id='rd-shm'; d.className='rd-shm'; d.setAttribute('role','dialog'); d.setAttribute('aria-modal','true'); d.setAttribute('aria-label',T('Compartir el radar','Share the radar')); d.setAttribute('data-noi18n','');
+    d.innerHTML='<div class="rd-shbx"><div class="rd-avh"><b>📤 '+T('Compartir el radar','Share the radar')+'</b><button type="button" class="rd-avx" data-a="x" aria-label="'+T('Cerrar','Close')+'">×</button></div>'
+     +'<img src="'+url+'" alt="'+T('Imagen del mapa del radar con el resumen','Radar map image with the summary')+'" width="'+r.w+'" height="'+r.h+'">'
+     +'<div class="rd-shbt">'+(navigator.share?'<button type="button" class="rd-btn on" data-a="sh">'+(canFiles?T('Compartir imagen','Share image'):T('Compartir enlace','Share link'))+'</button>':'')
+     +'<button type="button" class="rd-btn" data-a="dl">'+T('Descargar PNG','Download PNG')+'</button>'
+     +'<a class="rd-btn rd-wa" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a></div>'
+     +'<p class="rd-avsm">'+T('La imagen lleva el mapa tal y como lo ves, la fecha y hora, los recuentos y el crédito de los datos. «WhatsApp» manda el texto con el enlace; para mandar la imagen usa «Compartir» o descárgala.','The image has the map as you see it, the date and time, the counts and the data credit. «WhatsApp» sends the text with the link; to send the image use «Share» or download it.')+'</p></div>';
+    document.body.appendChild(d); document.addEventListener('keydown',shKey); var x=d.querySelector('[data-a="x"]'); if(x) x.focus();
+    d.onclick=function(e){ if(e.target===d){ shClose(); return; } var t=e.target.closest('[data-a]'); if(!t) return; var a=t.getAttribute('data-a');
+      if(a==='x') shClose();
+      else if(a==='dl'){ var l=document.createElement('a'); l.href=url; l.download=name; document.body.appendChild(l); l.click(); setTimeout(function(){ l.remove(); },500); }
+      else if(a==='sh'){ var p=canFiles?navigator.share({files:[file],title:'M.A.T · '+T('Radar aéreo','Air radar'),text:tx.text+' '+tx.url}):navigator.share({title:'M.A.T · '+T('Radar aéreo','Air radar'),text:tx.text,url:tx.url}); if(p&&p.catch) p.catch(function(){}); } };
+  }).catch(function(){ if(b){ b.disabled=false; b.innerHTML='📤 '+T('Compartir','Share'); } avToastMsg(T('No se pudo crear la imagen. Prueba otra vez.','Could not create the image. Try again.')); }); }
+function avToastMsg(m){ var t=toastEl(); t.removeAttribute('data-h'); t.innerHTML='<button type="button" class="rd-tx" aria-label="'+T('Cerrar','Close')+'">×</button><span>'+esc(m)+'</span>'; t.classList.add('on'); clearTimeout(AV.tm); AV.tm=setTimeout(function(){ t.classList.remove('on'); },5000); }
+var XCSS='.rd-acts{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 8px}.rd-act{display:inline-flex;align-items:center;gap:6px;min-height:38px}.rd-avbn{background:var(--rg,#d6b25e);color:#111;border-radius:999px;padding:2px 7px;font-size:11.5px;font-weight:800}'
+ +'.rd-av{margin:0 16px 10px;padding:12px 13px;border:1px solid #3a3f44;border-left:3px solid var(--rg,#d6b25e);border-radius:10px;background:#111417;font-size:13.5px;line-height:1.45;min-width:0}.rd-av[hidden]{display:none}'
+ +'.rd-avh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px}.rd-avh b{font-size:15px}.rd-avx{background:none;border:0;color:var(--tx);font-size:24px;line-height:1;cursor:pointer;padding:2px 8px;min-width:40px;min-height:36px}'
+ +'.rd-avn{margin:0 0 8px;color:#cfd2d4}.rd-avn b{color:var(--tx)}.rd-avs{margin:12px 0 6px;font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--rg,#d6b25e)}'
+ +'.rd-avc{display:flex;flex-wrap:wrap;gap:6px}.rd-avc .rd-chip{white-space:normal;text-align:left}.rd-avc .rd-chip.on{border-color:var(--rg,#d6b25e);background:rgba(214,178,94,.16);color:#fff}.rd-avc .rd-chip.on:after{content:"✓";margin-left:2px;color:var(--rg,#d6b25e);font-weight:800}'
+ +'.rd-chip i{display:inline-block;width:9px;height:9px;border-radius:50%;flex:0 0 9px}'
+ +'.rd-avf{display:flex;gap:8px;min-width:0}.rd-avf input{flex:1 1 auto;min-width:0;background:var(--s1);border:1px solid var(--line);color:var(--tx);border-radius:8px;height:40px;padding:0 10px;font:inherit;font-size:16px}'
+ +'.rd-avsel{margin-top:8px;max-width:100%;white-space:normal;text-align:left;line-height:1.3}.rd-avt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:12.5px}.rd-avt .u{color:var(--mu)}'
+ +'.rd-avtg{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--rg,#d6b25e);border-radius:999px;padding:2px 2px 2px 10px;font-weight:700;font-size:13px;overflow-wrap:anywhere}.rd-avtg button{background:none;border:0;color:var(--tx);font-size:18px;line-height:1;cursor:pointer;padding:2px 8px;min-height:30px}'
+ +'.rd-avz{display:flex;flex-wrap:wrap;gap:6px 16px}.rd-avz label,.rd-avsw{display:inline-flex;align-items:center;gap:6px;cursor:pointer;min-height:32px}.rd-avz input,.rd-avsw input{width:18px;height:18px;accent-color:#d6b25e}'
+ +'.rd-avsm{margin:6px 0 0;font-size:12px;color:var(--mu)}.rd-avrow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:12px}'
+ +'.rd-avlog{list-style:none;margin:0;padding:0;font-size:13px}.rd-avlog li{padding:5px 0;border-bottom:1px solid #22262a;overflow-wrap:anywhere}.rd-avlog a,.rd-avl a{color:var(--rg,#d6b25e);font-weight:700}.rd-avclr{margin-top:8px}'
+ +'.rd-avl{position:relative;display:none;margin:0 16px 8px;padding:9px 40px 9px 11px;border-radius:8px;background:#2a2410;border:1px solid #d6b25e;color:#f6ecd0;font-size:13px;line-height:1.45;overflow-wrap:anywhere}.rd-avlt{display:block;margin-bottom:2px}.rd-avl .u,.rd-toast .u{color:#cbbf9c}.rd-avlx{position:absolute;right:2px;top:2px;background:none;border:0;color:#f6ecd0;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;min-height:36px}'
+ +'.rd-toast{position:fixed;left:50%;bottom:16px;z-index:3000;transform:translate(-50%,140%);width:min(440px,calc(100vw - 24px));box-sizing:border-box;background:#1b1810;border:1px solid #d6b25e;border-radius:12px;padding:11px 40px 11px 13px;color:#f6ecd0;font-size:13.5px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.6);cursor:pointer;transition:transform .25s ease;display:flex;flex-direction:column;gap:2px;overflow-wrap:anywhere}.rd-toast.on{transform:translate(-50%,0)}.rd-toast b{color:#d6b25e}.rd-toast small{color:#cbbf9c;font-size:11.5px}.rd-toast .rd-fl{height:11px;vertical-align:-1px}.rd-tx{position:absolute;right:2px;top:2px;background:none;border:0;color:#f6ecd0;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px}'
+ +'@media (prefers-reduced-motion:reduce){.rd-toast{transition:none}}'
+ +'.rd-shm{position:fixed;inset:0;z-index:3100;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}.rd-shbx{background:#111417;border:1px solid #3a3f44;border-radius:12px;padding:12px;width:min(720px,100%);max-height:100%;overflow:auto;box-sizing:border-box;font-size:13.5px}'
+ +'.rd-shbx img{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:6px;background:#0b0e11}.rd-shbt{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.rd-shbt .rd-btn{min-height:40px;display:inline-flex;align-items:center}.rd-wa{border-color:#25d366!important;color:#25d366!important}';
+window.addEventListener('hashchange',function(){ if(!/^#\/radar/.test(location.hash)){ shClose(); var t=document.getElementById('rd-toast'); if(t) t.classList.remove('on'); } });
+function xCss(){ if(document.getElementById('rd-xcss')) return; var s=document.createElement('style'); s.id='rd-xcss'; s.textContent=XCSS; document.head.appendChild(s); }
+
+window.MAT_RADAR=function(app,ctx){ addCss(); stop(); AV.open=false; AV.lsel=null; S.ctx=ctx; var p=(ctx&&ctx.p)||[]; var tab=p[1]==='dias'?'dias':'live';
   if(S.map){ try{ S.map.remove(); }catch(e){} } S.map=null; S.mk={}; S.base=null; S.fitted=false; S.sel=null; S.trk=null; S.heat=null; S.hheat=null; TRL=null; S.data=S.data||null;
   if(ctx&&ctx.set) ctx.set(shell(tab),T('Radar aéreo','Air radar')); else app.innerHTML=shell(tab); S.root=app.querySelector('.rd');
   if(tab==='dias') dias(); else live();
