@@ -25,7 +25,7 @@ function cyl(r,h,m,n){ const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,n
 export async function mount(stage,st,D,M,opt){
   const V=M.viewer(stage,{yaw:0.5,pitch:0.05,zoom:0.6}); if(!V) throw new Error('webgl');
   if(!SOLP) SOLP=load('m3d/soldado/soldado_r.glb').catch(e=>{ SOLP=null; throw e; });
-  { const rim=new THREE.DirectionalLight(0xdde6ff,0.85); rim.position.set(2.5,3,-4); V.scene.add(rim); const fill=new THREE.DirectionalLight(0xfff2e2,0.4); fill.position.set(3,1.2,3.5); V.scene.add(fill); }
+  { const rim=new THREE.DirectionalLight(0xdde6ff,0.45); rim.position.set(2.5,3,-4); V.scene.add(rim); const fill=new THREE.DirectionalLight(0xfff2e2,0.4); fill.position.set(3,1.2,3.5); V.scene.add(fill); }
   const g=await SOLP; const body=g.scene; const holder=new THREE.Group(); holder.add(body); V.holder.add(holder); body.position.set(0,0,0);
   const UF=M.mkU(), UG=M.mkU(), UW=M.mkU(), UA=M.mkU(); [UF,UG,UW,UA].forEach(u=>V.track(u.uInv));
   const bones={}, mesh={};
@@ -39,7 +39,7 @@ export async function mount(stage,st,D,M,opt){
   const gearG=new THREE.Group(); body.add(gearG);
   const gm={ k:new THREE.MeshStandardMaterial({color:0x26282a,roughness:0.6,metalness:0.1}), p:new THREE.MeshStandardMaterial({color:0x4a4d3b,roughness:0.95}), d:new THREE.MeshStandardMaterial({color:0x3b3d30,roughness:0.95}) };
   [gm.p,gm.d].forEach(m=>M.camoPatch(m,UG));
-  let wpn=null, wkey='', wi=null, pvs=null;
+  let wpn=null, wkey='', wi=null, pvs=null, bc=null;
   /* ---- cinemática inversa de dos huesos ---- */
   const wp=o=>o.getWorldPosition(new THREE.Vector3());
   function aim(bone,childPos,newPos){ const p=wp(bone); const v1=childPos.clone().sub(p).normalize(), v2=newPos.clone().sub(p).normalize(); if(v1.lengthSq()<1e-8||v2.lengthSq()<1e-8) return;
@@ -68,9 +68,10 @@ export async function mount(stage,st,D,M,opt){
     ik('L',Hl.clone().add(new THREE.Vector3(0.035,-0.045,-0.04)),new THREE.Vector3(0.7,-0.7,-0.1)); handTo('L',new THREE.Vector3(-0.4,0.6,0.5));
   }
   async function setWeapon(){ const b=st.arma; const key=b?JSON.stringify([b.id,b.v||0,b.on||{}]):''; if(key===wkey) return; wkey=key;
-    if(wpn){ body.remove(wpn); wpn=null; wi=null; } if(!b){ pose(); rebuildGear(); V.recenter(); return; }
+    if(wpn){ body.remove(wpn); wpn=null; wi=null; } if(bc){ bc.dispose(); bc=null; } beamUI(); if(!b){ pose(); rebuildGear(); V.recenter(); return; }
     try{ const r=await M.buildWeapon(b,UW,UA); if(key!==wkey) return; const o=r.o; o.userData.gp=GRIP[r.v.id]||GRIP[r.w.id]||(r.w.cat==='pistol'?GRIP_PISTOL:[0,0]); { const bb=new THREE.Box3().setFromObject(o); const m=M.mt(r.v)||{}; o.userData.stock=[bb.min.z+0.01,(m.sty!=null?m.sty:(m.bore!=null?m.bore-0.02:(bb.min.y+bb.max.y)/2))]; } o.traverse(q=>{ if(q.isMesh) q.castShadow=true; });
-      wpn=o; wi=r; body.add(o); pose(); rebuildGear(); V.recenter(); credits(r); }catch(e){ console.warn('soldado arma',e); }
+      wpn=o; wi=r; body.add(o); pose(); rebuildGear(); V.recenter(); credits(r);
+      if(M.beamCtl){ bc=M.beamCtl(o,o.children.filter(c=>c.userData&&c.userData.acc).map(c=>({a:c.userData.acc,o:c}))); if(!bc.has()) bc=null; } beamUI(); }catch(e){ console.warn('soldado arma',e); }
   }
   function credits(r){ if(!opt.cred) return; const w=r?r.w:null; opt.cred.innerHTML=L('Figura: «','Figure: “')+'<a href="https://sketchfab.com/3d-models/soldier-full-tactical-gear-lowpolygameready-850593a8c7114c188395ba1849a66eb9" target="_blank" rel="noopener">Soldier Full Tactical Gear</a>'+L('» de ','” by ')+'<a href="https://sketchfab.com/1799danly" target="_blank" rel="noopener">DanlyVostok</a> (Sketchfab, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>); '+L('visor nocturno «','night vision “')+'<a href="https://sketchfab.com/3d-models/anpvs-14-nvd-ed14bb49bdf94cd7b572daf206f1ccfb" target="_blank" rel="noopener">AN/PVS-14 NVD</a>'+L('» de knolp (CC BY 4.0). M.A.T ha optimizado los modelos, recolocado los brazos para sujetar el arma y añadido los camuflajes.','” by knolp (CC BY 4.0). M.A.T optimized the models, re-posed the arms to hold the weapon and added the camouflages.')+' <b>'+L('Mochilas, cantimploras, pala y lanzador: modelo aproximado hecho por MAT a partir de medidas oficiales','Packs, canteens, shovel and launcher: approximate model made by MAT from official dimensions')+'</b>.'+(w?' '+L('Arma: modelo del Armero 3D','Weapon: 3D Gunsmith model')+' (<a href="#/armero/'+w.id+'">'+w.n+'</a>), '+L('a escala real','at real scale')+'.':'')+' <a href="#/license">'+L('Licencias','Licences')+'</a>'; }
   const has=id=>(st.q[id]||0)>0, anyOf=c=>Object.keys(st.q).some(k=>st.q[k]>0&&D.items[k]&&D.items[k].c===c), visTag=t=>Object.keys(st.q).some(k=>st.q[k]>0&&D.items[k]&&D.items[k].vis===t);
@@ -106,14 +107,14 @@ export async function mount(stage,st,D,M,opt){
     const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(P,3)); g.setIndex(I); g.computeVertexNormals(); const s=new THREE.Mesh(g,m); s.castShadow=true; return s; }
   function buckle(x,y,z){ const b=rbox(0.045,0.022,0.012,gmB); b.position.set(x,y,z); return b; }
   /* mochila principal MOLLE: cuerpo, armazón, tapa, bolsillos laterales de sostenimiento, bolsillo frontal, cinchas de compresión y saco de dormir debajo */
-  function ruckMesh(){ const G=new THREE.Group(), W=0.34, Hh=0.52, Dd=0.22;
+  function ruckMesh(noFP){ const G=new THREE.Group(), W=0.34, Hh=0.52, Dd=0.22;
     const body=soft(W,Hh,Dd,0.055,gmP,{bulge:0.035,taper:0.06}); body.position.set(0,0,-Dd/2); G.add(body);
     const frame=soft(W-0.03,Hh-0.03,0.045,0.015,gmS); frame.position.set(0,0,-0.01); G.add(frame);
     const lid=soft(W*0.96,0.1,Dd+0.04,0.045,gmP,{dome:0.02,bulge:0.015}); lid.position.set(0,Hh/2+0.02,-Dd/2-0.025); lid.rotation.x=-0.1; G.add(lid);
     [-1,1].forEach(s=>{ const pk=soft(0.085,0.27,0.14,0.035,gmM,{bulge:0.012}); pk.rotation.y=s*Math.PI/2; pk.position.set(s*(W/2+0.032),-0.07,-Dd/2-0.005); G.add(pk);
       const cs=rbox(0.008,0.024,0.15,gmS); cs.position.set(s*(W/2+0.076),0.02,-Dd/2-0.005); G.add(cs); G.add(buckle(s*(W/2+0.079),0.02,-Dd/2-0.06)); });
-    const fp=soft(0.24,0.22,0.07,0.03,gmM,{bulge:0.01}); fp.position.set(0,-0.09,-Dd-0.055); G.add(fp);
-    [-1,1].forEach(s=>{ const vs=rbox(0.025,0.25,0.006,gmS); vs.position.set(s*0.075,-0.09,-Dd-0.097); G.add(vs); G.add(buckle(s*0.075,0.0,-Dd-0.101)); });
+    if(!noFP){ const fp=soft(0.24,0.22,0.07,0.03,gmM,{bulge:0.01}); fp.position.set(0,-0.09,-Dd-0.055); G.add(fp); }
+    if(!noFP) [-1,1].forEach(s=>{ const vs=rbox(0.025,0.25,0.006,gmS); vs.position.set(s*0.075,-0.09,-Dd-0.097); G.add(vs); G.add(buckle(s*0.075,0.0,-Dd-0.101)); });
     return G; }
   /* mochila de asalto: cuerpo de tapa redondeada, panel MOLLE frontal y asa */
   function apMesh(){ const G=new THREE.Group(), W=0.3, Hh=0.42, Dd=0.15;
@@ -138,10 +139,10 @@ export async function mount(stage,st,D,M,opt){
         const pts=[new V3(s*0.085,top-0.05,zb-0.012), new V3(s*0.095,sy-0.035,bz(sy-0.035)-t), new V3(s*0.1,sy+t*0.6,-0.035), new V3(s*0.105,sy-0.07,fz(sy-0.07)+t), new V3(s*0.11,1.30,fz(1.30)+t), new V3(s*0.125,1.17,fz(1.17)+t*0.8),
           new V3(sx(1.08)+s*0.012,1.08,-0.03), new V3(s*0.15,bot+0.07,zb-0.012)];
         gearG.add(strap(pts.slice(0,6),w,t,gmT,ctr)); gearG.add(strap(pts.slice(5),w*0.45,t*0.6,gmT,ctr)); const b=buckle(0,0,0); b.position.copy(pts[5]); b.lookAt(pts[5].clone().add(new V3(0,0,1))); gearG.add(b); }); }
-    if(ruck){ const zb=backZ(1.22); const r=ruckMesh(); r.position.set(-0.01,1.17,zb+0.012); gearG.add(r); straps(1.43,0.91,zb,0.062,0.013);
+    if(ruck){ const zb=backZ(1.22); const r=ruckMesh(ap); r.position.set(-0.01,1.17,zb+0.012); gearG.add(r); straps(1.43,0.91,zb,0.062,0.013);
       if(has('sbag')||has('pad')){ const sb=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.36,20,1),gmP); sb.castShadow=true; sb.rotation.z=Math.PI/2; sb.position.set(-0.01,0.84,zb-0.12); gearG.add(sb);
         [-1,1].forEach(s=>{ const rg=new THREE.Mesh(new THREE.TorusGeometry(0.083,0.006,6,24),gmS); rg.rotation.y=Math.PI/2; rg.position.set(-0.01+s*0.1,0.84,zb-0.12); gearG.add(rg); }); } }
-    if(ap){ const zb=backZ(1.25); const a=apMesh(); a.position.set(-0.01,ruck?1.18:1.22,ruck?zb-0.30:zb+0.01); gearG.add(a); if(!ruck) straps(1.41,1.03,zb,0.05,0.011); }
+    if(ap){ const zb=backZ(1.25); const a=apMesh(); a.position.set(-0.01,ruck?1.18:1.22,ruck?zb-0.235:zb+0.01); gearG.add(a); if(!ruck) straps(1.41,1.03,zb,0.05,0.011); }
     if(has('medbag')){ const zb=backZ(1.0); const mb=soft(0.36,0.26,0.18,0.05,gmP,{bulge:0.02}); mb.position.set(-0.01,ruck?0.8:1.0,zb-0.09-(ruck?0.13:0)); gearG.add(mb); }
     if(visTag('at4')){ const zb=backZ(1.25); const t=cyl(0.042,1.0,gm.d,14); t.position.set(0.04,1.28,zb-(ruck?0.27:0.06)); t.rotation.z=0.45; gearG.add(t); }
     if(has('cant')&&!ruck){ /* el cinturón del modelo ya lleva bolsas; las cantimploras van detrás, en la cadera */ for(let i=0;i<Math.min(2,st.q.cant);i++){ const s=i?1:-1; const p=hit([mesh.pants_1,mesh.pouches_1],new THREE.Vector3(s*0.12,0.97,-0.8),new THREE.Vector3(0,0,1)); if(!p) continue; const c=cyl(0.042,0.17,gm.d,14); c.position.set(s*0.12,0.95,p.z-0.04); gearG.add(c); } }
@@ -163,7 +164,17 @@ export async function mount(stage,st,D,M,opt){
   const bt=document.createElement('div'); bt.className='arm-btns'; bt.innerHTML='<button type="button" data-x="rot">'+L('Pausar giro','Pause spin')+'</button><button type="button" data-x="rs">'+L('Vista inicial','Reset view')+'</button>'; stage.appendChild(bt);
   let spin=true; bt.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; e.stopPropagation(); if(b.dataset.x==='rot'){ spin=!spin; V.setAuto(spin); b.textContent=spin?L('Pausar giro','Pause spin'):L('Girar','Spin'); } else V.reset(); });
   bt.addEventListener('pointerdown',e=>e.stopPropagation());
-  camUI(); camos(); scale(); rebuildGear(); V.fit(holder); credits(null); await setWeapon();
+  /* linterna / láser del arma: Encender-Apagar (y vista IR si el láser es infrarrojo) */
+  const lb=document.createElement('div'); lb.className='arm-btns sd-lb'; lb.style.cssText='left:8px;right:auto;flex-direction:column;align-items:flex-start'; lb.innerHTML='<button type="button" data-b="on"></button><button type="button" data-b="ir"></button>'; stage.appendChild(lb);
+  const bn=document.createElement('div'); bn.style.cssText='position:absolute;left:8px;right:8px;bottom:8px;font-size:11px;line-height:1.3;color:#d8dde2;background:rgba(10,12,14,.55);padding:4px 7px;border-radius:6px;pointer-events:none'; stage.appendChild(bn);
+  lb.addEventListener('pointerdown',e=>e.stopPropagation());
+  lb.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||!bc) return; e.stopPropagation(); if(b.dataset.b==='on'){ const v=!bc.on(); bc.set(v,v?bc.ir():false); } else bc.set(true,!bc.ir()); beamUI(); V.redraw(); });
+  function beamUI(){ const has=!!bc; lb.style.display=has?'flex':'none'; bn.style.display=has&&bc.on()?'block':'none'; if(!has){ const cv=stage.querySelector('canvas'); if(cv) cv.style.filter=''; return; }
+    const what=bc.hasLight()&&bc.hasLaser()?L('luz y láser','light and laser'):bc.hasLaser()?L('láser','laser'):L('linterna','light');
+    const [b1,b2]=lb.querySelectorAll('button'); b1.textContent=(bc.on()?L('Apagar ','Turn off '):L('Encender ','Turn on '))+what; b1.style.background=bc.on()?'#c9a227':''; b1.style.color=bc.on()?'#15181a':'';
+    b2.style.display=bc.on()&&bc.hasIR()?'':'none'; b2.textContent=bc.ir()?L('Ver láser visible','Show visible laser'):L('Ver en IR (visor nocturno)','View in IR (night vision)');
+    const cv=stage.querySelector('canvas'); if(cv) cv.style.filter=bc.on()&&bc.ir()?M.NVG_FILTER:''; bn.textContent=bc.on()?bc.note(EN()):''; }
+  camUI(); camos(); scale(); rebuildGear(); V.fit(holder); credits(null); beamUI(); await setWeapon();
   window.MAT_SOLDADO_DBG={ w:()=>wpn&&[wpn.position.toArray(),wpn.userData.stock,wpn.userData.gp,wpn.scale.x,new THREE.Box3().setFromObject(wpn).min.toArray(),wp(B('R_Hand')).toArray(),wp(B('R_Upperarm')).toArray()], still:(y)=>{ V.setAuto(false); V.reset(); if(y!=null) V.look(y); }, gear:()=>gearG.children.length, weapon:()=>!!wpn, helmet:()=>!!(mesh.helmet1_2&&mesh.helmet1_2.visible), scale:()=>holder.scale.x };
-  return { update(s){ scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ body.remove(gearG); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
+  return { update(s){ scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ if(bc) bc.dispose(); body.remove(gearG); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
 }

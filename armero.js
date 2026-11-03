@@ -137,13 +137,20 @@ float fbm(vec3 p){ return 0.55*vn(p)+0.3*vn(p*2.03+7.1)+0.15*vn(p*4.1+3.7); }
 `;
 const GCOL=`
 if(uMode==1){ diffuseColor.rgb=uC0; } else if(uMode==2){ vec3 cp=vCP*uS; vec3 cc=uC0; if(fbm(cp)>uT.x) cc=uC1; if(fbm(cp*1.6+vec3(11.3,4.1,8.7))>uT.y) cc=uC2; if(fbm(cp*2.2+vec3(3.1,17.2,5.9))>uT.z) cc=uC3; diffuseColor.rgb=cc; }`;
+const FINR="\n/* acabado: micro-grano y desgaste suave (rugosidad y color) para que el pol\u00edmero y el anodizado no se vean de pl\u00e1stico liso */\nfloat fg=vn(vCP*900.0), fm=vn(vCP*45.0+vec3(5.3,1.7,9.1)); roughnessFactor=clamp(roughnessFactor+(fg-0.5)*0.16+(fm-0.5)*0.14,0.05,1.0);";
+const FINC='\ndiffuseColor.rgb*=0.95+0.1*vn(vCP*60.0+vec3(2.1,7.7,3.3));';
+const FINS='\nfloat fb=vn(vec3(vCP.x*1400.0,vCP.y*1400.0,vCP.z*40.0)); roughnessFactor=clamp(roughnessFactor+(fb-0.5)*0.2,0.05,1.0);';
+/* acero: rayado fino a lo largo del arma (rugosidad), sin camuflaje */
+function finishPatch(m,U){ m.onBeforeCompile=sh=>{ Object.assign(sh.uniforms,U); sh.vertexShader='varying vec3 vCP;\nuniform mat4 uInv;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvCP=(uInv*modelMatrix*vec4(transformed,1.0)).xyz;');
+  sh.fragmentShader=GHEAD+sh.fragmentShader.replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>'+FINS); }; m.customProgramCacheKey=()=>'matfin1'; }
 function camoPatch(m,U){
   m.onBeforeCompile=sh=>{ Object.assign(sh.uniforms,U);
     sh.vertexShader='varying vec3 vCP;\nuniform mat4 uInv;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvCP=(uInv*modelMatrix*vec4(transformed,1.0)).xyz;');
     sh.fragmentShader=GHEAD+sh.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>'+GCOL)
       .replace('#include <metalnessmap_fragment>','#include <metalnessmap_fragment>\nif(uMode>0){ metalnessFactor=min(metalnessFactor,0.12); }')
-      .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nif(uMode>0){ roughnessFactor=max(roughnessFactor,0.62); }'); };
-  m.customProgramCacheKey=()=>'matcamo1';
+      .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nif(uMode>0){ roughnessFactor=max(roughnessFactor,0.62); }'+FINR)
+      .replace('#include <color_fragment>'+GCOL,'#include <color_fragment>'+GCOL+FINC); };
+  m.customProgramCacheKey=()=>'matcamo2';
 }
 /* Materiales PBR: los modelos traen solo color plano; M.A.T asigna metal/rugosidad por tipo de pieza. */
 function pbr(c){ if(c.userData.kit) return; const col=c.color, r=col.r,g=col.g,b=col.b, mx=Math.max(r,g,b), mn=Math.min(r,g,b), lum=0.2126*r+0.7152*g+0.0722*b, sat=mx-mn, nm=c.name||'';
@@ -151,13 +158,13 @@ function pbr(c){ if(c.userData.kit) return; const col=c.color, r=col.r,g=col.g,b
   else if(c.transparent||c.opacity<1||/glass|lens/i.test(nm)){ c.userData.nocamo=1; c.roughness=Math.min(c.roughness,0.08); c.metalness=0.1; }
   else if(c.emissiveIntensity>0&&c.emissive&&(c.emissive.r+c.emissive.g+c.emissive.b)>0){ c.userData.nocamo=1; }
   else if(sat<0.05&&lum>0.2){ c.metalness=0.82; c.roughness=0.34; c.userData.nocamo=1; }          // piezas de acero (cerrojo, pasadores)
-  else if(sat<0.05&&lum<0.02){ c.metalness=0.4; c.roughness=0.4; }                             // aluminio anodizado / fosfatado negro
+  else if(sat<0.05&&lum<0.02){ c.metalness=0.35; c.roughness=0.42; col.setRGB(Math.max(r,0.032),Math.max(g,0.032),Math.max(b,0.034)); }   // negro puro -> negro real (albedo ~3 %), para que se lea la forma                             // aluminio anodizado / fosfatado negro
   else if(sat<0.05){ c.metalness=0.15; c.roughness=0.55; col.multiplyScalar(0.62); }              // acabado gris oscuro -> más próximo al negro real
   else { c.metalness=0.05; c.roughness=0.64; const gr=lum; col.setRGB(gr+(r-gr)*0.55,gr+(g-gr)*0.55,gr+(b-gr)*0.55).multiplyScalar(0.82); } // polímero de color (FDE, verde): menos saturado
   c.envMapIntensity=1;
 }
 function prep(root,U,cache){ root.traverse(o=>{ if(!o.isMesh) return; o.castShadow=true; o.receiveShadow=true;
-  const one=m=>{ let k=cache.get(m); if(k) return k; k=m.userData.kit?m:m.clone(); if(!m.userData.kit) pbr(k); if(!k.userData.nocamo&&!/glass|lens|reticle|ret_|dot/i.test(k.name||'')) camoPatch(k,U); cache.set(m,k); return k; };
+  const one=m=>{ let k=cache.get(m); if(k) return k; k=m.userData.kit?m:m.clone(); if(!m.userData.kit) pbr(k); if(!k.userData.nocamo&&!/glass|lens|reticle|ret_|dot/i.test(k.name||'')) camoPatch(k,U); else if(k.metalness>0.5&&!k.transparent&&!/glass|lens|reticle|ret_|dot/i.test(k.name||'')&&!m.userData.kit) finishPatch(k,U); cache.set(m,k); return k; };
   o.material=Array.isArray(o.material)?o.material.map(one):one(o.material); }); }
 
 /* HDRI de estudio (Poly Haven, CC0): 256×128 RGBE sin compresión */
@@ -254,6 +261,11 @@ const CSS=`
 .arm-hint{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:#c9cdd1;opacity:.75;pointer-events:none}
 .arm-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c9cdd1;font-size:14px}
 .arm-btns{position:absolute;right:8px;top:8px;display:flex;gap:6px}
+.arm-lrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 0}.arm-lrow[hidden],.arm-lb[hidden],.arm-bnote[hidden]{display:none}
+.arm-lb{background:#20262b;color:#e8eaec;border:1px solid #4a535b;border-radius:18px;padding:7px 13px;font-size:13px;cursor:pointer}.arm-lb.on{background:#c9a227;color:#15181a;border-color:#c9a227;font-weight:600}
+.arm-lb::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#59616a;margin-right:7px;vertical-align:1px}.arm-lb.on::before{background:#fff6c8;box-shadow:0 0 6px 2px #ffe58a}
+.arm-stage.arm-nvg{background:radial-gradient(ellipse at 50% 40%,#1d3a1f 0%,#0b1a0c 70%,#060d06 100%)}
+.arm-bnote{flex-basis:100%;font-size:11.5px;color:var(--dim,#9aa0a6);line-height:1.35}
 .arm-btns button{background:rgba(20,22,24,.75);color:#e8eaec;border:1px solid #444b52;border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer}
 .arm-slot{margin:10px 0 0}.arm-slot .sl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim,#9aa0a6);margin-bottom:5px}
 .arm-chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -297,8 +309,8 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
   const canvas=document.createElement('canvas'); stage.appendChild(canvas);
   let R; try{ R=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'}); R.setClearColor(0x000000,0); }catch(e){ return null; }
   const mob=Math.min(screen.width,screen.height)<700;
-  R.setPixelRatio(Math.min(window.devicePixelRatio||1, mob?1.5:1.75));
-  R.toneMapping=THREE.ACESFilmicToneMapping; R.toneMappingExposure=0.92; R.outputColorSpace=THREE.SRGBColorSpace;
+  R.setPixelRatio(Math.min(window.devicePixelRatio||1, mob?2:1.75));
+  R.toneMapping=THREE.ACESFilmicToneMapping; R.toneMappingExposure=opt.exposure||1.0; R.outputColorSpace=THREE.SRGBColorSpace;
   R.shadowMap.enabled=true; R.shadowMap.type=THREE.PCFShadowMap; R.shadowMap.autoUpdate=false;
   const scene=new THREE.Scene();
   const pm=new THREE.PMREMGenerator(R); let envRT=pm.fromScene(new RoomEnvironment(),0.04); scene.environment=envRT.texture; scene.environmentIntensity=0.9;
@@ -307,9 +319,10 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
     const rt=pm.fromEquirectangular(t); t.dispose(); envRT.dispose(); envRT=rt; scene.environment=rt.texture; scene.environmentIntensity=0.78; scene.environmentRotation.set(0,0.6,0); dirty=true; loop(); }).catch(()=>{});
   const key=new THREE.DirectionalLight(0xffffff,1.05); key.position.set(-3,5,4); scene.add(key);
   scene.add(new THREE.HemisphereLight(0xe6ecf5,0x2a2c30,0.4));
-  const sun=new THREE.DirectionalLight(0xffffff,0.55); sun.castShadow=true; sun.shadow.mapSize.set(mob?512:1024,mob?512:1024); sun.shadow.bias=-0.0004; sun.shadow.radius=5; sun.shadow.blurSamples=12; sun.shadow.normalBias=0.002; scene.add(sun); scene.add(sun.target);
+  const sun=new THREE.DirectionalLight(0xffffff,0.55); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024); sun.shadow.bias=-0.0004; sun.shadow.radius=5; sun.shadow.blurSamples=12; sun.shadow.normalBias=0.002; scene.add(sun); scene.add(sun.target);
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.ShadowMaterial({opacity:0.28,transparent:true,depthWrite:false})); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-  const cam=new THREE.PerspectiveCamera(28,1,0.01,50);
+  const cam=new THREE.PerspectiveCamera(28,1,0.01,50); scene.add(cam);
+  { /* luz de contorno que sigue a la cámara: separa las armas oscuras del fondo */ const rim=new THREE.DirectionalLight(0xdfe8ff,opt.rim!=null?opt.rim:1.1); rim.position.set(1.4,2.2,-8); cam.add(rim); const rt=new THREE.Object3D(); cam.add(rt); rim.target=rt; }
   const pivot=new THREE.Group(); scene.add(pivot); const holder=new THREE.Group(); pivot.add(holder);
   const inv=[]; // uniformes uInv que siguen al soporte
   let yaw=Y0, pitch=P0, dist=2, fitD=2, auto=true, idleT=0, dirty=true, raf=0, visible=true, last=performance.now();
@@ -344,7 +357,7 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
   function recenter(){ holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(holder); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
      const ratio=dist/fitD, tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), len=Math.max(s.x,s.y,s.z); fitD=(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD*ratio; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
   function dispose(o){ o.traverse(q=>{ if(q.geometry) q.geometry.dispose(); }); }
-  return { scene, holder, fit, recenter, reset, look(y,p){ yaw=y; if(p!=null) pitch=p; dirty=true; loop(); }, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?4:0; loop(); },
+  return { scene, holder, fit, recenter, reset, dbg(){ return {dist,fitD,aspect:cam.aspect,fov:cam.fov,yaw,pitch,cw:stage.clientWidth,ch:stage.clientHeight}; }, look(y,p){ yaw=y; if(p!=null) pitch=p; dirty=true; loop(); }, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?4:0; loop(); },
     destroy(){ alive=false; if(raf) cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); dispose(scene); envRT.dispose(); pm.dispose(); R.dispose(); try{R.forceContextLoss();}catch(e){} } };
 }
 
@@ -382,23 +395,67 @@ export async function buildWeapon(b,UW,UA){ const w=W.find(x=>x.id===b.id)||W[0]
   const g=await getGLB(v.file); const o=new THREE.Group(); const wp=g.scene.clone(true); const MW=new Map(), MA=new Map(); prep(wp,UW,MW); o.add(wp);
   for(const [s,a] of Object.entries(on)){ const P=whereAt(v,s,a,on); if(!P) continue; try{ const q=await makeAcc(a,s,on); q.position.set(...P.p); if(P.r) q.rotation.set(...P.r);
     if(P.sub){ q.updateMatrixWorld(true); for(const [nm,d] of Object.entries(P.sub)){ let hit=null; q.traverse(z=>{ if(!hit&&z.name&&z.name.includes(nm)) hit=z; }); if(hit){ const p2=hit.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(...d)); hit.parent.worldToLocal(p2); hit.position.copy(p2); } } }
-    prep(q,UA,MA); o.add(q); }catch(e){ console.warn('soldado acc',a,e); } }
+    q.userData.acc=a; prep(q,UA,MA); o.add(q); }catch(e){ console.warn('soldado acc',a,e); } }
   const m=mt(v), hasOptic=!!on.optic; (w.hideOptic||[]).forEach(n=>wp.traverse(z=>{ if(z.name&&z.name.includes(n)) z.visible=!hasOptic; })); if(m.stockNode) wp.traverse(z=>{ if(z.name&&z.name.includes(m.stockNode)) z.visible=!on.stock; });
   const list=Object.values(on).map(a=>ACC[a]), addG=list.filter(x=>x.slot!=='stock').reduce((s,x)=>s+(x.g||0),0);
   return {o,w,v,acc:list,kg:v.w?v.w+addG/1000:null,addG}; }
 export function lastBuild(){ try{ return JSON.parse(localStorage.getItem('mat_armero_build')||'null'); }catch(e){ return null; } }
-export {viewer,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,GHEAD,GCOL};
+/* ---- Linternas y láseres encendibles (M.A.T, fase 4). Efecto visual aditivo y ligero (sin sombras ni luces extra): lente que brilla, cono de luz,
+   rayo láser con su punto sobre una diana. El haz se acorta para que quepa en pantalla. Colores de láser según el fabricante. ---- */
+const LASER={ peq15:{c:0xff2414,nm:635,ir:835,src:['L3Harris – ficha AN/PEQ-15 (láser visible 635 nm; IR 835 nm)','https://www.l3harris.com/sites/default/files/2025-01/l3harris-an-peq-15-advanced-target-pointer-illuminator-aiming-laser-atpial-spec-sheet-ps-cs-ivs.pdf']},
+  peq16:{c:0xff2414,nm:635,ir:true,src:['Wikipedia – AN/PEQ-16 (láser visible 635 nm; linterna 125 lm)','https://en.wikipedia.org/wiki/AN/PEQ-16']},
+  dbal:{c:0x22ff3c,nm:520,ir:830,alt:642,src:['Steiner – DBAL-A3 (versiones de láser verde 520 nm y rojo 642 nm; IR 830 nm)','https://www.steiner-optics.com/products/dbal-a3']} };
+export function beamKind(a){ const x=ACC[a]; if(!x) return null; return x.slot==='light'?'light':x.slot==='laser'?'laser':null; }
+let GLOWT=null; function glowTex(){ if(GLOWT) return GLOWT; const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d'); const gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.15,'rgba(255,255,255,0.8)'); gr.addColorStop(0.4,'rgba(255,255,255,0.22)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,64,64); GLOWT=new THREE.CanvasTexture(c); return GLOWT; }
+function coneMat(col,a){ return new THREE.ShaderMaterial({uniforms:{c:{value:new THREE.Color(col)},a:{value:a}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+  vertexShader:'varying float vT; varying vec3 vN; varying vec3 vV; void main(){ vT=uv.y; vec4 mv=modelViewMatrix*vec4(position,1.0); vV=-mv.xyz; vN=normalMatrix*normal; gl_Position=projectionMatrix*mv; }',
+  fragmentShader:'uniform vec3 c; uniform float a; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float e=abs(dot(normalize(vN),normalize(vV))); float f=pow(e,1.8)*pow(1.0-vT,1.15)*a; gl_FragColor=vec4(c*f,f); }'}); }
+function spr(col,size,op){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:col,transparent:true,opacity:op==null?1:op,depthWrite:false,blending:THREE.AdditiveBlending})); s.scale.setScalar(size); return s; }
+function at(o,x,y,z){ o.position.set(x,y,z); return o; }
+function localBox(obj,root,skip){ root.updateMatrixWorld(true); const inv=root.matrixWorld.clone().invert(), m=new THREE.Matrix4(), b=new THREE.Box3(), t=new THREE.Box3();
+  obj.traverse(o=>{ if(skip&&o===skip) return; let p=o; while(p&&p!==root){ if(p===skip) return; p=p.parent; } if(o.isMesh&&o.visible&&o.geometry){ if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); m.multiplyMatrices(inv,o.matrixWorld); t.copy(o.geometry.boundingBox).applyMatrix4(m); b.union(t); } }); return b; }
+/* items: [{a: id del accesorio, o: su objeto 3D}] colgados de root (unidades del modelo: 0,00118 por mm, +Z = boca) */
+export function beamCtl(root,items){ const U=0.00118, G=new THREE.Group(); G.name='mat_beams'; let on=false, ir=false, its=items||[];
+  const kinds=()=>its.map(i=>beamKind(i.a)).filter(Boolean);
+  function clear(){ G.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material&&o.material.dispose) o.material.dispose(); }); G.clear(); if(G.parent) G.parent.remove(G); }
+  function build(){ clear(); if(!on||!kinds().length) return; const rb=localBox(root,root,G); if(rb.isEmpty()) return; const front=rb.max.z, len=rb.max.z-rb.min.z, D=Math.max(170*U,len*0.42), zEnd=front+D;
+    let cx=0, cy=0, n=0, cardR=55*U;
+    its.forEach(({a,o})=>{ const k=beamKind(a); if(!k) return; const b=localBox(o,root,G); if(b.isEmpty()) return; const c=b.getCenter(new THREE.Vector3()), z0=b.max.z+0.4*U, L=zEnd-z0; if(L<=0) return; cx+=c.x; cy+=c.y; n++;
+      if(k==='light'){ const x=ACC[a], r0=((x.d&&x.d.bez)||(x.dm&&x.dm.dia)||26)/2*U*0.9, r1=r0+L*0.13;
+        const lens=new THREE.Mesh(new THREE.CircleGeometry(r0,24),new THREE.MeshBasicMaterial({color:0xfffbea,toneMapped:false})); lens.position.set(c.x,c.y,z0); G.add(lens);
+        G.add(at(spr(0xfff3d6,r0*7,0.9),c.x,c.y,z0+r0*0.6));
+        const cone=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,L,28,1,true),coneMat(0xfff1d2,0.8)); cone.rotation.x=Math.PI/2; cone.position.set(c.x,c.y,z0+L/2); G.add(cone);
+        const pool=spr(0xfff1d2,r1*2.6,0.85); pool.position.set(c.x,c.y,zEnd-0.5*U); G.add(pool); cardR=Math.max(cardR,r1*1.5); }
+      else { const sp=LASER[a]||{c:0xff2414}, col=ir?0xd9ffd2:sp.c, lr=1.6*U;
+        const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(c.x,c.y,z0),new THREE.Vector3(c.x,c.y,zEnd)]); G.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false})));
+        const gl=new THREE.Mesh(new THREE.CylinderGeometry(lr,lr,L,8,1,true),coneMat(col,0.35)); gl.rotation.x=Math.PI/2; gl.position.set(c.x,c.y,z0+L/2); G.add(gl);
+        G.add(at(spr(col,9*U,0.9),c.x,c.y,z0));
+        const dot=spr(col,26*U,1); dot.position.set(c.x,c.y,zEnd-0.6*U); G.add(dot); const core=spr(0xffffff,7*U,1); core.position.copy(dot.position); G.add(core);
+        if(ir&&sp.ir){ const r0=6*U, r1=r0+L*0.09; const ill=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,L,24,1,true),coneMat(0xd9ffd2,0.22)); ill.rotation.x=Math.PI/2; ill.position.set(c.x,c.y-4*U,z0+L/2); G.add(ill); const pool=spr(0xd9ffd2,r1*2.4,0.5); pool.position.set(c.x,c.y,zEnd-0.4*U); G.add(pool); cardR=Math.max(cardR,r1*1.4); } } });
+    if(!n){ return; }
+    const card=new THREE.Mesh(new THREE.CircleGeometry(cardR,40),new THREE.MeshBasicMaterial({color:0x8d9399,alphaMap:glowTex(),transparent:true,opacity:0.55,depthWrite:false,side:THREE.DoubleSide}));
+    card.position.set(cx/n,cy/n,zEnd); G.add(card); root.add(G); }
+  return { has:()=>kinds().length>0, hasLight:()=>kinds().includes('light'), hasLaser:()=>kinds().includes('laser'), hasIR:()=>its.some(i=>beamKind(i.a)==='laser'&&LASER[i.a]&&LASER[i.a].ir),
+    on:()=>on, ir:()=>ir, set(v,irv){ on=!!v; if(irv!=null) ir=!!irv; build(); }, items(list){ its=list||[]; build(); }, detach(){ if(G.parent) G.parent.remove(G); }, attach(){ build(); }, dispose(){ clear(); },
+    note(EN){ const t=[]; const lz=its.filter(i=>beamKind(i.a)==='laser'); 
+      t.push(EN?'Beam shortened to fit on screen.':'Haz acortado para que quepa en pantalla.');
+      lz.forEach(i=>{ const sp=LASER[i.a]; if(!sp) return; const n=ACC[i.a].n; t.push(ir?(EN?n+': IR laser and illuminator, invisible to the naked eye — shown as seen through night vision.':n+': láser e iluminador IR, invisibles a simple vista — se muestra como se vería con visor nocturno.'):(EN?n+': '+(sp.c===0x22ff3c?'green':'red')+' visible laser, '+sp.nm+' nm'+(sp.alt?' (a red '+sp.alt+' nm version also exists)':'')+'.':n+': láser visible '+(sp.c===0x22ff3c?'verde':'rojo')+' de '+sp.nm+' nm'+(sp.alt?' (existe versión roja de '+sp.alt+' nm)':'')+'.')); });
+      return t.join(' '); } }; }
+export const NVG_FILTER='sepia(1) hue-rotate(52deg) saturate(2.6) brightness(0.92) contrast(1.12)';
+export {viewer,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,GHEAD,GCOL,LASER};
 function page(app,ctx,w){
   const st={v:0,on:{},camo:'orig',ca:false};
   const sv=new URLSearchParams((location.hash.split('?')[1]||''));
   const shell=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[L('Armero 3D','3D Gunsmith'),'#/armero'],[w.n]])+
    '<h1>'+esc(w.n)+'</h1><p class="sub">'+esc(LL(w.kind))+' · <a href="#/a/'+w.ficha+'">'+L('Ver ficha completa','Full data sheet')+'</a> · <a href="#/soldado?arma='+w.id+'" class="arm-sold">'+L('Equipar en «Crea tu soldado» →','Equip in “Build your soldier” →')+'</a></p>'+
    '<div class="arm-wrap"><div><div class="arm-stage" id="armst"><div class="arm-load">'+L('Cargando modelo 3D…','Loading 3D model…')+'</div><div class="arm-btns"><button type="button" id="armrot">'+L('Pausar giro','Pause spin')+'</button><button type="button" id="armrs">'+L('Centrar','Reset')+'</button></div><div class="arm-hint">'+L('Arrastra para girar · pellizca o rueda para zoom','Drag to rotate · pinch or scroll to zoom')+'</div></div>'+
+   '<div class="arm-lrow" id="armlrow" hidden><button type="button" class="arm-lb" id="armbeam" aria-pressed="false"></button><button type="button" class="arm-lb" id="armir" hidden aria-pressed="false"></button><div class="arm-bnote" id="armbn" hidden></div></div>'+
    '<div id="armsum" class="arm-sum"></div><div id="armui"></div></div><div><div class="arm-stats" id="armstats"></div><div id="armacc"></div></div></div>'+
    '<div id="armcred"></div>';
   ctx.set(shell,w.n+' · '+L('Armero 3D','3D Gunsmith'));
   const stage=document.getElementById('armst'); stop();
-  const V=viewer(stage);
+  const V=viewer(stage,{yaw:-1.25,pitch:0.2,zoom:0.86});
   if(!V){ stage.querySelector('.arm-load').textContent=L('Tu navegador no puede mostrar 3D (WebGL).','Your browser cannot show 3D (WebGL).'); }
   ACTIVE=V;
   const UW=mkU(), UA=mkU(); if(V){ V.track(UW.uInv); V.track(UA.uInv); }
@@ -473,18 +530,30 @@ function page(app,ctx,w){
         o.position.set(...P.p); if(P.r) o.rotation.set(...P.r);
         if(P.sub){ o.updateMatrixWorld(true); for(const [nm,d] of Object.entries(P.sub)){ let hit=null; o.traverse(q=>{ if(!hit&&q.name&&q.name.includes(nm)) hit=q; }); if(hit){ const wp=hit.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(...d)); hit.parent.worldToLocal(wp); hit.position.copy(wp); } } }
         prep(o,UA,MCA); V.holder.add(o); mounted[s]={a,k,o}; }catch(e){ console.warn('armero acc',a,e); } }
-    setVis(); V.recenter();
+    setVis(); beamsUp(); V.recenter();
   }
   async function load(){
     if(!V) return; const my=++token; const v=cur();
     stage.querySelector('.arm-load')&&(stage.querySelector('.arm-load').style.display='flex');
     try{ const g=await getGLB(v.file); if(my!==token) return;
-      if(weapon){ V.holder.remove(weapon); } Object.keys(mounted).forEach(s=>{ V.holder.remove(mounted[s].o); delete mounted[s]; });
+      if(weapon){ V.holder.remove(weapon); } Object.keys(mounted).forEach(s=>{ V.holder.remove(mounted[s].o); delete mounted[s]; }); BC.detach();
       weapon=g.scene.clone(true); prep(weapon,UW,MCW); V.holder.add(weapon); V.fit(weapon);
       const ld=stage.querySelector('.arm-load'); if(ld) ld.style.display='none';
       await sync();
     }catch(e){ const ld=stage.querySelector('.arm-load'); if(ld) ld.textContent=L('No se pudo cargar el modelo. Comprueba la conexión.','The model could not be loaded. Check your connection.'); }
   }
+  /* linterna / láser: botón Encender-Apagar y modo IR */
+  const BC=V?beamCtl(V.holder,[]):{has:()=>false,detach(){},items(){},set(){},on:()=>false,ir:()=>false,hasIR:()=>false,hasLight:()=>false,hasLaser:()=>false,note:()=>''};
+  const bB=document.getElementById('armbeam'), bI=document.getElementById('armir'), bN=document.getElementById('armbn');
+  function beamUI(){ const has=BC.has(); document.getElementById('armlrow').hidden=!has; bI.hidden=!(has&&BC.hasIR()&&BC.on()); bN.hidden=!(has&&BC.on());
+    const what=BC.hasLight()&&BC.hasLaser()?L('luz y láser','light and laser'):BC.hasLaser()?L('láser','laser'):L('linterna','light');
+    bB.textContent=(BC.on()?L('Apagar ','Turn off '):L('Encender ','Turn on '))+what; bB.setAttribute('aria-pressed',BC.on()?'true':'false'); bB.classList.toggle('on',BC.on());
+    bI.textContent=BC.ir()?L('Ver láser visible','Show visible laser'):L('Ver en IR (visor nocturno)','View in IR (night vision)'); bI.setAttribute('aria-pressed',BC.ir()?'true':'false'); bI.classList.toggle('on',BC.ir());
+    const cv=stage.querySelector('canvas'); if(cv) cv.style.filter=(BC.on()&&BC.ir())?NVG_FILTER:''; stage.classList.toggle('arm-nvg',BC.on()&&BC.ir()); bN.textContent=BC.on()?BC.note(EN()):''; }
+  function beamsUp(){ BC.detach(); BC.items(Object.values(mounted).map(m=>({a:m.a,o:m.o}))); if(!BC.has()&&BC.on()) BC.set(false,false); beamUI(); }
+  bB.onclick=e=>{ e.stopPropagation(); BC.set(!BC.on()); if(!BC.on()) BC.set(false,false); beamUI(); V&&V.recenter(); };
+  bI.onclick=e=>{ e.stopPropagation(); BC.set(true,!BC.ir()); beamUI(); V&&V.recenter(); };
+  [bB,bI].forEach(b=>b.addEventListener('pointerdown',e=>e.stopPropagation()));
   let spin=true; document.getElementById('armrot').onclick=e=>{ spin=!spin; V&&V.setAuto(spin); e.target.textContent=spin?L('Pausar giro','Pause spin'):L('Girar','Spin'); };
   document.getElementById('armrs').onclick=()=>V&&V.reset();
   // preselección por URL: #/armero/m4a1?acc=eotech,velos&camo=selva&ca=1
@@ -492,7 +561,7 @@ function page(app,ctx,w){
   pre.forEach(a=>{ if(accs(cur(),ACC[a].slot).includes(a)) st.on[ACC[a].slot]=a; }); if(!isDot(st.on.optic)) delete st.on.mag;
   if(CAMO.some(c=>c[0]===sv.get('camo'))) st.camo=sv.get('camo'); st.ca=sv.get('ca')==='1';
   renderUI(); stats(); camo(); load();
-  window.MAT_ARMERO_DBG={st,mounted:()=>Object.keys(mounted)};
+  window.MAT_ARMERO_DBG={st,mounted:()=>Object.keys(mounted),view:()=>V&&V.dbg()};
 }
 
 export function route(app,ctx,p){
