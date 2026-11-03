@@ -83,13 +83,13 @@ export async function mount(stage,st,D,M,opt){
     const pos=m.geometry.attributes.position, v=new THREE.Vector3(); let n=0,sx=0,sz=0,sxx=0,sxz=0,sy=0; const st_=Math.max(1,Math.floor(pos.count/4000));
     for(let i=0;i<pos.count;i+=st_){ m.getVertexPosition(i,v); m.localToWorld(v); body.worldToLocal(v); if(Ci) v.applyMatrix4(Ci); if(v.y>1.1&&v.y<1.3&&v.z<-0.1){ n++; sx+=v.x; sz+=v.z; sy+=v.y; sxx+=v.x*v.x; sxz+=v.x*v.z; } }
     if(n<8) return null; const mx=sx/n, mz=sz/n, b=(sxz/n-mx*mz)/Math.max(1e-6,(sxx/n-mx*mx));
-    /* centro visible de la espalda: punto medio entre los bordes izquierdo y derecho del torso (chaleco + chaqueta), a la altura de los omóplatos y solo la parte trasera */
-    const xs=[]; [m,mesh.kitel_1].forEach(mm=>{ if(!mm||!mm.visible) return; if(mm.skeleton) mm.skeleton.update(); const ps=mm.geometry.attributes.position, s2=Math.max(1,Math.floor(ps.count/5000)); for(let i=0;i<ps.count;i+=s2){ mm.getVertexPosition(i,v); mm.localToWorld(v); body.worldToLocal(v); if(Ci) v.applyMatrix4(Ci); if(v.y>1.15&&v.y<1.38&&v.z<-0.06) xs.push(v.x); } });
-    xs.sort((p,q)=>p-q); const mid=xs.length>20?(xs[Math.floor(xs.length*0.04)]+xs[Math.floor(xs.length*0.96)])/2:mx;
-    return {c:new THREE.Vector3(mx,sy/n,mz), a:Math.atan(b), m:m.name, mid}; }
-  function skinM(){ const C=chestM(), now=backFrame(C.clone().invert()); if(!now||!BF0||now.m!==BF0.m) return null; const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),-(now.a-BF0.a)); const p=now.c.clone().sub(BF0.c.clone().applyQuaternion(q)); p.y=now.c.y-BF0.c.y; p.x+=THREE.MathUtils.clamp((now.mid-BF0.mid)-(now.c.x-BF0.c.x),-0.1,0.1)-0.0026*(TWS.tw||0); /* centrada entre los omóplatos visibles: con el torso girado el hombro derecho retrasado ensancha la espalda hacia ese lado */ return C.multiply(new THREE.Matrix4().compose(p,q,new THREE.Vector3(1,1,1))); /* hueso del pecho + la corrección medida en la malla */ }
+    return {c:new THREE.Vector3(mx,sy/n,mz), a:Math.atan(b), m:m.name}; }
+  function skinM(){ const C=chestM(), now=backFrame(C.clone().invert()); if(!now||!BF0||now.m!==BF0.m) return null; const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),-(now.a-BF0.a)); const p=now.c.clone().sub(BF0.c.clone().applyQuaternion(q)); p.y=now.c.y-BF0.c.y; p.x+=-0.0026*(TWS.tw||0); /* centrada entre los omóplatos visibles: con el torso girado el hombro derecho retrasado ensancha la espalda hacia ese lado */ return C.multiply(new THREE.Matrix4().compose(p,q,new THREE.Vector3(1,1,1))); /* hueso del pecho + la corrección medida en la malla */ }
   function follow(){ /* mochilas y hombreras siguen la espalda medida sobre la malla; si no se puede medir, el hueso del pecho */
-    const S_=skinM()||backM(); S_.decompose(gearG.position,gearG.quaternion,gearG.scale); S_.decompose(gearC.position,gearC.quaternion,gearC.scale); hipM().decompose(gearH.position,gearH.quaternion,gearH.scale);
+    const S_=skinM()||backM(); S_.decompose(gearC.position,gearC.quaternion,gearC.scale); S_.decompose(gearG.position,gearG.quaternion,gearG.scale);
+    /* mochilas: el punto de apoyo en la espalda sigue exactamente al torso, pero solo el 60 % del giro horizontal del pecho, para que una mochila profunda no se vaya hacia un lado */
+    if(BF0){ const q=gearG.quaternion.clone(), f=new THREE.Vector3(0,0,1).applyQuaternion(q); const psi=Math.atan2(f.x,f.z); const qy=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),psi), qr=qy.clone().invert().multiply(q);
+      const q2=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),psi*0.6).multiply(qr); const A0=BF0.c.clone(), A1=A0.clone().applyMatrix4(S_); gearG.quaternion.copy(q2); gearG.position.copy(A1.sub(A0.applyQuaternion(q2))); } hipM().decompose(gearH.position,gearH.quaternion,gearH.scale);
     if(pvs&&pvs.userData.hm){ const m=headM().multiply(pvs.userData.hm); m.decompose(pvs.position,pvs.quaternion,pvs.scale); } }
   function handRoll(side,palmL){ /* gira la mano sobre el eje de los dedos para que la palma mire hacia palmL (cuerpo) */
     const H=B(side+'_Hand'), m=B(side+'_Mid1'), i1=B(side+'_Index1'), p1=B(side+'_Pinky1'); if(!H||!m||!i1||!p1) return;
@@ -279,8 +279,8 @@ export async function mount(stage,st,D,M,opt){
       [[0.19,-Dd-0.006,W+0.012],[-0.12,-Dd-0.086,0.29]].forEach(([y,z,w])=>{ const c=rbox(w,0.025,0.006,gmS); c.position.set(0,y,z); G.add(c); G.add(buckle(0.05,y,z-0.009)); }); }
     G.userData.depth=Dd+(noFP?0.02:0.085); G.userData.h=Hh; return G; }
   /* mochila de asalto: cuerpo de tapa redondeada, panel MOLLE frontal y asa */
-  function apMesh(){ /* mochila de asalto (~30-35 L): cuerpo acolchado con tapa redondeada, cremallera en arco con tiradores, panel frontal MOLLE, ribetes, cinchas laterales con hebilla, asa y panel de espalda acolchado — forma aproximada de M.A.T */
-    const G=new THREE.Group(), W=0.32, Hh=0.46, Dd=0.2;
+  function apMesh(thin){ /* mochila de asalto (~30-35 L): cuerpo acolchado con tapa redondeada, cremallera en arco con tiradores, panel frontal MOLLE, ribetes, cinchas laterales con hebilla, asa y panel de espalda acolchado — forma aproximada de M.A.T */
+    const G=new THREE.Group(), W=0.32, Hh=0.46, Dd=thin?0.15:0.2;
     const body=soft(W,Hh,Dd,0.055,gmP,{bulge:0.03,dome:0.04,taper:0.05}); body.position.set(0,0,-Dd/2); G.add(body);
     const pad=soft(W-0.04,Hh-0.06,0.04,0.016,gmS,{bulge:0.008}); pad.position.set(0,-0.01,-0.008); G.add(pad);
     for(let k=0;k<3;k++){ const q=rbox(W-0.08,0.008,0.01,gmB); q.position.set(0,-0.13+k*0.12,0.013); G.add(q); }
@@ -316,7 +316,7 @@ export async function mount(stage,st,D,M,opt){
         const gmR=gmP; /* esterilla/saco enrollado, mismo tono que la mochila y pegado a su base */
         const sb=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,0.42,20,1),gmR); sb.castShadow=true; sb.rotation.z=Math.PI/2; sb.position.set(-0.01,yb,zc); gearG.add(sb);
         [-1,1].forEach(s=>{ const rg=new THREE.Mesh(new THREE.TorusGeometry(0.078,0.006,6,24),gmS); rg.rotation.y=Math.PI/2; rg.position.set(-0.01+s*0.12,yb,zc); gearG.add(rg); }); } }
-    if(ap){ const zb=backZ(1.25); const apo=null, a=apMesh(); a.position.set(-0.01,ruck?1.2:1.2,ruck?zb+0.01-rD+0.004:zb+0.012); gearG.add(a); if(!ruck) straps(1.41,1.03,zb,0.05,0.011); }
+    if(ap){ const zb=backZ(1.25); const apo=null, a=apMesh(ruck); a.position.set(-0.01,ruck?1.2:1.2,ruck?zb+0.01-rD+0.004:zb+0.012); gearG.add(a); if(!ruck) straps(1.41,1.03,zb,0.05,0.011); }
     if(has('medbag')){ const zb=backZ(1.0); const mb=soft(0.36,0.26,0.18,0.05,gmP,{bulge:0.02}); mb.position.set(-0.01,ruck?0.8:1.0,zb-0.09-(ruck?0.13:0)); gearG.add(mb); }
     if(visTag('at4')){ const zb=backZ(1.25); const t=cyl(0.042,1.0,gm.d,14); t.position.set(0.04,1.28,zb-(ruck?0.27:0.06)); t.rotation.z=0.45; gearG.add(t); }
     if(has('cant')&&!ruck){ /* el cinturón del modelo ya lleva bolsas; las cantimploras van detrás, en la cadera */ for(let i=0;i<Math.min(2,st.q.cant);i++){ const s=i?1:-1; const p=hit([mesh.pants_1,mesh.pouches_1],new THREE.Vector3(s*0.12,0.97,-0.8),new THREE.Vector3(0,0,1)); if(!p) continue; const c=cyl(0.042,0.17,gm.d,14); c.position.set(s*0.12,0.95,p.z-0.04); gearH.add(c); } }
