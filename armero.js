@@ -305,7 +305,7 @@ let ACTIVE=null;
 function stop(){ if(ACTIVE){ ACTIVE.destroy(); ACTIVE=null; } }
 window.addEventListener('hashchange',()=>{ if(!/^#\/armero\/./.test(location.hash)) stop(); });
 
-function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0=opt.pitch!=null?opt.pitch:0.14, ZK=opt.zoom||1;
+function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0=opt.pitch!=null?opt.pitch:0.14; let ZK=opt.zoom||1; const ZK0=ZK;
   const canvas=document.createElement('canvas'); stage.appendChild(canvas);
   let R; try{ R=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'}); R.setClearColor(0x000000,0); }catch(e){ return null; }
   const mob=Math.min(screen.width,screen.height)<700;
@@ -346,7 +346,7 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
   stage.addEventListener('pointerup',up); stage.addEventListener('pointercancel',up);
   stage.addEventListener('wheel',e=>{ e.preventDefault(); idleT=0; dist=Math.max(fitD*0.35,Math.min(fitD*1.8,dist*(1+Math.sign(e.deltaY)*0.1))); dirty=true; loop(); },{passive:false});
   let lastTap=0; stage.addEventListener('pointerup',e=>{ const t=performance.now(); if(t-lastTap<300){ reset(); } lastTap=t; });
-  function reset(){ yaw=Y0; pitch=P0; dist=fitD; idleT=0; dirty=true; loop(); }
+  function reset(){ yaw=Y0; pitch=FP!=null?FP:P0; dist=fitD; idleT=0; dirty=true; loop(); }
   const _b=new THREE.Box3(), _c=new THREE.Vector3(), _s=new THREE.Vector3();
   function shade(){ holder.updateMatrixWorld(true); _b.setFromObject(holder); if(_b.isEmpty()) return; _b.getCenter(_c); _b.getSize(_s); const Lm=Math.max(_s.x,_s.z,_s.y);
     ground.position.set(_c.x,_b.min.y-0.004,_c.z); ground.scale.set(Lm*2.2,Lm*2.2,1);
@@ -354,10 +354,16 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
     const im=holder.matrixWorld.clone().invert(); inv.forEach(u=>u.value.copy(im)); R.shadowMap.needsUpdate=true; dirty=true; loop(); }
   function fit(obj){ holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(obj); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
      const tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)); const len=Math.max(s.x,s.y,s.z); fitD=(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
+  let FA=0, FP=null; /* FA: margen de encaje para «cabe entero en cualquier giro» (figura tumbada); 0 = encuadre normal */
+  function fitAllD(pitch){ holder.updateMatrixWorld(true); const pts=[], v=new THREE.Vector3(); holder.traverse(m=>{ if(!m.isMesh) return; let p=m; while(p){ if(!p.visible) return; p=p.parent; } const P=m.geometry.attributes.position; if(!P) return; const st_=Math.max(1,Math.floor(P.count/400));
+      for(let i=0;i<P.count;i+=st_){ if(m.isSkinnedMesh) m.getVertexPosition(i,v); else v.fromBufferAttribute(P,i); pts.push(m.localToWorld(v.clone())); } });
+    const tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), ax=FA*tv*cam.aspect, ay=FA*tv; let d=0; const cp=Math.cos(pitch), sp=Math.sin(pitch);
+    for(let k=0;k<24;k++){ const yw=k*Math.PI/12; const dir=new THREE.Vector3(Math.sin(yw)*cp,sp,Math.cos(yw)*cp), r=new THREE.Vector3(Math.cos(yw),0,-Math.sin(yw)), u=new THREE.Vector3().crossVectors(dir,r).negate();
+      for(const p of pts){ const z=p.dot(dir); const dd=z+Math.max(Math.abs(p.dot(r))/ax,Math.abs(p.dot(u))/ay); if(dd>d) d=dd; } } return d; }
   function recenter(){ holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(holder); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
-     const ratio=dist/fitD, tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), len=Math.max(s.x,s.y,s.z); fitD=(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD*ratio; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
+     const ratio=dist/fitD, tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), len=Math.max(s.x,s.y,s.z); fitD=FA?fitAllD(FP!=null?FP:pitch):(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD*ratio; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
   function dispose(o){ o.traverse(q=>{ if(q.geometry) q.geometry.dispose(); }); }
-  return { scene, holder, fit, recenter, reset, dbg(){ return {dist,fitD,aspect:cam.aspect,fov:cam.fov,yaw,pitch,cw:stage.clientWidth,ch:stage.clientHeight}; }, look(y,p){ yaw=y; if(p!=null) pitch=p; dirty=true; loop(); }, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?4:0; loop(); },
+  return { scene, holder, fit, recenter, reset, fitK(k){ ZK=ZK0*(k||1); recenter(); }, fitAll(m,p){ FA=m||0; FP=m?(p!=null?p:null):null; recenter(); }, dbg(){ return {dist,fitD,aspect:cam.aspect,fov:cam.fov,yaw,pitch,cw:stage.clientWidth,ch:stage.clientHeight}; }, look(y,p){ yaw=y; if(p!=null) pitch=p; dirty=true; loop(); }, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?4:0; loop(); },
     destroy(){ alive=false; if(raf) cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); dispose(scene); envRT.dispose(); pm.dispose(); R.dispose(); try{R.forceContextLoss();}catch(e){} } };
 }
 
@@ -461,33 +467,37 @@ function shotBuf(f){ if(!AUD.ctx) return Promise.resolve(null); if(AUD.c[f]) ret
     let on=0; for(let i=0;i<ch.length;i++){ if(Math.abs(ch[i])>mx*0.35){ on=i; break; } } return {buf,t0:Math.max(0,on/buf.sampleRate-0.008)}; }).catch(()=>null); return AUD.c[f]; }
 function playShot(s,dur){ const C=AUD.ctx; if(!s||!C) return; const src=C.createBufferSource(); src.buffer=s.buf; const g=C.createGain(), t=C.currentTime, D=Math.min(dur||0.3,s.buf.duration-s.t0);
   g.gain.setValueAtTime(0.85,t); g.gain.setValueAtTime(0.85,t+Math.max(0.02,D-0.07)); g.gain.linearRampToValueAtTime(0,t+D); src.connect(g); g.connect(C.destination); try{ src.start(t,s.t0,D); }catch(e){} }
+let FLS=null; function flashSide(){ if(FLS) return FLS; const c=document.createElement('canvas'); c.width=128; c.height=64; const x=c.getContext('2d'); const g=x.createRadialGradient(118,32,0,118,32,110);
+  g.addColorStop(0,'rgba(255,255,235,1)'); g.addColorStop(0.18,'rgba(255,214,120,0.95)'); g.addColorStop(0.5,'rgba(255,140,40,0.4)'); g.addColorStop(1,'rgba(255,90,0,0)'); x.fillStyle=g; x.save(); x.translate(0,32); x.scale(1,0.45); x.translate(0,-32); x.fillRect(0,-40,128,144); x.restore();
+  FLS=new THREE.CanvasTexture(c); FLS.colorSpace=THREE.SRGBColorSpace; return FLS; } /* fogonazo lateral: brillante en la boca, se apaga hacia delante */
 let FLT=null; function flashTex(){ if(FLT) return FLT; const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); const g=x.createRadialGradient(32,32,0,32,32,32);
   g.addColorStop(0,'rgba(255,255,235,1)'); g.addColorStop(0.25,'rgba(255,214,120,0.95)'); g.addColorStop(0.55,'rgba(255,140,40,0.45)'); g.addColorStop(1,'rgba(255,90,0,0)'); x.fillStyle=g; x.fillRect(0,0,64,64); FLT=new THREE.CanvasTexture(c); FLT.colorSpace=THREE.SRGBColorSpace; return FLT; }
 /* o: {holder, root()=arma (los puntos de MT están en su marco), recoil()=objetos que retroceden juntos, muz()=[y,z] boca (marco del arma), port()=[x,y,z] ventana de expulsión, ej=[x,y,z] dirección de expulsión (marco del arma),
        pivot()=[y,z] apoyo (culata o empuñadura), cal=texto de calibre, pist, mg, sup()=silenciador, slides()=[nodos cerrojo/corredera], ground()=y del suelo en el marco del holder, redraw(), snd (entrada de sonidos.json o null)} */
 function visBox(o){ const b=new THREE.Box3(); o.updateMatrixWorld(true); const inv=new THREE.Matrix4().copy(o.matrixWorld).invert(); o.traverse(m=>{ if(!m.isMesh) return; let p=m, v=true; while(p&&p!==o.parent){ if(!p.visible){ v=false; break; } p=p.parent; } if(!v) return; m.geometry.computeBoundingBox(); b.union(m.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv,m.matrixWorld))); }); return b; } /* caja de las mallas visibles, en el marco del propio objeto */
-function fireKit(o){ const fx=new THREE.Group(); fx.name='mat_fire'; fx.matrixAutoUpdate=false; const PAR=o.holder.parent||o.holder; PAR.add(fx); /* fuera del holder: no cuenta para el encuadre */
-  const sync_=()=>{ o.holder.updateMatrix(); if(PAR!==o.holder){ fx.matrix.copy(o.holder.matrix); fx.matrixWorldNeedsUpdate=true; } };
-  const fl=new THREE.Group(); fx.add(fl); fl.visible=false; const fm=new THREE.MeshBasicMaterial({map:flashTex(),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
-  const pg=new THREE.PlaneGeometry(1,1); [0,1].forEach(i=>{ const p=new THREE.Mesh(pg,fm); p.rotation.z=i*Math.PI/2; p.rotation.y=Math.PI/2; p.position.z=0.5; p.scale.set(1,0.42,1); fl.add(p); }); const st=new THREE.Mesh(pg,fm); st.scale.setScalar(0.62); fl.add(st);
+function fireKit(o){ const fx=new THREE.Group(); fx.name='mat_fire'; fx.matrixAutoUpdate=false; let PAR=o.holder; while(PAR.parent) PAR=PAR.parent; PAR.add(fx); /* colgado de la escena: no cuenta para el encuadre ni para la sombra */
+  const sync_=()=>{ o.holder.updateMatrixWorld(true); fx.matrix.copy(o.holder.matrixWorld); if(PAR.matrixWorld) fx.matrix.premultiply(new THREE.Matrix4().copy(PAR.matrixWorld).invert()); fx.matrixWorldNeedsUpdate=true; };
+  const fl=new THREE.Group(); fx.add(fl); fl.visible=false; fl.scale.setScalar(1e-4); const fm=new THREE.MeshBasicMaterial({map:flashTex(),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
+  const fs=fm.clone(); fs.map=flashSide(); const pg=new THREE.PlaneGeometry(1,1); [0,1].forEach(i=>{ const p=new THREE.Mesh(pg,fs); const g_=new THREE.Group(); g_.rotation.z=i*Math.PI/2; p.rotation.y=-Math.PI/2; p.position.z=0.5; p.scale.set(1,0.5,1); g_.add(p); fl.add(g_); }); const st=new THREE.Mesh(pg,fm); st.scale.setScalar(0.5); fl.add(st);
   const cm=(o.cal||'').replace(',','.').match(/(\d+(?:\.\d+)?)\s*[×x]\s*(\d+)/); const bd=cm?parseFloat(cm[1]):7.62, cl=cm?parseFloat(cm[2]):39; /* vaina: largo = el de la denominación del calibre */
   const cg=new THREE.CylinderGeometry(1,1,1,10); cg.rotateX(Math.PI/2); const brass=new THREE.MeshStandardMaterial({color:0xb48a3c,metalness:0.85,roughness:0.32});
-  const pool=[]; for(let i=0;i<14;i++){ const m=new THREE.Mesh(cg,brass); m.visible=false; m.castShadow=true; fx.add(m); pool.push({m,v:new THREE.Vector3(),w:new THREE.Vector3(),t:0,on:false,gr:false}); }
+  const pool=[]; for(let i=0;i<14;i++){ const m=new THREE.Mesh(cg,brass); m.visible=false; m.scale.setScalar(1e-4); m.castShadow=true; fx.add(m); pool.push({m,v:new THREE.Vector3(),w:new THREE.Vector3(),t:0,on:false,gr:false}); }
   let fired=0, raf=0, last=0, rec=0, sl=0, fl_t=0, base=null, sbase=null, upm=1, pv=null, ax=null, Mw=new THREE.Matrix4(), q=new THREE.Quaternion(), stopAt=0, queue=0, nextT=0, iv=0.12, ci=0;
   const W2H=()=>{ o.holder.updateMatrixWorld(true); const r=o.root(); r.updateMatrixWorld(true); return new THREE.Matrix4().copy(o.holder.matrixWorld).invert().multiply(r.matrixWorld); };
   function capture(){ const objs=o.recoil(); base=objs.map(b=>({b,p:b.position.clone(),q:b.quaternion.clone()})); const sl_=o.slides?o.slides():[]; sbase=sl_.map(n=>{ const bb=new THREE.Box3().setFromObject(n), sz=bb.getSize(new THREE.Vector3()); return {n,p:n.position.clone(),L:Math.max(sz.x,sz.y,sz.z)}; }); }
   function restore(){ if(base) base.forEach(x=>{ x.b.position.copy(x.p); x.b.quaternion.copy(x.q); }); if(sbase) sbase.forEach(x=>x.n.position.copy(x.p)); }
   function shot(){ sync_(); const M=W2H(); Mw.copy(M); const s=new THREE.Vector3(); M.decompose(new THREE.Vector3(),q,s); upm=1.18*s.x; /* el modelo del arma mide 1,18 unidades por metro */
     const mz=o.muz(), P=new THREE.Vector3(0,mz[0],mz[1]).applyMatrix4(M), F=new THREE.Vector3(0,0,1).applyQuaternion(q).normalize();
-    const L=(o.mg?0.24:o.pist?0.09:0.17)*upm*(o.sup()?0.18:1); fl.position.copy(P); fl.quaternion.copy(q); fl.rotateZ(Math.random()*Math.PI); fl.scale.set(L*0.55,L*0.55,L*(0.8+Math.random()*0.4)); fl.visible=true; fl_t=0.045;
+    const L=(o.mg?0.24:o.pist?0.09:0.17)*upm*(o.sup()?0.18:1); fl.position.copy(P); fl.quaternion.copy(q); fl.userData.rz=Math.random()*Math.PI; fl.rotateZ(fl.userData.rz); fl.scale.set(L*0.55,L*0.55,L*(0.8+Math.random()*0.4)); fl.visible=true; fl_t=0.045;
     const pp=o.port(), pd=o.ej; const PP=new THREE.Vector3(...pp).applyMatrix4(M); const E=new THREE.Vector3(...pd).applyQuaternion(q).normalize();
     const c=pool[ci++%pool.length]; c.on=true; c.gr=false; c.t=0; c.m.visible=true; c.m.position.copy(PP); c.m.quaternion.copy(q); c.m.scale.set(bd*(cl/bd<3?0.55:0.85)*0.001*upm,bd*(cl/bd<3?0.55:0.85)*0.001*upm,cl*0.001*upm);
     c.v.copy(E).multiplyScalar((2.6+Math.random()*1.2)*upm).addScaledVector(new THREE.Vector3(0,1,0),(1.2+Math.random()*0.8)*upm).addScaledVector(F,-(0.3+Math.random()*0.5)*upm); c.w.set(Math.random()*30-15,Math.random()*30-15,Math.random()*20-10);
     fired++; rec=1; sl=1; if(o.snd&&o.buf) playShot(o.buf,0.16); }
   function step(now){ const dt=Math.min(0.05,(now-(last||now))/1000)/((window.MAT_DEV&&window.MAT_FIRE_SLOW)||1); last=now; let busy=false;
     if(queue>0&&now>=nextT){ shot(); queue--; nextT=now+iv*1000; } if(queue>0) busy=true;
-    if(fl_t>0){ fl_t-=dt; if(fl_t<=0) fl.visible=false; busy=true; }
-    if(base&&(rec>0.001||sl>0.001)){ busy=true; const k=o.pist?1:0.75; const back=(o.pist?0.012:o.mg?0.01:0.014)*upm*rec, rise=(o.pist?7:o.mg?0.8:1.6)*Math.PI/180*rec*k;
+    if(fl_t>0){ fl_t-=dt; if(fl_t<=0){ fl.visible=false; fl.scale.setScalar(1e-4); } busy=true; }
+    if(fl.visible){ const M2=W2H(), q2=new THREE.Quaternion(); M2.decompose(new THREE.Vector3(),q2,new THREE.Vector3()); const mz=o.muz(); fl.position.copy(new THREE.Vector3(0,mz[0],mz[1]).applyMatrix4(M2)); const rz=fl.userData.rz||0; fl.quaternion.copy(q2); fl.rotateZ(rz); } /* el fogonazo sigue a la boca durante el retroceso */
+    if(base&&(rec>0.001||sl>0.001)){ busy=true; const k=o.pist?1:0.75; const back=(o.pist?0.012:o.mg?0.01:0.014)*upm*rec, rise=(o.pist?6:o.mg?0.8:1.6)*Math.PI/180*rec*k;
       const Mi=new THREE.Matrix4().copy(o.holder.matrixWorld).invert(); const pvz=o.pivot(); const Pv=new THREE.Vector3(0,pvz[0],pvz[1]).applyMatrix4(Mw), F=new THREE.Vector3(0,0,1).applyQuaternion(q), R_=new THREE.Vector3(1,0,0).applyQuaternion(q);
       const rq=new THREE.Quaternion().setFromAxisAngle(R_,-rise);
       base.forEach(x=>{ const par=x.b.parent; par.updateMatrixWorld(true); const toH=new THREE.Matrix4().copy(Mi).multiply(par.matrixWorld), toP=toH.clone().invert();
@@ -499,12 +509,12 @@ function fireKit(o){ const fx=new THREE.Group(); fx.name='mat_fire'; fx.matrixAu
     sync_(); const gy=o.ground?o.ground():-1e9;
     pool.forEach(c=>{ if(!c.on) return; busy=true; c.t+=dt; if(!c.gr){ c.v.y-=9.8*upm*dt; c.m.position.addScaledVector(c.v,dt); c.m.rotation.x+=c.w.x*dt; c.m.rotation.y+=c.w.y*dt; c.m.rotation.z+=c.w.z*dt;
         if(c.m.position.y<gy+c.m.scale.x){ c.m.position.y=gy+c.m.scale.x; c.gr=true; c.m.rotation.x=Math.PI/2*0+0; c.m.rotation.set(0,c.m.rotation.y,0); } }
-      if(c.t>(c.gr?2.2:1.3)){ c.on=false; c.m.visible=false; } });
+      if(c.t>(c.gr?2.2:1.3)){ c.on=false; c.m.visible=false; c.m.scale.setScalar(1e-4); } });
     o.redraw(); if(busy) raf=requestAnimationFrame(step); else { raf=0; last=0; } }
   function go(){ if(!raf){ last=0; raf=requestAnimationFrame(step); } }
   return { fire(n,interval){ if(!raf) capture(); if(!queue) fired=0; iv=interval||0.12; queue+=n; go(); },
     stop(min){ queue=Math.max(0,(min||0)-fired); }, settle(){ queue=0; restore(); rec=0; sl=0; base=null; sbase=null; }, busy:()=>!!raf,
-    dispose(){ cancelAnimationFrame(raf); raf=0; restore(); PAR.remove(fx); cg.dispose(); pg.dispose(); brass.dispose(); fm.dispose(); } }; }
+    dispose(){ cancelAnimationFrame(raf); raf=0; restore(); PAR.remove(fx); cg.dispose(); pg.dispose(); brass.dispose(); fm.dispose(); fs.dispose(); } }; }
 export {viewer,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,GHEAD,GCOL,LASER,visBox,fireKit,fireModes,fireSnd,audioOn,shotBuf};
 function page(app,ctx,w){
   const st={v:0,on:{},camo:'orig',ca:false};
