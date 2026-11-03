@@ -11,6 +11,8 @@ const VER=(document.querySelector('script[data-v]')||{getAttribute(){return '1';
 const BASE_H=1.809, U2M=1/1.18, PVS_LEN=0.114;
 const GRIP={'m4a1':[-0.03,-0.02],'scar-l':[-0.03,-0.01],'scar-h':[-0.03,-0.01],'mp7a1':[-0.02,-0.05],'sr-25':[-0.02,0.0],'m82a1':[-0.03,0.0],'p90':[-0.03,0.02],'aug':[0.05,-0.05],'l85a2':[0.02,-0.05],'m16a4':[-0.065,0.01],'m24':[-0.10,0.0],'awm':[-0.07,0.04],'hk416':[-0.13,-0.04],'hk417':[-0.28,-0.05],'g36':[-0.25,-0.03],'ak74':[-0.21,-0.04],'ak12':[-0.25,-0.06],'famas':[-0.03,-0.05],'tavor':[0.04,-0.05],'mp5':[-0.08,-0.06],'m249':[-0.27,-0.05],'m240':[-0.36,-0.07],'pkm':[-0.33,-0.04]};
 const GRIP_PISTOL=[-0.045,-0.035];
+/* armas con empuñadura delantera fija: punto de la mano de apoyo [z,y] en unidades del modelo (se ajusta tras revisar la hoja de contactos) */
+const LH={};
 /* camuflaje sobre tela con textura: conserva el relieve de la tela (luminancia) y cambia el color */
 const CAMV=`varying vec3 vCP; uniform mat4 uInv;`;
 function camoTex(m,U,M){ m.onBeforeCompile=sh=>{ Object.assign(sh.uniforms,U);
@@ -65,20 +67,26 @@ export async function mount(stage,st,D,M,opt){
     const back=(pist?AXDP:AXD).clone().multiplyScalar(-1);
     ik('R',G.clone().addScaledVector(back,0.045).add(new THREE.Vector3(-0.025,0.035,0)),new THREE.Vector3(-0.6,-0.7,-0.3)); handTo('R',new THREE.Vector3(0,-0.6,0.3));
     const ex=new THREE.Vector3().setFromMatrixColumn(R,0), ey=new THREE.Vector3().setFromMatrixColumn(R,1), ez=new THREE.Vector3().setFromMatrixColumn(R,2);
-    let Hl; if(pist){ /* agarre a dos manos: la mano de apoyo envuelve la mano del tirador por la izquierda, pulgares hacia delante */ Hl=G.clone().addScaledVector(ex,0.022).addScaledVector(ey,-0.058).addScaledVector(ez,0.0); } else { /* mano de apoyo sobre el guardamanos: el punto más adelantado que el brazo alcanza (adelantando un poco el hombro, como se hace al encarar), nunca en el aire */
-      const m=M.mt(wi.v)||{}; const uz=(m.uz!=null?m.uz:(gp[0]+0.3)), uy=(m.uy!=null?m.uy:gp[1]); const MW=new THREE.Matrix4().compose(wpn.position,wpn.quaternion,wpn.scale); const OFF=new THREE.Vector3(0.035,-0.045,-0.04);
-      const at=s=>new THREE.Vector3(0,uy-0.012,s).applyMatrix4(MW).add(OFF); const zMax=Math.min(uz,gp[0]+0.4), zMin=gp[0]+0.11;
+    let Hl; if(pist){ /* agarre a dos manos: la mano de apoyo envuelve la mano del tirador por la izquierda, pulgares hacia delante */ Hl=G.clone().addScaledVector(ex,0.022).addScaledVector(ey,-0.058).addScaledVector(ez,0.0); } else { /* mano de apoyo: se busca en la propia geometría del arma (rayo desde abajo) el guardamanos/brocal más adelantado que el brazo alcanza —adelantando un poco el hombro, como al encarar—; nunca en el aire ni atravesando el arma. LH: punto fijo [z,y] para armas con empuñadura delantera. */
+      const m=M.mt(wi.v)||{}; const MW=new THREE.Matrix4().compose(wpn.position,wpn.quaternion,wpn.scale); const OFF=new THREE.Vector3(0.035,-0.045,-0.04);
+      const bore=m.bore!=null?m.bore:(gp[1]+0.08), yLow=(wpn.userData.bmin!=null?wpn.userData.bmin:-0.3)-0.05, lh=LH[wi.v.id]||LH[wi.w.id];
+      const zMax=lh?lh[0]:Math.min(m.uz!=null?m.uz:gp[0]+0.3,gp[0]+0.42), zMin=gp[0]+0.1; const up=ey.clone();
+      const contact=s=>{ if(lh&&Math.abs(s-lh[0])<1e-6) return new THREE.Vector3(0,lh[1],s).applyMatrix4(MW); const o=new THREE.Vector3(0,yLow,s).applyMatrix4(MW); ray.set(o,up); ray.far=2;
+        const hs=ray.intersectObject(wpn,true).filter(h=>{ let p=h.object; while(p){ if(p.name==='mat_beams') return false; p=p.parent; } return h.object.visible; }); if(!hs.length) return null;
+        const yl=wpn.worldToLocal(hs[0].point.clone()).y; if(!lh&&(yl<bore-0.095||yl>bore)) return null; return body.worldToLocal(hs[0].point.clone()); };
       const U=B('L_Upperarm'), F=B('L_Forearm'), H=B('L_Hand'), C=B('L_Clavicle'); const reach=()=>wp(F).distanceTo(wp(U))+wp(H).distanceTo(wp(F));
-      if(C&&U){ const tW=body.localToWorld(at(zMax)); const d=tW.distanceTo(wp(U)); if(d>reach()*0.96){ const pc=wp(C), pu=wp(U), L0=pu.distanceTo(pc); const a1=pu.clone().sub(pc).normalize(), a2=tW.clone().sub(pc).normalize(); aim(C,pu,pc.clone().add(a1.multiplyScalar(0.6).add(a2.multiplyScalar(0.4)).normalize().multiplyScalar(L0))); } }
-      let s=zMax; if(U&&F&&H){ const R0=reach()*0.985; for(; s>zMin; s-=0.01){ if(body.localToWorld(at(s)).distanceTo(wp(U))<=R0) break; } }
-      Hl=at(s).sub(OFF); }
+      body.updateMatrixWorld(true); let c0=contact(zMax)||new THREE.Vector3(0,bore-0.04,zMax).applyMatrix4(MW);
+      if(C&&U){ const tW=body.localToWorld(c0.clone().add(OFF)); if(tW.distanceTo(wp(U))>reach()*0.96){ const pc=wp(C), pu=wp(U), L0=pu.distanceTo(pc); const a1=pu.clone().sub(pc).normalize(), a2=tW.clone().sub(pc).normalize(); aim(C,pu,pc.clone().add(a1.multiplyScalar(0.6).add(a2.multiplyScalar(0.4)).normalize().multiplyScalar(L0))); } }
+      Hl=null; const R0=(U&&F&&H)?reach()*0.985:9;
+      for(let s=zMax; s>=zMin-1e-6; s-=0.01){ const c=contact(s); if(!c) continue; if(!U||body.localToWorld(c.clone().add(OFF)).distanceTo(wp(U))<=R0){ Hl=c; break; } }
+      if(!Hl) Hl=new THREE.Vector3(0,bore-0.05,zMin).applyMatrix4(MW); }
     DBGH.t=Hl.clone(); DBGH.g=G.clone();
     if(pist){ ik('L',Hl,new THREE.Vector3(0.8,-0.6,-0.1)); handTo('L',ex.clone().multiplyScalar(-0.55).addScaledVector(ez,0.75).addScaledVector(ey,-0.15)); }
     else { ik('L',Hl.clone().add(new THREE.Vector3(0.035,-0.045,-0.04)),new THREE.Vector3(0.7,-0.7,-0.1)); handTo('L',new THREE.Vector3(-0.4,0.6,0.5)); }
   }
   async function setWeapon(){ const b=st.arma; const key=b?JSON.stringify([b.id,b.v||0,b.on||{}]):''; if(key===wkey) return; wkey=key;
     if(wpn){ body.remove(wpn); wpn=null; wi=null; } if(bc){ bc.dispose(); bc=null; } beamUI(); if(!b){ pose(); rebuildGear(); V.recenter(); return; }
-    try{ const r=await M.buildWeapon(b,UW,UA); if(key!==wkey) return; const o=r.o; o.userData.gp=GRIP[r.v.id]||GRIP[r.w.id]||(r.w.cat==='pistol'?GRIP_PISTOL:[0,0]); { const bb=new THREE.Box3().setFromObject(o); const m=M.mt(r.v)||{}; o.userData.stock=[bb.min.z+0.01,(m.sty!=null?m.sty:(m.bore!=null?m.bore-0.02:(bb.min.y+bb.max.y)/2))]; } o.traverse(q=>{ if(q.isMesh) q.castShadow=true; });
+    try{ const r=await M.buildWeapon(b,UW,UA); if(key!==wkey) return; const o=r.o; o.userData.gp=GRIP[r.v.id]||GRIP[r.w.id]||(r.w.cat==='pistol'?GRIP_PISTOL:[0,0]); { const bb=new THREE.Box3().setFromObject(o); const m=M.mt(r.v)||{}; o.userData.bmin=bb.min.y; o.userData.stock=[bb.min.z+0.01,(m.sty!=null?m.sty:(m.bore!=null?m.bore-0.02:(bb.min.y+bb.max.y)/2))]; } o.traverse(q=>{ if(q.isMesh) q.castShadow=true; });
       wpn=o; wi=r; body.add(o); pose(); rebuildGear(); V.recenter(); credits(r);
       if(M.beamCtl){ bc=M.beamCtl(o,o.children.filter(c=>c.userData&&c.userData.acc).map(c=>({a:c.userData.acc,o:c}))); if(!bc.has()) bc=null; } beamUI(); }catch(e){ console.warn('soldado arma',e); }
   }
