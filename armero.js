@@ -262,7 +262,7 @@ const CSS=`
 .arm-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c9cdd1;font-size:14px}
 .arm-btns{position:absolute;right:8px;top:8px;display:flex;gap:6px}
 .arm-lrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 0}.arm-lrow[hidden],.arm-lb[hidden],.arm-bnote[hidden]{display:none}
-.arm-lb{background:#20262b;color:#e8eaec;border:1px solid #4a535b;border-radius:18px;padding:7px 13px;font-size:13px;cursor:pointer}.arm-lb.on{background:#c9a227;color:#15181a;border-color:#c9a227;font-weight:600}
+.arm-frow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.arm-fm{display:flex;flex-wrap:wrap;gap:6px}.arm-fm .arm-chip.on{background:#8f9a6a;color:#0b0c0d;border-color:#8f9a6a}.arm-fire{background:#6b2a1f;border-color:#a8452f;font-weight:600;touch-action:none;user-select:none;-webkit-user-select:none}.arm-fire:active{background:#8a3424}.arm-lb{background:#20262b;color:#e8eaec;border:1px solid #4a535b;border-radius:18px;padding:7px 13px;font-size:13px;cursor:pointer}.arm-lb.on{background:#c9a227;color:#15181a;border-color:#c9a227;font-weight:600}
 .arm-lb::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#59616a;margin-right:7px;vertical-align:1px}.arm-lb.on::before{background:#fff6c8;box-shadow:0 0 6px 2px #ffe58a}
 .arm-stage.arm-nvg{background:radial-gradient(ellipse at 50% 40%,#1d3a1f 0%,#0b1a0c 70%,#060d06 100%)}
 .arm-bnote{flex-basis:100%;font-size:11.5px;color:var(--dim,#9aa0a6);line-height:1.35}
@@ -443,7 +443,69 @@ export function beamCtl(root,items){ const U=0.00118, G=new THREE.Group(); G.nam
       lz.forEach(i=>{ const sp=LASER[i.a]; if(!sp) return; const n=ACC[i.a].n; t.push(ir?(EN?n+': IR laser and illuminator, invisible to the naked eye — shown as seen through night vision.':n+': láser e iluminador IR, invisibles a simple vista — se muestra como se vería con visor nocturno.'):(EN?n+': '+(sp.c===0x22ff3c?'green':'red')+' visible laser, '+sp.nm+' nm'+(sp.alt?' (a red '+sp.alt+' nm version also exists)':'')+'.':n+': láser visible '+(sp.c===0x22ff3c?'verde':'rojo')+' de '+sp.nm+' nm'+(sp.alt?' (existe versión roja de '+sp.alt+' nm)':'')+'.')); });
       return t.join(' '); } }; }
 export const NVG_FILTER='sepia(1) hue-rotate(52deg) saturate(2.6) brightness(0.92) contrast(1.12)';
-export {viewer,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,GHEAD,GCOL,LASER};
+
+/* ===== Disparo animado (Fase 6): fogonazo, retroceso, vainas y cerrojo/corredera. Sonido: solo la grabación real del arma (sonidos.json);
+   cada disparo reproduce el primer estampido de esa grabación. Recorridos y tamaños de los efectos: orientativos (no son datos). ===== */
+const FIRE_BURST={'m16a4':3,'famas':3}; /* M16A4: tiro a tiro y ráfaga de 3; FAMAS F1: tiro a tiro, ráfaga de 3 y automático */
+function fireModes(w,v){ const c=(v.st&&v.st.cad&&v.st.cad[0])||''; const n=(c.match(/\d[\d.]*/g)||[]).map(x=>parseInt(x.replace(/\./g,''),10)).filter(x=>x>0);
+  const rate=n.length?(Math.min(...n)+Math.max(...n))/2:null; const m=[];
+  if(w.cat==='mg') m.push('auto'); else { m.push('semi'); if(FIRE_BURST[v.id]) m.push('burst'); if(rate&&rate>=300&&v.id!=='m16a4') m.push('auto'); }
+  return {modes:m, rate:(m.includes('auto')||m.includes('burst'))?rate:null, burst:FIRE_BURST[v.id]||0}; }
+let SNDD=null; function sndData(){ if(!SNDD) SNDD=fetch('sonidos.json?v='+VER).then(r=>r.json()).catch(()=>null); return SNDD; }
+async function fireSnd(w,v){ if(!w||v.id==='g17') return null; /* la grabación de la ficha Glock es una G18 en ráfaga */ const d=await sndData(); const it=d&&d.items&&d.items[w.ficha]; if(!it||!it.length) return null;
+  return it.find(x=>/disparo|ráfaga|tiro|firing|burst|shot|fire/i.test((x.l||[]).join(' ')))||null; }
+const AUD={ctx:null,c:{}};
+function audioOn(){ if(!AUD.ctx){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; try{ AUD.ctx=new C(); }catch(e){ return null; } } if(AUD.ctx.state==='suspended') AUD.ctx.resume(); return AUD.ctx; }
+function shotBuf(f){ if(!AUD.ctx) return Promise.resolve(null); if(AUD.c[f]) return AUD.c[f];
+  AUD.c[f]=fetch(f).then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(b=>new Promise((res,rej)=>AUD.ctx.decodeAudioData(b,res,rej))).then(buf=>{ const ch=buf.getChannelData(0); let mx=0; for(let i=0;i<ch.length;i+=3){ const a=Math.abs(ch[i]); if(a>mx) mx=a; }
+    let on=0; for(let i=0;i<ch.length;i++){ if(Math.abs(ch[i])>mx*0.35){ on=i; break; } } return {buf,t0:Math.max(0,on/buf.sampleRate-0.008)}; }).catch(()=>null); return AUD.c[f]; }
+function playShot(s,dur){ const C=AUD.ctx; if(!s||!C) return; const src=C.createBufferSource(); src.buffer=s.buf; const g=C.createGain(), t=C.currentTime, D=Math.min(dur||0.3,s.buf.duration-s.t0);
+  g.gain.setValueAtTime(0.85,t); g.gain.setValueAtTime(0.85,t+Math.max(0.02,D-0.07)); g.gain.linearRampToValueAtTime(0,t+D); src.connect(g); g.connect(C.destination); try{ src.start(t,s.t0,D); }catch(e){} }
+let FLT=null; function flashTex(){ if(FLT) return FLT; const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); const g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,235,1)'); g.addColorStop(0.25,'rgba(255,214,120,0.95)'); g.addColorStop(0.55,'rgba(255,140,40,0.45)'); g.addColorStop(1,'rgba(255,90,0,0)'); x.fillStyle=g; x.fillRect(0,0,64,64); FLT=new THREE.CanvasTexture(c); FLT.colorSpace=THREE.SRGBColorSpace; return FLT; }
+/* o: {holder, root()=arma (los puntos de MT están en su marco), recoil()=objetos que retroceden juntos, muz()=[y,z] boca (marco del arma), port()=[x,y,z] ventana de expulsión, ej=[x,y,z] dirección de expulsión (marco del arma),
+       pivot()=[y,z] apoyo (culata o empuñadura), cal=texto de calibre, pist, mg, sup()=silenciador, slides()=[nodos cerrojo/corredera], ground()=y del suelo en el marco del holder, redraw(), snd (entrada de sonidos.json o null)} */
+function visBox(o){ const b=new THREE.Box3(); o.updateMatrixWorld(true); const inv=new THREE.Matrix4().copy(o.matrixWorld).invert(); o.traverse(m=>{ if(!m.isMesh) return; let p=m, v=true; while(p&&p!==o.parent){ if(!p.visible){ v=false; break; } p=p.parent; } if(!v) return; m.geometry.computeBoundingBox(); b.union(m.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv,m.matrixWorld))); }); return b; } /* caja de las mallas visibles, en el marco del propio objeto */
+function fireKit(o){ const fx=new THREE.Group(); fx.name='mat_fire'; fx.matrixAutoUpdate=false; const PAR=o.holder.parent||o.holder; PAR.add(fx); /* fuera del holder: no cuenta para el encuadre */
+  const sync_=()=>{ o.holder.updateMatrix(); if(PAR!==o.holder){ fx.matrix.copy(o.holder.matrix); fx.matrixWorldNeedsUpdate=true; } };
+  const fl=new THREE.Group(); fx.add(fl); fl.visible=false; const fm=new THREE.MeshBasicMaterial({map:flashTex(),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
+  const pg=new THREE.PlaneGeometry(1,1); [0,1].forEach(i=>{ const p=new THREE.Mesh(pg,fm); p.rotation.z=i*Math.PI/2; p.rotation.y=Math.PI/2; p.position.z=0.5; p.scale.set(1,0.42,1); fl.add(p); }); const st=new THREE.Mesh(pg,fm); st.scale.setScalar(0.62); fl.add(st);
+  const cm=(o.cal||'').replace(',','.').match(/(\d+(?:\.\d+)?)\s*[×x]\s*(\d+)/); const bd=cm?parseFloat(cm[1]):7.62, cl=cm?parseFloat(cm[2]):39; /* vaina: largo = el de la denominación del calibre */
+  const cg=new THREE.CylinderGeometry(1,1,1,10); cg.rotateX(Math.PI/2); const brass=new THREE.MeshStandardMaterial({color:0xb48a3c,metalness:0.85,roughness:0.32});
+  const pool=[]; for(let i=0;i<14;i++){ const m=new THREE.Mesh(cg,brass); m.visible=false; m.castShadow=true; fx.add(m); pool.push({m,v:new THREE.Vector3(),w:new THREE.Vector3(),t:0,on:false,gr:false}); }
+  let fired=0, raf=0, last=0, rec=0, sl=0, fl_t=0, base=null, sbase=null, upm=1, pv=null, ax=null, Mw=new THREE.Matrix4(), q=new THREE.Quaternion(), stopAt=0, queue=0, nextT=0, iv=0.12, ci=0;
+  const W2H=()=>{ o.holder.updateMatrixWorld(true); const r=o.root(); r.updateMatrixWorld(true); return new THREE.Matrix4().copy(o.holder.matrixWorld).invert().multiply(r.matrixWorld); };
+  function capture(){ const objs=o.recoil(); base=objs.map(b=>({b,p:b.position.clone(),q:b.quaternion.clone()})); const sl_=o.slides?o.slides():[]; sbase=sl_.map(n=>{ const bb=new THREE.Box3().setFromObject(n), sz=bb.getSize(new THREE.Vector3()); return {n,p:n.position.clone(),L:Math.max(sz.x,sz.y,sz.z)}; }); }
+  function restore(){ if(base) base.forEach(x=>{ x.b.position.copy(x.p); x.b.quaternion.copy(x.q); }); if(sbase) sbase.forEach(x=>x.n.position.copy(x.p)); }
+  function shot(){ sync_(); const M=W2H(); Mw.copy(M); const s=new THREE.Vector3(); M.decompose(new THREE.Vector3(),q,s); upm=1.18*s.x; /* el modelo del arma mide 1,18 unidades por metro */
+    const mz=o.muz(), P=new THREE.Vector3(0,mz[0],mz[1]).applyMatrix4(M), F=new THREE.Vector3(0,0,1).applyQuaternion(q).normalize();
+    const L=(o.mg?0.24:o.pist?0.09:0.17)*upm*(o.sup()?0.18:1); fl.position.copy(P); fl.quaternion.copy(q); fl.rotateZ(Math.random()*Math.PI); fl.scale.set(L*0.55,L*0.55,L*(0.8+Math.random()*0.4)); fl.visible=true; fl_t=0.045;
+    const pp=o.port(), pd=o.ej; const PP=new THREE.Vector3(...pp).applyMatrix4(M); const E=new THREE.Vector3(...pd).applyQuaternion(q).normalize();
+    const c=pool[ci++%pool.length]; c.on=true; c.gr=false; c.t=0; c.m.visible=true; c.m.position.copy(PP); c.m.quaternion.copy(q); c.m.scale.set(bd*(cl/bd<3?0.55:0.85)*0.001*upm,bd*(cl/bd<3?0.55:0.85)*0.001*upm,cl*0.001*upm);
+    c.v.copy(E).multiplyScalar((2.6+Math.random()*1.2)*upm).addScaledVector(new THREE.Vector3(0,1,0),(1.2+Math.random()*0.8)*upm).addScaledVector(F,-(0.3+Math.random()*0.5)*upm); c.w.set(Math.random()*30-15,Math.random()*30-15,Math.random()*20-10);
+    fired++; rec=1; sl=1; if(o.snd&&o.buf) playShot(o.buf,0.16); }
+  function step(now){ const dt=Math.min(0.05,(now-(last||now))/1000)/((window.MAT_DEV&&window.MAT_FIRE_SLOW)||1); last=now; let busy=false;
+    if(queue>0&&now>=nextT){ shot(); queue--; nextT=now+iv*1000; } if(queue>0) busy=true;
+    if(fl_t>0){ fl_t-=dt; if(fl_t<=0) fl.visible=false; busy=true; }
+    if(base&&(rec>0.001||sl>0.001)){ busy=true; const k=o.pist?1:0.75; const back=(o.pist?0.012:o.mg?0.01:0.014)*upm*rec, rise=(o.pist?7:o.mg?0.8:1.6)*Math.PI/180*rec*k;
+      const Mi=new THREE.Matrix4().copy(o.holder.matrixWorld).invert(); const pvz=o.pivot(); const Pv=new THREE.Vector3(0,pvz[0],pvz[1]).applyMatrix4(Mw), F=new THREE.Vector3(0,0,1).applyQuaternion(q), R_=new THREE.Vector3(1,0,0).applyQuaternion(q);
+      const rq=new THREE.Quaternion().setFromAxisAngle(R_,-rise);
+      base.forEach(x=>{ const par=x.b.parent; par.updateMatrixWorld(true); const toH=new THREE.Matrix4().copy(Mi).multiply(par.matrixWorld), toP=toH.clone().invert();
+        const p=x.p.clone().applyMatrix4(toH).sub(Pv).applyQuaternion(rq).add(Pv).addScaledVector(F,-back).applyMatrix4(toP); x.b.position.copy(p);
+        const pq=new THREE.Quaternion(); toH.decompose(new THREE.Vector3(),pq,new THREE.Vector3()); x.b.quaternion.copy(pq.clone().invert().multiply(rq).multiply(pq).multiply(x.q)); });
+      if(sbase) sbase.forEach(x=>{ const par=x.n.parent; par.updateMatrixWorld(true); const d=new THREE.Vector3(0,0,-1).transformDirection(o.root().matrixWorld); const a=par.worldToLocal(par.getWorldPosition(new THREE.Vector3()).add(d.multiplyScalar(x.L*(o.pist?0.32:0.45))));
+        const ph=sl>0.6?(1-sl)/0.4:sl/0.6; x.n.position.copy(x.p).addScaledVector(a,Math.min(1,ph)); });
+      rec=Math.max(0,rec-dt/0.09); sl=Math.max(0,sl-dt/Math.max(0.05,Math.min(0.11,iv*0.9))); if(rec<=0.001&&sl<=0.001) restore(); }
+    sync_(); const gy=o.ground?o.ground():-1e9;
+    pool.forEach(c=>{ if(!c.on) return; busy=true; c.t+=dt; if(!c.gr){ c.v.y-=9.8*upm*dt; c.m.position.addScaledVector(c.v,dt); c.m.rotation.x+=c.w.x*dt; c.m.rotation.y+=c.w.y*dt; c.m.rotation.z+=c.w.z*dt;
+        if(c.m.position.y<gy+c.m.scale.x){ c.m.position.y=gy+c.m.scale.x; c.gr=true; c.m.rotation.x=Math.PI/2*0+0; c.m.rotation.set(0,c.m.rotation.y,0); } }
+      if(c.t>(c.gr?2.2:1.3)){ c.on=false; c.m.visible=false; } });
+    o.redraw(); if(busy) raf=requestAnimationFrame(step); else { raf=0; last=0; } }
+  function go(){ if(!raf){ last=0; raf=requestAnimationFrame(step); } }
+  return { fire(n,interval){ if(!raf) capture(); if(!queue) fired=0; iv=interval||0.12; queue+=n; go(); },
+    stop(min){ queue=Math.max(0,(min||0)-fired); }, settle(){ queue=0; restore(); rec=0; sl=0; base=null; sbase=null; }, busy:()=>!!raf,
+    dispose(){ cancelAnimationFrame(raf); raf=0; restore(); PAR.remove(fx); cg.dispose(); pg.dispose(); brass.dispose(); fm.dispose(); } }; }
+export {viewer,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,GHEAD,GCOL,LASER,visBox,fireKit,fireModes,fireSnd,audioOn,shotBuf};
 function page(app,ctx,w){
   const st={v:0,on:{},camo:'orig',ca:false};
   const sv=new URLSearchParams((location.hash.split('?')[1]||''));
@@ -451,6 +513,7 @@ function page(app,ctx,w){
    '<h1>'+esc(w.n)+'</h1><p class="sub">'+esc(LL(w.kind))+' · <a href="#/a/'+w.ficha+'">'+L('Ver ficha completa','Full data sheet')+'</a> · <a href="#/soldado?arma='+w.id+'" class="arm-sold">'+L('Equipar en «Crea tu soldado» →','Equip in “Build your soldier” →')+'</a></p>'+
    '<div class="arm-wrap"><div><div class="arm-stage" id="armst"><div class="arm-load">'+L('Cargando modelo 3D…','Loading 3D model…')+'</div><div class="arm-btns"><button type="button" id="armrot">'+L('Pausar giro','Pause spin')+'</button><button type="button" id="armrs">'+L('Centrar','Reset')+'</button></div><div class="arm-hint">'+L('Arrastra para girar · pellizca o rueda para zoom','Drag to rotate · pinch or scroll to zoom')+'</div></div>'+
    '<div class="arm-lrow" id="armxrow" hidden><button type="button" class="arm-lb" id="armx" aria-pressed="false"></button><div class="arm-bnote" id="armxn" hidden></div></div>'+
+   '<div class="arm-lrow arm-frow" id="armfrow" hidden><button type="button" class="arm-lb arm-fire" id="armfire">'+L('Disparar','Fire')+'</button><span class="arm-fm" id="armfm"></span><div class="arm-bnote" id="armfn"></div></div>'+
    '<div class="arm-lrow" id="armlrow" hidden><button type="button" class="arm-lb" id="armbeam" aria-pressed="false"></button><button type="button" class="arm-lb" id="armir" hidden aria-pressed="false"></button><div class="arm-bnote" id="armbn" hidden></div></div>'+
    '<div id="armsum" class="arm-sum"></div><div id="armui"></div></div><div><div class="arm-stats" id="armstats"></div><div id="armacc"></div></div></div>'+
    '<div id="armcred"></div>';
@@ -538,7 +601,7 @@ function page(app,ctx,w){
     stage.querySelector('.arm-load')&&(stage.querySelector('.arm-load').style.display='flex');
     try{ const g=await getGLB(v.file); if(my!==token) return;
       if(weapon){ V.holder.remove(weapon); } Object.keys(mounted).forEach(s=>{ V.holder.remove(mounted[s].o); delete mounted[s]; }); BC.detach();
-      weapon=g.scene.clone(true); prep(weapon,UW,MCW); V.holder.add(weapon); V.fit(weapon); xSetup(weapon);
+      weapon=g.scene.clone(true); prep(weapon,UW,MCW); V.holder.add(weapon); V.fit(weapon); xSetup(weapon); fireSetup();
       const ld=stage.querySelector('.arm-load'); if(ld) ld.style.display='none';
       await sync();
     }catch(e){ const ld=stage.querySelector('.arm-load'); if(ld) ld.textContent=L('No se pudo cargar el modelo. Comprueba la conexión.','The model could not be loaded. Check your connection.'); }
@@ -576,6 +639,37 @@ function page(app,ctx,w){
   function xAnim(to){ cancelAnimationFrame(XS.raf); const t0=performance.now(), from=XS.t;
     const step=now=>{ const k=Math.min(1,(now-t0)/650), e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2; XS.t=from+(to-from)*e; xApply(XS.t); if(k<1) XS.raf=requestAnimationFrame(step); else if(V) V.recenter(); }; XS.raf=requestAnimationFrame(step); }
   if(bX) bX.addEventListener('click',()=>{ XS.on=!XS.on; xAnim(XS.on?1:0); xUI(); });
+
+  /* disparo animado: botón Disparar + modo de tiro (según los datos del arma); sonido solo si M.A.T tiene la grabación real del arma */
+  const FX={k:null,o:null,m:null,mode:null,hold:false};
+  const bF=document.getElementById('armfire'), bFM=document.getElementById('armfm'), bFN=document.getElementById('armfn');
+  const FMN={semi:['Tiro a tiro','Semi'],burst:['Ráfaga','Burst'],auto:['Automático','Auto']};
+  function fireNote(){ const s=FX.o&&FX.o.snd; const md=FX.m; let t='';
+    t+=s?L('Sonido: grabación real (','Sound: real recording (')+esc(LL(s.t||''))+' — '+esc(LL(s.a||''))+', '+(s.lu?'<a href="'+esc(s.lu)+'" target="_blank" rel="noopener">'+esc(LL(s.lic||''))+'</a>':esc(LL(s.lic||'')))+'). ':L('M.A.T no tiene una grabación real de esta arma: el disparo es solo visual. ','M.A.T has no real recording of this weapon: firing is visual only. ');
+    if(md&&md.rate) t+=L('Cadencia según la ficha: ','Rate of fire from the data sheet: ')+esc(LL(cur().st.cad))+'. ';
+    t+=L('Fogonazo, retroceso y vainas son animaciones orientativas.','Muzzle flash, recoil and casings are indicative animations.'); bFN.innerHTML=t; }
+  function fireUI(){ const row=document.getElementById('armfrow'); if(!row) return; row.hidden=!FX.k; if(!FX.k) return; const md=FX.m;
+    bFM.innerHTML=md.modes.map(x=>'<button type="button" class="arm-chip'+(x===FX.mode?' on':'')+'" data-fm="'+x+'" aria-pressed="'+(x===FX.mode)+'">'+L(FMN[x][0],FMN[x][1])+(x==='burst'?' ('+md.burst+')':'')+'</button>').join(''); fireNote(); }
+  function fireSetup(){ if(FX.k){ FX.k.dispose(); FX.k=null; } if(!V||!weapon) return; const v=cur(), m=mt(v), pist=w.cat==='pistol', mg=w.cat==='mg';
+    weapon.updateMatrixWorld(true); const bb=visBox(weapon); /* el arma está sin girar dentro del holder: marco del arma = marco del holder */
+    const md=fireModes(w,v); FX.m=md; FX.mode=md.modes[0];
+    const EJ={m249:[-0.35,-1,0.1],m240:[0,-1,0.1],pkm:[1,0.25,0.1]};
+    const parts=()=>XS.parts.filter(p=>/^(Portacerrojo|Cerrojo|Corredera)$/.test(p.es)&&p.n.visible).map(p=>p.n);
+    FX.o={holder:V.holder, root:()=>weapon, recoil:()=>[weapon].concat(Object.values(mounted).map(x=>x.o)), cal:v.st&&v.st.cal?v.st.cal[0]:'', pist, mg,
+      muz:()=>{ const s=mounted.muzzle; if(s){ const b=visBox(s.o).applyMatrix4(s.o.matrix); return [m.bore!=null?m.bore:(b.min.y+b.max.y)/2,b.max.z]; } return [m.bore!=null?m.bore:(pist?bb.max.y-(bb.max.y-bb.min.y)*0.18:(bb.min.y+bb.max.y)/2), m.muz!=null?m.muz:bb.max.z]; },
+      port:()=>pist?[-0.012,bb.max.y-(bb.max.y-bb.min.y)*0.12,bb.min.z+(bb.max.z-bb.min.z)*0.55]:[-0.02,m.bore!=null?m.bore:(bb.min.y+bb.max.y)/2,m.oz!=null?m.oz:(bb.min.z+bb.max.z)/2],
+      ej:EJ[w.id]||[-1,0.45,-0.15], pivot:()=>pist?[bb.min.y,bb.min.z+(bb.max.z-bb.min.z)*0.25]:[m.sty!=null?m.sty:(m.bore!=null?m.bore:(bb.min.y+bb.max.y)/2),m.stz!=null?m.stz:bb.min.z],
+      sup:()=>!!mounted.muzzle&&ACC[mounted.muzzle.a]&&ACC[mounted.muzzle.a].b==='can', slides:parts, ground:()=>{ const b=visBox(weapon); return b.min.y-(b.max.y-b.min.y)*0.6; }, redraw:()=>V&&V.redraw(), snd:null, buf:null};
+    FX.k=fireKit(FX.o); const myk=FX.k; fireSnd(w,v).then(s=>{ if(FX.k!==myk) return; FX.o.snd=s; fireUI(); }); fireUI(); }
+  const iv=()=>FX.m&&FX.m.rate?60/FX.m.rate:0.16;
+  function fireStart(){ if(!FX.k) return; FX.up=false; const C=audioOn(); if(C&&FX.o.snd&&!FX.o.buf){ const k=FX.k; let done=false; const go=()=>{ if(done||FX.k!==k) return; done=true; fireGo(); }; shotBuf(FX.o.snd.f).then(b=>{ FX.o.buf=b; go(); }); setTimeout(go,450); return; } fireGo(); }
+  function fireGo(){ if(!FX.k) return;
+    if(FX.mode==='semi') FX.k.fire(1,0.12); else if(FX.mode==='burst') FX.k.fire(FX.m.burst,iv()); else if(FX.up) FX.k.fire(3,iv()); else { FX.hold=true; FX.k.fire(400,iv()); } }
+  function fireEnd(){ FX.up=true; if(FX.hold){ FX.hold=false; FX.k&&FX.k.stop(3); } }
+  if(bF){ bF.addEventListener('pointerdown',e=>{ e.preventDefault(); bF.setPointerCapture&&bF.setPointerCapture(e.pointerId); fireStart(); });
+    ['pointerup','pointercancel','lostpointercapture'].forEach(t=>bF.addEventListener(t,fireEnd));
+    bF.addEventListener('click',e=>{ if(e.detail===0){ FX.kb=true; fireStart(); FX.up=true; if(FX.hold){ FX.hold=false; FX.k.stop(5); } } }); /* teclado: una ráfaga corta */ }
+  if(bFM) bFM.addEventListener('click',e=>{ const b=e.target.closest('button[data-fm]'); if(!b) return; FX.mode=b.dataset.fm; fireUI(); });
   /* linterna / láser: botón Encender-Apagar y modo IR */
   const BC=V?beamCtl(V.holder,[]):{has:()=>false,detach(){},items(){},set(){},on:()=>false,ir:()=>false,hasIR:()=>false,hasLight:()=>false,hasLaser:()=>false,note:()=>''};
   const bB=document.getElementById('armbeam'), bI=document.getElementById('armir'), bN=document.getElementById('armbn');
@@ -595,7 +689,7 @@ function page(app,ctx,w){
   pre.forEach(a=>{ if(accs(cur(),ACC[a].slot).includes(a)) st.on[ACC[a].slot]=a; }); if(!isDot(st.on.optic)) delete st.on.mag;
   if(CAMO.some(c=>c[0]===sv.get('camo'))) st.camo=sv.get('camo'); st.ca=sv.get('ca')==='1';
   renderUI(); stats(); camo(); load();
-  window.MAT_ARMERO_DBG={xparts:()=>XS.parts.map(p=>p.es+':'+p.n.name), xon:()=>XS.on, st,mounted:()=>Object.keys(mounted),view:()=>V&&V.dbg()};
+  window.MAT_ARMERO_DBG={fx:()=>FX, xparts:()=>XS.parts.map(p=>p.es+':'+p.n.name), xon:()=>XS.on, st,mounted:()=>Object.keys(mounted),view:()=>V&&V.dbg()};
 }
 
 export function route(app,ctx,p){
