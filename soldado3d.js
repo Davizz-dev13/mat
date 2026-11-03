@@ -39,7 +39,7 @@ export async function mount(stage,st,D,M,opt){
   const gearG=new THREE.Group(); body.add(gearG);
   const gm={ k:new THREE.MeshStandardMaterial({color:0x26282a,roughness:0.6,metalness:0.1}), p:new THREE.MeshStandardMaterial({color:0x4a4d3b,roughness:0.95}), d:new THREE.MeshStandardMaterial({color:0x3b3d30,roughness:0.95}) };
   [gm.p,gm.d].forEach(m=>M.camoPatch(m,UG));
-  let wpn=null, wkey='', wi=null, pvs=null, bc=null;
+  let wpn=null, wkey='', wi=null, pvs=null, bc=null; const DBGH={};
   /* ---- cinemática inversa de dos huesos ---- */
   const wp=o=>o.getWorldPosition(new THREE.Vector3());
   function aim(bone,childPos,newPos){ const p=wp(bone); const v1=childPos.clone().sub(p).normalize(), v2=newPos.clone().sub(p).normalize(); if(v1.lengthSq()<1e-8||v2.lengthSq()<1e-8) return;
@@ -64,8 +64,17 @@ export async function mount(stage,st,D,M,opt){
       G=new THREE.Vector3(0,gp[1],gp[0]).multiplyScalar(k).applyQuaternion(q).add(wpn.position); }
     const back=(pist?AXDP:AXD).clone().multiplyScalar(-1);
     ik('R',G.clone().addScaledVector(back,0.045).add(new THREE.Vector3(-0.025,0.035,0)),new THREE.Vector3(-0.6,-0.7,-0.3)); handTo('R',new THREE.Vector3(0,-0.6,0.3));
-    let Hl; if(pist){ Hl=G.clone().add(new THREE.Vector3(0.05,-0.02,0.0)); } else { const m=M.mt(wi.v)||{}; const uz=(m.uz!=null?m.uz:(gp[0]+0.3)), uy=(m.uy!=null?m.uy:gp[1]); const lp=new THREE.Vector3(0,uy-0.012,Math.min(uz,gp[0]+0.4)); lp.applyMatrix4(new THREE.Matrix4().compose(wpn.position,wpn.quaternion,wpn.scale)); Hl=lp; }
-    ik('L',Hl.clone().add(new THREE.Vector3(0.035,-0.045,-0.04)),new THREE.Vector3(0.7,-0.7,-0.1)); handTo('L',new THREE.Vector3(-0.4,0.6,0.5));
+    const ex=new THREE.Vector3().setFromMatrixColumn(R,0), ey=new THREE.Vector3().setFromMatrixColumn(R,1), ez=new THREE.Vector3().setFromMatrixColumn(R,2);
+    let Hl; if(pist){ /* agarre a dos manos: la mano de apoyo envuelve la mano del tirador por la izquierda, pulgares hacia delante */ Hl=G.clone().addScaledVector(ex,0.036).addScaledVector(ey,-0.045).addScaledVector(ez,-0.012); } else { /* mano de apoyo sobre el guardamanos: el punto más adelantado que el brazo alcanza (adelantando un poco el hombro, como se hace al encarar), nunca en el aire */
+      const m=M.mt(wi.v)||{}; const uz=(m.uz!=null?m.uz:(gp[0]+0.3)), uy=(m.uy!=null?m.uy:gp[1]); const MW=new THREE.Matrix4().compose(wpn.position,wpn.quaternion,wpn.scale); const OFF=new THREE.Vector3(0.035,-0.045,-0.04);
+      const at=s=>new THREE.Vector3(0,uy-0.012,s).applyMatrix4(MW).add(OFF); const zMax=Math.min(uz,gp[0]+0.4), zMin=gp[0]+0.11;
+      const U=B('L_Upperarm'), F=B('L_Forearm'), H=B('L_Hand'), C=B('L_Clavicle'); const reach=()=>wp(F).distanceTo(wp(U))+wp(H).distanceTo(wp(F));
+      if(C&&U){ const tW=body.localToWorld(at(zMax)); const d=tW.distanceTo(wp(U)); if(d>reach()*0.96){ const pc=wp(C), pu=wp(U), L0=pu.distanceTo(pc); const a1=pu.clone().sub(pc).normalize(), a2=tW.clone().sub(pc).normalize(); aim(C,pu,pc.clone().add(a1.multiplyScalar(0.6).add(a2.multiplyScalar(0.4)).normalize().multiplyScalar(L0))); } }
+      let s=zMax; if(U&&F&&H){ const R0=reach()*0.985; for(; s>zMin; s-=0.01){ if(body.localToWorld(at(s)).distanceTo(wp(U))<=R0) break; } }
+      Hl=at(s).sub(OFF); }
+    DBGH.t=Hl.clone(); DBGH.g=G.clone();
+    if(pist){ ik('L',Hl,new THREE.Vector3(0.8,-0.6,-0.1)); handTo('L',ex.clone().multiplyScalar(-0.6).addScaledVector(ez,0.6).addScaledVector(ey,-0.35)); }
+    else { ik('L',Hl.clone().add(new THREE.Vector3(0.035,-0.045,-0.04)),new THREE.Vector3(0.7,-0.7,-0.1)); handTo('L',new THREE.Vector3(-0.4,0.6,0.5)); }
   }
   async function setWeapon(){ const b=st.arma; const key=b?JSON.stringify([b.id,b.v||0,b.on||{}]):''; if(key===wkey) return; wkey=key;
     if(wpn){ body.remove(wpn); wpn=null; wi=null; } if(bc){ bc.dispose(); bc=null; } beamUI(); if(!b){ pose(); rebuildGear(); V.recenter(); return; }
@@ -175,6 +184,6 @@ export async function mount(stage,st,D,M,opt){
     b2.style.display=bc.on()&&bc.hasIR()?'':'none'; b2.textContent=bc.ir()?L('Ver láser visible','Show visible laser'):L('Ver en IR (visor nocturno)','View in IR (night vision)');
     const cv=stage.querySelector('canvas'); if(cv) cv.style.filter=bc.on()&&bc.ir()?M.NVG_FILTER:''; bn.textContent=bc.on()?bc.note(EN()):''; }
   camUI(); camos(); scale(); rebuildGear(); V.fit(holder); credits(null); beamUI(); await setWeapon();
-  window.MAT_SOLDADO_DBG={ w:()=>wpn&&[wpn.position.toArray(),wpn.userData.stock,wpn.userData.gp,wpn.scale.x,new THREE.Box3().setFromObject(wpn).min.toArray(),wp(B('R_Hand')).toArray(),wp(B('R_Upperarm')).toArray()], still:(y)=>{ V.setAuto(false); V.reset(); if(y!=null) V.look(y); }, gear:()=>gearG.children.length, weapon:()=>!!wpn, helmet:()=>!!(mesh.helmet1_2&&mesh.helmet1_2.visible), scale:()=>holder.scale.x };
+  window.MAT_SOLDADO_DBG={ w:()=>wpn&&[wpn.position.toArray(),wpn.userData.stock,wpn.userData.gp,wpn.scale.x,new THREE.Box3().setFromObject(wpn).min.toArray(),wp(B('R_Hand')).toArray(),wp(B('R_Upperarm')).toArray()], still:(y)=>{ V.setAuto(false); V.reset(); if(y!=null) V.look(y); }, gear:()=>gearG.children.length, weapon:()=>!!wpn, helmet:()=>!!(mesh.helmet1_2&&mesh.helmet1_2.visible), scale:()=>holder.scale.x, hands:()=>{ body.updateMatrixWorld(true); const l=body.worldToLocal(wp(B('L_Hand'))), r=body.worldToLocal(wp(B('R_Hand'))); return {t:DBGH.t&&DBGH.t.toArray(),g:DBGH.g&&DBGH.g.toArray(),L:l.toArray(),R:r.toArray(),Lu:body.worldToLocal(wp(B('L_Upperarm'))).toArray(), mt:wi&&M.mt(wi.v), gp:wpn&&wpn.userData.gp}; } };
   return { update(s){ scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ if(bc) bc.dispose(); body.remove(gearG); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
 }
