@@ -241,7 +241,8 @@ export async function mount(stage,st,D,M,opt){
     bb=new THREE.Box3().setFromObject(o,true); const c=bb.getCenter(new THREE.Vector3()); o.position.sub(new THREE.Vector3(c.x,c.y,bb.max.z)); w.userData.depth=bb.max.z-bb.min.z; w.userData.h=bb.max.y-bb.min.y; return w; }
   function ruckMesh(noFP){ /* mochila grande (~80-100 L): cuerpo acolchado, tapa con cremallera, bolsillo frontal con cremallera en U, bolsillos laterales MOLLE, ribetes en las aristas, cinchas de compresión con hebillas y asa — forma aproximada de M.A.T */
     const G=new THREE.Group(), W=0.38, Hh=0.58, Dd=0.27, V3=THREE.Vector3;
-    const body=soft(W,Hh,Dd,0.06,gmP,{bulge:0.04,taper:0.05}); body.position.set(0,0,-Dd/2); G.add(body);
+    const body=soft(W,Hh,Dd,0.06,gmM,{bulge:0.04,taper:0.05}); body.position.set(0,0,-Dd/2); G.add(body); /* cuerpo con cintas MOLLE en frente y lados, como las mochilas MOLLE reales */
+    [0.12,-0.13].forEach(y=>{ const sm=rbox(W+0.004,0.006,Dd-0.02,gmS); sm.position.set(0,y,-Dd/2); G.add(sm); }); /* costuras horizontales */
     const pad=soft(W-0.04,Hh-0.05,0.05,0.022,gmS,{bulge:0.01}); pad.position.set(0,-0.005,-0.012); G.add(pad);
     for(let k=0;k<4;k++){ const q=rbox(W-0.08,0.008,0.012,gmB); q.position.set(0,-0.2+k*0.12,0.012); G.add(q); } /* acolchado del panel de espalda */
     const zip=(x0,y0,x1,y1,z,G2)=>{ const L=Math.hypot(x1-x0,y1-y0), t=rbox(L,0.007,0.005,gmB); t.position.set((x0+x1)/2,(y0+y1)/2,z); t.rotation.z=Math.atan2(y1-y0,x1-x0); (G2||G).add(t); };
