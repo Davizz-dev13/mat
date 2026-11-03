@@ -561,12 +561,18 @@ function page(app,ctx,w){
   function xSetup(o){ cancelAnimationFrame(XS.raf); XS.parts=[]; XS.t=0; XS.on=false; o.updateMatrixWorld(true);
     const bb=new THREE.Box3().setFromObject(o), L0=Math.max(...bb.getSize(new THREE.Vector3()).toArray()), seen={};
     const walk=n=>{ if(n!==o&&n.name&&n.visible){ const r=XP.find(x=>x[0].test(n.name)); if(r){ let has=false; n.traverse(q=>{ if(q.isMesh) has=true; }); if(has){ let es=r[1], en=r[2]; if(XMG[w.id]&&es==='Cargador'){ es='Caja de munición'; en='Ammo box'; } if(XMG[w.id]&&es==='Retén del cargador'){ es='Retén de la caja de munición'; en='Ammo box latch'; } const key=es, grp=(es==='Cartuchos'||es==='Culata'); seen[key]=(seen[key]||0)+1;
-          const k=0.2*(1+(grp?0:0.35*(seen[key]-1)))*(es==='Cartuchos'?1.5:1); const dW=new THREE.Vector3(...r[3]).normalize().transformDirection(o.matrixWorld).multiplyScalar(k*L0*(o.matrixWorld.getMaxScaleOnAxis()));
+          const k=0.3*(1+(grp?0:0.35*(seen[key]-1)))*(es==='Cartuchos'?1.4:1); const dW=new THREE.Vector3(...r[3]).normalize().transformDirection(o.matrixWorld).multiplyScalar(k*L0*(o.matrixWorld.getMaxScaleOnAxis()));
           const pw=n.getWorldPosition(new THREE.Vector3()); const a1=n.parent.worldToLocal(pw.clone()), a2=n.parent.worldToLocal(pw.clone().add(dW));
-          XS.parts.push({n,b:n.position.clone(),d:a2.sub(a1),es,en}); return; } } }
+          const cw=new THREE.Box3().setFromObject(n).getCenter(new THREE.Vector3()); XS.parts.push({n,b:n.position.clone(),d:a2.sub(a1),es,en,c0:o.worldToLocal(cw.clone()),c1:o.worldToLocal(cw.clone().add(dW))}); return; } } }
       n.children.forEach(walk); };
-    walk(o); xUI(); }
-  function xApply(t){ XS.parts.forEach(p=>p.n.position.copy(p.b).addScaledVector(p.d,t)); if(V) V.redraw(); }
+    walk(o); XS.o=o;
+    /* líneas guía finas desde la posición montada de cada pieza (solo con el despiece abierto) */
+    if(XS.lines){ XS.lines.parent&&XS.lines.parent.remove(XS.lines); XS.lines.geometry.dispose(); XS.lines=null; }
+    if(false&&XS.parts.length){ const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(XS.parts.length*6),3)); const ln=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xc9a24a,transparent:true,opacity:0.55,depthTest:false})); ln.renderOrder=5; ln.visible=false; ln.frustumCulled=false; ln.name='mat_xlines'; o.add(ln); XS.lines=ln; const P=g.attributes.position; XS.parts.forEach((p,i)=>{ P.setXYZ(i*2,p.c0.x,p.c0.y,p.c0.z); P.setXYZ(i*2+1,p.c0.x,p.c0.y,p.c0.z); }); g.computeBoundingSphere(); }
+    xUI(); }
+  function xApply(t){ XS.parts.forEach(p=>p.n.position.copy(p.b).addScaledVector(p.d,t));
+    if(XS.lines){ const P=XS.lines.geometry.attributes.position; XS.parts.forEach((p,i)=>{ const e=p.c0.clone().lerp(p.c1,t); P.setXYZ(i*2,p.c0.x,p.c0.y,p.c0.z); P.setXYZ(i*2+1,e.x,e.y,e.z); }); P.needsUpdate=true; XS.lines.visible=t>0.02; }
+    if(V) V.redraw(); }
   function xAnim(to){ cancelAnimationFrame(XS.raf); const t0=performance.now(), from=XS.t;
     const step=now=>{ const k=Math.min(1,(now-t0)/650), e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2; XS.t=from+(to-from)*e; xApply(XS.t); if(k<1) XS.raf=requestAnimationFrame(step); else if(V) V.recenter(); }; XS.raf=requestAnimationFrame(step); }
   if(bX) bX.addEventListener('click',()=>{ XS.on=!XS.on; xAnim(XS.on?1:0); xUI(); });
