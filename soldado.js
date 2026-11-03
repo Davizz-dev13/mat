@@ -84,6 +84,8 @@ function page(app,ctx){
    '<div class="sd-card"><button type="button" class="sd-btn" id="sdeq">'+L('Equipar (ver en 3D)','Equip (view in 3D)')+'</button><button type="button" class="sd-btn sec" id="sdclr">'+L('Vaciar','Clear')+'</button><div id="sd3d"></div></div>'+
    '</div></div><div class="sd-card" id="sdsrc"></div>';
   ctx.set(h,L('Crea tu soldado','Build your soldier'));
+  /* precarga del 3D en segundo plano (no con «ahorro de datos») */
+  { const cn=navigator.connection; if(!(cn&&(cn.saveData||/(^|-)2g$/.test(cn.effectiveType||'')))){ const go=()=>{ if(!document.getElementById('sdeq')) return; Promise.all([arm(),import('./soldado3d.js?v='+VER)]).then(([,S3])=>{ S3.prefetch&&S3.prefetch(); }).catch(()=>{}); }; (window.requestIdleCallback||((f)=>setTimeout(f,1200)))(go,{timeout:2500}); } }
   const $=id=>document.getElementById(id);
   function gearHTML(){ return D.cats.map(c=>{ const ids=itemsByCat(c[0]); if(!ids.length) return ''; return '<h3>'+esc(LL(c[1]))+(c[2]?' <small style="opacity:.6">'+L('(uno)','(one)')+'</small>':'')+'</h3>'+ids.map(id=>{ const it=D.items[id], q=st.q[id]||0, src=LL(it.src)||[];
     const blocked=(c[0]==='plate'&&st.q.iba&&id!=='side');

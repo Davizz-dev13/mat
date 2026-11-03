@@ -331,10 +331,13 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
   const ro=new ResizeObserver(size); ro.observe(stage); size();
   const io=new IntersectionObserver(es=>{ visible=es[0].isIntersecting; if(visible) loop(); },{threshold:0.01}); io.observe(stage);
   function place(){ cam.position.set(Math.sin(yaw)*Math.cos(pitch)*dist, Math.sin(pitch)*dist, Math.cos(yaw)*Math.cos(pitch)*dist); cam.lookAt(0,0,0); }
+  let lastR=0, fEma=0, fN=0, drops=0;
   function loop(){
     if(!alive||raf) return; raf=requestAnimationFrame(t=>{ raf=0; if(!alive) return; const dt=Math.min(0.05,(t-last)/1000); last=t;
       if(auto){ idleT+=dt; if(idleT>3.5){ yaw+=dt*0.35; dirty=true; } }
-      if(dirty){ place(); for(const f of PRE) f(R,scene,cam); R.render(scene,cam); dirty=false; }
+      if(dirty){ place(); for(const f of PRE) f(R,scene,cam); R.render(scene,cam); dirty=false;
+        /* resolución adaptativa (Fase 7): si el móvil no llega a ~30 fps de forma sostenida, baja la densidad de píxeles en pasos de 0,25 (mínimo 1) */
+        const gap=t-lastR; lastR=t; if(gap>0&&gap<250){ fEma=fEma?fEma*0.94+gap*0.06:gap; fN++; if(fN>50&&fEma>34&&R.getPixelRatio()>1.01&&drops<3){ drops++; R.setPixelRatio(Math.max(1,R.getPixelRatio()-0.25)); fN=0; fEma=0; dirty=true; } } }
       if(visible&&!document.hidden&&(auto||dirty)) loop(); }); }
   const P=new Map(); let pd0=0, d0=0;
   stage.addEventListener('pointerdown',e=>{ stage.setPointerCapture&&stage.setPointerCapture(e.pointerId); P.set(e.pointerId,{x:e.clientX,y:e.clientY}); idleT=0; if(P.size===2){ const a=[...P.values()]; pd0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); d0=dist; } });

@@ -31,6 +31,8 @@ function loader(){ return GL?Promise.resolve(GL):import('./gltf.min.js').then(G=
 function load(u){ return loader().then(l=>new Promise((res,rej)=>l.load(u+'?v='+VER,res,undefined,rej))); }
 function rbox(w,h,d,m){ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.castShadow=true; return o; }
 function cyl(r,h,m,n){ const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,n||14),m); o.castShadow=true; return o; }
+/* precarga (Fase 7): soldado.js la pide mientras eliges papel y nivel, así «Equipar» no espera a la descarga del modelo */
+export function prefetch(){ if(!SOLP){ SOLP=load('m3d/soldado/soldado_r.glb').catch(e=>{ SOLP=null; throw e; }); SOLP.catch(()=>{}); } }
 export async function mount(stage,st,D,M,opt){
   const V=M.viewer(stage,{yaw:0.5,pitch:0.05,zoom:0.6}); if(!V) throw new Error('webgl');
   if(!SOLP) SOLP=load('m3d/soldado/soldado_r.glb').catch(e=>{ SOLP=null; throw e; });
