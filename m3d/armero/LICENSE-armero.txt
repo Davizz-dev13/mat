@@ -65,3 +65,7 @@ Pistolas (tanda 3b), modified by M.A.T (loose parts removed, rescaled to real le
 - hipower.glb: "Low-Poly Browning Hi-Power" by TastyTony (https://sketchfab.com/TastyTony), https://sketchfab.com/3d-models/low-poly-browning-hi-power-e9701eeba3904caa81bed0a4a0fe9eeb, CC BY 4.0
 - tt33.glb: "Low-Poly TT-33 Tokarev" by notcplkerry (https://sketchfab.com/notcplkerry), https://sketchfab.com/3d-models/low-poly-tt-33-tokarev-5f53b93c2bab46beb6a1b83d9146ca4c, CC BY 4.0
 - p99.glb: "Walther P99" by tel-roman (https://sketchfab.com/tel-roman), https://sketchfab.com/3d-models/walther-p99-8b8153f8d1594f598961b2345f47da9b, CC BY 4.0
+
+Añadido por M.A.T el 4 nov 2026 (sin modelos nuevos de terceros):
+- Raíl Picatinny del G36E (España) y del FAMAS F1 «Infanterie»: modelo aproximado hecho por MAT a partir de medidas oficiales (MIL-STD-1913: ranura 5,23 mm, paso 10,01 mm, fondo 3,00 mm; Wikipedia «Picatinny rail»), construido en código (armero_kit.js, prail). Largo y altura ajustados al asa de los modelos g36.glb y famas.glb, que no se modifican.
+- Glock 18C: linternas SureFire X300U-A y Streamlight TLR-1 HL (las mismas piezas ya usadas en la Glock 17) colocadas en el raíl Glock del modelo g18c.glb.

@@ -476,5 +476,14 @@ function m145(d,P){ const G=new THREE.Group(); const L=d.L, W=d.W, H=d.H, ay=d.a
   return G; }
 
 const B={aimpoint,micro,hs510,eotech,acog,rmr,elcan,lpvo,magnifier,can,stock,grip,light,laser,atlas,plight,wpscope,wpref,p87,gpl,bayo,btnar,ag36,famasbip,sockbayo,susat,mepro,m145};
+// Raíl Picatinny (MIL-STD-1913) para versiones con raíl sobre el asa (G36E, FAMAS «Infanterie»). Ranura 5,23 mm, paso 10,01 mm, fondo 3,00 mm (Wikipedia).
+// Origen = cara inferior, centro. d={L,H,W}. Largo y altura ajustados al asa del modelo 3D.
+function prail(d,P){ const G=new THREE.Group(); const L=d.L, H=d.H||8, Wd=d.W||21, sp=10.01, sw=5.23, dp=3;
+  bx(G,P.body,Wd*0.72,H-dp,L,0,(H-dp)/2,0,0.8);                          // cuerpo
+  bx(G,P.body,Wd,1.8,L,0,H-dp-0.9,0,0.5);                                // alas del perfil
+  const n=Math.floor((L-sp*0.5)/sp), z0=-(n-1)*sp/2;
+  for(let i=0;i<n;i++) bx(G,P.body,Wd,dp,sp-sw,0,H-dp/2,z0+i*sp,0.5);    // dientes entre ranuras
+  return G; }
+B.prail=prail;
 export function build(kind,dims,fde){ const P=marks(mats(fde)); const g=B[kind](dims,P); const root=new THREE.Group(); g.scale.setScalar(K); root.add(g);
   root.traverse(o=>{ if(o.isMesh){ o.castShadow=true; } }); root.userData.kit=kind; return root; }
