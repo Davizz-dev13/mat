@@ -186,18 +186,43 @@ export async function create(host,cfg){
     if(f>=1){ walkEnd(S); S.grp.position.copy(W.pts[n-1]); S.walk=null; S.at=W.i; face(S); W.res(); } }
   /* disparo: fogonazo/retroceso/vainas de soldado3d + trazadoras e impactos de la escena */
   function shots(S,list,iv){ const T=other(S); const st=S.FK?S.FK:null; const n=list.length; if(st) st.fire(n,iv);
-    list.forEach((h,i)=>setTimeout(()=>{ if(!SOL.includes(S)) return; const m=muzzle(S)||chestPos(S); const tgt=h.loc==='head'?headPos(T):chestPos(T);
+    const TS_=window.MAT_CB_TS||1; list.forEach((h,i)=>setTimeout(()=>{ if(!SOL.includes(S)) return; const m=muzzle(S)||chestPos(S); const tgt=h.loc==='head'?headPos(T):chestPos(T);
         let end; if(h.hit){ end=tgt.clone().add(new V3((Math.random()-0.5)*0.12,(h.loc==='limb'?-0.45:0)+(Math.random()-0.5)*0.1,(Math.random()-0.5)*0.12)); }
         else { const miss=new V3((Math.random()-0.5)*1.4,(Math.random()-0.35)*1.2,(Math.random()-0.5)*1.6); end=tgt.clone().add(miss); const dir=end.clone().sub(m).normalize(); end=m.clone().add(dir.multiplyScalar(m.distanceTo(tgt)+2+Math.random()*10)); const gy=heightAt(end.x,end.z); if(end.y<gy){ end.y=gy+0.02; } }
-        tracer(m,end,S.tr,red?400:230); const fl=m.distanceTo(end)/(red?400:230);
+        tracer(m,end,S.tr,red?400:230); const fl=m.distanceTo(end)/(red?400:230)/TS_;
         setTimeout(()=>{ if(h.hit){ if(h.stop){ spark(end,18); } else { puff(end,[0.45,0.12,0.1],4); spark(end,5); } if(T.alive&&!red) kick(T,h.stop?0.04:0.07); }
-          else { const gy=heightAt(end.x,end.z); puff(new V3(end.x,Math.max(gy,end.y-0.05),end.z),null,6); } },fl*1000); },i*iv*1000)); return n*iv*1000+300; }
+          else { const gy=heightAt(end.x,end.z); puff(new V3(end.x,Math.max(gy,end.y-0.05),end.z),null,6); } },fl*1000); },i*iv*1000/TS_)); return n*iv*1000+300; }
   function kick(S,a){ S.kick={t:0,a}; }
   function stepKick(S,dt){ if(!S.kick) return; S.kick.t+=dt; const f=S.kick.t/0.25; S.inner.rotation.z=(f<1?Math.sin(f*Math.PI)*S.kick.a:0)*-S.side; if(f>=1){ S.inner.rotation.z=0; S.kick=null; } }
-  /* fuera de combate: cae hacia atrás despacio */
-  function fall(S){ return new Promise(res=>{ S.alive=false; S.fall={t:0,res,y0:S.grp.position.y}; }); }
-  function stepFall(S,dt){ const F=S.fall; if(!F) return; F.t+=dt; const f=Math.min(1,F.t/1.1); const e=f*f*(3-2*f); S.inner.rotation.x=0; const ax=new V3(1,0,0);
-    S.inner.rotation.order='YXZ'; S.inner.rotation.x=-e*1.38; S.inner.position.y=e*0.16; if(f>=1){ S.fall=null; F.res(); } }
+  /* fuera de combate: las rodillas ceden, el torso cae hacia delante y el cuerpo queda boca abajo, apoyado en el suelo (posturas clave de soldado3d.js, medidas por vértices);
+     el arma se suelta de las manos, cae y queda tumbada en el suelo al lado del cuerpo */
+  function fall(S,o){ return new Promise(res=>{ S.alive=false; S.kick=null; S.inner.rotation.set(0,0,0); S.inner.position.set(0,0,0); S.inner.updateMatrixWorld(true);
+      const D=S.api&&S.api.death; if(!D){ S.alive=false; res(); return; }
+      const K=D.keys({side:(o&&o.side)||1,ang:o&&o.ang}); S.inner.updateMatrixWorld(true); const HD=S.body.parent; HD.updateMatrixWorld(true); const bw=v=>HD.localToWorld(v.clone());
+      const qb=HD.getWorldQuaternion(new THREE.Quaternion()); const Fw=K.pts.F.clone().applyQuaternion(qb).setY(0).normalize(), Lw=K.pts.Lx.clone().applyQuaternion(qb).setY(0).normalize();
+      S.deadC=bw(K.pts.chest).lerp(bw(K.pts.hip),0.35); S.deadC.y=heightAt(S.deadC.x,S.deadC.z);
+      S.fall={t:0,K,D,res,drop:null,hand:bw(K.pts.su<0?K.pts.hL:K.pts.hR),Fw,Lw,su:K.pts.su,cloud:K.pts.cloud}; }); }
+  function dropStart(S){ const w=wpnOf(S); if(!w) return null; w.updateMatrixWorld(true); const c=w.clone(true); const rm=[]; c.traverse(o=>{ if(o.name==='mat_beams'||o.name==='mat_bipod') rm.push(o); }); rm.forEach(o=>o.parent&&o.parent.remove(o));
+    scene.add(c); w.matrixWorld.decompose(c.position,c.quaternion,c.scale); c.traverse(o=>{ if(o.isMesh) o.castShadow=true; }); w.visible=false;
+    const F=S.fall; const sgn=F.su>0?-1:1, side=F.Lw.clone().multiplyScalar(sgn); /* lado del brazo que queda a lo largo del cuerpo */
+    const zb=F.Fw.clone().applyAxisAngle(new V3(0,1,0),sgn*0.42).normalize(); const xb=new V3(0,F.su>0?1:-1,0); const yb=new V3().crossVectors(zb,xb).normalize();
+    const qF=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(xb,yb,zb)); const p0=c.position.clone(), q0=c.quaternion.clone();
+    c.quaternion.copy(qF); c.position.set(0,0,0); c.updateMatrixWorld(true); const inv0=c.matrixWorld.clone().invert(); const bl=new THREE.Box3(); c.traverse(o=>{ if(o.isMesh){ if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); bl.union(o.geometry.boundingBox.clone().applyMatrix4(inv0.clone().multiply(o.matrixWorld))); } }); bl.expandByScalar(0.015);
+    const cloud=F.cloud, Mb=S.body.parent.matrixWorld, v=new V3();
+    const place=(lat,fw)=>{ const tgt=F.hand.clone().addScaledVector(side,lat).addScaledVector(F.Fw,fw); c.position.copy(tgt); c.updateMatrixWorld(true); let bb=new THREE.Box3().setFromObject(c,true);
+      c.position.x+=tgt.x-(bb.min.x+bb.max.x)/2; c.position.z+=tgt.z-(bb.min.z+bb.max.z)/2; c.updateMatrixWorld(true); bb=new THREE.Box3().setFromObject(c,true);
+      const gy=Math.max(heightAt(bb.min.x,bb.min.z),heightAt(bb.max.x,bb.max.z),heightAt(bb.min.x,bb.max.z),heightAt(bb.max.x,bb.min.z)); c.position.y+=gy+0.001-bb.min.y; c.updateMatrixWorld(true);
+      if(!cloud) return 0; const inv=c.matrixWorld.clone().invert(); let n=0; for(let i=0;i<cloud.length;i+=3){ v.set(cloud[i],cloud[i+1],cloud[i+2]).applyMatrix4(Mb).applyMatrix4(inv); if(bl.containsPoint(v)) n++; } return n; };
+    let best=null; for(const fw of [0.3,0.1,0.5]){ for(let lat=0.22;lat<=0.9;lat+=0.06){ const n=place(lat,fw); if(n===0){ best=[lat,fw]; break; } } if(best) break; } if(!best) best=[0.9,0.3]; const nb=place(best[0],best[1]); S.dropDbg={best,n:nb,cloud:cloud?cloud.length/3:0};
+    const pF=c.position.clone(); c.position.copy(p0); c.quaternion.copy(q0); return {c,p0,q0,pF,qF,t:0}; }
+  function stepFall(S,dt){ const F=S.fall; if(!F) return; F.t+=dt; const t=F.t, T1=0.36, T2=0.66;
+    if(t<T1){ const u=t/T1; F.D.blend(F.K.K0,F.K.K1,u*u*(3-2*u),Math.min(1,u*1.3)); }
+    else if(t<T1+T2){ const u=(t-T1)/T2, e=Math.pow(u,1.6); F.D.blend(F.K.K1,F.K.K2,e,Math.min(1,e*1.2)); }
+    else if(!F.done){ F.done=true; F.D.end(F.K.K2); if(!red){ puff(S.deadC.clone().addScaledVector(F.Fw,0.3),[0.55,0.48,0.38],9,true); CAM.shake=Math.max(CAM.shake,0.02); } }
+    if(!F.drop&&t>0.05) F.drop=dropStart(S)||{none:1};
+    const d=F.drop; if(d&&d.c&&d.t<1){ d.t=Math.min(1,d.t+dt/0.5); const u=d.t; d.c.position.set(d.p0.x+(d.pF.x-d.p0.x)*(1-(1-u)*(1-u)),d.p0.y+(d.pF.y-d.p0.y)*(0.3*u+0.7*u*u),d.p0.z+(d.pF.z-d.p0.z)*(1-(1-u)*(1-u))); d.c.quaternion.slerpQuaternions(d.q0,d.qF,u*u*(3-2*u));
+      if(u>=1&&!red) puff(d.pF.clone(),[0.55,0.48,0.38],4); }
+    if(F.done&&(!d||!d.c||d.t>=1)){ S.fall=null; S.dropped=d&&d.c; F.res(); } }
   /* cámara */
   const CAM={mode:'intro',t:0,from:null,to:null,look:new V3(),pos:new V3(),shake:0}; let camP=new V3(-34,9,16), camL=new V3(0,0.8,0);
   function shotOf(kind,S){ const T=S?other(S):null; const P=S?S.grp.position.clone():new V3(); const sd=S?S.side:-1;
@@ -209,26 +234,32 @@ export async function create(host,cfg){
     if(kind==='shoulder'){ const rs=right.dot(zc)>0?1:-1; return {p:P.clone().addScaledVector(to,-2.3).addScaledVector(right,0.55*rs).add(new V3(0,h+0.45,0)),l:T.grp.position.clone().add(new V3(0,0.6,0)).addScaledVector(right,-6*rs)}; }
     if(kind==='side'){ return {p:P.clone().addScaledVector(zc,3.3).addScaledVector(to,1.6).add(new V3(0,h+0.25,0)),l:P.clone().addScaledVector(to,0.6).add(new V3(0,h-0.15,0))}; }
     if(kind==='track'){ return {p:P.clone().addScaledVector(zc,6.2).addScaledVector(to,-1.2).add(new V3(0,2.2,0)),l:P.clone().add(new V3(0,0.9,0)).addScaledVector(to,1.5)}; }
+    if((kind==='two'||kind==='behind')&&cam.aspect<0.9){ /* móvil en vertical: por detrás del hombro del tirador con óptica larga, el blanco grande al fondo */ const Q=T.grp.position.clone(); const k2=kind==='two'; return {p:P.clone().addScaledVector(to,k2?-3.2:-2.2).addScaledVector(right,k2?-0.95:-0.6).add(new V3(0,h+(k2?0.45:0.3),0)),l:Q.clone().add(new V3(0,0.85,0)),fov:k2?34:26}; }
+    if(kind==='victim'){ /* plano medio lateral del que cae (mismo lado que el plano general: no se cruza el eje) */ const dv=cam.aspect<0.9?4.8:3.7; return {p:P.clone().addScaledVector(right,dv).addScaledVector(to,0.55).add(new V3(0,1.35,0)),l:P.clone().addScaledVector(to,0.5).add(new V3(0,0.5,0))}; }
     if(kind==='two'){ const Q=T.grp.position.clone(); const M_=P.clone().add(Q).multiplyScalar(0.5); const D_=P.distanceTo(Q); const k=Math.min(1,CAM.t/4); const hf=2*Math.atan(Math.tan(cam.fov*Math.PI/360)*cam.aspect); const ds=Math.max(5,(D_/2+1.6)/Math.tan(hf/2)); return {p:M_.clone().addScaledVector(right,-ds).addScaledVector(to,-0.8+k*1.0).add(new V3(0,1.6+k*0.3,0)),l:M_.clone().add(new V3(0,0.85,0))}; }
     if(kind==='behind'){ return {p:P.clone().addScaledVector(to,-1.9).addScaledVector(right,-0.62).add(new V3(0,h+0.32,0)),l:T.grp.position.clone().add(new V3(0,1.0,0))}; }
-    if(kind==='orbit'){ const a=CAM.t*0.3+(sd<0?0:Math.PI); return {p:P.clone().add(new V3(Math.cos(a)*4.2,2.7,Math.sin(a)*4.2)),l:P.clone().add(new V3(0,0.75,0))}; }
+    if(kind==='orbit'){ const C=S&&S.deadC?S.deadC:P; const a=CAM.t*0.3+(sd<0?0:Math.PI); return {p:C.clone().add(new V3(Math.cos(a)*3.4,1.9,Math.sin(a)*3.4)),l:C.clone().add(new V3(0,0.2,0))}; }
+    if(kind==='fixed'){ return {p:CAM.fp.clone(),l:CAM.fl.clone()}; }
     return {p:new V3(0,15,26),l:new V3()}; }
   let camShot={kind:'intro',S:null}, camBlend=1;
-  function camera(kind,S,cut){ if(kind==='intro') CAM.t=0; camShot={kind,S}; camBlend=cut||red?1:0; }
+  function camera(kind,S,cut){ if(window.MAT_CB_CAMLOCK&&kind!=='fixed') return; if(kind==='intro') CAM.t=0; camShot={kind,S}; camBlend=cut||red?1:0; }
   function stepCam(dt){ CAM.t+=dt; const s=shotOf(camShot.kind,camShot.S);
     if(camBlend>=1){ camP.copy(s.p); camL.copy(s.l); } else { camBlend=Math.min(1,camBlend+dt*1.6); const k=1-Math.pow(0.02,dt); camP.lerp(s.p,k*1.4>1?1:k*1.4); camL.lerp(s.l,k*1.6>1?1:k*1.6); }
     /* el plano no atraviesa el terreno ni los muros bajos */ const gy=heightAt(camP.x,camP.z); if(camP.y<gy+0.35) camP.y=gy+0.35;
-    cam.position.copy(camP); if(CAM.shake>0&&!red){ cam.position.x+=(Math.random()-0.5)*CAM.shake; cam.position.y+=(Math.random()-0.5)*CAM.shake; CAM.shake*=Math.pow(0.02,dt); } cam.lookAt(camL); }
+    { const fv=s.fov||(cam.aspect<0.9?52:42); if(Math.abs(cam.fov-fv)>0.01){ cam.fov=fv; cam.updateProjectionMatrix(); } } cam.position.copy(camP); if(CAM.shake>0&&!red){ cam.position.x+=(Math.random()-0.5)*CAM.shake; cam.position.y+=(Math.random()-0.5)*CAM.shake; CAM.shake*=Math.pow(0.02,dt); } cam.lookAt(camL); }
   /* bucle */
   let alive=true, last=performance.now(), raf=0, fpsT=0, fpsN=0, fpsLow=0, vis=true; const io=new IntersectionObserver(e=>{ vis=e[0].isIntersecting; }); io.observe(host);
   function resize(){ const w=host.clientWidth||300, h=host.clientHeight||300; R.setSize(w,h,false); cam.aspect=w/h; cam.fov=w/h<0.9?52:42; cam.updateProjectionMatrix(); }
   const ro=new ResizeObserver(resize); ro.observe(host); resize();
-  function loop(now){ if(!alive) return; raf=requestAnimationFrame(loop); const dt=Math.min(0.05,(now-last)/1000); last=now; if(!vis||document.hidden) return;
+  function loop(now){ if(!alive) return; raf=requestAnimationFrame(loop); const dt=Math.min(0.05,(now-last)/1000)*(window.MAT_CB_TS||1); last=now; if(!vis||document.hidden) return;
     SOL.forEach(S=>{ stepWalk(S,dt); stepKick(S,dt); stepFall(S,dt); if(S.yawT!=null){ const d=angDiff(S.yawT,S.grp.rotation.y); S.grp.rotation.y+=d*Math.min(1,dt*6); if(Math.abs(d)<0.002) S.yawT=null; } S.V._sync(); });
     stepTracers(dt); sparks.update(dt); dust.update(dt); stepCam(dt); R.render(scene,cam);
     /* resolución adaptable: si va lento, baja la nitidez (como el soldado) */ fpsT+=dt; fpsN++; if(fpsT>2){ const f=fpsN/fpsT; fpsT=0; fpsN=0; if(f<26&&dpr>1){ dpr=Math.max(1,dpr-0.25); R.setPixelRatio(dpr); resize(); } if(f<14) fpsLow++; else fpsLow=0; if(cfg.onSlow&&fpsLow>=2){ cfg.onSlow(f); fpsLow=-999; } } }
   raf=requestAnimationFrame(loop);
-  const api={ R,scene,cam,SOL,A:sA,B:sB,setPose,moveTo,shots,fall,camera,face,spark,puff,muzzle,
+  /* listo: los dos soldados con su arma ya cargada en las manos (la carga del arma es asíncrona) */
+  function ready(ms){ const t0=performance.now(); return new Promise(res=>{ const ck=()=>{ if(!alive){ res(false); return; } if(SOL.every(S=>S.FK&&wpnOf(S))||performance.now()-t0>(ms||15000)){ SOL.forEach(S=>{ S.grp.updateMatrixWorld(true); face(S,true); }); res(SOL.every(S=>S.FK&&wpnOf(S))); return; } setTimeout(ck,120); }; ck(); }); }
+  const api={ R,scene,cam,SOL,A:sA,B:sB,setPose,moveTo,shots,fall,camera,face,spark,puff,muzzle,ready,
+    fixedCam(p,l){ CAM.fp=new V3().fromArray(p); CAM.fl=new V3().fromArray(l); camera('fixed',null,true); },
     shake(a){ CAM.shake=Math.max(CAM.shake,a); },
     dbg(){ return {dpr,fps:fpsN/Math.max(0.001,fpsT)}; },
     renderNow(){ SOL.forEach(S=>S.V._sync()); stepCam(0); R.render(scene,cam); },

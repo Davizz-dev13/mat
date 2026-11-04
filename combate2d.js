@@ -77,7 +77,8 @@ export function rng(seed){ let a=seed>>>0; return ()=>{ a|=0; a=a+0x6D2B79F5|0; 
 /* ---------------- simulación ---------------- */
 export function makeSim(mapKey,blue,reds,o){ const M=MAPS[mapKey](); const R=rng(o.seed||1); const night=!!o.night; const ev=[]; let T=0;
   const sim={M,T:0,ev,agents:[],fx:[],over:null,night,stats:{},destroyed:[],strike:null};
-  const log=(es,en,cls)=>{ ev.push({t:T,es,en,cls}); };
+  const log=(es,en,cls,key,fmt)=>{ /* líneas repetidas seguidas se juntan en una («…paró 2 impactos») */ if(key){ for(let k=ev.length-1;k>=Math.max(0,ev.length-3);k--){ const e=ev[k]; if(e.key===key&&T-e.t1<5){ e.n++; e.t1=T; const f=fmt(e.n); e.es=f[0]; e.en=f[1]; e.rev++; return; } } }
+    ev.push({t:T,t1:T,es,en,cls,key,n:1,rev:0}); };
   /* rejilla de navegación (0,5 m) */ const C=0.5, gw=Math.ceil(M.w/C), gh=Math.ceil(M.h/C); let blk=new Uint8Array(gw*gh);
   function rebuildGrid(){ blk=new Uint8Array(gw*gh); for(let j=0;j<gh;j++) for(let i=0;i<gw;i++){ const x=(i+0.5)*C, y=(j+0.5)*C; for(const s of M.S){ if(!BLOCK_MOVE[s[4]]) continue; if(dSeg(x,y,s)<0.3){ blk[j*gw+i]=1; break; } } } }
   rebuildGrid(); sim.grid=()=>({blk,gw,gh,C});
@@ -122,7 +123,7 @@ export function makeSim(mapKey,blue,reds,o){ const M=MAPS[mapKey](); const R=rng
     const hit=R()<p; let ex=t.x, ey=t.y; const fxs={t:'tr',x0:a.x,y0:a.y,team:a.team,t0:T};
     if(hit){ a.hits++; const u=R(); let dmg=0, stop=false, loc; if(u<0.1){ loc='head'; dmg=100; } else if(u<0.6){ loc='torso'; if(t.kit.plate&&R()<(t.kit.plateN>=2?0.7:0.55)){ stop=true; dmg=5; t.stops++; } else dmg=45; } else { loc='limb'; dmg=25; }
       t.hp-=dmg; t.hitsT++; t.sup=Math.min(1,t.sup+(stop?0.3:0.2)); fxs.hit=true; fxs.stop=stop;
-      if(stop) log((t.team===0?'Tu placa para un impacto':t.name+': su placa para un impacto')+' ('+Math.round(d)+' m)',(t.team===0?'Your plate stops a hit':t.name+': plate stops a hit')+' ('+Math.round(d)+' m)','hit');
+      if(stop){ const who=t.team===0?['Tu placa','Your plate']:[t.name+': su placa',t.name+': plate']; log(who[0]+' paró un impacto ('+Math.round(d)+' m)',who[1]+' stopped a hit ('+Math.round(d)+' m)','hit','stop'+t.id,n=>[who[0]+' paró '+n+' impactos',who[1]+' stopped '+n+' hits']); }
       if(t.hp<=0&&t.alive){ t.alive=false; a.kills++; if(loc==='head') t.headK=true; const vis=night&&!sees(t,a); if(vis) a.nightKills++; t.killedBy=a.id;
         log((a.team===0?'Tu soldado abate a ':t.team===0?a.name+' abate a ':'')+(t.team===0?'tu soldado':t.name)+(loc==='head'?' (impacto en la cabeza)':'')+(roomOf(t.x,t.y)?' en '+roomOf(t.x,t.y):''),(a.team===0?'Your soldier takes down ':a.name+' takes down ')+(t.team===0?'your soldier':t.name)+(loc==='head'?' (head hit)':''),'kill'); sim.lastKill={a:a.id,t:t.id,T,d,loc,stop}; } }
     else { const ang=Math.atan2(t.y-a.y,t.x-a.x)+(R()-0.5)*0.22; const L_=d+1.5+R()*4; ex=a.x+Math.cos(ang)*L_; ey=a.y+Math.sin(ang)*L_; t.sup=Math.min(1,t.sup+(k.mg?0.09:0.06));
@@ -147,13 +148,13 @@ export function makeSim(mapKey,blue,reds,o){ const M=MAPS[mapKey](); const R=rng
   function turn(a,want,dt){ const d=angD(want,a.dir); const m=6*dt; a.dir+=Math.max(-m,Math.min(m,d)); return Math.abs(d)<0.12; }
   function goTo(a,x,y){ const p=astar(a.x,a.y,x,y); a.path=p; a.pi=0; a.goal=[x,y]; return !!p; }
   function pickTarget(a){ const vis=enemiesOf(a).filter(b=>sees(a,b)); vis.forEach(b=>{ b.seenBy[a.id]=T; a.known={x:b.x,y:b.y,t:T,id:b.id}; }); if(!vis.length) return null; vis.sort((p,q)=>Math.hypot(p.x-a.x,p.y-a.y)-Math.hypot(q.x-a.x,q.y-a.y)); return vis[0]; }
-  function fireCtl(a,t,dt){ const k=a.kit; if(a.reloadT>0) return; if(a.mag<=0){ a.reloadT=k.reload; log((a.team===0?'Tu soldado recarga':a.name+' recarga'),(a.team===0?'Your soldier reloads':a.name+' reloads'),'rel'); return; }
+  function fireCtl(a,t,dt){ const k=a.kit; if(a.reloadT>0) return; if(a.mag<=0){ a.reloadT=k.reload; { const w2=a.team===0?['Tu soldado recarga','Your soldier reloads']:[a.name+' recarga',a.name+' reloads']; log(w2[0],w2[1],'rel','rel'+a.id,n=>[w2[0]+' (×'+n+')',w2[1]+' (×'+n+')']); } return; }
     const want=Math.atan2(t.y-a.y,t.x-a.x); const ok=turn(a,want,dt); if(!ok) return; if(a.tgt!==t){ a.tgt=t; const d=Math.hypot(t.x-a.x,t.y-a.y); a.aimT=(a.team===1&&!(a.known&&T-a.known.t<5)?1.0+R()*0.7:0.35)+((k.mag||1)>=3&&d<8?0.3:0)+(night&&!k.nvg&&!k.light&&!k.nightSight?0.25:0); if(a.team===0&&!a.contactLog){ a.contactLog=1; } log((a.team===0?'Contacto: enemigo a '+Math.round(d)+' m':a.name+' te ve a '+Math.round(d)+' m')+(roomOf(t.x,t.y)?' ('+roomOf(t.x,t.y)+')':''),(a.team===0?'Contact: enemy at '+Math.round(d)+' m':a.name+' spots you at '+Math.round(d)+' m'),'con'); }
     if(a.aimT>0){ a.aimT-=dt; return; } a.cd-=dt; if(a.cd>0) return;
     if(a.burst<=0){ a.burst=k.mg?6:(k.auto?3:1); }
     shoot(a,t); a.burst--; a.cd=a.burst>0?60/(k.rate||700):(k.mg?0.6:k.auto?0.5:0.4); if(a.mag<=0) a.burst=0; }
   function stepAgent(a,dt){ if(!a.alive) return; const k=a.kit; a.sup=Math.max(0,a.sup-0.28*dt); if(a.reloadT>0){ a.reloadT-=dt; if(a.reloadT<=0){ a.mag=k.magSize; } }
-    if(a.duck>0){ a.duck-=dt; a.moving=false; return; } if(a.sup>0.75&&!a.ducked){ a.duck=1.2; a.ducked=true; a.sup*=0.7; log((a.team===0?'Tu soldado se cubre (fuego de supresión)':a.name+' se cubre'),(a.team===0?'Your soldier takes cover (suppressive fire)':a.name+' takes cover'),'sup'); return; } if(a.sup<0.4) a.ducked=false;
+    if(a.duck>0){ a.duck-=dt; a.moving=false; return; } if(a.sup>0.75&&!a.ducked){ a.duck=1.2; a.ducked=true; a.sup*=0.7; { const w2=a.team===0?['Tu soldado se cubre (fuego de supresión)','Your soldier takes cover (suppressive fire)']:[a.name+' se cubre',a.name+' takes cover']; log(w2[0],w2[1],'sup','cov'+a.id,n=>[w2[0]+' (×'+n+')',w2[1]+' (×'+n+')']); } return; } if(a.sup<0.4) a.ducked=false;
     if(a.fragT&&T<a.fragT){ a.moving=false; return; }
     const t=pickTarget(a);
     if(t){ a.moving=false; a.lostT=0;
@@ -227,15 +228,16 @@ export function makeView(cv,sim,o){ const g=cv.getContext('2d'); const M=sim.M; 
         if(f.hit&&k<0.5){ g.fillStyle=f.stop?'#ffe08a':'#ff4d3d'; g.beginPath(); g.arc(f.x1,f.y1,0.35*(1-k),0,7); g.fill(); } else if(f.wall&&k<0.4){ g.fillStyle='#d8c7a0'; g.beginPath(); g.arc(f.x1,f.y1,0.18,0,7); g.fill(); } g.globalAlpha=1; }
       if(f.t==='gren'&&!f.done){ const k=Math.min(1,(T-f.t0)/f.fl); const x=f.x0+(f.x1-f.x0)*k, y=f.y0+(f.y1-f.y0)*k; g.fillStyle='#2b3a22'; g.beginPath(); g.arc(x,y,0.18+0.12*Math.sin(k*Math.PI),0,7); g.fill(); g.strokeStyle='#e8e2b0'; g.lineWidth=0.04; g.stroke(); } });
     /* niebla */
-    const fogA=night?0.72:0.3; if(!o.reveal&&!sim.over){ if(fog.width!==cv.width||fog.height!==cv.height){ fog.width=cv.width; fog.height=cv.height; fogG=fog.getContext('2d'); }
+    const fogA=night?0.56:0.3; if(!o.reveal&&!sim.over){ if(fog.width!==cv.width||fog.height!==cv.height){ fog.width=cv.width; fog.height=cv.height; fogG=fog.getContext('2d'); }
       fogG.setTransform(1,0,0,1,0,0); fogG.globalCompositeOperation='source-over'; fogG.clearRect(0,0,fog.width,fog.height); fogG.fillStyle=night?'rgba(4,8,14,'+fogA+')':'rgba(10,14,18,'+fogA+')'; fogG.fillRect(0,0,fog.width,fog.height);
       if(rot) fogG.setTransform(0,sc*dpr,-sc*dpr,0,(ox+M.h*sc)*dpr,oy*dpr); else fogG.setTransform(sc*dpr,0,0,sc*dpr,ox*dpr,oy*dpr);
       fogG.globalCompositeOperation='destination-out'; if(B.alive){ const P=visPoly(B); fogG.fillStyle='#000'; fogG.beginPath(); fogG.moveTo(P[0][0],P[0][1]); P.forEach(p=>fogG.lineTo(p[0],p[1])); fogG.closePath(); fogG.fill(); fogG.beginPath(); fogG.arc(B.x,B.y,1.4,0,7); fogG.fill(); }
-      fogG.globalCompositeOperation='source-over'; g.setTransform(1,0,0,1,0,0); g.drawImage(fog,0,0); if(night&&B.alive&&B.kit.nvg){ g.fillStyle='rgba(60,255,90,0.07)'; g.fillRect(0,0,cv.width,cv.height); } world(); }
+      fogG.globalCompositeOperation='source-over'; g.setTransform(1,0,0,1,0,0); g.drawImage(fog,0,0); if(night&&B.alive&&B.kit.nvg){ g.fillStyle='rgba(60,255,90,0.07)'; g.fillRect(0,0,cv.width,cv.height); } world();
+      if(night){ /* de noche los muros se siguen leyendo (luz ambiente); a los enemigos solo los ves en tu cono */ g.lineCap='round'; M.S.forEach(s=>{ if(s[4]==='low') { g.strokeStyle='rgba(205,190,150,0.22)'; g.lineWidth=0.2; } else if(s[4]==='win'){ g.strokeStyle='rgba(150,200,235,0.3)'; g.lineWidth=0.12; } else { g.strokeStyle='rgba(175,185,200,0.34)'; g.lineWidth=0.2; } g.beginPath(); g.moveTo(s[0],s[1]); g.lineTo(s[2],s[3]); g.stroke(); }); } }
     /* apoyo aéreo: animación de llegada */
-    if(sim.anim) sim.anim(g,T,world,screen);
+    if(sim.anim) sim.anim(g,T,world,screen,tx,showRed);
     /* etiquetas (siempre derechas) */
     screen(); g.font='600 10px system-ui,sans-serif'; g.textAlign='center';
-    sim.agents.forEach(a=>{ if(!a.alive) return; if(a.team===1&&!showRed(a)) return; const [sx,sy]=tx(a.x,a.y); const w=26; g.fillStyle='rgba(0,0,0,0.55)'; g.fillRect(sx-w/2,sy-sc*0.45-15,w,6); g.fillStyle=a.hp>60?'#5fbf4a':a.hp>30?'#e0b33a':'#d9493a'; g.fillRect(sx-w/2+1,sy-sc*0.45-14,(w-2)*Math.max(0,a.hp)/100,2.2); g.fillStyle='#9fc3ff'; if(a.kit.plate) g.fillRect(sx-w/2+1,sy-sc*0.45-11,(w-2)*Math.max(0,a.kit.plateN)/2,1.6);
+    sim.agents.forEach(a=>{ if(!a.alive) return; if(a.team===1&&!showRed(a)) return; const [sx,sy]=tx(a.x,a.y); const w=26; const by_=Math.max(2,sy-sc*0.45-15); g.fillStyle='rgba(0,0,0,0.55)'; g.fillRect(sx-w/2,by_,w,6); g.fillStyle=a.hp>60?'#5fbf4a':a.hp>30?'#e0b33a':'#d9493a'; g.fillRect(sx-w/2+1,by_+1,(w-2)*Math.max(0,a.hp)/100,2.2); g.fillStyle='#9fc3ff'; if(a.kit.plate) g.fillRect(sx-w/2+1,by_+4,(w-2)*Math.max(0,a.kit.plateN)/2,1.6);
       g.fillStyle='#fff'; g.strokeStyle='rgba(0,0,0,0.75)'; g.lineWidth=3; g.strokeText(a.label,sx,sy+sc*0.45+11); g.fillText(a.label,sx,sy+sc*0.45+11); }); }
   layout(); return {draw,layout,tx,get sc(){ return sc; },get rot(){ return rot; }}; }
