@@ -49,7 +49,24 @@ function trincheras(){ const S=[]; const add=a=>a.forEach(s=>S.push(s));
     blue:{p:[0.8,1.2],f:Math.PI/2,route:[[1.0,6.4],[1.2,8.0,['la entrada de la trinchera','the trench entrance']],[6,8],[10,8.2],[10,12],[15,12],[19,11.8],[19,8],[23.2,8],[23.2,4],[23.2,0.8],[21,0.7],[25.5,0.7],[23.2,4],[23.2,8],[28,8],[28,12],[33,12],[37,12],[37,8],[42,8]]},
     red:[[15.5,12.1,Math.PI/2],[24.8,8,Math.PI*0.5],[32,12.1,Math.PI/2],[5,8,Math.PI*0.55],[23.2,0.7,Math.PI/2],[40,8,Math.PI*0.6],[32,4.4,Math.PI*0.5],[11,12.1,Math.PI*0.5]],
     target:[23,6]}; }
-export const MAPS={casa,trincheras};
+
+function pueblo(){ const S=[]; const add=a=>a.forEach(s=>S.push(s));
+  /* B1 casa de dos habitaciones (noroeste) */ add(wallG(4,3,16,3,[[6,8,'win'],[12,14,'win']])); add(wallG(4,12,16,12,[[6,8,'win'],[12,13.2,'door']])); add(wallG(4,3,4,12,[[6,8,'win']])); add(wallG(16,3,16,12,[[5,6.5,'win']])); add(wallG(10,3,10,12,[[6,7.2,'door']])); add(rectS(5,4,1.6,2,'low'));
+  /* B5 tienda */ add(wallG(17,3,21,3,[])); add(wallG(17,8,21,8,[[18,19.5,'win']])); add(wallG(17,3,17,8,[])); add(wallG(21,3,21,8,[[5,6.2,'door']])); add(rectS(17.5,3.5,3,0.7,'low'));
+  /* B2 ayuntamiento (noreste) */ add(wallG(32,2,46,2,[[35,37,'win'],[41,43,'win']])); add(wallG(32,12,46,12,[[34,36,'win'],[38,39.4,'door'],[42,44,'win']])); add(wallG(32,2,32,12,[[6,8,'win']])); add(wallG(46,2,46,12,[[6,8,'win']])); add(wallG(40,2,40,8,[])); add(rectS(35,5,3,1,'low'));
+  /* B3 casa (suroeste) */ add(wallG(3,24,14,24,[[4.5,6.5,'win'],[7,8.2,'door'],[10.5,12.5,'win']])); add(wallG(3,33,14,33,[[6,8,'win']])); add(wallG(3,24,3,33,[[27,29,'win']])); add(wallG(14,24,14,33,[[29.5,31,'win']])); add(wallG(3,28.5,14,28.5,[[10,11.2,'door']])); add(rectS(4,30,2,2.4,'low'));
+  /* B4 edificio en ruinas (sureste): muros con brechas */ add(wallG(33,24,45,24,[[36,37.2,'door'],[39.5,41.5,'door']])); add(wallG(33,33,45,33,[[37,40,'door']])); add(wallG(33,24,33,33,[[28,29.2,'door']])); add(wallG(45,24,45,33,[[26,28,'win']])); add(wallG(39,24,39,29,[[26,27.2,'door']]));
+  [[35,30,0.8,0.6],[41,31,1.2,0.6],[43.5,25.2,0.6,0.9],[36.5,27.5,0.9,0.5]].forEach(r=>add(rectS(r[0],r[1],r[2],r[3],'low')));
+  /* muretes de jardín y coches */ add(wallG(30,13.4,47,13.4,[[37.6,40,'door']],'low')); add(wallG(29.6,23,29.6,34,[[27,29,'door']],'low')); add(wallG(2,22.6,15,22.6,[[6.6,8.6,'door']],'low'));
+  const cars=[[8,18.4,4.4,1.8],[17,15.8,4.4,1.8],[30,19.2,4.4,1.8],[23.6,26,1.8,4.4],[41,16,4.4,1.8]]; cars.forEach(c=>add(rectS(c[0],c[1],c[2],c[3],'low')));
+  const fl=[[0,14.5,50,7.5,'#4b4e52'],[22,0,6.5,36,'#4b4e52'],[0,13.8,50,0.7,'#7b776d'],[0,22,50,0.6,'#7b776d'],[21.4,0,0.6,36,'#7b776d'],[28.5,0,0.6,36,'#7b776d'],
+    [4,3,12,9,'#a1927b'],[17,3,4,5,'#b4a68c'],[32,2,14,10,'#9c8f7c'],[3,24,11,9,'#a1927b'],[33,24,12,9,'#857a6a']];
+  return {k:'pueblo',w:50,h:36,S,floors:fl,ground:'#66704f',cars,
+    rooms:[[4,3,6,9,['la casa del noroeste (oeste)','the north-west house (west room)']],[10,3,6,9,['la casa del noroeste (este)','the north-west house (east room)']],[17,3,4,5,['la tienda','the shop']],[32,2,8,10,['el ayuntamiento (oeste)','the town hall (west)']],[40,2,6,10,['el ayuntamiento (este)','the town hall (east)']],[3,24,11,4.5,['la casa del suroeste (delante)','the south-west house (front)']],[3,28.5,11,4.5,['la casa del suroeste (fondo)','the south-west house (back)']],[33,24,12,9,['el edificio en ruinas','the ruined building']],[0,14.5,50,7.5,['la calle mayor','the main street']],[22,0,6.5,36,['la calle transversal','the cross street']]],
+    blue:{p:[0.8,18],f:0,route:[[6.5,17.2,['la calle mayor','the main street']],[12.6,13.4],[12.6,10.4],[13,6],[10,6.6],[7,6.6],[7,10],[12.6,13.4],[7.6,22.2],[7.6,25.6],[11,26.4],[10.6,29.8],[6,30.8],[7.6,25.6],[7.6,22],[16,20.6],[22.8,6],[19,5.6],[22.8,9],[26,14],[38.7,14.2],[38.7,10.6],[36,7],[34,9],[42,9],[43.4,4.6],[38.7,10.6],[38.7,14.2],[36.6,22.6],[36.6,25.4],[36,30],[39,26.6],[42,28.5],[42,25.4],[31,28],[26,24]]},
+    red:[[7.2,10.4,Math.PI*0.5],[36.5,9.6,Math.PI*0.5],[43.5,5,Math.PI*0.6],[6.5,26.8,-Math.PI*0.5],[40.5,27.5,-Math.PI*0.6],[19,5.6,Math.PI*0.5],[31.5,18.6,Math.PI],[13.6,9.6,Math.PI*0.6]],
+    target:[38,8]}; }
+export const MAPS={casa,trincheras,pueblo};
 /* ---------------- geometría ---------------- */
 function segX(ax,ay,bx,by,cx,cy,dx,dy){ const r1=bx-ax, r2=by-ay, s1=dx-cx, s2=dy-cy; const den=r1*s2-r2*s1; if(Math.abs(den)<1e-9) return -1; const t=((cx-ax)*s2-(cy-ay)*s1)/den, u=((cx-ax)*r2-(cy-ay)*r1)/den; return (t>=0&&t<=1&&u>=0&&u<=1)?t:-1; }
 function dSeg(px,py,s){ const vx=s[2]-s[0], vy=s[3]-s[1]; const l=vx*vx+vy*vy; let t=l?((px-s[0])*vx+(py-s[1])*vy)/l:0; t=Math.max(0,Math.min(1,t)); const x=s[0]+vx*t-px, y=s[1]+vy*t-py; return Math.sqrt(x*x+y*y); }
@@ -161,7 +178,7 @@ export function makeSim(mapKey,blue,reds,o){ const M=MAPS[mapKey](); const R=rng
     sim.fx=sim.fx.filter(f=>T-f.t0<(f.t==='gren'?6:f.t==='boom'?1.6:0.5));
     if(!B.alive) sim.over={w:1,how:'ko'}; else if(!enemiesOf(B).length) sim.over={w:0,how:'ko'}; else if(T>240) sim.over={w:1,how:'time'};
     if(sim.over){ log(sim.over.w===0?'Misión cumplida: todos los enemigos fuera de combate':sim.over.how==='time'?'Se acaba el tiempo: el enemigo mantiene la posición':'Tu soldado queda fuera de combate',sim.over.w===0?'Mission complete: all enemies out of action':sim.over.how==='time'?'Time is up: the enemy holds the position':'Your soldier is out of action','end'); } };
-  sim.B=B; sim.reds=sim.agents.filter(a=>a.team===1); log('Tu soldado empieza la misión en '+LL(M.k==='casa'?['la casa','the house']:['las trincheras','the trenches'])+(night?' (de noche)':' (de día)'),'Your soldier starts the mission'+(night?' (night)':' (day)'),'start');
+  sim.B=B; sim.reds=sim.agents.filter(a=>a.team===1); log('Tu soldado empieza la misión en '+LL(M.k==='casa'?['la casa','the house']:M.k==='pueblo'?['el pueblo','the village']:['las trincheras','the trenches'])+(night?' (de noche)':' (de día)'),'Your soldier starts the mission'+(night?' (night)':' (day)'),'start');
   return sim; }
 /* ---------------- dibujo ---------------- */
 export function makeView(cv,sim,o){ const g=cv.getContext('2d'); const M=sim.M; let W=0,H=0,dpr=1,rot=false,sc=1,ox=0,oy=0; let bg=null, bgKey='';
