@@ -2,7 +2,7 @@
    Modelos 3D de armas y parte de los accesorios: serie «Low-Poly» de GoldbergR (Sketchfab), licencia CC BY 4.0 — optimizados (meshopt) y con el origen recolocado por M.A.T.
    Accesorios marcados own:1: modelos aproximados hechos por M.A.T en código (armero_kit.js) a partir de las medidas oficiales del fabricante (fuente en cada uno).
    Iluminación: HDRI «Studio Small 09» de Poly Haven (CC0), reducido a 256×128.
-   Datos del arma: fichas de Armas ligeras de M.A.T (Wikipedia). Datos de accesorios: fichas técnicas de cada fabricante (enlazadas). Nada inventado: sin dato publicado, sin cifra. */
+   Datos del arma: fichas de Armas de fuego de M.A.T (Wikipedia). Datos de accesorios: fichas técnicas de cada fabricante (enlazadas). Nada inventado: sin dato publicado, sin cifra. */
 import * as THREE from './three.module.min.js';
 import {GLTFLoader,MeshoptDecoder,RoomEnvironment} from './gltf.min.js';
 
@@ -376,7 +376,7 @@ const CAT0={m4a1:'rifle',scar:'rifle',mp7:'smg','sr-25':'sniper',m82:'sniper'};
 const AUTH=()=>{ const a=[...new Set(W.map(w=>w.au?w.au[0]:'GoldbergR'))]; return a.length>1?a.slice(0,-1).join(', ')+' '+L('y','and')+' '+a[a.length-1]:a[0]; };
 function hub(app,ctx){
   const own=Object.values(ACC).filter(a=>a.own).length, total=Object.keys(ACC).length;
-  const h=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[L('Armero 3D','3D Gunsmith')]])+
+  const h=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Armero 3D','3D Gunsmith')]])+
   '<h1>'+L('Armero 3D','3D Gunsmith')+'</h1><p class="sub">'+L('Gira el arma en 3D, monta accesorios reales que existen para ella (miras, magnificador, silenciador, culata, empuñadura, láser, linterna, bípode) y prueba camuflajes. Los datos cambian solo con cifras publicadas por el fabricante; si no hay dato, no se inventa.','Spin the weapon in 3D, mount real accessories that exist for it (optics, magnifier, suppressor, stock, grip, laser, light, bipod) and try camouflages. Figures only change with numbers published by the maker; no data, no number.')+'</p>'+
   '<a class="arm-soldtile" href="#/soldado"><b>'+L('Crea tu soldado','Build your soldier')+' →</b><span>'+L('Elige equipo real (chaleco, placas NIJ, casco, mochila y un arma del Armero), calcula el peso total, el % de tu peso corporal y la movilidad según doctrina publicada, y equípalo en 3D.','Pick real gear (vest, NIJ plates, helmet, pack and a weapon from the Gunsmith), work out the total load, its % of your body weight and mobility per published doctrine, and equip it in 3D.')+'</span></a>'+
   CATS.map(([c,t])=>{ const ws=W.filter(w=>(w.cat||CAT0[w.id]||'rifle')===c); return ws.length?'<h2 class="arm-cat">'+LL(t)+' <span>('+ws.length+')</span></h2><div class="arm-hub">'+ws.map(w=>{ const n=allAcc(w).length; return '<a class="arm-card" href="#/armero/'+w.id+'"><img src="'+DIR+(w.img||w.id)+'.jpg?v='+VER+'" alt="'+esc(w.n)+'" loading="lazy" width="800" height="320"><div class="t">'+esc(w.n)+'</div><div class="d">'+esc(LL(w.kind))+' · '+(n?n+' '+L('accesorios','accessories'):L('solo camuflajes','camouflages only'))+'</div></a>'; }).join('')+'</div>':''; }).join('')+
@@ -523,7 +523,7 @@ export {viewer,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,G
 function page(app,ctx,w){
   const st={v:0,on:{},camo:'orig',ca:false};
   const sv=new URLSearchParams((location.hash.split('?')[1]||''));
-  const shell=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[L('Armero 3D','3D Gunsmith'),'#/armero'],[w.n]])+
+  const shell=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Armero 3D','3D Gunsmith'),'#/armero'],[w.n]])+
    '<h1>'+esc(w.n)+'</h1><p class="sub">'+esc(LL(w.kind))+' · <a href="#/a/'+w.ficha+'">'+L('Ver ficha completa','Full data sheet')+'</a> · <a href="#/soldado?arma='+w.id+'" class="arm-sold">'+L('Equipar en «Crea tu soldado» →','Equip in “Build your soldier” →')+'</a></p>'+
    '<div class="arm-wrap"><div><div class="arm-stage" id="armst"><div class="arm-load">'+L('Cargando modelo 3D…','Loading 3D model…')+'</div><div class="arm-btns"><button type="button" id="armrot">'+L('Pausar giro','Pause spin')+'</button><button type="button" id="armrs">'+L('Centrar','Reset')+'</button></div><div class="arm-hint">'+L('Arrastra para girar · pellizca o rueda para zoom','Drag to rotate · pinch or scroll to zoom')+'</div></div>'+
    '<div class="arm-lrow" id="armxrow" hidden><button type="button" class="arm-lb" id="armx" aria-pressed="false"></button><div class="arm-bnote" id="armxn" hidden></div></div>'+

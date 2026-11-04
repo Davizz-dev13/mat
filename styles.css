@@ -922,3 +922,22 @@ body.r-home .hero p{text-wrap:pretty}
  .c4m{font-size:13px}
  .c4nm{font-size:15px}
 }
+
+/* Juegos (bloque de inicio y #/juegos) */
+.games{margin:4px 0 16px}
+.games .gh{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 8px}
+.games .gh h2{margin:0;font-size:19px}
+.games .gh a{font-size:13px;color:var(--mu);text-decoration:none}
+.gamesgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (min-width:760px){.gamesgrid{grid-template-columns:repeat(4,1fr)}}
+.gcard{position:relative;display:flex;flex-direction:column;gap:4px;min-height:118px;padding:12px;border-radius:10px;text-decoration:none;color:var(--tx);background:linear-gradient(150deg,#1b2116 0%,#232a1a 60%,#2b2a18 100%);border:1px solid #3f4a28;min-width:0}
+.gcard:hover,.gcard:focus-visible{border-color:#6f7c3e}
+.gcard .gi{font-size:26px;line-height:1}
+.gcard .gt{font-weight:700;font-size:15px;line-height:1.2}
+.gcard .gd{color:#c2c6b0;font-size:12.5px;line-height:1.35}
+.gcard.soon{opacity:.55;cursor:default}
+.gcard .gb{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;letter-spacing:.04em;border:1px solid currentColor;border-radius:6px;padding:1px 5px;color:#d6b25e}
+
+.topnav a.jnav .jic{display:none;font-size:18px}
+@media (max-width:420px){.topnav a.jnav .jtx{display:none}.topnav a.jnav .jic{display:inline}}
+@media (max-width:374px){.topnav a{min-width:30px;padding:0 3px}.topnav a.txt{font-size:12.5px;padding:0 3px}.topnav a.jnav .jic{font-size:16px}}

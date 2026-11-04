@@ -64,7 +64,7 @@ export function pandolf(W,Lk,V,G,eta){ return 1.5*W+2.0*(W+Lk)*Math.pow(Lk/W,2)+
 let ctxG=null;
 export function route(app,ctx,p){ css(); ctxG=ctx; stop3d();
   ctx.set('<p class="sub" style="padding:30px 0">'+L('Cargando…','Loading…')+'</p>',L('Crea tu soldado','Build your soldier'));
-  data().then(()=>{ if(!/^#\/soldado/.test(location.hash)) return; page(app,ctx); }).catch(()=>{ ctx.set(ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu soldado','Build your soldier')]])+'<p class="sub">'+L('No se pudo cargar. Comprueba la conexión.','Could not load. Check your connection.')+'</p>'); });
+  data().then(()=>{ if(!/^#\/soldado/.test(location.hash)) return; page(app,ctx); }).catch(()=>{ ctx.set(ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Crea tu soldado','Build your soldier')]])+'<p class="sub">'+L('No se pudo cargar. Comprueba la conexión.','Could not load. Check your connection.')+'</p>'); });
 }
 function stop3d(){ if(ACTIVE3D){ try{ ACTIVE3D.destroy(); }catch(e){} ACTIVE3D=null; } }
 function page(app,ctx){
@@ -73,7 +73,7 @@ function page(app,ctx){
   const pre=sv.get('arma');
   const itemsByCat=c=>D.order.filter(id=>D.items[id]&&D.items[id].c===c);
   const single=new Set(D.cats.filter(c=>c[2]).map(c=>c[0]));
-  let h=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Armas ligeras','Small arms'),'#/armas'],[L('Armero 3D','3D Gunsmith'),'#/armero'],[L('Crea tu soldado','Build your soldier')]])+
+  let h=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Crea tu soldado','Build your soldier')]])+
    '<h1>'+L('Crea tu soldado','Build your soldier')+'</h1><p class="sub">'+L('Pon tu altura y tu peso, elige un rol o equipo real (chaleco, placas, casco, mochila, munición y un arma del Armero 3D) y mira cuánto pesa todo, qué porcentaje de tu peso supone y cómo afecta a la movilidad según la doctrina y los estudios publicados. Pulsa «Equipar» para verlo en 3D.','Enter your height and weight, choose a role or real gear (vest, plates, helmet, pack, ammunition and a weapon from the 3D Gunsmith) and see the total load, what share of your body weight it is and how it affects mobility according to published doctrine and studies. Press “Equip” to see it in 3D.')+'</p>'+
    '<div class="sd-wrap"><div class="sd-main">'+
    '<div class="sd-card"><h2>'+L('1 · Tus datos','1 · About you')+'</h2><div class="sd-in"><label>'+L('Altura (cm)','Height (cm)')+'<input id="sdh" type="number" inputmode="numeric" min="140" max="215" value="'+st.h+'"></label><label>'+L('Peso corporal (kg)','Body weight (kg)')+'<input id="sdkg" type="number" inputmode="decimal" min="40" max="160" step="0.5" value="'+st.kg+'"></label></div><div class="sd-warn">'+L('Solo se usan en tu navegador; no se envían a ningún sitio.','Only used in your browser; nothing is sent anywhere.')+'</div></div>'+
