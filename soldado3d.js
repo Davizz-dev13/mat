@@ -66,7 +66,7 @@ export async function mount(stage,st,D,M,opt){
     pm.onBeforeCompile=sh=>{ sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','vec4 sm=texture2D(map,vMapUv); diffuseColor=vec4(0.0,0.0,0.0,sm.a*opacity);'); };
     const plane=new THREE.Mesh(new THREE.PlaneGeometry(1,1),pm); plane.rotation.x=Math.PI/2; plane.renderOrder=-1; plane.frustumCulled=false; V.scene.add(plane);
     let key='', on=true; const kv=new THREE.Vector3();
-    function sig(){ let s=gr.position.x.toFixed(3)+gr.position.y.toFixed(3)+gr.position.z.toFixed(3)+gr.scale.x.toFixed(3); ['Hip','L_Foot','R_Foot','L_Calf','R_Calf','L_Thigh','R_Thigh'].forEach(n=>{ const b=bones['CC_Base_'+n]; if(b){ b.getWorldPosition(kv); s+=kv.x.toFixed(3)+kv.y.toFixed(3)+kv.z.toFixed(3); } }); s+=gearG.children.length+'/'+gearG.visible+'/'+(wpn?wpn.uuid:'')+'/'+PO+'/'+(typeof ANIMON!=='undefined'&&ANIMON?Math.round(performance.now()/40):0); return s; } /* la respiración en reposo (BR) solo mueve el tronco: no recalcula la sombra */
+    function sig(){ let s=gr.position.x.toFixed(3)+gr.position.y.toFixed(3)+gr.position.z.toFixed(3)+gr.scale.x.toFixed(3); ['Hip','Head','L_Hand','R_Hand','L_Foot','R_Foot','L_Calf','R_Calf','Spine02'].forEach(n=>{ const b=bones['CC_Base_'+n]; if(b){ b.getWorldPosition(kv); s+=kv.x.toFixed(3)+kv.y.toFixed(3)+kv.z.toFixed(3); } }); s+=gearG.children.length+'/'+gearG.visible+'/'+(wpn?wpn.uuid:''); return s; }
     function blur(src,dst,dx,dy){ bs.uniforms.t.value=src.texture; bs.uniforms.d.value.set(dx/N,dy/N); R.setRenderTarget(dst); R.render(qs,qc); }
     V.pre((R_,scene)=>{ plane.visible=on&&gr.visible; if(!plane.visible) return; const k=sig(); if(k===key) return; key=k;
       const w=gr.scale.x*0.62, H=Math.max(0.05,gr.scale.x/2.2*0.32); plane.scale.set(w,w,1); plane.position.set(gr.position.x,gr.position.y+0.0015,gr.position.z);
@@ -290,7 +290,7 @@ export async function mount(stage,st,D,M,opt){
   function fitPose(){ if(V.fitAll) V.fitAll(PO==='tumbado'?0.92:0, 0.3); else if(V.fitK) V.fitK(PO==='tumbado'?1.3:1); } /* tumbado: la figura y el arma caben enteras con la cámara en cualquier giro, vista algo desde arriba */
   function ease(t){ return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2; }
   function poseKey(po){ PO=po; pose(); return snap(); }
-  function transition(to){ if(BR) BR.pause(400); const from=PO; const red=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function transition(to){ const from=PO; const red=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if(FK){ FK.settle(); } FKHOLD=false; if(ANIM){ cancelAnimationFrame(ANIM.raf); ANIM=null; } ghostEnd(); ANIMON=false; GD=false; FROMP=from==='tumbado';
     const S0=snap(); const keys=[]; let gearAt=-1;
     if(red){ PO=to; fitPose(); pose(); rebuildGear(); skinBounds(); V.recenter(); V.redraw(); return; }
@@ -595,7 +595,7 @@ export async function mount(stage,st,D,M,opt){
       sup:()=>{ const a=muzAcc(); return !!(a&&M.ACC[a.userData.acc].b==='can'); }, slides:()=>{ const out=[]; wpn.traverse(n=>{ if(n!==wpn&&n.name&&/bolt[ _]?carrier|(^|_)bolt(?![ _]?(catch|release))|slide(?![ _]?(lock|stop))/i.test(n.name)&&!out.some(p=>{ let q=n.parent; while(q){ if(q===p) return true; q=q.parent; } return false; })) out.push(n); }); return out.slice(0,2); },
       ground:()=>{ holder.updateMatrixWorld(true); return holder.worldToLocal(body.localToWorld(new THREE.Vector3(0,0,0))).y; }, redraw:()=>V.redraw&&V.redraw(), snd:null, buf:null};
     FK=M.fireKit(FKO); const my=FK; M.fireSnd(r.w,r.v).then(s=>{ if(FK!==my) return; FKO.snd=s; fireUI(); }); fireUI(); }
-  function fireGo(){ if(!FK) return; const iv=FKM.rate?60/FKM.rate:0.16; if(BR) BR.pause(FKMODE==='semi'?900:FKMODE==='burst'?(FKM.burst*iv*1000+900):(3*iv*1000+900)); if(FKMODE==='semi') FK.fire(1,0.12); else if(FKMODE==='burst') FK.fire(FKM.burst,iv); else if(FKUP) FK.fire(3,iv); else { FKHOLD=true; FK.fire(400,iv); } }
+  function fireGo(){ if(!FK) return; const iv=FKM.rate?60/FKM.rate:0.16; if(FKMODE==='semi') FK.fire(1,0.12); else if(FKMODE==='burst') FK.fire(FKM.burst,iv); else if(FKUP) FK.fire(3,iv); else { FKHOLD=true; FK.fire(400,iv); } }
   function fireStart(){ if(!FK||ANIMON) return; FKUP=false; const C=M.audioOn&&M.audioOn(); if(C&&FKO.snd&&!FKO.buf){ const k=FK; let done=false; const go=()=>{ if(done||FK!==k) return; done=true; fireGo(); }; M.shotBuf(FKO.snd.f).then(b=>{ FKO.buf=b; go(); }); setTimeout(go,450); return; } fireGo(); }
   function fireEnd(){ FKUP=true; if(FKHOLD){ FKHOLD=false; FK&&FK.stop(3); } }
   fr.addEventListener('pointerdown',e=>{ const b=e.target.closest('button[data-fire]'); if(!b) return; e.preventDefault(); b.setPointerCapture&&b.setPointerCapture(e.pointerId); fireStart(); });
@@ -605,27 +605,6 @@ export async function mount(stage,st,D,M,opt){
   const POS=[['pie','De pie','Standing'],['apunta','Apuntando','Aiming'],['rodilla','Rodilla en tierra','Kneeling'],['tumbado','Tumbado','Prone']];
   const pr=document.createElement('div'); pr.className='sd-chips sd-pose'; pr.style.margin='8px 0 2px';
 
-  /* respiración en reposo y ligero balanceo del peso (Fase 7): giro rígido mínimo del tronco desde Spine01; el arma, las mochilas, las hombreras y el visor nocturno giran con él, así que las manos no se separan del arma. Se pausa en transiciones y al disparar; tumbado, sin movimiento; con «reducir movimiento», nada. Frecuencia: 15 respiraciones/min (adulto en reposo: 12–20/min). */
-  const BR=(()=>{ const P=B('Spine01'); if(!P||!V.pre) return null; const red=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches; if(red) return null;
-    const V3=THREE.Vector3, Q=THREE.Quaternion, AXL=new V3(1,0,0), AXF=new V3(0,0,1); let base=null, last=null, t0=performance.now(), on=true, raf=0, lt=0, vis=true, pauseTo=0;
-    const objs=()=>[wpn,gearG,gearC,pvs].filter(Boolean);
-    const snap=()=>({q:P.quaternion.clone(), o:objs().map(o=>({o,p:o.position.clone(),q:o.quaternion.clone()}))});
-    const same=(a,b)=>{ if(!a||!b) return false; if(a.q.angleTo(b.q)>1e-7||a.o.length!==b.o.length) return false; for(let i=0;i<a.o.length;i++){ const x=a.o[i], y=b.o[i]; if(x.o!==y.o||x.p.distanceToSquared(y.p)>1e-12||x.q.angleTo(y.q)>1e-7) return false; } return true; };
-    const restore=()=>{ if(!base) return; P.quaternion.copy(base.q); base.o.forEach(e=>{ e.o.position.copy(e.p); e.o.quaternion.copy(e.q); }); body.updateMatrixWorld(true); base=null; last=null; };
-    const active=()=>on&&!ANIMON&&!FKHOLD&&performance.now()>pauseTo&&PO!=='tumbado';
-    V.pre(()=>{ const cur=snap(); if(!same(cur,last)){ base=cur; } if(!base) base=cur;
-      if(!active()){ if(last){ if(same(cur,last)) restore(); else { base=null; last=null; } } return; }
-      const t=(window.MAT_BR_T!=null?window.MAT_BR_T:(performance.now()-t0)/1000), br=Math.sin(t*2*Math.PI/4.0), sw=PO==='rodilla'?0:Math.sin(t*2*Math.PI/9.0+1.3);
-      const a=(0.7*br)*D2R, b=(0.5*sw)*D2R; const Rq=new Q().setFromAxisAngle(AXL,-a).multiply(new Q().setFromAxisAngle(AXF,b));
-      body.updateMatrixWorld(true); const piv=body.worldToLocal(P.getWorldPosition(new V3()));
-      const pq=body.getWorldQuaternion(new Q()).invert().multiply(P.parent.getWorldQuaternion(new Q()));
-      P.quaternion.copy(pq.clone().invert().multiply(Rq).multiply(pq).multiply(base.q));
-      base.o.forEach(e=>{ e.o.position.copy(e.p).sub(piv).applyQuaternion(Rq).add(piv); e.o.quaternion.copy(Rq).multiply(e.q); });
-      body.updateMatrixWorld(true); last=snap(); });
-    const io=new IntersectionObserver(es=>{ vis=es[0].isIntersecting; },{threshold:0.01}); io.observe(stage);
-    const loop=tt=>{ raf=requestAnimationFrame(loop); if(document.hidden||!vis||!active()) return; if(tt-lt<33) return; lt=tt; V.redraw(); }; raf=requestAnimationFrame(loop);
-    return { pause(ms){ pauseTo=Math.max(pauseTo,performance.now()+ms); }, set(v){ on=v; V.redraw(); }, stop(){ cancelAnimationFrame(raf); io.disconnect(); restore(); } };
-  })();
   function poseUI(){ if(typeof fireUI==='function') try{ fireUI(); }catch(_){} pr.innerHTML=POS.map(p=>'<button type="button" class="sd-chip'+(PO===p[0]?' on':'')+'" data-po="'+p[0]+'" aria-pressed="'+(PO===p[0])+'">'+L(p[1],p[2])+'</button>').join(''); }
   fitPose(); poseUI(); if(POSES_ON&&stage.parentNode){ stage.parentNode.insertBefore(pr,stage.nextSibling); pr.parentNode.insertBefore(fr,pr.nextSibling); } fireUI();
   pr.addEventListener('click',e=>{ const b=e.target.closest('button[data-po]'); if(!b||b.dataset.po===PO) return; const to=b.dataset.po; try{ localStorage.setItem(PKEY,to); }catch(_){} const was=PO; PO=to; poseUI(); PO=was; transition(to); { const d=V.dbg(); V.look(d.yaw,PO==='tumbado'?0.3:0.05); } V.redraw&&V.redraw(); });
@@ -643,7 +622,7 @@ export async function mount(stage,st,D,M,opt){
     b2.style.display=bc.on()&&bc.hasIR()?'':'none'; b2.textContent=bc.ir()?L('Ver láser visible','Show visible laser'):L('Ver en IR (visor nocturno)','View in IR (night vision)');
     const cv=stage.querySelector('canvas'); if(cv) cv.style.filter=bc.on()&&bc.ir()?M.NVG_FILTER:''; bn.textContent=bc.on()?bc.note(EN()):''; }
   camUI(); camos(); scale(); rebuildGear(); V.fit(holder); credits(null); beamUI(); await setWeapon();
-  if(window.MAT_DEV) window.MAT_DEV_K={hd:()=>{ PO='rodilla'; pose(); const a=lp('L_Upperarm').y, hy=lp('Hip').y; handsDown(); return [a,hy,lp('L_Upperarm').y,lp('Hip').y,lp('Spine02').y,lp('L_Hand').y,lp('L_Calf').y]; },lowY,THREE,body,B,bones,mesh,wpn:()=>wpn,wi:()=>wi,pose,V,lp,st,holder,gearG,gearH,gearC,UH,skinBounds,setPO:v=>{PO=v;}, PR, transition, animSeek, stopAnim, fk:()=>FK, br:()=>BR, zoom:(f,dx,dy,dz)=>{ const p=V.holder.parent; p.scale.setScalar(f); p.position.set(dx||0,dy||0,dz||0); V.redraw(); }};
+  if(window.MAT_DEV) window.MAT_DEV_K={hd:()=>{ PO='rodilla'; pose(); const a=lp('L_Upperarm').y, hy=lp('Hip').y; handsDown(); return [a,hy,lp('L_Upperarm').y,lp('Hip').y,lp('Spine02').y,lp('L_Hand').y,lp('L_Calf').y]; },lowY,THREE,body,B,bones,mesh,wpn:()=>wpn,wi:()=>wi,pose,V,lp,st,holder,gearG,gearH,gearC,UH,skinBounds,setPO:v=>{PO=v;}, PR, transition, animSeek, stopAnim, fk:()=>FK, zoom:(f,dx,dy,dz)=>{ const p=V.holder.parent; p.scale.setScalar(f); p.position.set(dx||0,dy||0,dz||0); V.redraw(); }};
   window.MAT_SOLDADO_DBG={ w:()=>wpn&&[wpn.position.toArray(),wpn.userData.stock,wpn.userData.gp,wpn.scale.x,new THREE.Box3().setFromObject(wpn).min.toArray(),wp(B('R_Hand')).toArray(),wp(B('R_Upperarm')).toArray()], still:(y,p)=>{ V.setAuto(false); V.reset(); if(y!=null) V.look(y,p==null?undefined:p); }, gear:()=>gearG.children.length,    weapon:()=>!!wpn, ground:()=>{ const s=holder.scale.x||1, g=lowY(1); return {legL:+(g[4]*s).toFixed(3),legR:+(g[5]*s).toFixed(3),lof:LOF.map(x=>+x.toFixed(3)),torso:+(g[0]*s).toFixed(3),armL:+(g[1]*s).toFixed(3),armR:+(g[2]*s).toFixed(3),head:+(g[3]*s).toFixed(3),gearG:+(objLow(gearG)*s).toFixed(3),gearH:+(objLow(gearH)*s).toFixed(3),gearC:+(objLow(gearC)*s).toFixed(3),wpn:+(objLow(wpn)*s).toFixed(3),prr:+PRR.toFixed(1),phy:+PHY.toFixed(3)}; }, helmet:()=>!!(mesh.helmet1_2&&mesh.helmet1_2.visible), scale:()=>holder.scale.x, hands:()=>{ body.updateMatrixWorld(true); const l=body.worldToLocal(wp(B('L_Hand'))), r=body.worldToLocal(wp(B('R_Hand'))); return {t:DBGH.t&&DBGH.t.toArray(),g:DBGH.g&&DBGH.g.toArray(),L:l.toArray(),R:r.toArray(),Lu:body.worldToLocal(wp(B('L_Upperarm'))).toArray(), mt:wi&&M.mt(wi.v), gp:wpn&&wpn.userData.gp, p:DBGH.p, hs:DBGH.hs}; } };
-  return { update(s){ stopAnim(); scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ if(BR) BR.stop(); }catch(e){} try{ if(CS) CS.dispose(); }catch(e){} try{ if(FK){ FK.dispose(); FK=null; } stopAnim(); if(bc) bc.dispose(); body.remove(gearG); body.remove(gearH); body.remove(gearC); pr.remove(); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
+  return { update(s){ stopAnim(); scale(); rebuildGear(); camos(); setWeapon(); }, destroy(){ try{ if(CS) CS.dispose(); }catch(e){} try{ if(FK){ FK.dispose(); FK=null; } stopAnim(); if(bc) bc.dispose(); body.remove(gearG); body.remove(gearH); body.remove(gearC); pr.remove(); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
 }
