@@ -9,7 +9,8 @@ const nf=(x,d)=>Number(x).toLocaleString(EN()?'en-GB':'es-ES',{minimumFractionDi
 let DATA=null, ARM=null, ACTIVE=null;
 function data(){ return DATA?Promise.resolve(DATA):fetch('soldado.json?v='+VER).then(r=>{ if(!r.ok) throw 0; return r.json(); }).then(d=>DATA=d); }
 function arm(){ return ARM?Promise.resolve(ARM):import('./armero.js?v='+VER).then(m=>ARM=m); }
-function stop(){ if(ACTIVE){ try{ ACTIVE.destroy(); }catch(e){} ACTIVE=null; } }
+let REPLAY=null; function stopReplay(){ if(REPLAY){ try{ REPLAY.destroy(); }catch(e){} REPLAY=null; } }
+function stop(){ stopReplay(); if(ACTIVE){ try{ ACTIVE.destroy(); }catch(e){} ACTIVE=null; } }
 window.addEventListener('hashchange',()=>{ if(!/^#\/soldado\/combate/.test(location.hash)) stop(); });
 /* ---- equipo ruso: cifras publicadas (no están en soldado.json) ---- */
 const SRC={
@@ -109,7 +110,7 @@ function css(){ if(document.getElementById('cb-css')) return; const s=document.c
 .cb-top .cb-hp{background:rgba(255,255,255,.05);color:inherit;text-shadow:none}.cb-top small{display:block;margin-top:3px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cb-dots{display:flex;gap:4px;margin-top:5px}.cb-dots i{width:10px;height:10px;border-radius:50%;background:#ff3b30;display:block}.cb-dots i.x{background:transparent;border:1.5px solid #ff3b30;opacity:.5}
 .cb-stage2{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#0d1013;height:420px}.cb-stage2 canvas{display:block;width:100%;height:100%}
-.cb-stage2 .cb-ban{top:50%}.cb-log li.c-kill{color:#ff8a7a}.cb-log li.c-air{color:#ffc46b}.cb-log li.c-end{font-weight:700}
+.cb-stage2 .cb-ban{top:50%}.cb-rp{margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px}.cb-rpst{position:relative;width:100%;height:min(58vh,460px);min-height:280px;border-radius:12px;overflow:hidden;background:#9fb1c0;margin:8px 0}.cb-rpcap{position:absolute;left:8px;right:8px;top:8px;background:rgba(10,14,18,.6);color:#fff;border-radius:10px;padding:6px 10px;font-size:13px;pointer-events:none;text-align:center}.cb-rpag{position:absolute;right:8px;bottom:8px}.cb-log li.c-kill{color:#ff8a7a}.cb-log li.c-air{color:#ffc46b}.cb-log li.c-end{font-weight:700}
 `; document.head.appendChild(s); }
 /* ---- página ---- */
 export /* ---- página ---- */
@@ -208,10 +209,31 @@ function page(app,ctx){ const D=DATA, M=ARM; const cfg=loadCfg(); const sv=new U
       const score=Math.max(0,Math.round((w===0?60+B.hp*0.3:sim.reds.filter(a=>!a.alive).length/sim.reds.length*40)+(st?0:10)-(st?st.cost:0)));
       const el=document.getElementById('cbres'); el.innerHTML='<div class="cb-card cb-res"><h2>'+(w===0?L('🏆 Gana tu soldado','🏆 Your soldier wins'):sim.over.how==='time'?L('⏱ Gana la IA: mantiene la posición','⏱ The AI wins: it holds the position'):L('🔴 Gana la IA','🔴 The AI wins'))+'</h2><p class="cb-note">'+LL(MAPN[cfg.map])+' · '+(cfg.night?L('noche','night'):L('día','day'))+' · '+cfg.n+' × '+FAC[cfg.fac].flag+' · '+fmt(sim.T)+(st?' · '+st.icon+' '+esc(LL(st.n).replace(/ \(.*\)$/,'')):'')+' · '+L('semilla ','seed ')+seed+'</p>'+
         '<h3 class="cb-h3">'+L('Por qué','Why')+'</h3><ol>'+reasons.map(r=>'<li>'+esc(r)+'</li>').join('')+'</ol><p><b>'+L('Puntuación: ','Score: ')+score+'/100</b> <span class="cb-est">'+L('Estimación','Estimate')+'</span><br><small>'+(w===0?L('60 por ganar + 30 × la salud que te queda','60 for winning + 30 × health left'):L('40 × la parte de enemigos abatidos','40 × the share of enemies taken down'))+(st?L(' − '+st.cost+' por el apoyo («realismo»)',' − '+st.cost+' for the strike (“realism”)'):L(' + 10 por entrar sin apoyo',' + 10 for going in without support'))+'</small></p>'+
-        '<div class="cb-chips"><button type="button" class="cb-btn" id="cbrev">'+L('🔁 Revancha','🔁 Rematch')+'</button><button type="button" class="cb-btn sec" id="cbrep">'+L('Repetir (misma semilla)','Replay (same seed)')+'</button><button type="button" class="cb-btn sec" id="cbmapb">'+L('Cambiar mapa','Change map')+'</button><a class="cb-btn sec" href="#/soldado">'+L('Cambiar equipo','Change kit')+'</a></div></div>';
+        (()=>{ const k=sim.lastKill; if(!k||k.gren||sim.over.how!=='ko') return ''; return '<div class="cb-rp"><h3 class="cb-h3">'+L('🎬 Repetición 3D del disparo final','🎬 3D replay of the final shot')+'</h3><div class="cb-rpst" id="cbrp" hidden></div><button type="button" class="cb-btn sec" id="cbrpb">'+L('▶ Ver la repetición 3D','▶ Watch the 3D replay')+'</button> <span class="cb-note">'+L('Con los soldados 3D de «Crea tu soldado», en un escenario de campo abierto.','With the 3D soldiers from “Build your soldier”, on an open-field set.')+'</span></div>'; })()+'<div class="cb-chips"><button type="button" class="cb-btn" id="cbrev">'+L('🔁 Revancha','🔁 Rematch')+'</button><button type="button" class="cb-btn sec" id="cbrep">'+L('Repetir (misma semilla)','Replay (same seed)')+'</button><button type="button" class="cb-btn sec" id="cbmapb">'+L('Cambiar mapa','Change map')+'</button><a class="cb-btn sec" href="#/soldado">'+L('Cambiar equipo','Change kit')+'</a></div></div>';
+      const rpb=document.getElementById('cbrpb'); if(rpb) rpb.onclick=()=>replay(sim,PA,RS,KA);
       document.getElementById('cbrev').onclick=()=>fight(PA,RS,1+Math.floor(Math.random()*99999)); document.getElementById('cbrep').onclick=()=>fight(PA,RS,seed);
       document.getElementById('cbmapb').onclick=()=>{ const m=document.getElementById('cbmap'); if(m) try{ m.scrollIntoView({behavior:RM()?'auto':'smooth',block:'center'}); }catch(e){} };
       try{ el.scrollIntoView({behavior:RM()?'auto':'smooth',block:'nearest'}); }catch(e){} } }
+  async function replay(sim,PA,RS,KA){ stopReplay(); const k=sim.lastKill; const box=document.getElementById('cbrp'), btn=document.getElementById('cbrpb'); if(!box||!k) return; box.hidden=false; btn.disabled=true; btn.textContent=L('Cargando el 3D…','Loading 3D…');
+    const killer=sim.agents.find(a=>a.id===k.a), victim=sim.agents.find(a=>a.id===k.t); if(!killer||!victim){ btn.hidden=true; return; }
+    const redA=killer.team===1?killer:victim; const ri=redA.id-1; const mg=cfg.n>=4&&ri===cfg.n-1; const stB=aiSt(cfg.fac,mg); const stA=loadSt(); if(!stA.arma&&stA.role){ const r=DATA.roles.find(x=>x.id===stA.role); if(r) stA.arma=r.arma; }
+    const rm=RM(); let G=null;
+    try{ const C3=await import('./combate3d.js?v='+VER); const low=Math.min(window.innerWidth,window.innerHeight)<500||(navigator.hardwareConcurrency||8)<=4;
+      G=await C3.create(box,{M:ARM,A:{st:stA,D:DATA,tracer:0xffd36b},B:{st:stB,D:DATA,tracer:FAC[cfg.fac].tracer},red:rm,low,seed:seed}); }
+    catch(e){ console.warn('replay 3d',e); box.innerHTML='<p class="cb-note" style="padding:12px">'+L('El 3D no se pudo cargar en este dispositivo.','3D could not load on this device.')+'</p>'; btn.hidden=true; return; }
+    if(!document.getElementById('cbrp')){ G.destroy(); return; } REPLAY=G; btn.hidden=true;
+    const cap=document.createElement('div'); cap.className='cb-rpcap'; box.appendChild(cap);
+    const SH=killer.team===0?G.A:G.B, TG=killer.team===0?G.B:G.A; const dd=Math.max(5,Math.min(15,k.d));
+    G.A.grp.position.set(-dd/2,0,-3.2); G.B.grp.position.set(dd/2,0,-3.2); [G.A,G.B].forEach(S=>{ S.at=-1; S.grp.updateMatrixWorld(true); }); G.face(G.A,true); G.face(G.B,true);
+    const wait=ms=>new Promise(r=>setTimeout(r,ms)); const live=()=>REPLAY===G&&!!document.getElementById('cbrp');
+    async function run(){ cap.textContent=(killer.team===0?L('Tu soldado','Your soldier'):killer.name)+' · '+killer.kit.short+' · '+L('a ','at ')+nf(k.d)+' m'+(Math.abs(dd-k.d)>0.6?L(' (en la escena, '+nf(dd)+' m)',' (on set, '+nf(dd)+' m)'):'');
+      G.camera('two',SH,true); await Promise.all([G.setPose(SH,'apunta'),G.setPose(TG,'apunta')]); G.face(SH,true); G.face(TG,true); if(!live()) return;
+      await wait(rm?200:1400); G.camera('behind',SH,true); await wait(rm?300:1100); if(!live()) return;
+      const n=killer.kit.mg?4:killer.kit.auto?3:1; const list=[]; for(let i=0;i<n-1;i++) list.push({hit:false}); list.push({hit:true,loc:k.loc==='head'?'head':k.loc==='limb'?'limb':'torso',stop:false});
+      const iv=60/(killer.kit.rate||700); const ms=G.shots(SH,list,iv); await wait(ms*0.75); if(!live()) return; G.camera('two',SH,true); G.shake(0.05); await G.fall(TG); if(!live()) return;
+      cap.textContent=(victim.team===0?L('Tu soldado, fuera de combate','Your soldier, out of action'):victim.name+L(', fuera de combate',', out of action'))+(k.loc==='head'?L(' (impacto en la cabeza)',' (head hit)'):'');
+      G.camera('orbit',TG); await wait(rm?800:3200); if(!live()) return; const again=document.createElement('button'); again.type='button'; again.className='cb-btn sec cb-rpag'; again.textContent=L('↻ Repetir','↻ Replay'); again.onclick=()=>replay(sim,PA,RS,KA); box.appendChild(again); }
+    run(); try{ box.scrollIntoView({behavior:rm?'auto':'smooth',block:'center'}); }catch(e){} }
   render(); }
 function whyList(sim,cfg,st,KA,KR,PA,RS){ const B=sim.B, w=sim.over.w, out=[]; const reds=sim.reds; const N=reds.length; const kb=KR[0]; const nm=cfg.fac==='ru'?L('rusos','Russian'):L('estadounidenses','US');
   if(st&&st.killed) out.push([9,L(LL(st.logN).replace(/^Impacto (de la|del) /,'La ').replace(/^La Tomahawk/,'El Tomahawk')+' eliminó a '+st.killed+' de '+N+' antes de entrar'+(st.walls?' y destruyó '+st.walls+' tramos de muro':''),LL(st.logN).replace(/ impact$/,'')+' took out '+st.killed+' of '+N+' before you went in'+(st.walls?' and destroyed '+st.walls+' wall sections':''))]);
