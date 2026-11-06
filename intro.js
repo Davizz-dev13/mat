@@ -64,7 +64,7 @@ function build(){
  ov.appendChild(el('div','msh'));
  cv=el('canvas','mcv'); cv.setAttribute('aria-hidden','true'); ov.appendChild(cv);
  var top=el('div','mtop','<div class="mk"><b>M.A.T</b>'+(EN?'Military encyclopedia':'Enciclopedia militar')+'</div>');
- var sk=el('button','misk',EN?'Skip':'Saltar'); sk.type='button'; sk.onclick=exit; top.appendChild(sk); ov.appendChild(top);
+ ov.appendChild(top);
  stg=el('div','mstage'); word=el('div','mword'); word.setAttribute('aria-hidden','true');
  ['M','A','T'].forEach(function(l,i){ if(i) word.appendChild(el('span','mdot','.')); word.appendChild(el('span','ml',l)); });
  stg.appendChild(word); ov.appendChild(stg);
