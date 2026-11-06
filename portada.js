@@ -108,5 +108,5 @@ function run(){ if(busy) return; var h=location.hash.replace(/^#\/?/,''); if(h.s
 new MutationObserver(function(){ if(busy) return; clearTimeout(tm); tm=setTimeout(run,60); }).observe(app,{childList:true,subtree:true});
 window.addEventListener('hashchange',function(){ clearTimeout(tm); tm=setTimeout(run,60); });
 setTimeout(run,0);
-window.MAT_PORTADA={run:run,load:loadNews,live:liveLoad};
+window.MAT_PORTADA={run:run,load:loadNews,live:liveLoad,ORDER:ORDER,BIG:BIG,PH:PH};
 })();

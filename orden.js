@@ -45,7 +45,7 @@ var ICO={debate:'<svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="tr
 function tile(href,ico,t,d){ var a=document.createElement('a'); a.className='maptile dtile'; a.href=href; a.setAttribute('data-noi18n',''); a.innerHTML=ico+'<div><div class="t">'+t+'</div><div class="d">'+d+'</div></div><div class="ch" style="margin-left:auto;color:var(--dim);font-size:20px">›</div>'; return a; }
 function row(href,t,d){ var a=document.createElement('a'); a.className='row'; a.href=href; a.setAttribute('data-noi18n',''); a.innerHTML='<div class="m"><div class="nm">'+t+'</div><div class="ds">'+d+'</div></div><div class="ch">›</div>'; return a; }
 function home(){
-  if(app.querySelector('.hgrid')) return; document.body.classList.add('r-home');
+  if(app.querySelector('.hgrid')||app.querySelector(':scope > h2.hsec')) return; document.body.classList.add('r-home');
   var tiles=[].slice.call(app.children).filter(function(c){ return c.matches('a.maptile,a.newstile'); });
   if(tiles.length){ var g=document.createElement('div'); g.className='hgrid'; tiles[0].parentNode.insertBefore(g,tiles[0]); tiles.forEach(function(t){ g.appendChild(t); });
     g.appendChild(tile('#/debate',ICO.debate,EN()?'Debate &amp; feedback':'Debate y feedback',EN()?'Share your opinion and reply to others, or report an error or idea to the author':'Opina y responde a otros, o avisa al autor de un error o una idea'));
