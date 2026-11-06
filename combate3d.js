@@ -120,6 +120,7 @@ async function mkSoldier(world,M,st,D,side,pose0,host){
   try{ S.api=await S3.mount(stg,st,D,M2,{}); } finally { try{ if(prev==null) localStorage.removeItem('mat_soldado_pose'); else localStorage.setItem('mat_soldado_pose',prev); }catch(e){} }
   S.pose=pose0; S.body=inner.children[0]&&inner.children[0].children[0];
   S.bones={}; inner.traverse(o=>{ if(o.isBone) S.bones[o.name.replace('CC_Base_','')]=o; });
+  if(st&&st.ins){ try{ insLook(S); }catch(e){ console.warn('ins look',e); } }
   inner.traverse(o=>{ if(o.isMesh){ o.castShadow=true; } });
   return S; }
 function wpnOf(S){ return S.FKO&&S.FKO.root?S.FKO.root():null; }
@@ -127,6 +128,29 @@ export function muzzle(S){ const w=wpnOf(S); if(!w) return null; w.updateMatrixW
 function wpnDir(S){ const w=wpnOf(S); if(!w) return null; w.updateMatrixWorld(true); const q=new THREE.Quaternion(); w.getWorldQuaternion(q); return new V3(0,0,1).applyQuaternion(q).normalize(); }
 function headPos(S){ const h=S.bones.Head; if(!h) return S.grp.position.clone().add(new V3(0,1.6,0)); return h.getWorldPosition(new V3()); }
 function chestPos(S){ const h=S.bones.Spine02; if(!h) return S.grp.position.clone().add(new V3(0,1.2,0)); return h.getWorldPosition(new V3()); }
+
+/* ---------- insurgente: pañuelo (shemagh) a cuadros en la cabeza y al cuello, camisa de paisano, chaleco portacargadores sin placa (modelo aproximado de M.A.T en código) ---------- */
+function checkTex(){ const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d'); g.fillStyle='#d8cfba'; g.fillRect(0,0,64,64); g.strokeStyle='rgba(70,60,48,0.55)'; g.lineWidth=2; for(let i=0;i<64;i+=8){ g.beginPath(); g.moveTo(i+2,0); g.lineTo(i+2,64); g.stroke(); g.beginPath(); g.moveTo(0,i+2); g.lineTo(64,i+2); g.stroke(); } g.fillStyle='rgba(70,60,48,0.35)'; for(let i=0;i<64;i+=8) for(let j=0;j<64;j+=8) g.fillRect(i+1,j+1,3,3); const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(3,3); t.colorSpace=THREE.SRGBColorSpace; return t; }
+function insLook(S){ const inner=S.inner; const shirt=new THREE.MeshStandardMaterial({color:0x7d6a52,roughness:0.95});
+  inner.traverse(o=>{ if(!o.isMesh) return; if(o.name==='plate_1'||/^helmet/.test(o.name)){ Object.defineProperty(o,'visible',{get(){ return false; },set(){},configurable:true}); }
+    if(/^kitel/.test(o.name)){ const m0=o.material; const m=shirt.clone(); if(m0&&m0.normalMap){ m.normalMap=m0.normalMap; } o.material=m; o.userData.orig=m; } });
+  const head=S.bones.Head; if(!head) return; inner.updateMatrixWorld(true); const cloth=new THREE.MeshStandardMaterial({map:checkTex(),roughness:0.97,side:THREE.DoubleSide});
+  const wq=new THREE.Quaternion(), ws=new V3(); head.getWorldQuaternion(wq); head.getWorldScale(ws); const hp=head.getWorldPosition(new V3());
+  const add=(geo,wpos,rot)=>{ const m=new THREE.Mesh(geo,cloth); m.castShadow=true; head.add(m); m.position.copy(head.worldToLocal(wpos.clone())); m.quaternion.copy(wq.clone().invert()); if(rot) m.quaternion.multiply(new THREE.Quaternion().setFromEuler(rot)); m.scale.set(1/ws.x,1/ws.y,1/ws.z); return m; };
+  const cap=new THREE.SphereGeometry(0.118,18,12,0,Math.PI*2,0,Math.PI*0.6); cap.scale(1,1.05,1.12); add(cap,hp.clone().add(new V3(0,0.085,0)));
+  const tail=new THREE.ConeGeometry(0.07,0.26,10,1,true); add(tail,hp.clone().add(new V3(0,0.0,-0.13)),new THREE.Euler(-2.6,0,0));
+  const neck=new THREE.TorusGeometry(0.075,0.032,8,18); add(neck,hp.clone().add(new V3(0,-0.1,0.01)),new THREE.Euler(Math.PI/2,0,0)); }
+/* ---------- técnica: pickup civil con una ametralladora sobre un soporte en la caja (modelo propio de M.A.T en código; medidas de un pickup mediano, estimación) ---------- */
+function buildTec(scene){ const G=new THREE.Group(); const paint=new THREE.MeshStandardMaterial({color:0xd8d1bf,roughness:0.75,metalness:0.15,map:noiseTex(64,'#bcbcbc',['#8f8a80','#d6d6d6','#7a5a3c'],11)});
+  const dark=new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:0.6,metalness:0.3}), glass=new THREE.MeshStandardMaterial({color:0x26323a,roughness:0.15,metalness:0.6}), tire=new THREE.MeshStandardMaterial({color:0x1b1b1b,roughness:0.9}), steel=new THREE.MeshStandardMaterial({color:0x2c2f2a,roughness:0.45,metalness:0.7}), rust=new THREE.MeshStandardMaterial({color:0x6e4a30,roughness:0.95});
+  const box=(w,h,d,mat,x,y,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; G.add(m); return m; };
+  /* largo en z (5,3 m), ancho en x (1,85 m); la cabina hacia z+ */ box(1.8,0.42,5.2,paint,0,0.68,0); box(1.82,0.36,1.25,paint,0,0.98,1.95); box(1.72,0.62,1.6,paint,0,1.2,0.55); box(1.6,0.5,0.06,glass,0,1.22,1.36).rotation.x=-0.5; box(1.74,0.42,0.04,glass,0,1.22,-0.26); box(0.04,0.38,1.2,glass,0.87,1.24,0.6); box(0.04,0.38,1.2,glass,-0.87,1.24,0.6);
+  box(1.84,0.1,0.18,dark,0,0.62,2.62); box(1.84,0.1,0.18,dark,0,0.62,-2.62); box(1.7,0.04,2.25,rust,0,0.9,-1.35); box(0.07,0.42,2.3,paint,0.88,1.1,-1.35); box(0.07,0.42,2.3,paint,-0.88,1.1,-1.35); box(1.8,0.42,0.07,paint,0,1.1,-2.5); box(1.8,0.5,0.07,dark,0,1.15,-0.22);
+  [[0.86,1.6],[-0.86,1.6],[0.86,-1.6],[-0.86,-1.6]].forEach(([x,z])=>{ const w=new THREE.Mesh(new THREE.CylinderGeometry(0.38,0.38,0.27,18),tire); w.rotation.z=Math.PI/2; w.position.set(x,0.38,z); w.castShadow=true; G.add(w); const h=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,0.29,12),steel); h.rotation.z=Math.PI/2; h.position.set(x,0.38,z); G.add(h); });
+  /* soporte y ametralladora tipo PK */ const post=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.07,1.0,10),steel); post.position.set(0,1.4,-1.15); G.add(post); const gun=new THREE.Group(); gun.position.set(0,1.95,-1.15); G.add(gun);
+  const bar=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,1.05,10),steel); bar.rotation.x=Math.PI/2; bar.position.set(0,0,0.42); gun.add(bar); const rec=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.13,0.55),steel); rec.position.set(0,0,0.02); gun.add(rec); const stock=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.12,0.3),rust); stock.position.set(0,-0.03,-0.38); gun.add(stock); const can=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.16,0.2),new THREE.MeshStandardMaterial({color:0x4b5232,roughness:0.8})); can.position.set(0.11,-0.08,0.05); gun.add(can);
+  const shield=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.32,0.02),steel); shield.position.set(0,0.02,0.32); gun.add(shield);
+  G.userData.gun=gun; scene.add(G); return G; }
 /* ---------- la escena ---------- */
 export async function create(host,cfg){
   const red=!!cfg.red, low=!!cfg.low; const R=new THREE.WebGLRenderer({antialias:!low,powerPreference:'high-performance'}); const DPR0=Math.min(window.devicePixelRatio||1,low?1.5:2); let dpr=DPR0; R.setPixelRatio(dpr);
@@ -258,7 +282,9 @@ export async function create(host,cfg){
   raf=requestAnimationFrame(loop);
   /* listo: los dos soldados con su arma ya cargada en las manos (la carga del arma es asíncrona) */
   function ready(ms){ const t0=performance.now(); return new Promise(res=>{ const ck=()=>{ if(!alive){ res(false); return; } if(SOL.every(S=>S.FK&&wpnOf(S))||performance.now()-t0>(ms||15000)){ SOL.forEach(S=>{ S.grp.updateMatrixWorld(true); face(S,true); }); res(SOL.every(S=>S.FK&&wpnOf(S))); return; } setTimeout(ck,120); }; ck(); }); }
-  const api={ R,scene,cam,SOL,A:sA,B:sB,setPose,moveTo,shots,fall,camera,face,spark,puff,muzzle,ready,
+  const tecG=cfg.tec?buildTec(scene):null; if(tecG) tecG.visible=false;
+  const api={ R,scene,cam,SOL,A:sA,B:sB,tec:tecG,
+    placeTec(S,dead){ if(!tecG) return; const p=S.grp.position; const sx=Math.sign(p.x)||1; const tx=p.x+sx*0.6, tz=p.z+3.6; tecG.position.set(tx,Math.max(0,heightAt(tx,tz)),tz); tecG.rotation.y=sx>0?-Math.PI/2+0.35:Math.PI/2-0.35; const gn=tecG.userData.gun; gn.rotation.y=sx>0?-0.9:0.9; if(dead){ tecG.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color&&o.material.color.multiplyScalar(0.42); } }); } tecG.visible=true; },setPose,moveTo,shots,fall,camera,face,spark,puff,muzzle,ready,
     fixedCam(p,l){ CAM.fp=new V3().fromArray(p); CAM.fl=new V3().fromArray(l); camera('fixed',null,true); },
     shake(a){ CAM.shake=Math.max(CAM.shake,a); },
     dbg(){ return {dpr,fps:fpsN/Math.max(0.001,fpsT)}; },
