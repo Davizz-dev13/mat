@@ -1,7 +1,7 @@
 (function(){
 "use strict";
 // M.A.T · filas de chips desplazables con ratón (ordenador): flechas, rueda y arrastrar. En móvil (táctil) no cambia nada.
-var SEL='.mpchips,.chips,.dbtabs,.gw2yrs';
+var SEL='.mpchips,.chips,.dbtabs,.gw2yrs,.games.gm .gamesgrid';
 var mq=window.matchMedia?window.matchMedia('(hover: hover) and (pointer: fine)'):null;
 function fine(){ return !mq||mq.matches; }
 function EN(){ return (window.MAT_LANG||document.documentElement.lang)==='en'; }
