@@ -179,6 +179,26 @@
   ]
  },
  {
+  "id": "ardenas",
+  "tema": "nieve",
+  "t": [
+   "Batalla de las Ardenas",
+   "Battle of the Bulge"
+  ],
+  "fecha": [
+   "16 de diciembre de 1944 – 25 de enero de 1945",
+   "16 December 1944 – 25 January 1945"
+  ],
+  "lugar": [
+   "Las Ardenas: este de Bélgica y norte de Luxemburgo",
+   "The Ardennes: eastern Belgium and northern Luxembourg"
+  ],
+  "d": [
+   "En 32 pasos: Wacht am Rhein, la niebla del 16 de diciembre, el Kampfgruppe Peiper y Malmedy, Elsenborn y St. Vith, Bastogne cercada y el «Nuts!» de McAuliffe, el giro de Patton, el cielo despejado, la 2.ª Panzer a la vista del Mosa, Bodenplatte y el cierre de la bolsa, con todas las cifras de bajas.",
+   "In 32 steps: Wacht am Rhein, the fog of 16 December, Kampfgruppe Peiper and Malmedy, Elsenborn and St. Vith, encircled Bastogne and McAuliffe’s “Nuts!”, Patton’s turn, the clearing skies, 2nd Panzer within sight of the Meuse, Bodenplatte and the closing of the bulge, with every casualty figure."
+  ]
+ },
+ {
   "id": "remagen",
   "t": [
    "Batalla de Remagen (1945)",
