@@ -100,7 +100,7 @@ let FICHA={};
 // ---------- estado <-> URL ----------
 function readURL(){ const h=location.hash,i=h.indexOf('?'); const q={}; if(i>=0) h.slice(i+1).split('&').forEach(p=>{const kv=p.split('='); if(kv[0]) q[kv[0]]=decodeURIComponent(kv[1]||'');});
   let any=false;
-  if(q.b){ any=true; if(/^c\d+$/.test(q.b)){ST.b='custom';ST.cu=Math.max(100,Math.min(1e6,+q.b.slice(1)));} else if(PRE.indexOf(q.b)>=0||q.b==='otan') ST.b=q.b; }
+  if(q.b){ any=true; if(/^c\d+$/.test(q.b)){ST.b='custom';ST.cu=Math.max(100,Math.min(1e6,+q.b.slice(1)));} else if(PRE.indexOf(q.b)>=0||q.b==='otan'||(G&&G.p[q.b]&&G.p[q.b].e)) ST.b=q.b; }
   if(q.p!=null&&/^[012]$/.test(q.p)) ST.pm=+q.p;
   if(q.r) ST.real=q.r==='1'?1:0;
   if(q.c!=null){ any=true; ST.cart={}; q.c.split(',').forEach(x=>{const m=x.match(/^([a-z0-9]+)\.(\d+)$/); if(m&&IB[m[1]]) ST.cart[m[1]]=Math.min(+m[2],9999999);}); }
@@ -121,14 +121,18 @@ function ensureFz(){ if(!PF) PF=Promise.all([get('fuerzas.json.gz').catch(()=>nu
 // ---------- render ----------
 export function route(app,XX){ X=XX; APP=app; css();
   X.set('<div class="ejw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu ejército','Build your army')]])+'<h1>'+L('Crea tu ejército','Build your army')+'</h1><p class="sub">'+L('Cargando precios…','Loading prices…')+'</p></div>',L('Crea tu ejército','Build your army'));
-  ensure().then(()=>{ if(!/^#\/ejercito/.test(location.hash)) return; load(); readURL(); if(!ST.cmp) ST.cmp=(ST.b==='custom'||ST.b==='otan')?'espana':ST.b; page(); if(ST.open) openSum(true); }).catch(err=>{ console.warn('ejercito',err); const w=app.querySelector('.ejw .sub'); if(w) w.textContent=L('No se pudieron cargar los datos. Actualiza la página.','Could not load the data. Please reload.'); });
+  ensure().then(()=>{ if(!/^#\/ejercito/.test(location.hash)) return; css2(); const md=mode();
+    if(md==='renovacion') return ensureEs().then(()=>{ if(mode()==='renovacion') renov(); });
+    if(md==='asistente') return asis();
+    if(md!=='libre') return entry();
+    load(); readURL(); if(!ST.cmp) ST.cmp=(ST.b==='custom'||ST.b==='otan')?'espana':ST.b; page(); if(ST.open) openSum(true); try{ if(sessionStorage.getItem('ej_asis')){ sessionStorage.removeItem('ej_asis'); toast(L('Propuesta del asistente cargada: cámbiala a tu gusto','Assistant suggestion loaded: change it as you like')); } }catch(_){} }).catch(err=>{ console.warn('ejercito',err); const w=app.querySelector('.ejw .sub'); if(w) w.textContent=L('No se pudieron cargar los datos. Actualiza la página.','Could not load the data. Please reload.'); });
 }
 function bdesc(){ if(ST.b==='custom') return L('Presupuesto personalizado','Custom budget');
   if(ST.b==='otan') return L('España · cifra de la OTAN 2025 (estimación, sin pensiones)','Spain · NATO 2025 figure (estimate, excl. pensions)');
   const p=G.p[ST.b]; return pn(ST.b)+' · '+L('gasto militar ','military spending ')+p.y+' (SIPRI)'; }
 function page(){
   const h=[]; h.push('<div class="ejw" data-noi18n>');
-  h.push(X.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu ejército','Build your army')]]));
+  h.push(X.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu ejército','Build your army'),'#/ejercito'],[L('Modo libre','Free mode')]])+'<a class="ejback" href="#/ejercito">← '+L('Otros modos','Other modes')+'</a>');
   h.push('<h1>'+L('Crea tu ejército','Build your army')+'</h1>');
   h.push('<p class="ejlead">'+L('Tienes el presupuesto de defensa de un país real. Gástalo en cazas, fragatas, carros de combate, drones, defensa aérea y soldados con precios reales sacados de contratos y presupuestos públicos, y al final compara tu ejército con el de verdad.','You get a real country\'s defence budget. Spend it on fighters, frigates, tanks, drones, air defence and soldiers at real prices taken from public contracts and budgets, then compare your army with the real one.')+'</p>');
   h.push('<p class="ejtip"><b>'+L('Cómo se juega:','How to play:')+'</b> '+L('toca + o −, o escribe la cantidad (mantén pulsado para ir rápido). Arriba, «Tu ejército» muestra lo que llevas, cuánto cuesta y te deja quitarlo todo de un toque.','tap + or −, or type the number (press and hold to go faster). Up top, «Your army» shows what you have, what it costs, and lets you remove anything in one tap.')+'</p>');
@@ -363,3 +367,207 @@ function sumHTML(S,R,loading){ const b=budget(); const h=[]; const bought=D.item
 function shareText(noUrl){ const S=stats(), R=rating(S); const bought=D.items.filter(i=>ST.cart[i.id]);
   let t=L('Mi ejército en M.A.T','My army on M.A.T')+' — '+R.t+' '+'★'.repeat(R.stars)+'☆'.repeat(5-R.stars)+'\n'+L('Presupuesto: ','Budget: ')+fm(budget())+' ('+bdesc()+')\n'+L('Gastado: ','Spent: ')+fm(S.s)+'\n';
   t+=bought.map(i=>'• '+nf(ST.cart[i.id])+' × '+nm(i)).join('\n'); if(!noUrl) t+='\n'+shareURL(); return t; }
+
+// ---------- v2: pantalla de entrada, Renovación España y Asistente ----------
+function mode(){ const h=location.hash.replace(/^#\/?/,''), qi=h.indexOf('?'), path=(qi>=0?h.slice(0,qi):h).split('/').filter(Boolean);
+  if(path[1]) return path[1]; return (qi>=0&&h.slice(qi+1).length)?'libre':''; }
+function mp(it){ return (it.lo+it.hi)/2; }
+function css2(){ if(document.getElementById('ej-css2')) return; const s=document.createElement('style'); s.id='ej-css2';
+ s.textContent='.ejmodes{display:grid;gap:12px;margin:14px 0}@media(min-width:900px){.ejmodes{grid-template-columns:1.25fr 1fr 1fr}}'+
+ '.ejmode{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:16px 16px 18px;min-height:44px;position:relative}'+
+ '.ejmode:hover,.ejmode:focus-visible{border-color:var(--ac2)}.ejmode h2{margin:2px 0 6px;font-size:22px;text-transform:none;letter-spacing:0;line-height:1.2}.ejmode p{margin:0;color:#cfd1cd;font-size:14.5px;line-height:1.45}'+
+ '.ejmode .k{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu)}.ejmode .go{display:inline-block;margin-top:12px;font-weight:600;color:var(--ac2);font-size:15px}'+
+ '.ejmode.main{border-color:#d6b25e;background:linear-gradient(160deg,rgba(214,178,94,.13),rgba(214,178,94,0) 60%),var(--s1)}.ejmode.main .go{color:#d6b25e}'+
+ '.ejmode .bdg{position:absolute;top:12px;right:12px;font-size:11px;background:#d6b25e;color:#111;border-radius:99px;padding:2px 8px;font-weight:700}'+
+ '.rvw,.asw{max-width:920px}.ejback{display:inline-flex;align-items:center;min-height:40px;color:var(--ac2);text-decoration:none;font-size:14px}'+
+ '.rvbud .big{font-size:22px;color:#d6b25e;font-weight:700;font-variant-numeric:tabular-nums}.rvbud .ln{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13.5px;margin:4px 0}'+
+ '.rvbar{height:14px;border-radius:7px;background:rgba(255,255,255,.08);overflow:hidden;position:relative;margin:6px 0 4px}.rvbar i{position:absolute;left:0;top:0;bottom:0;background:#d6b25e;border-radius:7px;transition:width .2s}.rvbar.over i{background:#d0563f}'+
+ '.rvstk{position:sticky;top:0;z-index:5;background:var(--bg,#0f1110);padding:8px 0 6px;border-bottom:1px solid var(--line)}.rvstk .ln{display:flex;justify-content:space-between;gap:6px;font-size:13.5px;flex-wrap:wrap}.rvstk b{font-variant-numeric:tabular-nums}'+
+ '.rvtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0 8px}.rvtabs button{min-height:48px;font-size:13.5px;line-height:1.15;padding:6px 4px;white-space:normal}'+
+ '.rvrow{border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:10px 12px;margin:8px 0}.rvrow.chg{border-color:#d6b25e}'+
+ '.rvhd{display:flex;gap:10px;align-items:flex-start}.rvth{flex:0 0 72px;width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center}.rvth img{width:100%;height:100%;object-fit:cover}.rvth svg{width:34px;height:34px}.rvhd>div{min-width:0}'+
+ '.rvrow h4{margin:0;font-size:16px}.rvrow .meta{font-size:13px;color:var(--mu);margin:3px 0 0;line-height:1.4}.rvrow .meta b{color:#e8e6df;font-size:15px}.rvrow .meta a{color:var(--ac2)}'+
+ '.rvseg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0 0}.rvseg button{min-height:44px;font-size:13px;padding:4px 2px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#e8e6df;cursor:pointer;line-height:1.1}'+
+ '.rvseg button[aria-pressed=true]{background:#d6b25e;color:#111;border-color:#d6b25e;font-weight:700}.rvseg button[data-v=r][aria-pressed=true]{background:#d0563f;border-color:#d0563f;color:#fff}.rvseg button:disabled{opacity:.35;cursor:default}'+
+ '@media(max-width:350px){.rvseg{grid-template-columns:repeat(2,1fr)}}'+
+ '.rvdet{margin:10px 0 0;padding:8px 0 0;border-top:1px dashed var(--line)}.rvdet .ejqq{margin:0 0 6px}.rvdet .ct{font-size:13.5px;line-height:1.45}.rvdet .ct b{font-variant-numeric:tabular-nums}'+
+ '.rvtag{display:inline-block;font-size:11px;border:1px solid #b9935a;color:#e0c48c;border-radius:5px;padding:0 5px;margin-left:4px;vertical-align:1px}.rvtag.ok{border-color:#5f9a6e;color:#9fd1a9}'+
+ '.rvadd{width:100%;min-height:50px;font-size:15px;margin:10px 0}.rvpick{border:1px solid var(--ac2);border-radius:var(--r);padding:10px;margin:8px 0;background:var(--s1)}.rvpick input{width:100%;min-height:44px;font-size:16px;box-sizing:border-box;margin:0 0 6px}'+
+ '.rvpick .lst{max-height:360px;overflow:auto}.rvpick .lst button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;min-height:46px;padding:6px 8px;border:0;border-bottom:1px solid var(--line);background:none;color:#e8e6df;font-size:14.5px;cursor:pointer}.rvpick .lst button span{color:var(--mu);font-size:13px;white-space:nowrap}'+
+ '.rvgo{width:100%;min-height:54px;font-size:17px;margin:16px 0 6px}'+
+ '.ejw .ejbox h2.rvh{margin:2px 0 10px;font-size:22px;text-transform:none;letter-spacing:0;color:#ecebe6;font-weight:700}.rvsum h3{margin:16px 0 8px}.rvsum table{width:100%;border-collapse:collapse;font-size:14px}.rvsum td,.rvsum th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.rvsum td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}'+
+ '.rvcap{margin:8px 0 12px}.rvcap .t{display:flex;justify-content:space-between;font-size:14px;gap:6px;flex-wrap:wrap}.rvcap .rvbar{height:10px}.rvcap .rvbar i{background:#7aa7d6}.rvcap .rvbar i.b{background:rgba(122,167,214,.35)}'+
+ '.rvchg li{margin:4px 0;font-size:14px;line-height:1.4}.rvbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.rvbtns .btn{min-height:48px}'+
+ '.asq h2{font-size:23px;margin:6px 0 4px;text-transform:none;letter-spacing:0;line-height:1.25}.asq .stp{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu)}.asopts{display:grid;gap:8px;margin:12px 0}@media(min-width:700px){.asopts{grid-template-columns:1fr 1fr}}'+
+ '.asopts button{min-height:64px;text-align:left;padding:10px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--s1);color:#e8e6df;cursor:pointer;font-size:16px}.asopts button b{display:block;font-size:17px}.asopts button span{display:block;color:var(--mu);font-size:13px;margin-top:3px;line-height:1.35}'+
+ '.asopts button[aria-pressed=true]{border-color:#d6b25e;background:rgba(214,178,94,.12)}.aswhy li{margin:6px 0;line-height:1.45;font-size:14.5px}.aslist td{font-size:14px}';
+ document.head.appendChild(s); }
+function hdr(t2){ return X.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu ejército','Build your army'),'#/ejercito'],[t2]]); }
+// ---- entrada ----
+function entry(){ css2();
+  const h=['<div class="ejw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu ejército','Build your army')]])+'<h1>'+L('Crea tu ejército','Build your army')+'</h1>'];
+  h.push('<p class="ejlead">'+L('Elige cómo quieres jugar. Todos los precios y cifras salen de fuentes públicas; lo que es cálculo nuestro va marcado como «Estimación».','Choose how you want to play. Every price and figure comes from public sources; anything that is our own calculation is marked «Estimate».')+'</p><div class="ejmodes">');
+  h.push('<a class="ejmode main" href="#/ejercito/renovacion"><span class="bdg">'+L('Empieza aquí','Start here')+'</span><span class="k">'+L('Modo principal','Main mode')+'</span><h2>'+L('Renovación — España','Renewal — Spain')+'</h2><p>'+L('Empiezas con lo que España ya tiene en Tierra, Armada y Aire, y un presupuesto real. Decide qué mantienes, modernizas, retiras o compras hasta 2030.','You start with what Spain already has in its Army, Navy and Air Force, and a real budget. Decide what you keep, upgrade, retire or buy up to 2030.')+'</p><span class="go">'+L('Renovar las Fuerzas Armadas →','Renew the Armed Forces →')+'</span></a>');
+  h.push('<a class="ejmode" href="#/ejercito/asistente"><span class="k">'+L('3–4 preguntas','3–4 questions')+'</span><h2>'+L('Asistente','Assistant')+'</h2><p>'+L('¿Más aviones, más mecanizado o más barcos? Responde unas preguntas y te propongo un ejército explicado, que luego cambias a tu gusto.','More aircraft, more armour or more ships? Answer a few questions and I will suggest an army, explained, that you can then change.')+'</p><span class="go">'+L('Responder →','Answer →')+'</span></a>');
+  h.push('<a class="ejmode" href="#/ejercito/libre"><span class="k">'+L('Desde cero','From scratch')+'</span><h2>'+L('Modo libre','Free mode')+'</h2><p>'+L('El juego de siempre: el presupuesto de un país y '+D.items.length+' equipos con precio real para montar tu ejército desde cero.','The classic game: a country\'s budget and '+D.items.length+' items at real prices to build your army from scratch.')+'</p><span class="go">'+L('Jugar →','Play →')+'</span></a>');
+  h.push('</div></div>'); X.set(h.join(''),L('Crea tu ejército','Build your army')); }
+// ---- Renovación España ----
+let ESD=null,PES=null; const RB={}; let RV={a:{},add:{},br:'et',sum:0};
+function ensureEs(){ if(!PES) PES=get('ejercito_es.json.gz').then(z=>{ ESD=z; ESD.rows.forEach(r=>RB[r.id]=r); }); return PES; }
+function rvLoad(){ try{ const o=JSON.parse(localStorage.getItem('mat_renov')||'null'); if(o){ RV.a={}; for(const k in (o.a||{})) if(RB[k]) RV.a[k]=o.a[k]; RV.add={}; for(const k in (o.add||{})){ const id=k.split(':')[1]; if(IB[id]&&o.add[k]>0) RV.add[k]=o.add[k]; } if(o.br) RV.br=o.br; } }catch(_){} }
+function rvSave(){ try{ localStorage.setItem('mat_renov',JSON.stringify({a:RV.a,add:RV.add,br:RV.br})); }catch(_){} }
+function sl(k){ const s=(ESD&&ESD.src[k])||(D.src[k]); return s?{t:s[0],u:s[1],d:s[2]}:null; }
+function slink(keys,txt){ return (keys||[]).map(k=>{ const s=sl(k); return s?'<a href="'+e(s.u)+'" target="_blank" rel="noopener nofollow" title="'+e(s.t)+'">'+e(txt||L('Fuente','Source'))+'</a>':''; }).filter(Boolean).join(' · '); }
+function rn(r){ return EN()&&r.ne?r.ne:r.n; }
+function annual(){ const p=G.p.espana; return p&&p.nato?p.nato.eur:0; }
+function envl(){ return annual()*0.2*ESD.yrs; }
+function refP(r){ const it=IB[r.ref]; return it?mp(it):0; }
+function modU(r){ if(r.mod&&r.mod.c) return r.mod.c; if(r.mod&&r.mod.cat&&IB[r.mod.cat]) return mp(IB[r.mod.cat]); return ESD.modp*refP(r); }
+function modSrc(r){ return !!(r.mod&&(r.mod.c||r.mod.cat)); }
+function retU(r){ return ESD.retp*refP(r); }
+function buyU(r){ const it=IB[r.buy]; return it?mp(it):0; }
+function mxA(r,a){ return a==='m'?Math.min(r.q,(r.mod&&r.mod.mx)||r.q):a==='r'?r.q:9999; }
+function rvTot(){ let c=0,s=0; for(const id in RV.a){ const r=RB[id],x=RV.a[id]; if(!r||!x[1]) continue; if(x[0]==='m') c+=modU(r)*x[1]; else if(x[0]==='b') c+=buyU(r)*x[1]; else if(x[0]==='r') s+=retU(r)*x[1]; }
+  for(const k in RV.add){ const it=IB[k.split(':')[1]]; if(it) c+=mp(it)*RV.add[k]; } return {c:c,s:s,net:c-s}; }
+const BRC={et:['car','vci','art','dfa','hel','dro'],ar:['buq','sub','por','hel','dro'],ea:['caz','apo','dro','hel','dfa']};
+function renov(){ css2(); rvLoad();
+  const p=G.p.espana, A=annual(), E=envl(), ns=G.src.nato;
+  const h=['<div class="ejw rvw" data-noi18n>'+hdr(L('Renovación — España','Renewal — Spain'))];
+  h.push('<a class="ejback" href="#/ejercito">← '+L('Otros modos','Other modes')+'</a><h1>'+L('Renovación — España','Renewal — Spain')+'</h1>');
+  h.push('<p class="ejlead">'+L('España no compra un ejército desde cero: ya tiene uno. Aquí empiezas con su material en servicio y decides, sistema a sistema, qué mantienes, modernizas, retiras o compras de aquí a '+ESD.y1+'.','Spain does not buy an army from scratch: it already has one. Here you start with the equipment it has in service and decide, system by system, what to keep, upgrade, retire or buy by '+ESD.y1+'.')+'</p>');
+  h.push('<div class="ejbox rvbud"><h3>'+L('Presupuesto','Budget')+'</h3>');
+  h.push('<div class="ln"><span>'+L('Gasto en defensa de España','Spain\'s defence spending')+' ('+(p.nato?p.nato.y:'')+')</span><b>'+fm(A)+' '+L('al año','a year')+'</b></div>');
+  h.push('<p class="ejnote">'+L('Cifra de la OTAN (estimación de la propia OTAN, sin pensiones). SIPRI, que sí incluye pensiones, I+D e inteligencia, da ','NATO figure (NATO\'s own estimate, excluding pensions). SIPRI, which does include pensions, R&D and intelligence, gives ')+fm(p.e)+' ('+p.y+'). <a href="'+e(ns.url)+'" target="_blank" rel="noopener">'+e(ns.t)+'</a> · <a href="'+e(G.src.sipri.url)+'" target="_blank" rel="noopener">SIPRI</a></p>');
+  h.push('<div class="ln" style="margin-top:10px"><span>'+L('Para renovar material ('+ESD.y0+'–'+ESD.y1+')','To renew equipment ('+ESD.y0+'–'+ESD.y1+')')+' <span class="rvtag">'+L('Estimación','Estimate')+'</span></span><span class="big">'+fm(E)+'</span></div>');
+  h.push('<p class="ejnote">'+L('Cálculo M.A.T: el 20 % del gasto anual, que es lo que la OTAN pide dedicar a equipamiento principal ('+fm(A*0.2)+' al año), durante '+ESD.yrs+' años. El resto del dinero se va en sueldos, mantenimiento y operaciones, y aquí no se toca.','M.A.T calculation: 20% of annual spending, which is what NATO asks members to put into major equipment ('+fm(A*0.2)+' a year), over '+ESD.yrs+' years. The rest goes on pay, maintenance and operations, and is not touched here.')+' <a href="'+e(D.nato20.src[1])+'" target="_blank" rel="noopener">'+L('Directriz OTAN','NATO guideline')+'</a></p></div>');
+  h.push('<div class="rvstk" id="rvstk"><div class="ln"><span>'+L('Usado','Used')+' <b id="rvu"></b> '+L('de','of')+' '+fm(E)+'</span><span id="rvr"></span></div><div class="rvbar" id="rvbar"><i></i></div><div class="ln" style="font-size:12.5px;color:var(--mu)"><span id="rvc"></span><span id="rvs"></span></div></div>');
+  h.push('<p class="ejtip"><b>'+L('Cómo se juega:','How to play:')+'</b> '+L('elige una rama, toca «Modernizar», «Retirar» o «Comprar más» en cada sistema y ajusta cuántos. Retirar libera dinero. Al final, mira «Tus Fuerzas Armadas '+ESD.y1+'».','pick a branch, tap «Upgrade», «Retire» or «Buy more» on each system and set how many. Retiring frees money. At the end, see «Your Armed Forces '+ESD.y1+'».')+'</p>');
+  h.push('<div class="rvtabs" role="tablist" id="rvtabs">'+ESD.br.map(b=>'<button type="button" class="chip" role="tab" data-br="'+b[0]+'" aria-pressed="'+(RV.br===b[0])+'">'+e(EN()?b[2]:b[1])+'</button>').join('')+'</div>');
+  h.push('<div id="rvlist"></div>');
+  h.push('<button type="button" class="btn pri rvgo" id="rvsumb">'+L('Ver «Tus Fuerzas Armadas '+ESD.y1+'»','See «Your Armed Forces '+ESD.y1+'»')+'</button>');
+  h.push('<div id="rvsum"></div>');
+  h.push('<details class="ejsrc ejbox"><summary>'+L('Fuentes y reglas','Sources and rules')+'</summary><p class="ejnote">'+L('Cantidades en servicio: las mismas listas de la página de España en Fuerzas armadas (Wikipedia, con fecha de consulta) y prensa especializada cuando hay entregas más recientes. Precio de compra: el de la tabla de precios del modo libre, con su fuente (valor medio entre el mínimo y el máximo).','Quantities in service: the same lists used on the Spain page in Armed forces (Wikipedia, with access date) and the defence press when there are more recent deliveries. Purchase price: the one in the free-mode price table, with its source (midpoint between lowest and highest).')+'</p><p class="ejnote"><b>'+L('Estimación M.A.T','M.A.T estimate')+'</b> — '+L('modernizar sin coste publicado: '+nf(ESD.modp*100)+' % del precio de uno nuevo equivalente por unidad. Retirar: ahorra el '+nf(ESD.retp*100)+' % del precio de uno nuevo equivalente por unidad (mantenimiento y operación que dejas de pagar hasta '+ESD.y1+'). «Moderno» = equipo de generación actual o modernizado. Son reglas sencillas para el juego, no cifras oficiales.','upgrades with no published cost: '+nf(ESD.modp*100)+'% of the price of a new equivalent per unit. Retiring saves '+nf(ESD.retp*100)+'% of the price of a new equivalent per unit (maintenance and operation you stop paying until '+ESD.y1+'). «Modern» = current-generation or upgraded equipment. These are simple game rules, not official figures.')+'</p><ol>'+Object.keys(ESD.src).map(k=>{const s=ESD.src[k]; return '<li><a href="'+e(s[1])+'" target="_blank" rel="noopener nofollow">'+e(s[0])+'</a> ('+e(s[2])+')</li>';}).join('')+'</ol></details>');
+  h.push('</div>'); X.set(h.join(''),L('Renovación — España','Renewal — Spain'));
+  rvList(); rvBar(); rvBind(); if(RV.sum) rvSum(); }
+function stepper(key,n,mx){ return '<div class="ejqq" data-k="'+e(key)+'"><button type="button" data-d="-10" aria-label="−10">−10</button><button type="button" class="b1" data-d="-1" aria-label="−1">−</button><input class="ejqn" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" value="'+nf(n)+'" aria-label="'+L('Cantidad','Quantity')+'"><button type="button" class="pl b1" data-d="1" aria-label="+1">+</button><button type="button" class="pl" data-d="10" aria-label="+10">+10</button></div>'+(mx<9999?'<button type="button" class="chip" data-all="'+e(key)+'">'+L('Todos','All')+' ('+nf(mx)+')</button>':''); }
+let TH=null;
+function rth(r){ if(!TH){ TH={}; ((window.MAT_DATA&&window.MAT_DATA.items)||[]).forEach(a=>{ if(a.img&&(a.img.th||a.img.src)) TH[a.id]=a.img.th||a.img.src; }); }
+  if(r.f&&TH[r.f]) return '<img src="'+e(TH[r.f])+'" alt="" loading="lazy">'; const it=IB[r.buy]||IB[r.ref]; return it?thumb(it):''; }
+function rowHTML(r){ const x=RV.a[r.id]||['k',0], a=x[0], n=x[1];
+  let h='<div class="rvrow'+(a!=='k'&&n?' chg':'')+'" data-id="'+r.id+'"><div class="rvhd"><span class="rvth">'+rth(r)+'</span><div><h4>'+e(rn(r))+'</h4><p class="meta">'+L('En servicio: ','In service: ')+'<b>'+nf(r.q)+'</b> · '+slink(r.qs)+(r.o?' · '+e(EN()?r.o[1]:r.o[0])+(r.os?' ('+slink(r.os)+')':''):'')+'</p></div></div>';
+  if(r.nt) h+='<p class="meta">'+e(EN()?r.nt[1]:r.nt[0])+(r.ns?' '+slink(r.ns):'')+'</p>';
+  const ob=[['k',L('Mantener','Keep'),1],['m',L('Modernizar','Upgrade'),r.q>0],['r',L('Retirar','Retire'),r.q>0],['b',L('Comprar más','Buy more'),!!r.buy]];
+  h+='<div class="rvseg" role="group" aria-label="'+e(rn(r))+'">'+ob.map(o=>'<button type="button" data-v="'+o[0]+'" aria-pressed="'+(a===o[0])+'"'+(o[2]?'':' disabled')+'>'+o[1]+'</button>').join('')+'</div>';
+  if(a!=='k'){ h+='<div class="rvdet">'+stepper(r.id,n,mxA(r,a))+'<p class="ct">'+costLine(r,a,n)+'</p></div>'; }
+  return h+'</div>'; }
+function costLine(r,a,n){ const est='<span class="rvtag">'+L('Estimación','Estimate')+'</span>';
+  if(a==='m'){ const u=modU(r), src=modSrc(r); let t=L('Modernizar ','Upgrade ')+nf(n)+' × '+fm(u)+' = <b>'+fm(u*n)+'</b> '+(src?'<span class="rvtag ok">'+L('Con fuente','Sourced')+'</span>':est);
+    if(r.mod&&r.mod.es) t+='<br>'+e(EN()?r.mod.en:r.mod.es)+' · '+slink(r.mod.s); else { const it=IB[r.ref]; t+='<br>'+L('Sin coste publicado: '+nf(ESD.modp*100)+' % del precio de un ','No published cost: '+nf(ESD.modp*100)+'% of the price of a new ')+e(it?nm(it):'')+L(' nuevo',''); if(r.mod&&r.mod.s) t+=' · '+L('contexto: ','context: ')+slink(r.mod.s); }
+    if(r.mod&&r.mod.mx&&r.mod.mx<r.q) t+='<br>'+L('Este programa cubre como máximo ','This programme covers at most ')+nf(r.mod.mx)+'.'; return t; }
+  if(a==='r'){ const u=retU(r), it=IB[r.ref]; return L('Retirar ','Retire ')+nf(n)+L(' libera ',' frees ')+'<b>'+fm(u*n)+'</b> '+est+'<br>'+L(nf(ESD.retp*100)+' % del precio de un '+(it?nm(it):'')+' nuevo por unidad, en mantenimiento que ya no pagas.',nf(ESD.retp*100)+'% of the price of a new '+(it?nm(it):'')+' per unit, in maintenance you no longer pay.'); }
+  if(a==='b'){ const it=IB[r.buy]; return L('Comprar ','Buy ')+nf(n)+' × '+e(nm(it))+' ('+fm(mp(it))+') = <b>'+fm(mp(it)*n)+'</b>'+(it.b==='est'?' '+est:'')+'<br>'+L('Precio: ','Price: ')+fmr(it)+' · '+e(EN()?it.en:it.es)+' · '+slink(it.s); }
+  return ''; }
+function addHTML(){ const keys=Object.keys(RV.add).filter(k=>k.split(':')[0]===RV.br); if(!keys.length) return '';
+  return keys.map(k=>{ const it=IB[k.split(':')[1]], n=RV.add[k]; return '<div class="rvrow chg" data-add="'+e(k)+'"><h4>'+e(nm(it))+' <span class="rvtag ok">'+L('Nuevo','New')+'</span></h4><p class="meta">'+L('No está en servicio en España. Precio: ','Not in service in Spain. Price: ')+fmr(it)+' · '+slink(it.s)+'</p><div class="rvdet">'+stepper(k,n,9999)+' <button type="button" class="chip" data-rm="'+e(k)+'">✕ '+L('Quitar','Remove')+'</button><p class="ct">'+nf(n)+' × '+fm(mp(it))+' = <b>'+fm(mp(it)*n)+'</b>'+(it.b==='est'?' <span class="rvtag">'+L('Estimación','Estimate')+'</span>':'')+'</p></div></div>'; }).join(''); }
+function rvList(){ const box=document.getElementById('rvlist'); if(!box) return;
+  box.innerHTML=addHTML()+ESD.rows.filter(r=>r.r===RV.br).map(rowHTML).join('')+'<button type="button" class="btn rvadd" id="rvaddb">+ '+L('Añadir sistema nuevo','Add a new system')+'</button><div id="rvpick"></div>'; }
+function rvBar(){ const t=rvTot(), E=envl(), u=t.net, over=u>E+1e-6, b=document.getElementById('rvbar'); if(!b) return;
+  b.classList.toggle('over',over); b.firstChild.style.width=Math.max(0,Math.min(100,u/E*100))+'%';
+  document.getElementById('rvu').textContent=fm(Math.max(0,u))+(u<0?' ('+L('ahorras ','you save ')+fm(-u)+')':'');
+  const rr=document.getElementById('rvr'); rr.textContent=over?L('Te pasas ','Over by ')+fm(u-E):L('Te quedan ','Left: ')+fm(E-u); rr.style.color=over?'#ff8a73':'';
+  document.getElementById('rvc').textContent=L('Gastos ','Costs ')+fm(t.c); document.getElementById('rvs').textContent=L('Ahorro por retiradas ','Savings from retirements ')+fm(t.s); }
+function rvRow(id){ const el=document.querySelector('.rvrow[data-id="'+id+'"]'); if(el) el.outerHTML=rowHTML(RB[id]); }
+function setN(key,n){ if(key.indexOf(':')>0){ n=Math.max(0,Math.min(9999,n)); if(!n) delete RV.add[key]; else RV.add[key]=n; rvSave(); rvList(); rvBar(); rvSumR(); return; }
+  const r=RB[key], x=RV.a[key]; if(!r||!x) return; x[1]=Math.max(0,Math.min(mxA(r,x[0]),n)); rvSave(); rvRow(key); rvBar(); rvSumR(); }
+function rvSumR(){ if(RV.sum) rvSum(); }
+function picker(){ const pk=document.getElementById('rvpick'); if(!pk) return; if(pk.innerHTML){ pk.innerHTML=''; return; }
+  const cs=BRC[RV.br]; pk.innerHTML='<div class="rvpick"><input type="search" id="rvq" autocomplete="off" placeholder="'+L('Buscar en el catálogo…','Search the catalogue…')+'" aria-label="'+L('Buscar en el catálogo','Search the catalogue')+'"><div class="lst" id="rvpl"></div></div>';
+  const draw=q=>{ q=(q||'').toLowerCase(); document.getElementById('rvpl').innerHTML=D.items.filter(i=>cs.indexOf(i.c)>=0&&(!q||(nm(i)+' '+i.n).toLowerCase().indexOf(q)>=0)).map(i=>'<button type="button" data-pk="'+i.id+'">'+e(nm(i))+'<span>'+fmr(i)+'</span></button>').join('')||'<p class="ejnote">'+L('Nada con ese nombre.','Nothing by that name.')+'</p>'; };
+  draw(''); document.getElementById('rvq').addEventListener('input',ev=>draw(ev.target.value)); }
+function rvBind(){ const w=APP.querySelector('.rvw'); let hold=null;
+  w.addEventListener('click',ev=>{ const t=ev.target.closest('button'); if(!t) return;
+    if(t.dataset.br){ RV.br=t.dataset.br; rvSave(); w.querySelectorAll('#rvtabs button').forEach(b=>b.setAttribute('aria-pressed',b===t)); rvList(); return; }
+    if(t.dataset.v){ const id=t.closest('.rvrow').dataset.id, r=RB[id], v=t.dataset.v; if(v==='k') delete RV.a[id]; else RV.a[id]=[v,v==='b'?1:mxA(r,v)]; rvSave(); rvRow(id); rvBar(); rvSumR(); return; }
+    if(t.dataset.d){ const k=t.closest('.ejqq').dataset.k, cur=k.indexOf(':')>0?(RV.add[k]||0):((RV.a[k]||[0,0])[1]); setN(k,cur+(+t.dataset.d)); return; }
+    if(t.dataset.all){ const k=t.dataset.all, x=RV.a[k]; if(x) setN(k,mxA(RB[k],x[0])); return; }
+    if(t.dataset.rm){ delete RV.add[t.dataset.rm]; rvSave(); rvList(); rvBar(); rvSumR(); return; }
+    if(t.id==='rvaddb'){ picker(); return; }
+    if(t.dataset.pk){ const k=RV.br+':'+t.dataset.pk; RV.add[k]=(RV.add[k]||0)+1; rvSave(); rvList(); rvBar(); rvSumR(); toast(L('Añadido: ','Added: ')+nm(IB[t.dataset.pk])); const el=document.querySelector('.rvrow[data-add="'+k+'"]'); if(el) el.scrollIntoView({block:'center'}); return; }
+    if(t.id==='rvsumb'){ RV.sum=1; rvSum(); const s=document.getElementById('rvsum'); if(s) s.scrollIntoView({block:'start',behavior:'smooth'}); return; }
+    if(t.id==='rvedit'){ RV.sum=0; document.getElementById('rvsum').innerHTML=''; document.getElementById('rvtabs').scrollIntoView({block:'start'}); return; }
+    if(t.id==='rvreset'){ if(t.dataset.ok!=='1'){ t.dataset.ok='1'; t.textContent=L('¿Seguro? Toca otra vez','Sure? Tap again'); return; } RV.a={}; RV.add={}; RV.sum=0; rvSave(); renov(); window.scrollTo(0,0); toast(L('Vuelves a la España de hoy','Back to today\'s Spain')); return; }
+  });
+  w.addEventListener('change',ev=>{ const t=ev.target; if(!t.classList.contains('ejqn')) return; const k=t.closest('.ejqq').dataset.k; const n=parseInt(String(t.value).replace(/\D/g,''),10)||0; setN(k,n); });
+  w.addEventListener('keydown',ev=>{ if(ev.key==='Enter'&&ev.target.classList.contains('ejqn')) ev.target.blur(); });
+  w.addEventListener('focusin',ev=>{ if(ev.target.classList.contains('ejqn')) ev.target.select(); });
+  // mantener pulsado
+  const stop=()=>{ if(hold){ clearTimeout(hold.t); hold=null; } };
+  w.addEventListener('pointerdown',ev=>{ let t=ev.target.closest('.ejqq button[data-d]'); if(!t) return; stop(); let k=0; const run=()=>{ if(!hold) return; k++; const q=t.closest('.ejqq'); if(!q){stop();return;} const key=q.dataset.k, cur=key.indexOf(':')>0?(RV.add[key]||0):((RV.a[key]||[0,0])[1]); setN(key,cur+(+t.dataset.d)*(k>12?10:1)); const nb=document.querySelector('.ejqq[data-k="'+key+'"] button[data-d="'+t.dataset.d+'"]'); if(nb&&nb!==t) t=nb; if(hold) hold.t=setTimeout(run,Math.max(45,170-k*12)); }; hold={t:setTimeout(run,420)}; });
+  ['pointerup','pointercancel','pointerleave','scroll'].forEach(n=>w.addEventListener(n,stop,{passive:true})); window.addEventListener('scroll',stop,{passive:true});
+}
+function rvCap(){ const o={}; ESD.br.forEach(b=>o[b[0]]={u0:0,m0:0,u1:0,m1:0});
+  ESD.rows.forEach(r=>{ const c=o[r.r], x=RV.a[r.id]||['k',0]; c.u0+=r.q; c.m0+=r.m?r.q:0; let q=r.q, m=r.m?r.q:0;
+    if(x[0]==='r'){ q-=x[1]; m=r.m?q:0; } else if(x[0]==='m'){ m=r.m?q:x[1]; } else if(x[0]==='b'){ q+=x[1]; m+=x[1]; } c.u1+=q; c.m1+=m; });
+  for(const k in RV.add){ const c=o[k.split(':')[0]]; if(c){ c.u1+=RV.add[k]; c.m1+=RV.add[k]; } } return o; }
+function rvSum(){ const box=document.getElementById('rvsum'); if(!box) return; const t=rvTot(), E=envl(), C=rvCap(), over=t.net>E+1e-6;
+  const h=['<div class="ejbox rvsum" id="rvsumx"><h2 class="rvh">'+L('Tus Fuerzas Armadas '+ESD.y1,'Your Armed Forces '+ESD.y1)+'</h2>'];
+  h.push('<div class="rvbud"><div class="ln"><span>'+L('Presupuesto usado','Budget used')+'</span><b>'+fm(Math.max(0,t.net))+' / '+fm(E)+'</b></div><div class="rvbar'+(over?' over':'')+'"><i style="width:'+Math.max(0,Math.min(100,t.net/E*100))+'%"></i></div><p class="ejnote">'+L('Gastos ','Costs ')+fm(t.c)+' − '+L('ahorro por retiradas ','savings from retirements ')+fm(t.s)+' <span class="rvtag">'+L('Estimación','Estimate')+'</span>. '+(over?'<b style="color:#ff8a73">'+L('Te pasas en '+fm(t.net-E)+': retira algo o compra menos.','You are '+fm(t.net-E)+' over: retire something or buy less.')+'</b>':L('Te sobran ','Left over: ')+fm(E-t.net)+'.')+'</p></div>');
+  h.push('<h3>'+L('Capacidad por rama','Capability by branch')+'</h3>');
+  ESD.br.forEach(b=>{ const c=C[b[0]], p0=c.u0?c.m0/c.u0*100:0, p1=c.u1?c.m1/c.u1*100:0;
+    h.push('<div class="rvcap"><div class="t"><b>'+e(EN()?b[2]:b[1])+'</b><span>'+L('Unidades: ','Units: ')+nf(c.u0)+' → <b>'+nf(c.u1)+'</b> · '+L('modernas: ','modern: ')+nf(p0)+' % → <b>'+nf(p1)+' %</b></span></div><div class="rvbar"><i class="b" style="width:'+p0+'%"></i><i style="width:'+p1+'%;opacity:.9"></i></div></div>'); });
+  h.push('<p class="ejnote">'+L('Unidades = suma de los sistemas principales de esta lista. «Modernas» es una ','Units = total of the main systems in this list. «Modern» is a ')+'<span class="rvtag">'+L('Estimación','Estimate')+'</span> '+L('de M.A.T: equipo de generación actual, modernizado o recién comprado. No cuenta los pedidos ya firmados (por ejemplo, las F-110 o los Halcón), que se muestran en cada sistema.','by M.A.T: current-generation, upgraded or newly bought equipment. It does not count orders already signed (for example the F-110s or the Halcón), which are shown on each system.')+'</p>');
+  h.push('<h3>'+L('Tus cambios','Your changes')+'</h3>');
+  const ch=[]; ESD.br.forEach(b=>{ const li=[]; ESD.rows.filter(r=>r.r===b[0]&&RV.a[r.id]&&RV.a[r.id][1]).forEach(r=>{ const x=RV.a[r.id], n=x[1];
+      if(x[0]==='m') li.push(L('Modernizar ','Upgrade ')+nf(n)+' '+e(rn(r))+' — '+fm(modU(r)*n)); if(x[0]==='r') li.push(L('Retirar ','Retire ')+nf(n)+' '+e(rn(r))+' — '+L('ahorro ','saves ')+fm(retU(r)*n)); if(x[0]==='b') li.push(L('Comprar ','Buy ')+nf(n)+' '+e(nm(IB[r.buy]))+' — '+fm(buyU(r)*n)); });
+    for(const k in RV.add){ if(k.split(':')[0]!==b[0]) continue; const it=IB[k.split(':')[1]]; li.push(L('Nuevo: ','New: ')+nf(RV.add[k])+' '+e(nm(it))+' — '+fm(mp(it)*RV.add[k])); }
+    if(li.length) ch.push('<li><b>'+e(EN()?b[2]:b[1])+'</b><ul>'+li.map(x=>'<li>'+x+'</li>').join('')+'</ul></li>'); });
+  h.push(ch.length?'<ul class="rvchg">'+ch.join('')+'</ul>':'<p class="ejnote">'+L('Aún no has cambiado nada: así sería España en '+ESD.y1+' sin renovar (solo con lo que ya tiene).','You have not changed anything yet: this is Spain in '+ESD.y1+' with no renewal (only what it already has).')+'</p>');
+  h.push('<div class="rvbtns"><button type="button" class="btn pri" id="rvedit">'+L('Seguir editando','Keep editing')+'</button><button type="button" class="btn" id="rvreset">'+L('Empezar de nuevo','Start over')+'</button></div></div>');
+  box.innerHTML=h.join(''); }
+// ---- Asistente ----
+let AS={st:0,p:'',d:'',b:'',c:''};
+const ASQ=()=>[
+ ['p',L('¿Qué quieres que pese más en tu ejército?','What should weigh most in your army?'),[['aire',L('Aire','Air'),L('Cazas, aviones de transporte y drones','Fighters, transport aircraft and drones')],['tierra',L('Tierra','Land'),L('Carros de combate, blindados y artillería','Tanks, armoured vehicles and artillery')],['mar',L('Mar','Sea'),L('Fragatas, submarinos y buques anfibios','Frigates, submarines and amphibious ships')],['eq',L('Equilibrado','Balanced'),L('Un poco de todo','A bit of everything')]]],
+ ['d',L('¿Para qué lo quieres?','What is it for?'),[['ter',L('Defensa del territorio','Defend the territory'),L('Proteger tus fronteras, tu espacio aéreo y tus costas','Protect your borders, airspace and coasts')],['ext',L('Misiones en el exterior','Missions abroad'),L('Llevar tropas lejos y mantenerlas allí','Send troops far away and keep them there')],['dis',L('Disuasión','Deterrence'),L('Que nadie se atreva a atacarte','Make sure nobody dares to attack you')]]],
+ ['b',L('¿Cuánto dinero tienes?','How much money do you have?'),[['s',L('Pequeño','Small'),L('Como Portugal: ','Like Portugal: ')+fm(G.p.portugal.e)+' ('+G.p.portugal.y+', SIPRI)'],['m',L('Medio','Medium'),L('Como España: ','Like Spain: ')+fm(G.p.espana.e)+' ('+G.p.espana.y+', SIPRI)'],['l',L('Grande','Large'),L('Como Francia: ','Like France: ')+fm(G.p.francia.e)+' ('+G.p.francia.y+', SIPRI)']]],
+ ['c',L('¿Quieres partir de un país? (opcional)','Do you want to start from a country? (optional)'),[['-',L('Ninguno','None'),L('Me quedo con el presupuesto que he elegido','Keep the budget I chose')]].concat(PRE.filter(k=>G.p[k]).map(k=>[k,pn(k),L('Su presupuesto y más peso a su material: ','Its budget, and more weight to its equipment: ')+fm(G.p[k].e)+' ('+G.p[k].y+', SIPRI)']))]];
+const BKEY={s:'portugal',m:'espana',l:'francia'};
+const SH={aire:{aire:.45,mar:.15,tierra:.18,dfa:.14,sol:.08},tierra:{aire:.18,mar:.10,tierra:.47,dfa:.13,sol:.12},mar:{aire:.17,mar:.48,tierra:.15,dfa:.10,sol:.10},eq:{aire:.30,mar:.25,tierra:.25,dfa:.10,sol:.10}};
+const POOL={ter:{aire:[['ef',.5],['nh90',.15],['mq9b',.1],['a400m',.1],['meteor',.15]],mar:[['s80',.45],['f110',.4],['nsm',.15]],tierra:[['leo2a8',.3],['ascod',.2],['k9',.25],['dragon',.25]],dfa:[['nasams',.4],['irist',.35],['skyr',.25]]},
+ ext:{aire:[['ef',.3],['a400m',.25],['mrtt',.2],['nh90',.15],['mq9b',.1]],mar:[['jci',.35],['f110',.45],['nh90',.2]],tierra:[['dragon',.45],['ch47',.2],['caesar',.15],['leo2a8',.2]],dfa:[['nasams',.6],['skyr',.4]]},
+ dis:{aire:[['f35a',.4],['ef',.35],['mrtt',.1],['meteor',.15]],mar:[['s80',.4],['f110',.45],['nsm',.15]],tierra:[['leo2a8',.35],['himars',.25],['k9',.2],['dragon',.2]],dfa:[['patriot',.5],['sampt',.5]]}};
+function asBud(){ return AS.c&&AS.c!=='-'?AS.c:BKEY[AS.b]; }
+function propose(){ const bk=asBud(), B=G.p[bk].e*0.2, sh=Object.assign({},SH[AS.p]); const why=[];
+  if(AS.d==='ter'){ sh.dfa+=.05; sh.tierra+=.03; sh.aire-=.04; sh.mar-=.04; } if(AS.d==='ext'){ sh.sol+=.03; sh.dfa-=.03; } if(AS.d==='dis'){ sh.dfa+=.04; sh.sol-=.04; }
+  const tg={}; const pool=POOL[AS.d]; const cc=AS.c&&AS.c!=='-'?AS.c:'';
+  ['aire','mar','tierra','dfa'].forEach(dm=>{ let ws=pool[dm].map(x=>{ let id=x[0], w=x[1]; if(dm==='mar'&&id==='f110'&&IB.f110&&mp(IB.f110)>B*sh.mar*.6&&IB.avante) id='avante'; if(cc&&IB[id]&&(IB[id].o||[]).indexOf(cc)>=0) w*=1.6; return [id,w]; });
+    const s=ws.reduce((a,x)=>a+x[1],0); ws.forEach(x=>{ if(IB[x[0]]) tg[x[0]]=(tg[x[0]]||0)+B*sh[dm]*x[1]/s; }); });
+  tg.sold=B*sh.sol; const c={}; let used=0;
+  for(const id in tg){ const q=Math.floor(tg[id]/price(IB[id])); if(q>0){ c[id]=q; used+=q*price(IB[id]); } }
+  for(let g=0;g<400;g++){ const left=B-used; const cand=Object.keys(tg).filter(id=>id!=='sold'&&price(IB[id])<=left&&((c[id]||0)+1)*price(IB[id])<=tg[id]*2).sort((a,b)=>(tg[b]-(c[b]||0)*price(IB[b]))-(tg[a]-(c[a]||0)*price(IB[a]))); if(!cand.length) break; const id=cand[0]; if(tg[id]-(c[id]||0)*price(IB[id])<price(IB[id])*-0.5) break; c[id]=(c[id]||0)+1; used+=price(IB[id]); }
+  const left=B-used; if(left>price(IB.sold)){ const q=Math.floor(left/price(IB.sold)); c.sold=(c.sold||0)+q; used+=q*price(IB.sold); }
+  const pct=v=>nf(Math.round(v*100))+' %'; const dn={aire:L('aire','air'),mar:L('mar','sea'),tierra:L('tierra','land'),dfa:L('defensa aérea','air defence'),sol:L('soldados','soldiers')};
+  why.push(L('Has elegido prioridad ','You chose priority ')+'<b>'+e(ASQ()[0][2].find(x=>x[0]===AS.p)[1].toLowerCase())+'</b>: '+L('reparto el dinero así: ','so I split the money like this: ')+Object.keys(sh).map(k=>dn[k]+' '+pct(sh[k])).join(', ')+'.');
+  why.push(AS.d==='ter'?L('Para defender el territorio pongo más defensa aérea y artillería, y submarinos y fragatas para vigilar las costas.','To defend the territory I add more air defence and artillery, plus submarines and frigates to watch the coasts.'):AS.d==='ext'?L('Para misiones lejos de casa hace falta llevar y mantener tropas: aviones de transporte y cisterna, helicópteros pesados, buque anfibio y blindados sobre ruedas.','Missions far from home need ways to move and supply troops: transport and tanker aircraft, heavy helicopters, an amphibious ship and wheeled armour.'):L('Para disuadir priorizo lo que más preocupa a un rival: cazas de quinta generación, submarinos, fuego de largo alcance y defensa antimisil.','To deter, I favour what worries a rival most: fifth-generation fighters, submarines, long-range fires and missile defence.'));
+  why.push(L('Presupuesto: ','Budget: ')+e(pn(bk))+', '+fm(G.p[bk].e)+' ('+G.p[bk].y+', SIPRI). '+L('Uso el modo realista: solo el 20 % es para comprar equipo (','I use realistic mode: only 20% goes on equipment (')+fm(B)+L('), como pide la OTAN; el resto son sueldos y mantenimiento.','), as NATO asks; the rest is pay and maintenance.'));
+  if(cc) why.push(L('Doy más peso al material que ya usa ','I give more weight to equipment already used by ')+e(pn(cc))+'.');
+  if(c.avante) why.push(L('Con este presupuesto una fragata F-110 se come casi todo el dinero del mar, así que pongo corbetas Avante 2200.','With this budget an F-110 frigate would eat almost all the naval money, so I use Avante 2200 corvettes.'));
+  const nf0=Object.keys(tg).filter(id=>id!=='sold'&&!c[id]&&IB[id]); if(nf0.length) why.push(L('No caben con este dinero: ','Too expensive for this budget: ')+nf0.map(id=>e(nm(IB[id]))+' ('+fm(price(IB[id]))+')').join(', ')+L('. Ese dinero va al resto.','. That money goes to the rest.'));
+  why.push(L('Las cantidades salen de los mismos precios con fuente del modo libre, redondeadas para que quepan.','Quantities come from the same sourced prices as free mode, rounded so they fit.'));
+  return {c:c,B:B,bk:bk,why:why,used:used}; }
+function asis(){ css2(); const Q=ASQ(); const h=['<div class="ejw asw" data-noi18n>'+hdr(L('Asistente','Assistant'))+'<a class="ejback" href="#/ejercito">← '+L('Otros modos','Other modes')+'</a><h1>'+L('Asistente','Assistant')+'</h1>'];
+  if(AS.st<Q.length){ const q=Q[AS.st];
+    h.push('<div class="asq"><span class="stp">'+L('Pregunta ','Question ')+(AS.st+1)+L(' de ',' of ')+Q.length+'</span><h2>'+q[1]+'</h2><div class="asopts" role="group">'+q[2].map(o=>'<button type="button" data-o="'+o[0]+'" aria-pressed="'+(AS[q[0]]===o[0])+'"><b>'+e(o[1])+'</b><span>'+e(o[2])+'</span></button>').join('')+'</div>'+(AS.st?'<button type="button" class="btn" id="asback" style="min-height:46px">← '+L('Atrás','Back')+'</button>':'')+'</div>');
+  } else { const P2=propose(); const its=D.items.filter(i=>P2.c[i.id]);
+    h.push('<div class="ejbox"><h2 class="rvh">'+L('Te propongo esto porque…','I suggest this because…')+'</h2><ul class="aswhy">'+P2.why.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>');
+    h.push('<div class="ejbox"><h3>'+L('Tu ejército propuesto','Your suggested army')+'</h3><table class="ejtbl aslist" style="width:100%"><tbody>'+its.map(i=>'<tr><td>'+e(nm(i))+'</td><td class="n" style="text-align:right">'+nf(P2.c[i.id])+'</td><td class="n" style="text-align:right">'+fm(price(i)*P2.c[i.id])+'</td></tr>').join('')+'</tbody></table><p class="ejnote">'+L('Total: ','Total: ')+fm(P2.used)+' / '+fm(P2.B)+'</p></div>');
+    h.push('<div class="rvbtns"><button type="button" class="btn pri" id="asopen">'+L('Abrir en el editor','Open in the editor')+'</button><button type="button" class="btn" id="asredo">'+L('Cambiar respuestas','Change answers')+'</button></div>');
+    h.push('<p class="ejnote">'+L('En el editor puedes cambiar cualquier cosa: añadir, quitar, cambiar el presupuesto o quitar el modo realista.','In the editor you can change anything: add, remove, change the budget or turn off realistic mode.')+'</p>'); }
+  h.push('</div>'); X.set(h.join(''),L('Asistente','Assistant')); window.scrollTo(0,0);
+  APP.querySelector('.asw').addEventListener('click',ev=>{ const t=ev.target.closest('button'); if(!t) return;
+    if(t.dataset.o){ const q=Q[AS.st]; AS[q[0]]=t.dataset.o; AS.st++; asis(); return; }
+    if(t.id==='asback'){ AS.st=Math.max(0,AS.st-1); asis(); return; }
+    if(t.id==='asredo'){ AS.st=0; asis(); return; }
+    if(t.id==='asopen'){ const P2=propose(); ST.b=P2.bk; ST.pm=1; ST.real=1; ST.cart=P2.c; ST.cmp=P2.bk;
+      try{ localStorage.setItem('mat_ejercito',JSON.stringify({b:ST.b,cu:ST.cu,pm:ST.pm,real:ST.real,cart:ST.cart})); sessionStorage.setItem('ej_asis','1'); }catch(_){}
+      location.hash='#/ejercito/libre?'+qstr(false); } }); }
