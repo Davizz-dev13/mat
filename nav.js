@@ -20,7 +20,7 @@ function railHTML(cards){ return '<div class="railw"><button type="button" class
 function featHTML(h,img,k,tt,ds,go){ return '<a class="ddfe" href="'+h+'"><span class="fi"'+(img?' style="background-image:url('+img+')"':'')+'></span><span class="ft"><span class="k">'+esc(k)+'</span><b>'+esc(tt)+'</b>'+(ds?'<span class="ds">'+esc(ds)+'</span>':'')+'<span class="go">'+esc(go)+'</span></span></a>'; }
 var FEAT_J='#/soldado/combate', FEAT_S='#/radar';
 /* Foto de «Países y facciones» (Jose, 7 nov: fuera el collage de banderas): foto de una ficha del sitio. */
-var FZ_IMG='https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9e/INS_Kulish_%28P63%29_is_underway_with_U.S._and_Indian_navy_ships_during_Exercise_Malabar_2012.jpg/960px-INS_Kulish_%28P63%29_is_underway_with_U.S._and_Indian_navy_ships_during_Exercise_Malabar_2012.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail';
+var FZ_IMG='img/sec_fuerzas.webp';
 function gamesHTML(){
   var G=window.MAT_GAMES?window.MAT_GAMES():null, h='', f=null;
   var list=G?G.list:[['#/armero','armero','Armero 3D','3D Gunsmith'],['#/soldado','soldado','Crea tu soldado','Build your soldier'],['#/soldado/combate','combate','Combate','Fight'],['#/duelo','duelo','Duelo','Duel'],['#/antidisturbios','antidisturbios','Antidisturbios','Riot control'],['#/guerra-nuclear','nuclear','Guerra nuclear','Nuclear war'],['#/ejercito','ejercito','Crea tu ejército','Build your army']].map(function(g){ return [g[0],g[1],EN()?g[3]:g[2],'']; });

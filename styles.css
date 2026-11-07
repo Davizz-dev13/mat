@@ -1239,4 +1239,4 @@ body .cats.cartas,body.r-home .cats.cartas.cgrid2,.cats.cartas.cgrid2{display:gr
 html[lang=en] .rc.on .rt:after,html[lang=en] .ddfe.on .go:after{content:" · tap again"}
 @media (hover:hover){.rc:hover .ri,.ddfe:hover .fi{filter:none;transform:scale(1.06)}.rc:hover .ri:after{opacity:.4}}
 @media (prefers-reduced-motion:reduce){.rc .ri,.ddfe .fi{transform:none!important}}
-.carta[href="#/armas"] .sm img{object-fit:contain;padding:10% 7%;box-sizing:border-box}
+.carta[href="#/armas"] .sm img{object-fit:cover;object-position:50% 45%}
