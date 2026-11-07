@@ -1280,3 +1280,10 @@ html[lang=en] .rc.on .rt:after,html[lang=en] .ddfe.on .go:after{content:" · tap
 .mh-all .mh-card{flex:none}
 @media(min-width:900px){.mh-rail{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow:visible}.mh-card{flex:none}.mhist{padding:20px 20px 12px}.mhist h2{font-size:36px}}
 /* fin M.A.T fichas nov. 2026 */
+
+/* === M.A.T «Ver fotos» en fichas sin foto libre (nov. 2026): solo un enlace de texto, sin imágenes externas === */
+.verfotos{margin:10px 0 4px;padding:0 2px}
+.verfotos .vfbtn{display:flex;width:100%;min-height:48px;gap:10px;padding:10px 16px;border:1px solid var(--ac);background:rgba(143,154,106,.16);color:var(--tx);font-family:'Anton',Impact,'Arial Narrow',sans-serif;font-weight:400;font-size:16px;letter-spacing:.06em;text-transform:uppercase;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere}
+.verfotos .vfbtn:hover,.verfotos .vfbtn:focus-visible{background:rgba(143,154,106,.28);border-color:var(--ac2)}
+.verfotos .vfic{width:18px;height:18px;flex:0 0 18px;color:var(--ac2)}
+.verfotos .vfnote{margin:6px 0 0;font-size:11px;line-height:1.4;color:var(--dim);text-align:center}

@@ -42,7 +42,7 @@ window.MAT_FYSE=function(app,X){
     var h=X.crumbs([[L('Inicio','Home'),'#/'],[TITLE,'#/fyse'],[T(BN[x.b]),'#/fyse?t='+x.b+'&s='+bt],[x.sig||x.n]]);
     h+='<div data-noi18n class="dwrap"><div>';
     if(x.img) h+='<figure class="dhero fyhero" style="margin-bottom:0"><img'+(isSvg(x.img.src)?' class="fysvg"':'')+' src="'+esc(x.img.src)+'" alt="'+esc(x.n)+'"></figure><div class="credit"><span class="fycap">'+esc(EN?x.img.cen:x.img.ces)+'</span> · '+L('Foto','Photo')+': <a href="'+esc(x.img.credit)+'" target="_blank" rel="noopener">Wikimedia Commons'+(x.img.lic?' ('+esc(x.img.lic)+')':'')+' — '+L('autor y licencia','author and licence')+'</a></div>';
-    else h+=window.MAT_PHBIG(x,(x.k==='veh'?({heli:'heli',barco:'ship',avion:'plane',moto:'moto'}[x.g]||'truck'):'emb'));
+    else h+=window.MAT_PHBIG(x,(x.k==='veh'?({heli:'heli',barco:'ship',avion:'plane',moto:'moto'}[x.g]||'truck'):'emb'))+(window.MAT_VERFOTOS?window.MAT_VERFOTOS(x,'',(BN[x.b]?BN[x.b][0]:'')):'');
     h+='</div><div><div class="kicker">'+T(BN[x.b])+' · '+T(x.k==='unit'?(GU[x.g]||KN.unit):x.k==='veh'?(GV[x.g]||KN.veh):KN.hist)+'</div><h1>'+esc(EN&&x.nen?x.nen:x.n)+'</h1>';
     h+='<div class="tags"><span class="tag on"><img class="flag" src="flags/es.png" alt="">'+T(BN[x.b])+'</span>'+(x.sig?'<span class="tag">'+esc(x.sig)+'</span>':'')+'<span class="tag">'+T(ST[x.st]||ST.act)+'</span></div>';
     h+='<p class="lead">'+esc(EN?x.en:x.es)+'</p></div></div>';

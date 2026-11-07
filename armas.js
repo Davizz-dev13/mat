@@ -201,7 +201,7 @@ function ficha(a){
  var h=crumbs([[L('Inicio','Home'),'#/'],[L('Armas de fuego','Firearms'),'#/armas'],[tn,'#/armas/'+sl],[a.n]]);
  h+='<div class="dwrap"><div>';
  if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+esc(a.img.src)+'" alt="'+esc(a.n)+'"></figure><div class="gcred">'+L('Foto','Photo')+': <a href="'+esc(a.img.credit)+'" target="_blank" rel="noopener">'+esc((a.img.au?a.img.au+' · ':'')+(EN()?(a.img.lic_en||a.img.lic):a.img.lic)+' · Wikimedia Commons')+'</a></div>';
- else h+='<figure class="dhero" style="margin-bottom:0"><div class="gph" style="height:180px">'+ICO+'</div></figure><div class="gcred">'+L('Sin foto libre en Wikimedia Commons por ahora (silueta genérica, no es el arma).','No free photo on Wikimedia Commons yet (generic silhouette, not the weapon).')+'</div>';
+ else h+='<figure class="dhero" style="margin-bottom:0"><div class="gph" style="height:180px">'+ICO+'</div></figure><div class="gcred">'+L('Sin foto libre en Wikimedia Commons por ahora (silueta genérica, no es el arma).','No free photo on Wikimedia Commons yet (generic silhouette, not the weapon).')+'</div>'+(window.MAT_VERFOTOS?window.MAT_VERFOTOS(a,'arma'):'');
  if(ARM3D[a.id]) h+='<p style="margin:10px 0 0"><a class="btn" href="#/armero/'+ARM3D[a.id]+'">'+L('Ver en el Armero 3D','Open in the 3D Gunsmith')+' ›</a></p>';
  h+='</div><div><div class="kicker">'+esc(tn)+(a.era&&ERAM[a.era]?' · '+L(ERAM[a.era][0],ERAM[a.era][1]):'')+'</div><h1>'+esc(a.n)+'</h1>';
  var m=EN()?(a.mun_en||a.mun):a.mun;

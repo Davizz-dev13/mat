@@ -2,6 +2,28 @@
 
 (function(){
 "use strict";
+/* «Ver fotos» (nov. 2026): en fichas SIN foto libre, enlace de texto a una búsqueda de Google Imágenes del modelo. M.A.T no aloja, no incrusta ni miniaturiza ninguna imagen externa: solo es un enlace que se abre en otra pestaña. */
+window.MAT_VERFOTOS=function(a,k,extra){
+  if(!a||a.img) return '';
+  var en=window.MAT_LANG==='en', c=a.cat||'', t=a.tipo||'', n=String(a.nen&&en?a.nen:(a.n||'')).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,'').replace(/\s+/g,' ').trim();
+  if(!n) return '';
+  var w='';
+  if(k==='arma'||c==='armas') w=/pistola/.test(t)?'pistol':/revolver/.test(t)?'revolver':/subfusil/.test(t)?'submachine gun':/escopeta/.test(t)?'shotgun':/amet/.test(t)?'machine gun':/carabina/.test(t)?'carbine':/franco/.test(t)?'sniper rifle':/asalto|cerrojo/.test(t)?'rifle':/lanza|granad/.test(t)?'launcher':'firearm';
+  else if(c==='aviones') w=t==='dron'?'drone':'aircraft';
+  else if(c==='helicopteros') w='helicopter';
+  else if(c==='tanques') w='tank';
+  else if(c==='blindados') w=t==='b_art'?'self-propelled artillery':t==='b_mlr'?'rocket launcher':t==='b_aa'?'anti-aircraft vehicle':'armored vehicle';
+  else if(c==='buques') w='ship';
+  else if(c==='submarinos') w='submarine';
+  else if(c==='logistica') w=/buque/.test(t)?'ship':/heli/.test(t)?'helicopter':/avion/.test(t)?'aircraft':'military truck';
+  else if(c==='armamento') w=t==='w_bomba'?'bomb':t==='w_nuclear'?'nuclear weapon':'missile';
+  else if(c==='espacio') w=t==='e_lanz'?'rocket':t==='e_sat'?'satellite':t==='e_nave'?'spacecraft':t==='e_astro'?'astronaut':'';
+  else if(k==='heli') w='helicopter'; else if(k==='ship') w='ship'; else if(k==='plane') w='aircraft'; else if(k==='moto') w='motorcycle'; else if(k==='truck') w='vehicle';
+  var q=n; if(/^clase\s+/i.test(q)) q=q.replace(/^clase\s+/i,'')+' class'; if(extra) q+=' '+extra; else if(w&&q.toLowerCase().indexOf(w)<0) q+=' '+w;
+  var u='https://www.google.com/search?tbm=isch&q='+encodeURIComponent(q);
+  var e=function(s){return String(s).replace(/[&<>"]/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x];});};
+  return '<div class="verfotos" data-noi18n><a class="btn vfbtn" href="'+e(u)+'" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer"><svg class="vfic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.4 15.4L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span>'+(en?'See photos of ':'Ver fotos de ')+e(n)+'</span></a><p class="vfnote">'+(en?'External photos: they open in Google Images; M.A.T does not host these images.':'Fotos externas: se abren en Google Imágenes; M.A.T no aloja estas imágenes.')+'</p></div>';
+};
 var D=window.MAT_DATA, I=D.items, P=D.meta.paises;
 var BY={}; I.forEach(function(a){BY[a.id]=a;});
 var LZP={};
@@ -310,7 +332,7 @@ function detalle(id){
   var tc=(tipoOf(a.tipo)||{}).c||a.cat; var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
   if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+=window.MAT_PHBIG(a);
+  else h+=window.MAT_PHBIG(a)+window.MAT_VERFOTOS(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.tags?a.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join(''):'')+'<span class="tag">'+svcL(a)+'</span></div>';
@@ -346,7 +368,7 @@ function detalleS(a){
   var h=crumbs([['Inicio','#/'],[CN[tcc],'#/'+tcc]].concat(isSanT(a.tipo)?[['Sanidad','#/logistica/sanidad']]:[]).concat([[TN[a.tipo],'#/'+tcc+'/'+a.tipo],[a.n]]));
   h+='<div class="dwrap"><div>';
   if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+=window.MAT_PHBIG(a);
+  else h+=window.MAT_PHBIG(a)+window.MAT_VERFOTOS(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>'+(a.en&&a.en!==a.n?'<div class="cnt">'+esc(a.en)+'</div>':'');
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.tags?a.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join(''):'')+'<span class="tag">'+svcL(a)+'</span></div>';
@@ -378,7 +400,7 @@ function detalleT(a){
   var h=crumbs([['Inicio','#/'],[CN[tcc],'#/'+tcc]].concat(isSanT(a.tipo)?[['Sanidad','#/logistica/sanidad']]:[]).concat([[TN[a.tipo],'#/'+tcc+'/'+a.tipo],[a.n]]));
   h+='<div class="dwrap"><div>';
   if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+=window.MAT_PHBIG(a);
+  else h+=window.MAT_PHBIG(a)+window.MAT_VERFOTOS(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.ptag?'<span class="tag on">'+esc(a.ptag)+'</span>':'')+'<span class="tag">'+svcL(a)+'</span></div>';
@@ -409,7 +431,7 @@ function detalleW(a){
   var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
   if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+=window.MAT_PHBIG(a);
+  else h+=window.MAT_PHBIG(a)+window.MAT_VERFOTOS(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.ptag?'<span class="tag on">'+esc(a.ptag)+'</span>':'')+'<span class="tag">'+svcL(a)+'</span></div>';
@@ -438,7 +460,7 @@ function detalleE(a){
   var h=crumbs([['Inicio','#/'],[CN[tc],'#/'+tc],[TN[a.tipo],'#/'+tc+'/'+a.tipo],[a.n]]);
   h+='<div class="dwrap"><div>';
   if(a.img) h+='<figure class="dhero" style="margin-bottom:0"><img src="'+a.img.src+'" alt="'+esc(a.n)+'"></figure><div class="credit">Foto: '+window.MAT_CREDIT(a.img)+''+(a.img.var?' · <span class="imgvar">'+esc(a.img.var)+'</span>':'')+'</div>';
-  else h+=window.MAT_PHBIG(a);
+  else h+=window.MAT_PHBIG(a)+window.MAT_VERFOTOS(a);
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>'+(a.sub?'<p class="sub">'+esc(a.sub)+'</p>':'');
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(estE(a)?'<span class="tag">'+esc(estE(a))+'</span>':'')+'</div>';
