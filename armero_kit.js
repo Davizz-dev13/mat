@@ -253,11 +253,12 @@ function laser(d,P){ const G=new THREE.Group(); const L=d.len, W=d.w, H=d.h, st=
 function atlas(d,P){ const G=new THREE.Group(); const Hh=d.hmin||122;
   bx(G,P.body,26,10,42,0,-5,0,2); for(const s of [-1,1]) xcyl(G,P.dark,4,4,s*15,-6,s*10,8);                // abrazadera de dos tornillos
   bx(G,P.body,40,14,30,0,-17,0,5);                                                                           // cuerpo
-  for(const s of [-1,1]){ const leg=new THREE.Group(); leg.position.set(s*17,-20,0); leg.rotation.set(0,0,s*0.2);
-    const len=Hh-18; const parts=[[P.body,6.5,len*0.55,-len*0.27],[P.dark,7.5,10,-len*0.55],[P.steel,4.8,len*0.42,-len*0.77],[P.rubber,7,8,-len]];
-    for(const [m,r,h,y] of parts){ const me=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,10),m); me.position.y=y; me.castShadow=true; leg.add(me); }
+  for(const s of [-1,1]){ const leg=new THREE.Group(); leg.name='mat_leg'; leg.position.set(s*17,-20,0); leg.rotation.set(0,0,s*0.2);
+    const len=Hh-18; const tel=new THREE.Group(); tel.name='mat_tel'; leg.add(tel); /* pata telescópica: el tubo interior y el taco bajan juntos (4,75–9″ según Atlas) */
+    const parts=[[leg,P.body,6.5,len*0.55,-len*0.27,'mat_out'],[leg,P.dark,7.5,10,-len*0.55,'mat_col'],[tel,P.steel,4.8,len*0.94,-len*0.51],[tel,P.rubber,7,8,-len]];
+    for(const [pa,m,r,h,y,nm] of parts){ const me=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,10),m); me.position.y=y; me.castShadow=true; if(nm) me.name=nm; pa.add(me); }
     const hub=new THREE.Mesh(new THREE.CylinderGeometry(8,8,10,10),P.dark); hub.rotation.z=Math.PI/2; leg.add(hub); G.add(leg); }
-  return G; }
+  G.userData.bip={tel:[1,9/4.75],fold:1}; return G; }
 
 /* ===== Linternas de pistola bajo el raíl del armazón (origen: cara inferior del raíl, centro; cuelga en -Y, lente en +Z). d={len,bez,w,h,style}
    Medidas oficiales: largo y bisel (SureFire) o largo × ancho × alto (Streamlight); el resto de la forma es aproximada. */
@@ -413,14 +414,13 @@ function famasbip(d,P){ const G=new THREE.Group(); const L=d.L, sp=d.sp, r=d.r||
   for(const s of [-1,1]){
     xcyl(G,P.body,dr,8,s*(sp+4),0,0,14); xcyl(G,P.dark,dr*0.42,10,s*(sp+5),0,0,8);                  // tambor de articulación y eje
     const a=[s*(sp+8),0,0], k=[s*(sp+11),-9,0]; rod4(G,P.steel,r+0.8,a,k);                           // codo de salida
-    const l=L-dr-14; let e, fd;
-    if(d.fold){ e=[k[0],k[1]+1,-l]; fd=[0,0,-1]; }
-    else { e=[k[0]+s*Math.sin(sa)*l, k[1]-Math.cos(sa)*Math.cos(fa)*l, k[2]+Math.cos(sa)*Math.sin(fa)*l]; fd=[0,-1,0]; }
-    rod4(G,P.steel,r,k,e);
-    const f=d.fold? [e[0],e[1],e[2]-7] : [e[0],e[1]-5,e[2]];                                            // base de plástico
-    if(d.fold) bx(G,P.poly,9,12,20,f[0],f[1],f[2],2); else bx(G,P.poly,13,9,24,f[0],f[1],f[2],2);
+    const l=L-dr-14; /* cada pata gira en su articulación: se construye desplegada y, plegada, se gira hacia atrás bajo el guardamanos */
+    const pv=new THREE.Group(); pv.name='mat_leg'; pv.position.set(k[0],k[1],k[2]); G.add(pv);
+    const e=[s*Math.sin(sa)*l, -Math.cos(sa)*Math.cos(fa)*l, Math.cos(sa)*Math.sin(fa)*l];
+    rod4(pv,P.steel,r,[0,0,0],e); bx(pv,P.poly,13,9,24,e[0],e[1]-5,e[2],2);                          // base de plástico
+    pv.userData.qd=pv.quaternion.clone(); if(d.fold) pv.quaternion.setFromUnitVectors(new THREE.Vector3(...e).normalize(),new THREE.Vector3(0,1,-l).normalize());
   }
-  return G; }
+  G.userData.bip={fold:-1}; return G; }
 
 // Bayoneta de manguito L3A1 (SA80): la empuñadura es un tubo hueco que entra por el apagallamas; la hoja va desplazada por debajo del ánima.
 // Origen = boca del arma (eje del ánima). d={L (total), bl (hoja), bw (ancho hoja), sr (radio exterior del manguito)}
