@@ -28,6 +28,14 @@ function budgetFull(){ if(ST.b==='custom') return ST.cu; if(ST.b==='otan') retur
 function budget(){ return budgetFull()*(ST.real?0.2:1); }
 function spent(){ let t=0; for(const k in ST.cart){const it=IB[k]; if(it) t+=price(it)*ST.cart[k];} return t; }
 function units(){ let n=0; for(const k in ST.cart){ if(IB[k]&&IB[k].c!=='sol') n+=ST.cart[k]; } return n; }
+function maxN(it){ return Math.max(0,Math.floor((budget()-spent()+1e-9)/price(it))); }
+function stp(it){ return it.c==='sol'?[100,1000]:[1,10]; }
+function cpt(v){ return v>=10000?(EN()?nf(v/1000,0)+'k':nf(v/1000,0)+' mil'):nf(v); }
+// plantillas: reparto del presupuesto (cuota de cada equipo); las cantidades salen de los precios de siempre
+const PRESETS=[['eq','Equilibrado','Balanced',[['ef',.18],['nh90',.06],['mq9b',.03],['a400m',.05],['f110',.15],['s80',.08],['leo2a8',.08],['dragon',.08],['caesar',.04],['nasams',.05],['meteor',.04],['sold',.15]]],
+ ['air','Dominio aéreo','Air power',[['ef',.30],['f35a',.22],['a400m',.06],['mrtt',.06],['mq9b',.05],['nh90',.04],['meteor',.08],['irist',.05],['sold',.12]]],
+ ['sea','Gran armada','Big navy',[['f110',.28],['s80',.17],['jci',.12],['nh90',.07],['f35b',.07],['nsm',.06],['mq9b',.04],['sold',.16]]],
+ ['land','Fuerza terrestre','Land force',[['leo2a8',.20],['dragon',.15],['ascod',.12],['caesar',.08],['himars',.06],['skyr',.06],['tiger3',.07],['jav',.04],['sold',.19]]]];
 function css(){ if(document.getElementById('ej-css')) return; const s=document.createElement('style'); s.id='ej-css';
  s.textContent='.ejw{padding-bottom:30px}.ejlead{color:#cfd1cd;margin:6px 0 12px;font-size:15px}'+
  '.ejbox{border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:10px 12px 12px;margin:12px 0}'+
@@ -48,10 +56,24 @@ function css(){ if(document.getElementById('ej-css')) return; const s=document.c
  '.ejm{flex:1 1 auto;min-width:0}.ejn{font-weight:650;font-size:15px;line-height:1.25;overflow-wrap:anywhere}.ejn .ejfl{width:18px;height:12px;object-fit:cover;border-radius:2px;margin-left:5px;vertical-align:-1px}'+
  '.ejp{margin-top:3px;font-size:13px;color:var(--mu);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}.ejp b{color:#d6b25e;font-variant-numeric:tabular-nums;font-size:14px}.ejb{font-size:11px;border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:var(--mu)}.ejb.est{border-color:#6b4b3a;color:#d6a08a}.ejsrch{margin:12px 0 4px}.ejsrch input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--s1);color:var(--tx);font-size:16px;font-family:inherit}.ejsrch input:focus{outline:none;border-color:#d6b25e}'+
  '.ejm details{margin-top:4px;font-size:12.5px;color:var(--mu);line-height:1.45}.ejm summary{cursor:pointer;color:var(--ac2);list-style:none}.ejm summary::-webkit-details-marker{display:none}.ejm details a{color:var(--ac2);overflow-wrap:anywhere}.ejm details p{margin:4px 0}'+
- '.ejq{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px}.ejqq{display:flex;align-items:center;border:1px solid var(--line);border-radius:999px;overflow:hidden}'+
- '.ejqq button{width:38px;height:38px;border:0;background:var(--s2);color:var(--tx);font-size:20px;line-height:1;cursor:pointer;font-family:inherit}.ejqq button:disabled{opacity:.3;cursor:default}.ejqq button.pl{background:#2b2f22;color:#d6e09c}'+
- '.ejqq span{min-width:34px;text-align:center;font-variant-numeric:tabular-nums;font-weight:650}'+
- '.ejx{display:flex;gap:4px}.ejx button{border:1px solid var(--line);background:transparent;color:var(--mu);border-radius:999px;font-size:11px;padding:3px 8px;cursor:pointer;font-family:inherit}.ejx button:disabled{opacity:.3;cursor:default}'+
+ '.ejit{flex-wrap:wrap}.ejq{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px;margin-top:2px}'+
+ '.ejqq{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--s2);flex:0 0 auto}'+
+ '.ejqq button{min-width:42px;height:44px;padding:0 6px;border:0;background:var(--s2);color:var(--tx);font-size:15px;font-weight:650;line-height:1;cursor:pointer;font-family:inherit;font-variant-numeric:tabular-nums;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}'+
+ '.ejqq button.b1{font-size:22px}.ejqq button.pl{background:#2b2f22;color:#d6e09c}.ejqq button:disabled{opacity:.3;cursor:default}.ejqq button:active:not(:disabled){filter:brightness(1.5)}'+
+ '.ejqn{width:72px;height:44px;box-sizing:border-box;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);border-radius:0;background:#0d1013;color:var(--tx);text-align:center;font:inherit;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;padding:0 2px;margin:0;-webkit-appearance:none;appearance:none}.ejqn:focus{outline:2px solid #d6b25e;outline-offset:-2px}'+
+ '.ejx{display:flex;gap:6px;margin-left:auto}.ejx button{height:40px;border:1px solid var(--line);background:transparent;color:var(--tx);border-radius:10px;font-size:13px;padding:0 10px;cursor:pointer;font-family:inherit;white-space:nowrap}.ejx button:disabled{opacity:.35;cursor:default}.ejx button.del{color:#ec9a8a;border-color:#5a3a33}'+
+ '.ejlt{font-size:12.5px;color:#d6b25e;margin-top:4px;font-variant-numeric:tabular-nums}.ejlt:empty{display:none}'+
+ '.ejit.ko{animation:ejko .7s}@keyframes ejko{0%,100%{box-shadow:none}25%,60%{box-shadow:0 0 0 2px #e06c5a}}.ejit.hi{animation:ejhi 1.6s}@keyframes ejhi{0%,100%{box-shadow:none}20%,70%{box-shadow:0 0 0 2px #d6b25e}}'+
+ '.ejarm{display:flex;align-items:center;gap:6px;width:100%;margin-top:7px;min-height:40px;box-sizing:border-box;border:1px solid #6f6236;border-radius:10px;background:#1b1a12;color:var(--tx);font:inherit;font-size:14px;padding:6px 12px;cursor:pointer;text-align:left;line-height:1.25}.ejarm b{color:#d6b25e;font-variant-numeric:tabular-nums}.ejarm .t{font-weight:650;white-space:nowrap}.ejarm .lb{color:var(--mu);min-width:0}.ejarm .ar{margin-left:auto;color:#d6b25e;transition:transform .2s;flex:0 0 auto}.ejarm[aria-expanded=true] .ar{transform:rotate(180deg)}'+
+ '.ejpan{max-height:min(62vh,480px);overflow:auto;margin-top:6px;overscroll-behavior:contain}.ejpan[hidden]{display:none}'+
+ '.ejr{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}.ejr .nmw{flex:1 1 auto;min-width:0}.ejr .rn{display:block;background:none;border:0;color:var(--tx);font:inherit;font-size:14px;font-weight:600;text-align:left;padding:0;cursor:pointer;overflow-wrap:anywhere;line-height:1.25}.ejr .rc{display:block;font-size:12.5px;color:#d6b25e;font-variant-numeric:tabular-nums;margin-top:2px}'+
+ '.ejr .ejqq button{min-width:40px;height:40px}.ejr .ejqn{width:76px;height:40px}.ejr .rx{flex:0 0 auto;width:40px;height:40px;border:1px solid #5a3a33;background:transparent;color:#ec9a8a;border-radius:10px;font-size:17px;cursor:pointer;font-family:inherit}'+
+ '.ejtot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}.ejtot b{color:#d6b25e}.ejtot .ko{color:#e06c5a}.ejpf{display:flex;gap:8px;flex-wrap:wrap;padding:2px 0 4px}.ejpf .btn{flex:1 1 140px;min-height:44px}'+
+ '.ejcf{border:1px solid #e06c5a;background:#2a1714;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;line-height:1.4}.ejcf div{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.ejcf .btn{flex:1 1 120px;min-height:44px}.ejcf .btn.dg{background:#e06c5a;border-color:#e06c5a;color:#0b0c0d;font-weight:650}'+
+ '.ejtip{font-size:13.5px;line-height:1.45;color:#cfd1cd;background:var(--s2);border-left:3px solid #d6b25e;border-radius:0 6px 6px 0;padding:8px 10px;margin:0 0 10px}.ejtip b{color:#d6b25e}'+
+ '.ejh2{margin:16px 0 4px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);font-weight:600}.ejpst{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0 2px}.ejpst>span{font-size:13px;color:var(--mu);margin-right:2px}.ejpst .chip{min-height:38px}'+
+ '.ejcu{width:110px;height:40px;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--tx);font:inherit;font-size:16px;padding:0 10px;font-variant-numeric:tabular-nums}.ejcu:focus{outline:none;border-color:#d6b25e}'+
+ '.ejtoast button{margin-left:10px;background:#0b0c0d;color:#d6b25e;border:0;border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;font-weight:650;cursor:pointer}.ejbuy .c{color:var(--mu);font-size:12.5px;font-variant-numeric:tabular-nums}'+
  '.ejgo{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.ejgo .btn{flex:1 1 auto}'+
  '.ejcard{border:1px solid #6f6236;border-radius:10px;background:radial-gradient(140% 120% at 0% 0%,#1f2328 0%,#0d1013 70%);padding:14px;margin:16px 0;position:relative;overflow:hidden}'+
  '.ejcard .k{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#d6b25e}.ejcard h2.ejt{border:0;margin:4px 0 2px;padding:0;font-size:24px;letter-spacing:0;text-transform:none;color:var(--tx);font-weight:700}'+
@@ -109,24 +131,26 @@ function page(){
   h.push(X.crumbs([[L('Inicio','Home'),'#/'],[L('Crea tu ejército','Build your army')]]));
   h.push('<h1>'+L('Crea tu ejército','Build your army')+'</h1>');
   h.push('<p class="ejlead">'+L('Tienes el presupuesto de defensa de un país real. Gástalo en cazas, fragatas, carros de combate, drones, defensa aérea y soldados con precios reales sacados de contratos y presupuestos públicos, y al final compara tu ejército con el de verdad.','You get a real country\'s defence budget. Spend it on fighters, frigates, tanks, drones, air defence and soldiers at real prices taken from public contracts and budgets, then compare your army with the real one.')+'</p>');
+  h.push('<p class="ejtip"><b>'+L('Cómo se juega:','How to play:')+'</b> '+L('toca + o −, o escribe la cantidad (mantén pulsado para ir rápido). Arriba, «Tu ejército» muestra lo que llevas, cuánto cuesta y te deja quitarlo todo de un toque.','tap + or −, or type the number (press and hold to go faster). Up top, «Your army» shows what you have, what it costs, and lets you remove anything in one tap.')+'</p>');
   // presupuesto
   h.push('<div class="ejbox"><h3>'+L('1 · Elige el presupuesto','1 · Pick the budget')+'</h3><div class="chips ejpre" role="group">');
   PRE.forEach(k=>{ if(!G.p[k]) return; h.push('<button type="button" class="chip" data-b="'+k+'" aria-pressed="'+(ST.b===k)+'">'+fl(k,'ejfl')+' '+e(pn(k))+'</button>'); });
   h.push('<button type="button" class="chip" data-b="otan" aria-pressed="'+(ST.b==='otan')+'">'+fl('espana','ejfl')+' '+L('España (OTAN)','Spain (NATO)')+'</button>');
   h.push('<button type="button" class="chip" data-b="custom" aria-pressed="'+(ST.b==='custom')+'">'+L('Personalizado','Custom')+'</button></div>');
   h.push('<div class="ejbud" style="margin-top:10px"><b id="ejbudv"></b><span id="ejbudd"></span></div>');
-  h.push('<div id="ejcust"'+(ST.b==='custom'?'':' hidden')+'><input class="ejrange" type="range" min="0" max="1000" step="1" id="ejsl" aria-label="'+L('Presupuesto personalizado','Custom budget')+'"><div class="ejnote">'+L('De 100 M€ a 1 billón de euros (escala logarítmica).','From €100M to €1 trillion (log scale).')+'</div></div>');
+  h.push('<div id="ejcust"'+(ST.b==='custom'?'':' hidden')+'><div class="ejrow"><label for="ejcu">'+L('Cifra (M€):','Amount (€M):')+'</label><input class="ejcu" id="ejcu" type="text" inputmode="numeric" autocomplete="off"></div><input class="ejrange" type="range" min="0" max="1000" step="1" id="ejsl" aria-label="'+L('Presupuesto personalizado','Custom budget')+'"><div class="ejnote">'+L('De 100 M€ a 1 billón de euros (escala logarítmica).','From €100M to €1 trillion (log scale).')+'</div></div>');
   h.push('<details class="ejnote"><summary style="cursor:pointer;color:var(--ac2)">'+L('Sobre esta cifra','About this figure')+'</summary><span id="ejbnote"></span></details>');
   h.push('<div class="ejrow"><label>'+L('Precio:','Price:')+'</label><div class="chips" role="group" id="ejpm">'+[[0,L('Mínimo','Lowest')],[1,L('Medio','Middle')],[2,L('Máximo','Highest')]].map(x=>'<button type="button" class="chip" data-pm="'+x[0]+'" aria-pressed="'+(ST.pm===x[0])+'">'+x[1]+'</button>').join('')+'</div></div>');
   h.push('<div class="ejrow"><button type="button" class="chip" id="ejreal" aria-pressed="'+(!!ST.real)+'">'+L('Modo realista: solo el 20 % para compras','Realistic mode: only 20% for purchases')+'</button></div>');
   h.push('<p class="ejnote">'+e(D.nato20[EN()?'en':'es'])+' <a href="'+e(D.nato20.src[1])+'" target="_blank" rel="noopener">'+L('Fuente','Source')+'</a></p></div>');
   // barra fija
-  h.push('<div class="ejsticky" id="ejstk"><div class="ejst"><span>'+L('Gastado','Spent')+' <b id="ejsp"></b></span><span id="ejrem"></span></div><div class="ejbar" id="ejbar"></div><div class="ejmsg" id="ejmsg"></div></div>');
+  h.push('<div class="ejsticky" id="ejstk"><div class="ejst"><span>'+L('Gastado','Spent')+' <b id="ejsp"></b></span><span id="ejrem"></span></div><div class="ejbar" id="ejbar"></div><div class="ejmsg" id="ejmsg" role="status" aria-live="polite"></div><button type="button" class="ejarm" id="ejarm" aria-expanded="false" aria-controls="ejpan"><span class="t">'+L('Tu ejército','Your army')+'</span><span class="lb"></span><span class="ar" aria-hidden="true">▾</span></button><div class="ejpan" id="ejpan" hidden></div></div>');
+  h.push('<h3 class="ejh2">'+L('2 · Compra tu equipo','2 · Buy your equipment')+'</h3>'+presetHTML(L('Empieza rápido:','Quick start:')));
   // pestañas
   h.push('<div class="ejsrch"><input type="search" id="ejq" autocomplete="off" enterkeyhint="search" aria-label="'+L('Buscar equipo','Search equipment')+'" placeholder="'+L('Buscar: F-35, Leopard, Rusia… ('+D.items.length+' equipos)','Search: F-35, Leopard, Russia… ('+D.items.length+' items)')+'"></div>');
   h.push('<div class="chips ejtabs" role="tablist" id="ejtabs">'+D.cats.map(c=>'<button type="button" class="chip" role="tab" data-cat="'+c[0]+'" aria-pressed="'+(ST.cat===c[0])+'">'+e(EN()?c[2]:c[1])+'<em hidden></em></button>').join('')+'</div>');
   h.push('<div class="ejlist" id="ejlist"></div>');
-  h.push('<div class="ejgo"><button type="button" class="btn pri" id="ejver">'+L('Ver mi ejército','See my army')+' ›</button><button type="button" class="btn" id="ejclr">'+L('Vaciar','Clear')+'</button></div>');
+  h.push('<div class="ejgo"><button type="button" class="btn pri" id="ejver">'+L('Ver mi ejército','See my army')+' ›</button><button type="button" class="btn" id="ejclr" data-clr="1">'+L('Vaciar ejército','Clear army')+'</button></div>');
   h.push('<div id="ejsum"></div>');
   h.push('<div class="ejwarn">'+L('Precios aproximados. Cada precio es una cifra pública (contrato, presupuesto oficial o estimación de prensa o analistas) dividida entre las unidades; muchos contratos incluyen armas, repuestos, formación o desarrollo, y por eso hay rangos. Salvo que se indique, no incluyen el mantenimiento ni el coste de operar durante décadas, que suele superar el de compra. Los soldados sí son un coste anual.','Approximate prices. Each price is a public figure (contract, official budget or press/analyst estimate) divided by the number of units; many contracts include weapons, spares, training or development, hence the ranges. Unless stated, they exclude maintenance and the cost of operating for decades, which usually exceeds the purchase price. Soldiers are a yearly cost.')+'</div>');
   h.push(srcHTML());
@@ -149,6 +173,7 @@ function refreshBudget(){ const b=budgetFull(); const v=document.getElementById(
   else n=L('Mueve la barra para elegir cualquier cifra.','Move the slider to pick any amount.');
   document.getElementById('ejbnote').textContent=n;
   const sl=document.getElementById('ejsl'); if(sl&&ST.b==='custom') sl.value=Math.round((Math.log10(ST.cu)-2)/4*1000);
+  const ci=document.getElementById('ejcu'); if(ci&&ci!==document.activeElement) ci.value=nf(Math.round(ST.cu||0));
 }
 const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
 function list(){ const el=document.getElementById('ejlist'); if(!el) return; const qv=nrm(ST.q); const its=qv?D.items.filter(i=>nrm(i.n+' '+(i.ne||'')+' '+(i.o||[]).map(k=>pn(k)+' '+((P()[k]||{}).n||'')).join(' ')).indexOf(qv)>=0):D.items.filter(i=>i.c===ST.cat);
@@ -158,23 +183,77 @@ function card(it){ const q=ST.cart[it.id]||0; const B=D.basis[it.b]||['','']; co
   const fich=it.f&&FICHA[it.f]?' · <a href="#/a/'+e(it.f)+'">'+L('Ver ficha','View entry')+' ›</a>':'';
   const per=it.u?' '+(EN()?it.u[1]:it.u[0]):it.c==='sol'?L(' /año',' /year'):it.c==='mis'?L(' /misil',' /missile'):it.c==='dfa'?L(' /sistema',' /system'):'';
   const th=it.f&&FICHA[it.f]?'<a class="ejth" href="#/a/'+e(it.f)+'" aria-label="'+e(nm(it))+'">'+thumb(it)+'</a>':'<div class="ejth">'+ico(it.c)+'</div>';
-  const ex=it.c==='sol'?[100,1000,10000]:(price(it)<60?[10]:[]);
   return '<div class="ejit'+(q?' has':'')+'" data-id="'+it.id+'">'+th+'<div class="ejm"><div class="ejn">'+e(nm(it))+(it.o||[]).slice(0,4).map(k=>fl(k)).join('')+'</div>'+
    '<div class="ejp"><b>'+fmr(it)+per+'</b><span class="ejb'+(est?' est':'')+'">'+e(EN()?B[1]:B[0])+'</span>'+(it.x&&!est?'<span class="ejb est">'+L('Estimación','Estimate')+'</span>':'')+'</div>'+
-   '<details><summary>'+L('De dónde sale el precio','Where the price comes from')+'</summary><p>'+e(EN()?it.en:it.es)+'</p><p>'+src+fich+'</p></details></div>'+
-   '<div class="ejq"><div class="ejqq"><button type="button" data-a="-1" aria-label="'+L('Quitar','Remove')+'">−</button><span class="ejqn">'+nf(q)+'</span><button type="button" class="pl" data-a="1" aria-label="'+L('Añadir','Add')+'">+</button></div><div class="ejx">'+ex.map(n=>'<button type="button" data-a="'+n+'">+'+nf(n)+'</button>').join('')+'<button type="button" data-a="max">'+L('Máx','Max')+'</button></div></div></div>'; }
-function toast(t){ let x=document.querySelector('.ejtoast'); if(!x){x=document.createElement('div');x.className='ejtoast';document.body.appendChild(x);} x.textContent=t; clearTimeout(x._t); x.style.display='block'; x._t=setTimeout(()=>{x.style.display='none';},1900); }
-function add(id,a){ const it=IB[id]; if(!it) return; const pr=price(it); const left=budget()-spent(); let q=ST.cart[id]||0;
-  if(a==='max'){ const n=Math.floor((left+1e-9)/pr); if(n<1){ msg(it,pr-left); return; } q+=n; }
-  else { a=+a; if(a<0){ q=Math.max(0,q+a); } else { const n=Math.min(a,Math.floor((left+1e-9)/pr)); if(n<1){ msg(it,pr-left); return; } q+=n; if(n<a) toast(L('Solo te llegaba para ','You could only afford ')+nf(n)); } }
-  if(q>0) ST.cart[id]=q; else delete ST.cart[id]; document.getElementById('ejmsg').textContent=''; save(); upd(); bar(); const s=document.getElementById('ejsum'); if(s&&s.innerHTML) openSum(false,true); }
-function msg(it,miss){ const m=document.getElementById('ejmsg'); if(m) m.textContent=L('No te llega para ','Not enough for ')+nm(it)+': '+L('te faltan ','you are short by ')+fm(miss); toast(L('Presupuesto insuficiente','Not enough budget')); }
+   '<details><summary>'+L('De dónde sale el precio','Where the price comes from')+'</summary><p>'+e(EN()?it.en:it.es)+'</p><p>'+src+fich+'</p></details>'+
+   '<div class="ejlt"></div></div><div class="ejq">'+qq(it,false)+'<div class="ejx"><button type="button" class="mx" data-a="max">'+L('Máx','Max')+'</button><button type="button" class="del" data-a="del" hidden>✕ '+L('Quitar','Remove')+'</button></div></div></div>'; }
+function qq(it,small){ const sp=stp(it), q=ST.cart[it.id]||0, N=e(nm(it));
+  const b=(v,c)=>'<button type="button" class="'+c+'" data-a="'+v+'" aria-label="'+(v<0?L('Quitar ','Remove ')+nf(-v):L('Añadir ','Add ')+nf(v))+' · '+N+'">'+(v<0?'−':'+')+(Math.abs(v)===1?'':nf(Math.abs(v)))+'</button>';
+  return '<div class="ejqq">'+(small?'':b(-sp[1],''))+b(-sp[0],sp[0]===1?'b1':'')+'<input class="ejqn" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" value="'+nf(q)+'" aria-label="'+L('Cantidad','Quantity')+' · '+N+'">'+b(sp[0],'pl'+(sp[0]===1?' b1':''))+(small?'':b(sp[1],'pl'))+'</div>'; }
+function toast(t,act){ let x=document.querySelector('.ejtoast'); if(!x){x=document.createElement('div');x.className='ejtoast';x.setAttribute('role','status');document.body.appendChild(x);} x.textContent=t;
+  if(act){ const b=document.createElement('button'); b.type='button'; b.textContent=L('Deshacer','Undo'); b.addEventListener('click',()=>{ act(); x.style.display='none'; }); x.appendChild(b); }
+  clearTimeout(x._t); x.style.display='block'; x._t=setTimeout(()=>{x.style.display='none';},act?5000:2000); }
+let UNDO=null;
+function snap(){ UNDO=Object.assign({},ST.cart); }
+function undo(){ if(!UNDO) return; ST.cart=UNDO; UNDO=null; after(); toast(L('Recuperado','Restored')); }
+function after(){ const m=document.getElementById('ejmsg'); if(m) m.textContent=''; save(); upd(); bar(); resum(); }
+function flash(id,cl){ const c=document.querySelector('#ejlist .ejit[data-id="'+id+'"]'); if(!c) return; c.classList.remove(cl||'ko'); void c.offsetWidth; c.classList.add(cl||'ko'); }
+// fija la cantidad de una línea; devuelve true si cambió sin topar con el presupuesto
+function setQ(id,q,quiet){ const it=IB[id]; if(!it) return false; const pr=price(it), cur=ST.cart[id]||0; q=Math.max(0,Math.min(9999999,Math.floor(+q||0))); let capped=false;
+  if(q>cur){ const can=maxN(it); if(can<1){ msg(it,pr-(budget()-spent())); flash(id); upd(); return false; } if(q-cur>can){ q=cur+can; capped=true; } }
+  if(q===cur){ upd(); return false; }
+  if(q>0) ST.cart[id]=q; else delete ST.cart[id];
+  const m=document.getElementById('ejmsg'); if(m) m.textContent='';
+  if(capped){ if(m) m.textContent=L('Tope del presupuesto: solo te llegaba para ','Budget limit: you could only afford ')+nf(q-cur)+' '+L('más','more')+' ('+nm(it)+').'; toast(L('Solo te llegaba para ','You could only afford ')+nf(q-cur)+' '+L('más','more')); flash(id); }
+  upd(); bar(); if(!quiet){ save(); resum(); } return !capped; }
+function add(id,a,quiet){ const it=IB[id]; if(!it) return false; const cur=ST.cart[id]||0;
+  if(a==='max') return setQ(id,cur+Math.max(1,maxN(it)),quiet);
+  if(a==='del'){ if(!cur) return false; snap(); setQ(id,0,quiet); toast(nm(it)+L(' quitado',' removed'),undo); return true; }
+  return setQ(id,cur+(+a),quiet); }
+function msg(it,miss){ const m=document.getElementById('ejmsg'); if(m) m.textContent=L('No te llega para ','Not enough for ')+nm(it)+': '+L('te faltan ','you are short by ')+fm(miss)+'. '+L('Quita algo o sube el presupuesto.','Remove something or raise the budget.'); toast(L('Presupuesto insuficiente','Not enough budget')); }
 function upd(){ const left=budget()-spent();
-  document.querySelectorAll('#ejlist .ejit').forEach(c=>{ const it=IB[c.dataset.id]; const q=ST.cart[it.id]||0; const pr=price(it);
-    c.classList.toggle('has',q>0); c.querySelector('.ejqn').textContent=nf(q); c.querySelector('[data-a="-1"]').disabled=!q;
-    c.querySelectorAll('[data-a]').forEach(b=>{ const a=b.dataset.a; if(a==='-1') return; const n=a==='max'?1:+a; b.disabled=pr*Math.min(n,1)>left+1e-9; }); });
+  document.querySelectorAll('#ejlist .ejit').forEach(c=>{ const it=IB[c.dataset.id]; if(!it) return; const q=ST.cart[it.id]||0; const pr=price(it); const mx=maxN(it);
+    c.classList.toggle('has',q>0); const inp=c.querySelector('.ejqn'); if(inp&&inp!==document.activeElement) inp.value=nf(q);
+    c.querySelectorAll('[data-a]').forEach(b=>{ const a=b.dataset.a;
+      if(a==='del'){ b.hidden=!q; return; }
+      if(a==='max'){ b.disabled=mx<1; b.textContent=L('Máx','Max')+(mx>0?' +'+cpt(mx):''); b.title=mx>0?L('Añadir todo lo que te llega: ','Add as many as you can afford: ')+nf(mx):L('No te llega para ninguno más','You cannot afford any more'); return; }
+      b.disabled=(+a)<0?!q:pr>left+1e-9; });
+    const lt=c.querySelector('.ejlt'); if(lt) lt.textContent=q?L('En tu ejército: ','In your army: ')+nf(q)+' · '+fm(pr*q):''; });
   const cnt={}; for(const k in ST.cart){ const it=IB[k]; if(it) cnt[it.c]=(cnt[it.c]||0)+ST.cart[k]; }
-  document.querySelectorAll('#ejtabs .chip').forEach(b=>{ const em=b.querySelector('em'); const n=cnt[b.dataset.cat]||0; em.hidden=!n; em.textContent=n>999?nf(n/1000,0)+'k':nf(n); }); }
+  document.querySelectorAll('#ejtabs .chip').forEach(b=>{ const em=b.querySelector('em'); const n=cnt[b.dataset.cat]||0; em.hidden=!n; em.textContent=n>999?nf(n/1000,0)+'k':nf(n); });
+  panel(); }
+// ---------- «Tu ejército» (panel fijo) ----------
+let PK='';
+function presetHTML(lead){ return '<div class="ejpst" role="group">'+(lead?'<span>'+e(lead)+'</span>':'')+PRESETS.map(p=>'<button type="button" class="chip" data-pre="'+p[0]+'">'+e(EN()?p[2]:p[1])+'</button>').join('')+'</div>'; }
+function prow(it){ return '<div class="ejr" data-id="'+it.id+'"><div class="nmw"><button type="button" class="rn" data-go="'+it.id+'">'+e(nm(it))+'</button><span class="rc"></span></div>'+qq(it,true)+'<button type="button" class="rx" data-a="del" aria-label="'+L('Quitar','Remove')+' · '+e(nm(it))+'" title="'+L('Quitar','Remove')+'">✕</button></div>'; }
+function panel(){ const tg=document.getElementById('ejarm'), pa=document.getElementById('ejpan'); if(!tg||!pa) return;
+  const its=D.items.filter(i=>ST.cart[i.id]); const u=units(), so=ST.cart.sold||0; const pl=(v,a,b)=>'<b>'+nf(v)+'</b> '+(v===1?a:b);
+  const parts=[]; if(u) parts.push(pl(u,L('unidad','unit'),L('unidades','units'))); if(so) parts.push(pl(so,L('soldado','soldier'),L('soldados','soldiers')));
+  tg.querySelector('.lb').innerHTML=its.length?'· '+parts.join(' · '):'· '+L('vacío','empty');
+  if(pa.hidden){ PK=''; return; }
+  const key=its.map(i=>i.id).join(',')+'|'+EN();
+  if(key!==PK){ PK=key; pa.innerHTML=its.length?its.map(prow).join('')+'<div class="ejtot" id="ejtot"></div><div class="ejpf"><button type="button" class="btn pri" id="ejver2">'+L('Ver valoración','See rating')+' ›</button><button type="button" class="btn" data-clr="1">'+L('Vaciar ejército','Clear army')+'</button></div>'
+      :'<p class="ejnote" style="font-size:13.5px">'+L('Aún no llevas nada. Toca + en cualquier equipo de la lista o empieza con una plantilla:','Nothing here yet. Tap + on any item in the list, or start from a template:')+'</p>'+presetHTML(''); }
+  const left=budget()-spent();
+  pa.querySelectorAll('.ejr').forEach(r=>{ const it=IB[r.dataset.id]; if(!it) return; const q=ST.cart[it.id]||0, pr=price(it); const inp=r.querySelector('.ejqn'); if(inp&&inp!==document.activeElement) inp.value=nf(q);
+    r.querySelector('.rc').textContent=fm(pr*q)+(q>1?' · '+fm(pr)+' '+L('c/u','each'):'');
+    r.querySelectorAll('.ejqq [data-a]').forEach(b=>{ b.disabled=(+b.dataset.a)<0?!q:pr>left+1e-9; }); });
+  const tt=document.getElementById('ejtot'); if(tt) tt.innerHTML='<span>'+L('Total','Total')+' <b>'+fm(spent())+'</b> '+L('de','of')+' '+fm(budget())+'</span>'+(left>=-1e-9?'<span>'+L('Te quedan ','Left: ')+'<b>'+fm(Math.max(0,left))+'</b></span>':'<span class="ko">'+L('Te pasas en ','Over by ')+fm(-left)+'</span>'); }
+function togglePanel(open){ const tg=document.getElementById('ejarm'), pa=document.getElementById('ejpan'); if(!tg||!pa) return; const o=open==null?pa.hidden:open; pa.hidden=!o; tg.setAttribute('aria-expanded',o); PK=''; panel(); }
+function goTo(id){ const it=IB[id]; if(!it) return; togglePanel(false); ST.cat=it.c; ST.q=''; const qi=document.getElementById('ejq'); if(qi) qi.value='';
+  document.querySelectorAll('#ejtabs .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.cat===it.c)); list();
+  const c=document.querySelector('#ejlist .ejit[data-id="'+id+'"]'); if(c){ c.scrollIntoView({block:'center'}); flash(id,'hi'); } }
+function applyPreset(k){ const p=PRESETS.find(x=>x[0]===k); if(!p) return; const B=budget(); if(Object.keys(ST.cart).length) snap(); else UNDO={};
+  const c={}; p[3].forEach(x=>{ const it=IB[x[0]]; if(!it) return; const q=Math.round(x[1]*B/price(it)); if(q>0) c[x[0]]=q; });
+  let tot=()=>{ let t=0; for(const id in c) t+=price(IB[id])*c[id]; return t; };
+  if(tot()>B&&c.sold){ c.sold=Math.max(0,c.sold-Math.ceil((tot()-B)/price(IB.sold))); if(!c.sold) delete c.sold; }
+  while(tot()>B){ const ids=Object.keys(c).sort((a,b)=>price(IB[b])-price(IB[a])); if(!ids.length) break; const id=ids[0]; c[id]--; if(!c[id]) delete c[id]; }
+  ST.cart=c; after(); togglePanel(true); toast(L('Plantilla «','Template «')+(EN()?p[2]:p[1])+L('» cargada: cámbiala a tu gusto','» loaded: change it as you like'),undo); }
+function askClear(btn){ document.querySelectorAll('.ejcf').forEach(x=>x.remove()); const its=Object.keys(ST.cart); if(!its.length){ toast(L('Tu ejército ya está vacío','Your army is already empty')); return; }
+  const d=document.createElement('div'); d.className='ejcf'; d.setAttribute('role','alertdialog');
+  d.innerHTML=L('¿Vaciar tu ejército? Se quitan ','Clear your army? This removes ')+nf(its.length)+' '+(its.length===1?L('línea','line'):L('líneas','lines'))+' ('+fm(spent())+').<div><button type="button" class="btn dg" data-cf="1">'+L('Sí, vaciar','Yes, clear it')+'</button><button type="button" class="btn" data-cf="0">'+L('Cancelar','Cancel')+'</button></div>';
+  btn.parentNode.insertAdjacentElement('afterend',d); const y=d.querySelector('[data-cf="0"]'); if(y) y.focus({preventScroll:true}); }
+function doClear(){ snap(); ST.cart={}; const s=document.getElementById('ejsum'); if(s) s.innerHTML=''; after(); toast(L('Ejército vaciado','Army cleared'),undo); }
 function bar(){ const b=budget(), s=spent(); const sp=document.getElementById('ejsp'); if(!sp) return;
   sp.textContent=fm(s); const r=document.getElementById('ejrem'); const left=b-s;
   r.innerHTML=left>=-1e-9?'<span class="ok">'+L('Te quedan ','Left: ')+fm(Math.max(0,left))+'</span> · '+nf(b?Math.min(100,s/b*100):0,1)+' %':'<span class="ko">'+L('Te pasas en ','Over by ')+fm(-left)+'</span>';
@@ -189,9 +268,13 @@ function bind(){ const w=APP.querySelector('.ejw');
     if(t.dataset.pm!=null){ ST.pm=+t.dataset.pm; w.querySelectorAll('#ejpm .chip').forEach(c=>c.setAttribute('aria-pressed',c===t)); list(); bar(); save(); resum(); return; }
     if(t.id==='ejreal'){ ST.real=ST.real?0:1; t.setAttribute('aria-pressed',!!ST.real); refreshBudget(); upd(); bar(); save(); resum(); return; }
     if(t.dataset.cat){ ST.cat=t.dataset.cat; ST.q=''; const qi=document.getElementById('ejq'); if(qi) qi.value=''; w.querySelectorAll('#ejtabs .chip').forEach(c=>c.setAttribute('aria-pressed',c===t)); list(); return; }
-    if(t.dataset.a){ const c=t.closest('.ejit'); if(c) add(c.dataset.id,t.dataset.a); return; }
-    if(t.id==='ejver'){ openSum(true); return; }
-    if(t.id==='ejclr'){ if(!Object.keys(ST.cart).length) return; ST.cart={}; save(); upd(); bar(); document.getElementById('ejsum').innerHTML=''; document.getElementById('ejmsg').textContent=''; toast(L('Ejército vaciado','Army cleared')); return; }
+    if(t.dataset.a){ if(t._held){ t._held=0; return; } const c=t.closest('[data-id]'); if(c) add(c.dataset.id,t.dataset.a); return; }
+    if(t.id==='ejarm'){ togglePanel(); return; }
+    if(t.dataset.go){ goTo(t.dataset.go); return; }
+    if(t.dataset.pre){ applyPreset(t.dataset.pre); return; }
+    if(t.dataset.clr){ askClear(t); return; }
+    if(t.dataset.cf!=null){ const d=t.closest('.ejcf'); if(d) d.remove(); if(t.dataset.cf==='1') doClear(); return; }
+    if(t.id==='ejver'||t.id==='ejver2'){ togglePanel(false); openSum(true); return; }
     if(t.id==='ejcopy'){ copy(shareText(),L('Texto copiado','Text copied')); return; }
     if(t.id==='ejlink'){ copy(shareURL(),L('Enlace copiado','Link copied')); return; }
     if(t.id==='ejnative'){ const d={title:L('Mi ejército en M.A.T','My army on M.A.T'),text:shareText(true),url:shareURL()}; if(navigator.share) navigator.share(d).catch(()=>{}); else copy(shareText(),L('Texto copiado','Text copied')); return; }
@@ -199,6 +282,20 @@ function bind(){ const w=APP.querySelector('.ejw');
   });
   const sl=document.getElementById('ejsl'); if(sl) sl.addEventListener('input',()=>{ const v=Math.pow(10,2+4*(+sl.value)/1000); const r=v<1000?10:v<10000?50:v<100000?500:5000; ST.cu=Math.max(100,Math.round(v/r)*r); refreshBudget(); upd(); bar(); save(); });
   w.addEventListener('input',ev=>{ if(ev.target.id==='ejq'){ ST.q=ev.target.value; list(); } });
+  // cantidad escrita a mano (también el presupuesto personalizado)
+  const num=v=>+(String(v).replace(/[^0-9]/g,'')||0);
+  w.addEventListener('focusin',ev=>{ const t=ev.target; if(t.classList&&(t.classList.contains('ejqn')||t.id==='ejcu')){ const v=num(t.value); t.value=v?String(v):''; setTimeout(()=>{ if(document.activeElement===t){ try{t.select();}catch(_){} } },0); } });
+  w.addEventListener('focusout',ev=>{ const t=ev.target; if(!t.classList) return; if(t.classList.contains('ejqn')){ const r=t.closest('[data-id]'); if(r) setQ(r.dataset.id,num(t.value)); t.value=nf(ST.cart[r?r.dataset.id:'']||0); }
+    else if(t.id==='ejcu'){ const v=num(t.value); if(v){ ST.cu=Math.max(100,Math.min(1e6,v)); refreshBudget(); upd(); bar(); save(); resum(); } t.value=nf(Math.round(ST.cu||0)); } });
+  w.addEventListener('keydown',ev=>{ const t=ev.target; if(ev.key==='Enter'&&t.classList&&(t.classList.contains('ejqn')||t.id==='ejcu')){ ev.preventDefault(); t.blur(); } });
+  // mantener pulsado: repite y acelera (a los ~1,5 s salta de 10 en 10, o de 100 en 100)
+  let HOLD=null; const stop=()=>{ if(!HOLD) return; clearTimeout(HOLD.t); const h=HOLD; HOLD=null; if(h.on){ save(); resum(); } };
+  w.addEventListener('pointerdown',ev=>{ if(ev.button>0) return; const b=ev.target.closest('button[data-a]'); if(!b||b.disabled||!/^-?\d+$/.test(b.dataset.a)) return; const r=b.closest('[data-id]'); if(!r) return; stop(); b._held=0;
+    const h=HOLD={b:b,id:r.dataset.id,st:+b.dataset.a,k:0,on:false,iv:170};
+    const tick=()=>{ if(HOLD!==h) return; h.on=true; b._held=1; const ok=add(h.id,String(h.st*(h.k>=12?10:1)),true); h.k++; if(!ok||b.disabled||!b.isConnected){ stop(); return; } h.iv=Math.max(45,h.iv*0.86); h.t=setTimeout(tick,h.iv); };
+    h.t=setTimeout(tick,420); });
+  ['pointerup','pointercancel'].forEach(k=>w.addEventListener(k,stop)); w.addEventListener('pointerout',ev=>{ if(HOLD&&ev.target===HOLD.b&&!HOLD.b.contains(ev.relatedTarget)) stop(); });
+  window.addEventListener('blur',stop); w.addEventListener('contextmenu',ev=>{ if(ev.target.closest('.ejqq')) ev.preventDefault(); });
   w.addEventListener('change',ev=>{ if(ev.target.id==='ejcsel'){ ST.cmp=ev.target.value; openSum(false,true); } });
   w.addEventListener('error',ev=>{ const t=ev.target; if(t&&t.tagName==='IMG'&&t.dataset.ejc){ const p=t.parentNode; p.innerHTML=ico(t.dataset.ejc); } },true);
 }
@@ -242,7 +339,7 @@ function sumHTML(S,R,loading){ const b=budget(); const h=[]; const bought=D.item
   h.push('<div class="ejcard" id="ejcard"><div class="k">M.A.T · '+L('Tu ejército','Your army')+'</div><h2 class="ejt">'+e(R.t)+'</h2><div class="ejstars" aria-label="'+R.stars+'/5">'+'★'.repeat(R.stars)+'<s>'+'★'.repeat(5-R.stars)+'</s></div><p class="ejdesc">'+e(R.d)+'</p>');
   h.push('<div class="ejkp"><div><span>'+L('Presupuesto','Budget')+'</span><b>'+fm(b)+'</b></div><div><span>'+L('Gastado','Spent')+'</span><b>'+fm(S.s)+'</b></div><div><span>'+L('Unidades','Units')+'</span><b>'+nf(units())+'</b></div><div><span>'+L('Soldados','Soldiers')+'</span><b>'+nf(S.sol)+'</b></div></div>');
   h.push('<div class="ejdom">'+Object.keys(DOM).map(d=>'<div class="ejdr"><span>'+e(DOMN[d][EN()?1:0])+'</span><div class="tr"><i style="width:'+(S.sh[d]*100)+'%;background:'+DOMC[d]+'"></i></div><em>'+nf(S.sh[d]*100,0)+' %</em></div>').join('')+'</div>');
-  if(bought.length) h.push('<ul class="ejbuy">'+bought.map(i=>'<li><b>'+nf(ST.cart[i.id])+' ×</b> '+(i.f&&FICHA[i.f]?'<a href="#/a/'+e(i.f)+'" style="color:var(--tx)">'+e(nm(i))+'</a>':e(nm(i)))+'</li>').join('')+'</ul>');
+  if(bought.length) h.push('<ul class="ejbuy">'+bought.map(i=>'<li><b>'+nf(ST.cart[i.id])+' ×</b> '+(i.f&&FICHA[i.f]?'<a href="#/a/'+e(i.f)+'" style="color:var(--tx)">'+e(nm(i))+'</a>':e(nm(i)))+' <span class="c">· '+fm(price(i)*ST.cart[i.id])+'</span></li>').join('')+'</ul>');
   // datos curiosos
   const fun=[]; const left=b-S.s;
   if(S.s) fun.push(L('Has gastado el ','You have spent ')+nf(b?S.s/b*100:0,1)+' % '+L('del presupuesto','of the budget')+(left>0.5?'; '+L('te sobran ','you have ')+fm(left)+(EN()?' left':''):'')+'.');
