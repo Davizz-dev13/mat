@@ -19,6 +19,8 @@ var FLAGS='<span class="thf" aria-hidden="true"><img src="flags/es.png" alt=""><
 function railHTML(cards){ return '<div class="railw"><button type="button" class="rl rl-p" aria-label="‹" tabindex="-1">‹</button><div class="rail">'+cards+'</div><button type="button" class="rl rl-n" aria-label="›" tabindex="-1">›</button></div>'; }
 function featHTML(h,img,k,tt,ds,go){ return '<a class="ddfe" href="'+h+'"><span class="fi"'+(img?' style="background-image:url('+img+')"':'')+'></span><span class="ft"><span class="k">'+esc(k)+'</span><b>'+esc(tt)+'</b>'+(ds?'<span class="ds">'+esc(ds)+'</span>':'')+'<span class="go">'+esc(go)+'</span></span></a>'; }
 var FEAT_J='#/soldado/combate', FEAT_S='#/radar';
+/* Foto de «Países y facciones» (Jose, 7 nov: fuera el collage de banderas): foto de una ficha del sitio. */
+var FZ_IMG='https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9e/INS_Kulish_%28P63%29_is_underway_with_U.S._and_Indian_navy_ships_during_Exercise_Malabar_2012.jpg/960px-INS_Kulish_%28P63%29_is_underway_with_U.S._and_Indian_navy_ships_during_Exercise_Malabar_2012.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail';
 function gamesHTML(){
   var G=window.MAT_GAMES?window.MAT_GAMES():null, h='', f=null;
   var list=G?G.list:[['#/armero','armero','Armero 3D','3D Gunsmith'],['#/soldado','soldado','Crea tu soldado','Build your soldier'],['#/soldado/combate','combate','Combate','Fight'],['#/duelo','duelo','Duelo','Duel'],['#/antidisturbios','antidisturbios','Antidisturbios','Riot control'],['#/guerra-nuclear','nuclear','Guerra nuclear','Nuclear war'],['#/ejercito','ejercito','Crea tu ejército','Build your army']].map(function(g){ return [g[0],g[1],EN()?g[3]:g[2],'']; });
@@ -41,12 +43,12 @@ function secItems(){
   var keys=ORDER.filter(function(k){ return k in by; }).concat(Object.keys(by).filter(function(k){ return ORDER.indexOf(k)<0; }));
   if(window.MAT_FUERZAS!==false){ keys.splice(Math.min(1,keys.length),0,'#/fuerzas'); by['#/fuerzas']=t('fz'); }
   return keys.map(function(k){ var tt=by[k]; if(EN()&&SEN[k]) tt=SEN[k]; if(!tt) tt=k.slice(2);
-    return {h:k,t:tt,img:PH[k]||BIG[k]||'',d:(EN()&&SEN[k])?'':(DS[k]||'')}; });
+    return {h:k,t:tt,img:k==='#/fuerzas'?FZ_IMG:(PH[k]||BIG[k]||''),d:(EN()&&SEN[k])?'':(DS[k]||'')}; });
 }
 function secHTML(){
   var L=secItems(), f=null, h='';
   L.forEach(function(s){ if(s.h===FEAT_S&&!f){ f=s; return; }
-    var th=s.h==='#/fuerzas'?'<span class="ri rif">'+FLAGS+'</span>':'<span class="ri"'+(s.img?' style="background-image:url('+s.img+')"':'')+'></span>';
+    var th='<span class="ri"'+(s.img?' style="background-image:url('+s.img+')"':'')+'></span>';
     h+='<a class="rc" href="'+s.h+'">'+th+'<span class="rt">'+esc(s.t)+'</span></a>'; });
   var fe=f?featHTML(f.h,f.img,t('feat'),f.t,EN()?t('radd'):(f.d||t('radd')),t('open')):'';
   return '<div class="ddh"><span>'+t('s')+'</span><a href="#/secciones">'+t('alls')+'</a></div><div class="mm">'+fe+'<div class="mmg">'+h+'</div></div><div class="ddf"><a href="#/noticias">'+ICO_NEWS+'<span>'+t('news')+'</span></a><a href="#/comparar">'+ICO_CMP+'<span>'+t('cmp')+'</span></a></div>';
