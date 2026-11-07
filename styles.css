@@ -1091,3 +1091,55 @@ main#app.px-enter{animation:pxEnter .75s var(--ease) both}
  .xsh{margin:56px 0 18px;flex-wrap:wrap;gap:8px 16px}.xsh h2{font-size:15vw;width:100%;text-align:left}.xsh .n{padding-bottom:0;white-space:normal}
 }
 @media (prefers-reduced-motion:reduce){.rv,#xhome h1 span i{transition:none!important;opacity:1!important;transform:none!important}main#app.px-enter{animation:none}#xhome .xs:after{animation:none}header.top{transition:none}}
+
+/* ===== Categorías «tipo cascos» (nov. 2026): tarjeta oscura con esquina cortada, icono grande; al pasar el ratón (PC) o al primer toque (móvil) baja la foto de una ficha. */
+body .cats.cartas,body.r-home .cats.cartas.cgrid2,.cats.cartas.cgrid2{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto;gap:8px;margin-top:14px}
+@media (min-width:700px){body .cats.cartas,body.r-home .cats.cartas.cgrid2,.cats.cartas.cgrid2{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}}
+@media (min-width:980px){body .cats.cartas,body.r-home .cats.cartas.cgrid2,.cats.cartas.cgrid2{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}}
+.carta{--cut:20px;position:relative;display:flex;flex-direction:column;min-width:0;text-decoration:none;color:var(--tx);background:linear-gradient(165deg,#1d2018 0%,#14160f 55%,#0f110c 100%);clip-path:polygon(0 0,calc(100% - var(--cut)) 0,100% var(--cut),100% 100%,0 100%);transition:background .75s var(--ease,cubic-bezier(.65,.05,0,1));-webkit-tap-highlight-color:transparent;outline:none}
+.carta .fr{position:relative;display:block;aspect-ratio:6/5;overflow:hidden}
+@media (min-width:700px){.carta .fr{aspect-ratio:1/1}}
+.carta .ck{position:absolute;top:10px;left:12px;z-index:3;font:600 11px/1 'Mona Sans',sans-serif;letter-spacing:.12em;color:var(--dim);transition:color .5s}
+.carta .ci{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;transition:transform .75s var(--ease,cubic-bezier(.65,.05,0,1)),opacity .5s var(--ease,cubic-bezier(.65,.05,0,1))}
+.carta .ci svg{width:58%;height:58%;max-width:150px;max-height:150px;overflow:visible;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
+.carta .ci svg *{fill:none;stroke:#d6b25e;stroke-width:1.55;stroke-linejoin:round;stroke-linecap:round}
+.carta .ci svg .a{fill:#a88a46;stroke:none}.carta .ci svg .a.s{fill:none;stroke:#a88a46}
+.carta .ci:before{content:"";position:absolute;left:50%;top:50%;width:70%;height:70%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(214,178,94,.10),rgba(214,178,94,0));pointer-events:none}
+.carta .cf{position:absolute;inset:0;z-index:2;overflow:hidden;clip-path:inset(0 0 100% 0);transition:clip-path .75s var(--ease,cubic-bezier(.65,.05,0,1));background:#0d0f0b}
+.carta .cf img{width:100%;height:100%;object-fit:cover;transform:translateY(-22%) scale(1.12);transition:transform .75s var(--ease,cubic-bezier(.65,.05,0,1));filter:saturate(.85) contrast(1.05)}
+.carta .cf:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,12,8,0) 45%,rgba(10,12,8,.82))}
+.carta .cd{position:absolute;left:12px;right:12px;bottom:10px;z-index:3;font-size:11.5px;line-height:1.3;color:#e6e4da;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .75s var(--ease,cubic-bezier(.65,.05,0,1));display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;pointer-events:none}
+.carta .ce{position:absolute;right:8px;bottom:8px;z-index:4;display:none;padding:7px 11px;background:var(--lime,#c8f03c);color:#0b0c0a;font:700 12px/1 'Mona Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,0 100%)}
+.carta .nt{display:flex;flex-direction:column;gap:4px;padding:10px 12px 13px;min-height:62px}
+.carta .nt b{font:400 18px/1.05 'Anton',Impact,sans-serif;text-transform:uppercase;letter-spacing:.02em;color:var(--tx);overflow-wrap:anywhere;transition:color .5s}
+.carta .nt i{font:500 12px/1.2 'Mona Sans',sans-serif;font-style:normal;color:var(--mu)}
+@media (min-width:980px){.carta .nt b{font-size:21px}.carta .ci svg{width:56%;height:56%}}
+.carta.on,.carta:focus-visible{background:linear-gradient(165deg,#252a1d 0%,#171a12 60%,#11130d 100%)}
+.carta.on .cf,.carta:focus-visible .cf{clip-path:inset(0 0 0 0)}
+.carta.on .cf img,.carta:focus-visible .cf img{transform:none}
+.carta.on .ci,.carta:focus-visible .ci{transform:translateY(30%) scale(.8);opacity:0}
+.carta.on .cd,.carta:focus-visible .cd{opacity:1;transform:none;transition-delay:.18s}
+.carta.on .ck,.carta:focus-visible .ck,.carta.on .nt b,.carta:focus-visible .nt b{color:var(--lime,#c8f03c)}
+@media (hover:hover){
+ .carta:hover{background:linear-gradient(165deg,#252a1d 0%,#171a12 60%,#11130d 100%)}
+ .carta:hover .cf{clip-path:inset(0 0 0 0)}
+ .carta:hover .cf img{transform:none}
+ .carta:hover .ci{transform:translateY(30%) scale(.8);opacity:0}
+ .carta:hover .cd{opacity:1;transform:none;transition-delay:.18s}
+ .carta:hover .ck,.carta:hover .nt b{color:var(--lime,#c8f03c)}
+}
+@media (hover:none){.carta.on .ce{display:block}.carta .cd{display:none}}
+.carta.soon{opacity:.5;cursor:default}
+@media (prefers-reduced-motion:reduce){.carta,.carta *{transition:none!important}.carta .cf img{transform:none}}
+#xcat,.cats.cartas{scroll-margin-top:84px}
+.carta img{border:0!important;border-radius:0!important;background:none!important}
+
+/* Reposo «en sombra»: la misma foto nítida de la ficha en gris y oscura, con viñeta; al pasar el ratón / tocar toma color y se acerca un poco. */
+.carta .sm{position:absolute;inset:0;z-index:1;overflow:hidden;background:#0b0c0a}
+.carta .sm img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(.38) contrast(1.12);transform:scale(1);transition:filter .75s var(--ease,cubic-bezier(.65,.05,0,1)),transform .75s var(--ease,cubic-bezier(.65,.05,0,1))}
+.carta .sm:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(8,9,7,0) 38%,rgba(8,9,7,.72) 100%),linear-gradient(180deg,rgba(8,9,7,0) 55%,rgba(8,9,7,.55));transition:opacity .75s var(--ease,cubic-bezier(.65,.05,0,1))}
+.carta.on .sm img,.carta:focus-visible .sm img{filter:none;transform:scale(1.06)}
+.carta.on .sm:after,.carta:focus-visible .sm:after{opacity:.55}
+@media (hover:hover){.carta:hover .sm img{filter:none;transform:scale(1.06)}.carta:hover .sm:after{opacity:.55}}
+.carta .ck{color:#cfcdc2}
+@media (prefers-reduced-motion:reduce){.carta .sm img,.carta.on .sm img,.carta:hover .sm img{transform:none!important}}
