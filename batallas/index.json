@@ -140,6 +140,26 @@
   ]
  },
  {
+  "id": "kursk",
+  "tema": "meseta",
+  "t": [
+   "Batalla de Kursk",
+   "Battle of Kursk"
+  ],
+  "fecha": [
+   "5 de julio – 23 de agosto de 1943",
+   "5 July – 23 August 1943"
+  ],
+  "lugar": [
+   "Saliente de Kursk, Oriol, Bélgorod y Járkov (Rusia y Ucrania)",
+   "Kursk salient, Orel, Belgorod and Kharkov (Russia and Ukraine)"
+  ],
+  "d": [
+   "En 22 pasos: los planes de Ciudadela, casi 300 km de defensas y campos de minas, el norte de Model y Rokossovski, Ponyri, el golpe de Hoth en el sur, la guerra aérea, Prójorovka con todas las versiones de sus pérdidas y las contraofensivas que liberaron Oriol, Bélgorod y Járkov.",
+   "In 22 steps: the Citadel plans, nearly 300 km of defences and minefields, Model and Rokossovsky in the north, Ponyri, Hoth’s blow in the south, the air war, Prokhorovka with every version of its losses, and the counter-offensives that liberated Orel, Belgorod and Kharkov."
+  ]
+ },
+ {
   "id": "dia-d",
   "t": [
    "Día D: Operación Overlord",
