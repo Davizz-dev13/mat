@@ -13,7 +13,9 @@ const pick=a=>a[Math.floor(RND()*a.length)];
 const ri=(a,b)=>a+Math.floor(RND()*(b-a+1));
 const shuf=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(RND()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function fill(s){ return String(T(s)).replace(/\{(\w+)\}/g,(m,k)=>{ const v=P&&P.v?P.v[k]:null; return v==null?m:T(v); }); }
+/* sujeto mujer: en inglés he/him/his pasan a she/her (los pronombres de otras personas van como {marcas} y se ponen después) */
+const FEM_EN=s=>s.replace(/\bhimself\b/g,'herself').replace(/\bHimself\b/g,'Herself').replace(/\bhim\b/g,'her').replace(/\bHim\b/g,'Her').replace(/\bhis\b/g,'her').replace(/\bHis\b/g,'Her').replace(/\bhe\b/g,'she').replace(/\bHe\b/g,'She');
+function fill(s){ let x=String(T(s)); if(P&&P.fem&&EN()) x=FEM_EN(x); return x.replace(/\{(\w+)\}/g,(m,k)=>{ const v=P&&P.v?P.v[k]:null; return v==null?m:T(v); }); }
 
 /* ---------------- fuentes ---------------- */
 const SRC={
@@ -58,7 +60,7 @@ const FUENTES=[
 /* ---------------- técnicas (informe final) ---------------- */
 const TECH={
  pres:[["Presentarse y pregunta abierta","Introduce yourself + open question"],["Decir quién eres y preguntar algo que no se contesta con sí o no le invita a hablar. Mejor «¿qué está pasando?» que «¿por qué?», que suena a interrogatorio.","Saying who you are and asking something that can’t be answered yes or no invites them to talk. “What’s going on?” beats “why?”, which sounds like an interrogation."],"nw",1],
- etiq:[["Etiquetado emocional","Emotion labelling"],["Poner nombre a lo que siente («parece que estás harto de…») le demuestra que le entiendes y baja la intensidad. Es de las herramientas más potentes de la escucha activa.","Naming what they feel (“it sounds like you’re fed up with…”) shows you understand and lowers the intensity. One of the most powerful active-listening tools."],"nw",1],
+ etiq:[["Etiquetado emocional","Emotion labelling"],["Poner nombre a lo que siente («parece que estás hart{o} de…») le demuestra que le entiendes y baja la intensidad. Es de las herramientas más potentes de la escucha activa.","Naming what they feel (“it sounds like you’re fed up with…”) shows you understand and lowers the intensity. One of the most powerful active-listening tools."],"nw",1],
  espejo:[["Espejo","Mirroring"],["Repetir sus últimas palabras en tono de pregunta le anima a seguir hablando y te da información sin dirigirle.","Repeating their last words as a question keeps them talking and gives you information without steering."],"voss",1],
  parafr:[["Parafraseo","Paraphrasing"],["Repetir con tus palabras lo que te ha dicho demuestra que no solo escuchas: entiendes.","Restating what they said in your own words shows you’re not just hearing, you understand."],"nw",1],
  resumen:[["Resumen («eso es»)","Summary (“that’s right”)"],["Resumir sus motivos y emociones hasta que diga «eso es». Es la señal de que se siente entendido y de que puedes empezar a influir.","Summarising their reasons and emotions until they say “that’s right”. It signals they feel understood and that you can start to influence."],"voss",1],
@@ -153,7 +155,7 @@ function makeProfile(seed){
    vive=civil[1]==='Married'?["Con su pareja, enferma de alzhéimer.","With partner, who has Alzheimer’s."]:[`Sol${o}.`,"Alone."];
    const nk=ri(1,3); for(let i=0;i<nk;i++) p.kids.push({n:pick(['Rosa','Manuel','Antonio','Pilar','José','Isabel','Juan','Mercedes']),age:ri(30,p.age-22)});
    if(RND()<0.55) p.estranged=true;
-   if(!p.estranged&&RND()<0.6){ p.nieta={n:pick(KIDS),age:ri(4,9)}; p.hook='nieta'; }
+   if(!p.estranged&&RND()<0.6){ p.nieta={n:pick(['Alba','Lola','Noa','Vera','Sara','Carla','Lucía','Martina']),age:ri(4,9)}; p.hook='nieta'; }
    else if(RND()<0.55){ p.dog=pick(DOG); p.hook='perro'; }
    p.despair=civil[1]==='Widowed'?1:0;
  }
@@ -172,8 +174,8 @@ function makeProfile(seed){
  /* antecedentes y salud */
  p.record=["Sin antecedentes.","No criminal record."];
  if(p.sit==='fugado'){ const y=ri(2,6); p.record=[`Cumplía ${y} años por robo con violencia. No volvió de un permiso penitenciario hace 9 días.`,`Serving ${y} years for violent robbery. Failed to return from prison leave 9 days ago.`]; p.trigger=p.trigger||'carcel'; p.prison=true; }
- else if(RND()<0.35&&p.band!=='mayor'){ p.record=["Cumplió 2 años de prisión por un robo (2019–2021).","Served 2 years in prison for a robbery (2019–2021)."]; p.prison=true; if(RND()<0.6) p.trigger=p.trigger||'carcel'; }
- else if(RND()<0.3) p.record=["Dos hurtos menores (2018 y 2021).","Two minor thefts (2018 and 2021)."];
+ else if(RND()<0.35&&p.band!=='mayor'&&p.age>=21){ /* fechas posibles para su edad: prisión solo de adulto (18 años) */ const y0=Math.max(2026-p.age+18,2026-ri(4,9)); p.record=[`Cumplió 2 años de prisión por un robo (${y0}–${y0+2}).`,`Served 2 years in prison for a robbery (${y0}–${y0+2}).`]; p.prison=true; if(RND()<0.6) p.trigger=p.trigger||'carcel'; }
+ else if(RND()<0.3){ /* hurtos: desde los 14 años (edad penal en España) */ const a0=Math.max(2026-p.age+14,2026-ri(6,9)), y1=ri(a0,2024), y2=ri(y1+1,2025); p.record=[`Dos hurtos menores (${y1} y ${y2}).`,`Two minor thefts (${y1} and ${y2}).`]; }
  p.health=["Sin datos.","No data."];
  const hr=RND();
  if(p.band==='mayor'&&hr<0.62){ p.health=["Diagnóstico de una enfermedad grave hace tres meses. Esta semana ha regalado sus herramientas a un vecino.","Diagnosed with a serious illness three months ago. This week he gave his tools away to a neighbour."]; p.despair+=2; p.keys.push('regalo'); }
@@ -222,8 +224,9 @@ function makeProfile(seed){
  /* notas de inteligencia y claves */
  const NOTE=(es,en,key,why)=>p.notes.push({t:[es,en],key:key,why:why});
  if(p.hook==='madre') NOTE(`Su madre, ${mom.n}, ha llegado al cordón policial y pide hablar con él.`,`His mother, ${mom.n}, has arrived at the cordon and is asking to speak to him.`,'madre',["Su madre es su ancla: puedes usarla como gancho, pero contigo hablando, no pasándole el teléfono.","His mother is his anchor: use her as a hook, but you do the talking, don’t hand her the phone."]);
- if(p.kids.length&&p.estranged) NOTE(`Su hermano dice que sus hijos no le hablan desde 2019.`,`His brother says his children haven’t spoken to him since 2019.`,'estranged',["Sus hijos no le hablan: apelar a ellos no le ayuda, le recuerda lo que ha perdido.","His children don’t speak to him: appealing to them doesn’t help, it reminds him of what he lost."]);
- if(p.hook==='hijos') NOTE(`Ve a ${lst(p.kids.map(k=>k.n))} cada fin de semana; el sábado ${p.kids[0].n} cumple ${p.kids[0].age+1} años.`,`He sees ${lst(p.kids.map(k=>k.n),1)} every weekend; on Saturday ${p.kids[0].n} turns ${p.kids[0].age+1}.`,'hijos',["Sus hijos son su ancla: el cumpleaños del sábado era un gancho real.","His children are his anchor: Saturday’s birthday was a real hook."]);
+ if(p.kids.length===1&&p.estranged) NOTE(`Su hermano dice que ${p.kids[0].n}, su único hijo, no le habla desde 2019.`.replace('su único hijo',/^(Rosa|Pilar|Isabel|Mercedes|Alba|Lola|Noa|Vera|Sara|Carla)$/.test(p.kids[0].n)?'su única hija':'su único hijo'),`His brother says ${p.kids[0].n}, his only child, hasn’t spoken to him since 2019.`,'estranged',[`${p.kids[0].n} no le habla: apelar a la familia no le ayuda, le recuerda lo que ha perdido.`,`${p.kids[0].n} doesn’t speak to him: appealing to family doesn’t help, it reminds him of what he lost.`]);
+ else if(p.kids.length&&p.estranged) NOTE(`Su hermano dice que sus hijos no le hablan desde 2019.`,`His brother says his children haven’t spoken to him since 2019.`,'estranged',["Sus hijos no le hablan: apelar a ellos no le ayuda, le recuerda lo que ha perdido.","His children don’t speak to him: appealing to them doesn’t help, it reminds him of what he lost."]);
+ if(p.hook==='hijos') NOTE(/pareja y sus hijos/.test(p.vive[0])?`Vive con ${lst(p.kids.map(k=>k.n))} y su pareja; el sábado ${p.kids[0].n} cumple ${p.kids[0].age+1} años y tienen la fiesta preparada.`:`Ve a ${lst(p.kids.map(k=>k.n))} cada fin de semana; el sábado ${p.kids[0].n} cumple ${p.kids[0].age+1} años.`,/pareja y sus hijos/.test(p.vive[0])?`He lives with ${lst(p.kids.map(k=>k.n),1)} and his partner; on Saturday ${p.kids[0].n} turns ${p.kids[0].age+1} and the party is all planned.`:`He sees ${lst(p.kids.map(k=>k.n),1)} every weekend; on Saturday ${p.kids[0].n} turns ${p.kids[0].age+1}.`,'hijos',["Sus hijos son su ancla: el cumpleaños del sábado era un gancho real.","His children are his anchor: Saturday’s birthday was a real hook."]);
  if(p.hook==='nieta') NOTE(`Recoge a su nieta ${p.nieta.n} (${p.nieta.age} años) del colegio todos los días.`,`He picks up his granddaughter ${p.nieta.n} (${p.nieta.age}) from school every day.`,'nieta',["Su nieta era su ancla: alguien que le espera mañana a las cinco.","His granddaughter was his anchor: someone waiting for him tomorrow at five."]);
  if(p.hook==='perro') NOTE(`Vive con su perro, ${p.dog}; los vecinos dicen que no se separa de él.`,`He lives with his dog, ${p.dog}; neighbours say they’re inseparable.`,'perro',["Su perro era su ancla: alguien que depende de él.","His dog was his anchor: someone who depends on him."]);
  if(p.hook==='oficio') NOTE(`${p.oficioYears} años en su oficio; muy orgullos${o} de su trabajo, según sus antiguos compañeros.`,`${p.oficioYears} years in his trade; very proud of his work, former colleagues say.`,'oficio',["Su orgullo profesional era la forma de darle una salida digna.","His professional pride was the way to give him a face-saving exit."]);
@@ -237,17 +240,22 @@ function makeProfile(seed){
  if(p.inst) p.keys.push('inst');
  if(p.fem){
    const fe=s=>s.replace(/\bhimself\b/g,'herself').replace(/\bhim\b/g,'her').replace(/\bhis\b/g,'her').replace(/\bHis\b/g,'Her').replace(/\bhe\b/g,'she').replace(/\bHe\b/g,'She');
-   const fs=s=>s.replace(/ con él\b/g,' con ella').replace(/ de él\b/g,' de ella').replace(/como a un loco/g,'como a una loca').replace(/^Despedido/,'Despedida');
+   const fs=s=>s.replace(/ con él\b/g,' con ella').replace(/ de él\b/g,' de ella').replace(/como a un loco/g,'como a una loca').replace(/^Despedido/,'Despedida').replace(/nadie le ha escuchado/g,'nadie la ha escuchado').replace(/se siente juzgado/g,'se siente juzgada');
    const fx2=a=>[fs(a[0]),fe(a[1])];
    ['vive','record','health','subst','motTxt','moodTxt','place'].forEach(k=>{ if(p[k]) p[k]=fx2(p[k]); });
-   p.jobs=p.jobs.map(fx2); p.notes.forEach(n=>{ n.t=fx2(n.t); n.why=fx2(n.why); });
+   const fj=s=>[['repartidor','repartidora'],['camarero','camarera'],['mozo de almacén','moza de almacén'],['conductor de autobús','conductora de autobús'],['cocinero','cocinera'],['mecánico','mecánica'],['encargado de obra','encargada de obra'],['administrativo','administrativa'],['pescador','pescadora'],['dueño de un bar','dueña de un bar'],['carpintero jubilado','carpintera jubilada'],['profesor de instituto jubilado','profesora de instituto jubilada'],['agricultor jubilado','agricultora jubilada'],['camionero jubilado','camionera jubilada'],['electricista jubilado','electricista jubilada'],['escolta privado','escolta privada']].reduce((a,[m,f])=>a.replace(new RegExp('\\b'+m+'\\b','g'),f),s);
+   const fx3=a=>[fj(fs(a[0])),fe(a[1])];
+   p.jobs=p.jobs.map(fx3); p.job=p.jobs[0]; p.notes.forEach(n=>{ n.t=fx3(n.t); n.why=fx3(n.why); });
+   if(p.trigger==='expareja') p.notes.forEach(n=>{ if(n.key==='expareja') n.why=["Su ex-pareja era un detonante: meterlo en la conversación la encendía.","Her ex-partner was a trigger: bringing him up set her off."]; });
  }
  p.hc=hc;
  /* variables de texto */
  const k0=p.kids[0];
  p.v={n:p.name,o:o,el:[p.fem?'ella':'él',p.fem?'she':'he'],lo:p.fem?'la':'lo',yo:yoN,cuerpo:p.corps,mom:mom.n,
    k:k0?k0.n:'',kk:[lst(p.kids.map(k=>k.n)),lst(p.kids.map(k=>k.n),1)],dog:p.dog||'',nieta:p.nieta?p.nieta.n:'',
-   lug:p.place,h:p.host[0].n,hc:hc.n,cond:hc.cond};
+   lug:p.place,h:p.host[0].n,hc:hc.n,cond:hc.cond,
+   hche:hc.f?'she':'he',hchis:hc.f?'her':'his',hcHe:hc.f?'She':'He',un:p.fem?'una':'un',
+   exla:p.fem?'lo':'la',exella:p.fem?'él':'ella',exher:p.fem?'him':'her',exshe:p.fem?'he':'she',exherself:p.fem?'himself':'herself'};
  p.sig=sig(p);
  return p;
 }
@@ -271,12 +279,12 @@ function evalOpt(o){
  let [dt,dr]=BASE[o.k]; const why=[]; let rep=null; const ph=phase();
  if(o.k==='mentira'){ dt=2; dr=-2; }
  if(P.inst){ if(LISTEN.includes(o.k)) dr=Math.round(dr*0.75); if(['qpq','calib','autor','honest'].includes(o.k)){ dr=Math.round(dr*1.3); why.push(S2("Era un caso instrumental (busca algo concreto, no desahogarse): lo práctico y concreto le llegaba más.","It was an instrumental case (wanting something concrete, not to vent): practical, concrete moves reached him best.")); } }
- if(P.heard&&['etiq','parafr','resumen','espejo','digna','calib'].includes(o.k)){ dr=Math.round(dr*1.35); dt-=2; why.push(S2("En el expediente: siente que «nadie le escucha». Sentirse escuchado era justo lo que necesitaba.","In the dossier: he feels “nobody listens”. Being heard was exactly what he needed.")); }
+ if(P.heard&&['etiq','parafr','resumen','espejo','digna','calib'].includes(o.k)){ dr=Math.round(dr*1.35); dt-=2; why.push(S2("En el expediente: siente que «nadie le escucha». Sentirse escuchad{o} era justo lo que necesitaba.","In the dossier: he feels “nobody listens”. Being heard was exactly what he needed.")); }
  if(P.heard&&['minim','precoz','juicio','nono'].includes(o.k)){ dt+=5; dr-=3; why.push(S2("Para alguien que siente que nadie le escucha, fue otra puerta cerrada.","For someone who feels nobody listens, it was one more closed door.")); }
  if(P.despair>=2){ if(['amenaza','prisa','juicio','minim'].includes(o.k)){ dt+=7; dr-=4; why.push(S2("A alguien al que ya le da igual vivir, la presión no le asusta: le empuja.","To someone who no longer cares about living, pressure doesn’t scare: it pushes.")); } if(['etiq','pausa','asksui','yo'].includes(o.k)) dr+=3; }
  if(P.impulsive>=2){ dt=Math.round(dt*1.25); if(['plan','honest','calib','pres'].includes(o.k)) dt-=2; }
  if(P.savvy){ const j=P.jobs[1];
-   if(o.k==='mentira'){ dt+=16; dr-=14; rep=S2("¿Me tomas por tonto? Sé cómo montáis un operativo. Sé dónde os ponéis y cuántos sois.","You think I’m stupid? I know how you set up an operation. I know where you stand and how many of you there are."); why.push(S2(`Fue ${j[0]}: sabía cómo funciona un operativo y detectó la mentira al momento.`,`He was a ${j[1]}: he knew how an operation works and spotted the lie at once.`)); }
+   if(o.k==='mentira'){ dt+=16; dr-=14; rep=S2("¿Me tomas por tont{o}? Sé cómo montáis un operativo. Sé dónde os ponéis y cuántos sois.","You think I’m stupid? I know how you set up an operation. I know where you stand and how many of you there are."); why.push(S2(`Fue ${j[0]}: sabía cómo funciona un operativo y detectó la mentira al momento.`,`He was a ${j[1]}: he knew how an operation works and spotted the lie at once.`)); }
    if(o.k==='promesa'){ dt+=7; dr-=10; rep=S2("Eso no lo decides tú y los dos lo sabemos. No me vendas humo.","That’s not your call and we both know it. Don’t sell me smoke."); why.push(S2(`Fue ${j[0]}: sabía que esa promesa no estaba en tu mano.`,`He was a ${j[1]}: he knew that promise wasn’t yours to make.`)); }
    if(o.k==='honest'){ dr+=4; why.push(S2("Con alguien que conoce los procedimientos, la honestidad valía el doble.","With someone who knows the procedures, honesty was worth double.")); }
    if(o.k==='amenaza'){ dt-=5; dr-=3; why.push(S2("Conoce los procedimientos: sabía que era un farol, y eso te restó credibilidad.","He knows the procedures: he knew it was a bluff, and it cost you credibility.")); }
@@ -288,7 +296,7 @@ function evalOpt(o){
  if(P.substance&&['tiempo','autor','pausa','noplazo'].includes(o.k)){ dt-=3; why.push(S2("Había bebido o consumido: cada minuto que ganabas, el efecto bajaba.","He had been drinking or using: every minute you gained, the effect wore off.")); }
  if(o.hook){
    if(o.hook===P.hook){ dt-=5; dr+=6; const n=P.notes.find(x=>x.key===P.hook); if(n) why.push(S2("En el expediente: «"+n.t[0]+"» "+n.why[0],"In the dossier: “"+n.t[1]+"” "+n.why[1])); }
-   else if(o.hook==='hijos'&&P.estranged){ dt+=14; dr-=12; rep=S2("¿Mis hijos? Hace años que no me hablan. ¿Eso no lo pone en tu informe?","My kids? They haven’t spoken to me in years. Isn’t that in your file?"); const n=P.notes.find(x=>x.key==='estranged'); if(n) why.push(S2("En el expediente: «"+n.t[0]+"» "+n.why[0],"In the dossier: “"+n.t[1]+"” "+n.why[1])); o.det=1; }
+   else if(o.hook==='hijos'&&P.estranged){ dt+=14; dr-=12; rep=P.kids.length===1?S2("¿{k}? Hace años que no me habla. ¿Eso no lo pone en tu informe?","{k}? Hasn’t spoken to me in years. Isn’t that in your file?"):S2("¿Mis hijos? Hace años que no me hablan. ¿Eso no lo pone en tu informe?","My kids? They haven’t spoken to me in years. Isn’t that in your file?"); const n=P.notes.find(x=>x.key==='estranged'); if(n) why.push(S2("En el expediente: «"+n.t[0]+"» "+n.why[0],"In the dossier: “"+n.t[1]+"” "+n.why[1])); o.det=1; }
    else if(o.hook==='madre'&&P.keys.includes('sinmadre')){ dt+=10; dr-=8; rep=S2("¿Mi madre? Es la última persona que quiero que se meta en esto.","My mother? She’s the last person I want involved in this."); why.push(S2("En el expediente: no se habla con su madre. Era un detonante, no un ancla.","In the dossier: he doesn’t speak to his mother. A trigger, not an anchor.")); o.det=1; }
    else { dr=Math.round(dr*0.4); dt=Math.round(dt*0.4); why.push(S2("No era su punto débil: el argumento no le llegó.","That wasn’t what he cared about: the argument didn’t reach him.")); }
  }
@@ -305,14 +313,14 @@ const RG=[[S2("...Vale. Te escucho. Pero no me la juegues.","...OK. I’m listen
  [S2("Eso es. Exactamente eso.","That’s it. Exactly that."),S2("Por fin alguien que no me grita.","Finally someone who isn’t yelling at me."),S2("Llevo toda la mañana con un nudo aquí dentro.","I’ve had a knot in here all morning.")],
  [S2("Vale, {yo}. Contigo se puede hablar.","OK, {yo}. You I can talk to."),S2("No soy mala persona, ¿sabes? No quería esto.","I’m not a bad person, you know? I didn’t want this."),S2("(Se le oye respirar más despacio.)","(You hear slower breathing on the line.)")]];
 const RM=[S2("Ya... ¿Y qué?","Yeah... so what?"),S2("No sé si creerte.","Not sure I believe you."),S2("Hmm. Sigue.","Hmm. Go on."),S2("Eso dices tú.","So you say.")];
-const RB=[S2("¡No me digas lo que tengo que hacer!","Don’t tell me what to do!"),S2("¡Así no vamos a ningún lado!","This is going nowhere!"),S2("¡Te estás riendo de mí!","You’re laughing at me!"),S2("(Cuelga. Tardas varios minutos en recuperar la línea.)","(The line goes dead. It takes several minutes to get it back.)"),S2("¡Estoy harto de que me habléis así!","I’m sick of being spoken to like that!")];
+const RB=[S2("¡No me digas lo que tengo que hacer!","Don’t tell me what to do!"),S2("¡Así no vamos a ningún lado!","This is going nowhere!"),S2("¡Te estás riendo de mí!","You’re laughing at me!"),S2("(Cuelga. Tardas varios minutos en recuperar la línea.)","(The line goes dead. It takes several minutes to get it back.)"),S2("¡Estoy hart{o} de que me habléis así!","I’m sick of being spoken to like that!")];
 function hookOpt(h){
- const T_={hijos:P.estranged?S2("Piensa en tus hijos, {n}. Ellos no querrían verte así.","Think of your children, {n}. They wouldn’t want to see you like this."):S2("{k} quiere verte el sábado. Eso todavía está en tu mano.","{k} wants to see you on Saturday. That’s still in your hands."),
+ const T_={hijos:P.estranged?(P.kids.length===1?S2("Piensa en {k}, {n}. No querría verte así.","Think of {k}, {n}. They wouldn’t want to see you like this."):S2("Piensa en tus hijos, {n}. Ellos no querrían verte así.","Think of your children, {n}. They wouldn’t want to see you like this.")):((G.saidO||{})[L("{k} quiere verte el sábado. Eso todavía está en tu mano.","{k} wants to see you on Saturday. That’s still in your hands.")]?S2("{k} cumple años el sábado y te está esperando. Todavía puedes estar ahí.","{k} has a birthday on Saturday and is waiting for you. You can still be there."):S2("{k} quiere verte el sábado. Eso todavía está en tu mano.","{k} wants to see you on Saturday. That’s still in your hands.")),
   madre:P.hook==='madre'?S2("Tu madre está aquí fuera, {n}. Quiere verte salir bien. Hazlo por ella.","Your mother is out here, {n}. She wants to see you come out OK. Do it for her."):S2("Piensa en tu madre, {n}. Seguro que quiere verte salir bien de esta.","Think of your mother, {n}. She’d surely want to see you come out of this OK."),
   nieta:S2("{nieta} te va a esperar a la salida del colegio. Vamos a trabajar para que esto acabe bien.","{nieta} will be waiting for you outside school. Let’s work so this ends well."),
   perro:S2("{dog} te está esperando en casa. Vamos a buscar la forma de que esto acabe bien.","{dog} is waiting for you at home. Let’s find a way for this to end well."),
   oficio:S2("Toda una vida trabajando con tus manos, {n}. Eso no lo borra un mal día.","A whole life working with your hands, {n}. One bad day doesn’t erase that.")};
- const OK={hijos:S2("{k}... (se le quiebra la voz). Le prometí que iría a su cumpleaños.","{k}... (the voice cracks). I promised I’d be at the birthday."),madre:S2("(Larga pausa) ...Dile que estoy bien. Que lo siento.","(Long pause)... Tell her I’m OK. That I’m sorry."),nieta:S2("A las cinco. Siempre llego a las cinco. Nunca he llegado tarde.","At five. I always get there at five. I’ve never been late."),perro:S2("{dog} no tiene a nadie más. Nadie más le saca a pasear.","{dog} has nobody else. Nobody else walks him."),oficio:S2("(Ríe, cansado) Hice el portón de la iglesia del pueblo, ¿sabes? Sigue ahí.","(A tired laugh) I made the church door in my village, you know? It’s still there.")};
+ const OK={hijos:(G.saidO||{})[L("{k} quiere verte el sábado. Eso todavía está en tu mano.","{k} wants to see you on Saturday. That’s still in your hands.")]?S2("(Silencio largo) ...Quiero estar ahí. Quiero estar.","(Long silence)... I want to be there. I really do."):S2("{k}... (se le quiebra la voz). Le prometí que iría a su cumpleaños.","{k}... (the voice cracks). I promised I’d be at the birthday."),madre:S2("(Larga pausa) ...Dile que estoy bien. Que lo siento.","(Long pause)... Tell her I’m OK. That I’m sorry."),nieta:S2("A las cinco. Siempre llego a las cinco. Nunca he llegado tarde.","At five. I always get there at five. I’ve never been late."),perro:S2("{dog} no tiene a nadie más. Nadie más le saca a pasear.","{dog} has nobody else. Nobody else walks him."),oficio:S2("(Ríe, cansad{o}) Hice el portón de la iglesia del pueblo, ¿sabes? Sigue ahí.","(A tired laugh) I made the church door in my village, you know? It’s still there.")};
  return O(h==='oficio'?'digna':'gancho',T_[h][0],T_[h][1],{hook:h,ok:OK[h]});
 }
 function M_contacto(){
@@ -348,7 +356,7 @@ function M_desahogo(){
   O('precoz',PRE[P.motive][0],PRE[P.motive][1])];
  if(RND()<0.5) o.push(O('pausa',"(Le dejas terminar y guardas unos segundos de silencio.)","(You let him finish and stay silent for a few seconds.)",{ok:S2("...¿Sigues ahí? Vale. Es que nunca se lo había contado a nadie.","...You still there? OK. It’s just I’ve never told anyone this.")}));
  if(RND()<0.6) o.push(O('espejo',v[2],v[3],{ok:S2("Eso. Y lo peor es que nadie te pregunta cómo estás.","Yes. And the worst part is nobody asks how you are.")}));
- if(P.trigger==='loco'||RND()<0.25) o.push(O('juicio',"¿Estás tomando tu medicación, {n}?","Are you taking your medication, {n}?",{trig:'loco',trigRep:S2("¡¿Ves?! ¡Ya estamos! ¡Para vosotros soy un loco y punto!","See?! There we go! To you lot I’m just a nutcase!")}));
+ if(P.trigger==='loco'||RND()<0.25) o.push(O('juicio',"¿Estás tomando tu medicación, {n}?","Are you taking your medication, {n}?",{trig:'loco',trigRep:S2("¡¿Ves?! ¡Ya estamos! ¡Para vosotros soy {un} loc{o} y punto!","See?! There we go! To you lot I’m just a nutcase!")}));
  return {say:S2(v[0],v[1]),o:o,n:4,need:['etiq','espejo']};
 }
 function M_exigencia(){
@@ -374,9 +382,9 @@ function M_exigencia(){
    O('autor',"Eso no depende de mí; tengo que consultarlo.","That’s not my call; I have to check."),
    O('promesa',"Te prometo que mañana sales en todos los periódicos.","I promise you’ll be in every paper tomorrow.",{prom:1}),
    O('nono',"Nadie va a venir a grabarte.","Nobody’s coming to film you.")];
- else o=[O('calib',"No voy a meter a nadie más en esto. Pero cuéntame: ¿qué le dirías?","I’m not bringing anyone else into this. But tell me: what would you say to her?",{ok:S2("Que me dejó sin nada. Que me quitó a los niños. (Se calla.)","That she left me with nothing. Took the kids. (Silence.)")}),
-   O('tpi',"Vale, la busco y te la pongo.","OK, I’ll find her and put her on.",{trig:'expareja',trigRep:S2("¡Que se ponga! ¡Que me lo explique delante de todos!","Put her on! Let her explain herself in front of everyone!")}),
-   O('juicio',"Con una orden de alejamiento, ¿todavía quieres hablar con ella?","With a restraining order, you still want to talk to her?",{trig:'expareja',trigRep:S2("¡Esa orden es mentira! ¡Todo es mentira!","That order is a lie! It’s all lies!")}),
+ else o=[O('calib',"No voy a meter a nadie más en esto. Pero cuéntame: ¿qué le dirías?","I’m not bringing anyone else into this. But tell me: what would you say to {exher}?",{ok:S2("Que me dejó sin nada. Que me quitó a los niños. (Se calla.)","That {exshe} left me with nothing. Took the kids. (Silence.)")}),
+   O('tpi',"Vale, {exla} busco y te {exla} pongo.","OK, I’ll find {exher} and put {exher} on.",{trig:'expareja',trigRep:S2("¡Que se ponga! ¡Que me lo explique delante de todos!","Put {exher} on! Let {exher} explain {exherself} in front of everyone!")}),
+   O('juicio',"Con una orden de alejamiento, ¿todavía quieres hablar con {exella}?","With a restraining order, you still want to talk to {exher}?",{trig:'expareja',trigRep:S2("¡Esa orden es mentira! ¡Todo es mentira!","That order is a lie! It’s all lies!")}),
    O('nono',"Ni lo sueñes.","Not a chance.")];
  return {say:SAY[t],o:o,n:RND()<0.5?4:3,need:['calib','autor','tiempo']};
 }
@@ -396,7 +404,7 @@ function M_gancho(){
  else if(h==='nieta') say=S2(`Mañana tenía que recoger a ${P.nieta.n} del colegio. A las cinco.`,`Tomorrow I was supposed to pick ${P.nieta.n} up from school. At five.`);
  else if(h==='perro') say=S2(`${P.dog} lleva solo desde esta mañana. No ha comido.`,`${P.dog} has been alone since this morning. He hasn’t eaten.`);
  else if(h==='oficio') say=S2("Cuarenta años trabajando con las manos, y mira cómo acabo.","Forty years working with my hands, and look how I end up.");
- else if(P.estranged&&RND()<0.5) say=S2("Mis hijos ni se van a enterar. Hace años que no saben nada de mí.","My kids won’t even find out. They haven’t heard from me in years.");
+ else if(P.estranged&&RND()<0.5) say=P.kids.length===1?S2("{k} ni se va a enterar. Hace años que no sabe nada de mí.","{k} won’t even find out. Hasn’t heard from me in years."):S2("Mis hijos ni se van a enterar. Hace años que no saben nada de mí.","My kids won’t even find out. They haven’t heard from me in years.");
  else say=S2("No tengo a nadie. A nadie le va a importar lo que me pase.","I’ve got nobody. Nobody will care what happens to me.");
  if(h) o.push(hookOpt(h)); else if(P.estranged) o.push(hookOpt('hijos')); else if(P.keys.includes('sinmadre')) o.push(hookOpt('madre'));
  o.push(O('etiq',h?"Suena a que te pesa mucho pensar en eso ahora mismo.":"Suena a que te sientes muy sol{o}.",h?"It sounds like thinking about that weighs on you a lot right now.":"It sounds like you feel very alone.",{ok:S2("...Mucho. Más de lo que crees.","...A lot. More than you think.")}));
@@ -405,8 +413,8 @@ function M_gancho(){
  return {say:say,o:o,n:3,need:['gancho','digna','etiq','yo']};
 }
 function M_rehen(){
- const hc=P.hc, c=hc.cond, a=hc.f?'a':'o', he=hc.f?'she':'he', his=hc.f?'her':'his';
- const say=S2(`${hc.n} dice que ${c[4]} ${c[0]} y que necesita su ${c[2]}. Está muy pálid${a}.`,`${hc.n} says ${he} ${c[5]} ${c[1]} and needs ${his} ${c[3]}. ${hc.f?'She':'He'} looks very pale.`);
+ const hc=P.hc, c=hc.cond, a=hc.f?'a':'o', he='{hche}', his='{hchis}';
+ const say=S2(`${hc.n} dice que ${c[4]} ${c[0]} y que necesita su ${c[2]}. Está muy pálid${a}.`,`${hc.n} says ${he} ${c[5]} ${c[1]} and needs ${his} ${c[3]}. {hcHe} looks very pale.`);
  const o=[O('qpq',"Te propongo algo: dejas salir a {hc} y yo te mando agua y algo de comer para los demás.","Here’s a deal: you let {hc} out and I send in water and something to eat for the others.",{rel:hc,ok:S2("...Vale. Que salga {hc}. Pero manda el agua.","...OK. {hc} can go. But send the water.")}),
   O('calib',`¿Cómo podemos hacer para que {hc} tenga su ${c[2]}?`,`How can we get {hc} ${his} ${c[3]}?`,{rel:hc,ok:S2("...Mejor que salga. No quiero problemas con eso.","...Better they go out. I don’t want trouble over that.")}),
   O('amenaza',"Si le pasa algo a {hc}, será culpa tuya.","If anything happens to {hc}, it’s on you."),
@@ -433,7 +441,7 @@ function M_desesperanza(){
 }
 function M_consecuencias(){
  const say=pick([S2("¿Y qué me pasa si salgo? Dímelo claro.","And what happens to me if I come out? Straight answer."),S2("Si salgo, ¿cuánto me cae? No me dores la píldora.","If I come out, how long do I get? Don’t sugar-coat it.")]);
- const o=[O('honest',"No te voy a prometer lo que decida un juez. Lo que sí te digo: ahora mismo nadie está herido, y eso cuenta mucho. Y voy a estar ahí cuando salgas.","I won’t promise what a judge will decide. What I can tell you: right now nobody’s hurt, and that counts for a lot. And I’ll be there when you come out.",{ok:S2("...Nadie está herido. Eso es verdad.","...Nobody’s hurt. That’s true.")}),
+ const o=[((G.saidO||{})[L("No te voy a prometer lo que decida un juez. Lo que sí te digo: ahora mismo nadie está herido, y eso cuenta mucho. Y voy a estar ahí cuando salgas.","I won’t promise what a judge will decide. What I can tell you: right now nobody’s hurt, and that counts for a lot. And I’ll be there when you come out.")]?O('honest',"Te lo digo claro: eso lo decide un juez, no yo, y no te voy a engañar. Lo que cuenta a tu favor es que nadie ha salido herido. Y voy a estar contigo cuando salgas.","Straight answer: a judge decides that, not me, and I won’t lie to you. What counts in your favour is that nobody’s been hurt. And I’ll be with you when you come out.",{ok:S2("...Vale. Por lo menos no me mientes.","...OK. At least you’re not lying to me.")}):O('honest',"No te voy a prometer lo que decida un juez. Lo que sí te digo: ahora mismo nadie está herido, y eso cuenta mucho. Y voy a estar ahí cuando salgas.","I won’t promise what a judge will decide. What I can tell you: right now nobody’s hurt, and that counts for a lot. And I’ll be there when you come out.",{ok:S2("...Nadie está herido. Eso es verdad.","...Nobody’s hurt. That’s true.")})),
   O('promesa',"No te va a pasar nada, te lo prometo.","Nothing will happen to you, I promise.",{prom:1}),
   O('amenaza',"Te van a caer muchos años de cárcel, eso seguro.","You’re going to get a lot of years in prison, that’s for sure.",{trig:'carcel',trigRep:S2("¡A la cárcel no vuelvo! ¡Ni lo menciones!","I’m not going back to prison! Don’t even say it!")})];
  if(inside().length) o.push(O('digna',"Hasta ahora has cuidado de {h}. Nadie ha salido herido por ti. Eso se va a saber.","So far you’ve looked after {h}. Nobody’s been hurt because of you. That will be known.",{ok:S2("Yo no quería hacer daño a nadie. Nunca.","I never wanted to hurt anyone. Never.")}));
@@ -481,7 +489,7 @@ function M_salida(){
  const o=[O('plan',ins?"Lo hacemos juntos y despacio: primero salen "+hh()+", luego tú, con las manos vacías y a la vista. Yo te voy diciendo cada paso.":"Lo hacemos juntos y despacio: sales con las manos vacías y a la vista. Yo te voy diciendo cada paso.",ins?"We do it together and slowly: first "+hh()+" come out, then you, hands empty and visible. I’ll talk you through every step.":"We do it together and slowly: you come out with your hands empty and visible. I’ll talk you through every step.",{exit:1,ok:S2("...Vale. Vale. Dime cuándo.","...OK. OK. Tell me when.")}),
   O('prisa',"Sal ya y no hagas tonterías.","Come out now and don’t do anything stupid."),
   O('cargada',"Entonces, ¿te rindes?","So, you’re surrendering?")];
- if(!G.sumDone) o.push(O('resumen',"A ver si lo he entendido: estás agotad{o}, no querías que esto pasara y quieres salir de aquí entero. ¿Es así?","Let me see if I’ve got it: you’re exhausted, you never wanted this to happen and you want to walk out of here in one piece. Is that it?",{sum:1,ok:S2("...Eso es. Eso es.","...That’s right. That’s right.")}));
+ if(!G.sumDone) o.push(O('resumen',"A ver si lo he entendido: estás agotad{o}, no querías que esto pasara y quieres salir de aquí enter{o}. ¿Es así?","Let me see if I’ve got it: you’re exhausted, you never wanted this to happen and you want to walk out of here in one piece. Is that it?",{sum:1,ok:S2("...Eso es. Eso es.","...That’s right. That’s right.")}));
  return {say:say,o:o,n:3,need:['plan','resumen']};
 }
 const MOM={contacto:M_contacto,desahogo:M_desahogo,exigencia:M_exigencia,plazo:M_plazo,gancho:M_gancho,rehen:M_rehen,trampa:M_trampa,desesperanza:M_desesperanza,consecuencias:M_consecuencias,reclamo:M_reclamo,medios:M_medios,familiar:M_familiar,ruido:M_ruido,salida:M_salida};
@@ -510,9 +518,11 @@ function nextType(ex){
 }
 function buildTurn(){
  G.saids=G.saids||{}; const ex={}; let type, m;
- for(let k=0;k<7;k++){ type=nextType(ex); m=MOM[type](); const key=T(m.say); if(!G.saids[key]||type==='salida'||type==='reclamo'||k===6) break; ex[type]=1; }
+ const SO0=G.saidO||{};
+ for(let k=0;k<7;k++){ type=nextType(ex); m=MOM[type](); const key=T(m.say); const gd=m.o.filter(o=>evalOpt(Object.assign({},o)).q==='good'); const stale=gd.length&&gd.every(o=>SO0[T(o.t)]); /* si la única buena ya la dijiste, mejor otro momento */ if(((!G.saids[key]&&!stale)||type==='salida'||type==='reclamo'||k===6)) break; ex[type]=1; }
  G.saids[T(m.say)]=1; G.lastType=type; G.used[type]=(G.used[type]||0)+1;
- const ev=m.o.map(o=>({o:o,e:evalOpt(Object.assign({},o))}));
+ let ev=m.o.map(o=>({o:o,e:evalOpt(Object.assign({},o))}));
+ /* no ofrecer otra vez una frase que ya dijiste (si quedan opciones de sobra y alguna buena) */ { const SO=G.saidO||{}; const fr=ev.filter(x=>!SO[T(x.o.t)]); if(fr.length>=Math.min(2,ev.length)&&(fr.some(x=>x.e.q==='good')||!ev.some(x=>x.e.q==='good'))) ev=fr; }
  let goods=shuf(ev.filter(x=>x.e.q==='good')), rest=shuf(ev.filter(x=>x.e.q!=='good'));
  const n=Math.min(m.n,ev.length); const sel=[];
  if(goods.length) sel.push(goods.shift()); else { const nd=rest.find(x=>m.need&&m.need.includes(x.o.k)); if(nd){ sel.push(nd); rest=rest.filter(x=>x!==nd); } }
@@ -522,7 +532,7 @@ function buildTurn(){
  m.opts=shuf(sel.map(x=>x.o)); m.type=type; G.cur=m;
 }
 function choose(i){
- const m=G.cur, o=m.opts[i]; const e=evalOpt(o); const ph0=phase();
+ const m=G.cur, o=m.opts[i]; const e=evalOpt(o); const ph0=phase(); G.saidO=G.saidO||{}; G.saidO[T(o.t)]=1;
  const rank=x=>{ const v=evalOpt(Object.assign({},x)); return v.dr-v.dt; };
  const best=m.opts.slice().sort((a,b)=>rank(b)-rank(a))[0];
  let dt=e.dt, dr=e.dr, reply=e.rep;
@@ -536,7 +546,7 @@ function choose(i){
  if(G.trust>50) G.tension=clamp(G.tension-2,0,100);
  if(G.trust<15) G.tension=clamp(G.tension+2,0,100);
  const ph1=phase();
- if(!reply){ if(e.q==='good'&&o.ok) reply=o.ok; else if(e.q==='good') reply=pick(RG[ph1>=3?2:ph1>=1?1:0]); else if(e.q==='mid') reply=pick(RM); else reply=pick(RB); }
+ if(!reply){ /* respuesta genérica sin repetir la misma en la partida si hay otras */ const pk=L_=>{ G.usedR=G.usedR||{}; const f=L_.filter(x=>!G.usedR[T(x)]); const r=pick(f.length?f:L_); G.usedR[T(r)]=1; return r; }; if(e.q==='good'&&o.ok) reply=o.ok; else if(e.q==='good') reply=pk(RG[ph1>=3?2:ph1>=1?1:0]); else if(e.q==='mid') reply=pk(RM); else reply=pk(RB); }
  if(o.sum&&e.q!=='bad') G.sumDone=1;
  if(o.tip) reply=S2("(Hablas aparte con la familia; la línea con {n} sigue abierta.)","(You talk to the family separately; the line to {n} stays open.)");
  const rec={turn:G.turn,mins:G.mins,type:m.type,say:fill(m.say),cmd:!!m.cmd,said:fill(o.t),k:o.k,q:e.q,dt:dt,dr:dr,why:e.why,det:!!o.det,
@@ -575,7 +585,7 @@ function apEval(ap){
  if(ap==='escucha'){ if(P.heard||P.despair>=1||P.impulsive>=2) return [1,-5,8,S2("Encajaba: "+(P.heard?"siente que nadie le escucha":P.despair>=1?"había señales de desesperanza":"era joven y estaba desbordado")+". Escuchar es el primer peldaño de la escalera del FBI.","It fitted: "+(P.heard?"he feels nobody listens":P.despair>=1?"there were signs of hopelessness":"young and overwhelmed")+". Listening is the first step of the FBI stairway.")];
    return [0,-2,5,S2("Siempre es una base segura: escuchar es el primer peldaño de la escalera del FBI.","Always a safe base: listening is the first step of the FBI stairway.")]; }
  if(ap==='practico'){ if(P.inst||P.savvy) return [1,-3,8,S2("Encajaba: "+(P.savvy?"conoce los procedimientos y respeta lo concreto":"era un caso instrumental: quiere algo concreto")+".","It fitted: "+(P.savvy?"he knows procedures and respects straight talk":"an instrumental case: he wants something concrete")+".")];
-   if(P.heard||P.despair>=2) return [-1,3,-2,S2("No encajaba: necesitaba sentirse escuchado antes de hablar de soluciones.","It didn’t fit: he needed to feel heard before talking solutions.")];
+   if(P.heard||P.despair>=2) return [-1,3,-2,S2("No encajaba: necesitaba sentirse escuchad{o} antes de hablar de soluciones.","It didn’t fit: he needed to feel heard before talking solutions.")];
    return [0,0,3,S2("Neutral: útil más adelante, en la fase de influencia.","Neutral: useful later, in the influence stage.")]; }
  return [-1,10,-6,S2("No encajaba: la doctrina moderna (FBI desde 1990, escalera del cambio) parte de la escucha, no de la presión.","It didn’t fit: modern doctrine (FBI since 1990, the stairway) starts with listening, not pressure.")];
 }
@@ -834,16 +844,16 @@ function debrief(){
  const QN={good:S2("Bien","Good"),mid:S2("Regular","So-so"),bad:S2("Mal","Bad")};
  const keys=P.notes.map(n=>'<li><b>'+esc(T(n.t))+'</b><br><i>'+esc(T(n.why))+'</i></li>');
  if(P.despair>=2) keys.push('<li><b>'+esc(T(P.health))+'</b><br><i>'+L('Señales de desesperanza: la presión no funcionaba y había que preguntar directamente por el riesgo.','Signs of hopelessness: pressure wouldn’t work and you had to ask directly about the risk.')+'</i></li>');
- if(P.heard) keys.push('<li><b>'+esc(T(P.motTxt))+'</b><br><i>'+L('Un agravio: necesitaba sentirse escuchado antes que cualquier solución.','A grievance: he needed to feel heard before any solution.')+'</i></li>');
+ if(P.heard) keys.push('<li><b>'+esc(T(P.motTxt))+'</b><br><i>'+fill(S2('Un agravio: necesitaba sentirse escuchad{o} antes que cualquier solución.','A grievance: he needed to feel heard before any solution.'))+'</i></li>');
  if(P.inst&&!P.heard) keys.push('<li><b>'+esc(T(P.moodTxt))+'</b><br><i>'+L('Caso instrumental (busca algo concreto): lo práctico, los intercambios y la honestidad pesaban más que lo emocional.','Instrumental case (wants something concrete): practical moves, exchanges and honesty mattered more than emotion.')+'</i></li>');
  const turns=G.log.map(r=>{ const tc=TECH[r.k]; return '<div class="ngturn '+r.q+'"><div class="h"><span>'+L('Turno','Turn')+' '+r.turn+' · '+Math.floor(r.mins/60)+':'+String(r.mins%60).padStart(2,'0')+' h</span><span>'+L('Tensión','Tension')+' '+(r.dt>0?'+':'')+r.dt+' · '+L('Confianza','Trust')+' '+(r.dr>0?'+':'')+r.dr+'</span></div>'+
    '<div class="q1">'+(r.cmd?L('Mando','Command'):esc(P.name))+': «'+TXT(r.sayT)+'»</div><div class="q2">'+L('Tú','You')+': «'+TXT(r.saidT)+'»</div>'+
-   '<p><span class="ngtag '+r.q+'">'+esc(T(QN[r.q]))+'</span><b>'+esc(T(tc[0]))+'</b> · <span style="color:var(--mu);font-size:12px">'+esc(T(SRC[tc[2]]))+'</span></p><p>'+esc(T(tc[1]))+'</p>'+
+   '<p><span class="ngtag '+r.q+'">'+esc(T(QN[r.q]))+'</span><b>'+esc(T(tc[0]))+'</b> · <span style="color:var(--mu);font-size:12px">'+esc(T(SRC[tc[2]]))+'</span></p><p>'+TXT(tc[1])+'</p>'+
    r.why.map(w=>'<p>· '+TXT(w)+'</p>').join('')+(r.best?'<p class="bt">'+L('Mejor opción: ','Better option: ')+'«'+TXT(r.best.t)+'» ('+esc(T(TECH[r.best.k][0]))+')</p>':'')+'</div>'; }).join('');
  const h='<div class="ngw" data-noi18n>'+crumbs()+'<h1>'+L('Informe','Debrief')+'</h1>'+
   '<div class="ngres '+E[1]+'"><b class="big">'+esc(T(E[0]))+'</b><p>'+esc(T(endText()))+'</p></div>'+
   '<div class="ngkp"><div><b>'+sc+'</b><span>/100 · '+esc(T(rank))+'</span></div><div><b>'+Math.floor(G.mins/60)+':'+String(G.mins%60).padStart(2,'0')+'</b><span>'+L('horas de negociación','hours negotiating')+'</span></div><div><b>'+ng+' / '+nb+'</b><span>'+L('respuestas buenas / malas','good / bad replies')+'</span></div><div><b>'+(ph+1)+'/5</b><span>'+esc(T(PH[ph]))+'</span></div></div>'+
-  '<div class="ngsec">'+L('Tu enfoque','Your approach')+'</div><p><b>'+esc(T(APS[G.ap][0]))+'</b>: '+esc(T(G.apNote))+'</p>'+
+  '<div class="ngsec">'+L('Tu enfoque','Your approach')+'</div><p><b>'+esc(T(APS[G.ap][0]))+'</b>: '+TXT(G.apNote)+'</p>'+
   '<div class="ngsec">'+L('Lo que importaba del expediente','What mattered in the dossier')+'</div><ul class="ngkey">'+(keys.join('')||'<li>'+L('Un perfil sin anclas ni detonantes claros: la escucha era la única llave.','A profile with no clear anchors or triggers: listening was the only key.')+'</li>')+'</ul>'+
   '<div class="ngsec">'+L('Turno a turno','Turn by turn')+'</div>'+turns+
   (cs?'<div class="ngsec">'+L('Caso real parecido','A similar real case')+'</div><div class="ngcase"><b class="t">'+esc(T(cs.c.t))+'</b><p>'+esc(T(cs.c.s))+'</p>'+(cs.sh.length?'<p style="font-size:14px;color:var(--mu)">'+L('Se parece en: ','Similar in: ')+cs.sh.map(t=>esc(T(TAGTXT[t]))).join(', ')+'.</p>':'')+'<p style="font-size:13px">'+L('Fuente: ','Source: ')+'<a href="'+esc(cs.c.u)+'" target="_blank" rel="noopener">'+esc(cs.c.src)+' ›</a></p></div>':'')+
