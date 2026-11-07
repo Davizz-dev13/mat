@@ -418,7 +418,7 @@ function airKit(a,W){
     else if(w.k==='gun_air'&&!k.gun){ var g=null; GUNT.forEach(function(q){ if(!g&&q[0].test(nm)) g=q; }); k.gun={w:w,n:g?g[3]:w.n,rounds:g?g[1]:300,rate:g?g[2]:2000,src:g?'wiki':'est',km:0.9}; }
   });
   k.cm=era(a)>1965&&a.cat==='aviones'?{fl:30,ch:30}:(a.cat==='helicopteros'&&era(a)>1975?{fl:24,ch:0}:{fl:0,ch:0});
-  return k;
+  return loAir(k,a,W);
 }
 function airTurn(a){ return turnRate(a)*(a.cat==='helicopteros'?1:1); }
 function AIRsim(A,B,WA,WB,seed){
@@ -590,9 +590,9 @@ function gndKit(a,W){ var main=null,atgm=null,ac=null, F=a.F||{};
   var ac_=Object.assign({},a,{cal:cal||a.cal});
   var pm=main?(main.penmm||pen(main,ac_)):0, pmsrc=main&&main.penmm?'ficha':'est';
   var pa=atgm?(atgm.penmm||pen(atgm,a)):0, pasrc=atgm&&atgm.penmm?'ficha':'est';
-  return {main:main,heat:heat,atgm:atgm,ac:ac,auto:auto,rl:auto?7.5:(tank?7:4),rlsrc:auto?'auto':'est',ammo:ammo,ammosrc:ammosrc,atg:atgm?4:0,smoke:2,cal:cal,
+  return loGnd({main:main,heat:heat,atgm:atgm,ac:ac,auto:auto,rl:auto?7.5:(tank?7:4),rlsrc:auto?'auto':'est',ammo:ammo,ammosrc:ammosrc,atg:atgm?4:0,smoke:2,cal:cal,
     therm:therm,thsrc:thF?'ficha':'est',fcs:fcs,fcssrc:fcsF?'ficha':'est',v:vmax*0.45/3.6,vmax:vmax,ke:af.ke,ce:af.ce,armsrc:af.src,ceest:af.ceest,armq:af.q,arm:af.ke,
-    pm:Math.round(pm),pmsrc:pmsrc,pa:Math.round(pa),pasrc:pasrc,rng:(main&&main.k==='ke'&&fcs)?3000:2200}; }
+    pm:Math.round(pm),pmsrc:pmsrc,pa:Math.round(pa),pasrc:pasrc,rng:(main&&main.k==='ke'&&fcs)?3000:2200},W); }
 function GNDsim(A,B,WA,WB,seed,night){
   var rnd=mkRng(seed); R=rnd; var MW=3000, MH=1900;
   var S={mode:'suelo',gnd:true,T:0,U:[],P:[],FX:[],ev:[],over:null,seed:seed,first:null,reasons:[],night:!!night,MW:MW,MH:MH,smk:[],
@@ -610,7 +610,7 @@ function GNDsim(A,B,WA,WB,seed,night){
   function inWood(x,y){ return woods.some(function(q){return Math.hypot(x-q.x,y-q.y)<q.r;}); }
   function los(a,b){ var ea=elev(a.x,a.y)+2.8, eb=elev(b.x,b.y)+(b.hd_?2.4:2.2), n=60; for(var i=1;i<n;i++){ var f=i/n, x=a.x+(b.x-a.x)*f, y=a.y+(b.y-a.y)*f; if(elev(x,y)>ea+(eb-ea)*f+0.3) return false; if(inHouse(x,y)) return false; if(f>0.04&&f<0.96&&inWood(x,y)) return false; if(S.smk.some(function(s){return Math.hypot(x-s.x,y-s.y)<s.r;})) return false; } return true; }
   S.elev=elev; S.los=los;
-  function mk(i,a,W,x,y){ var K=gndKit(a,W); return {i:i,a:a,K:K,sn:shortN(a),x:x,y:y,hd:0,tur:0,hp:1,alive:true,rl:2+rnd()*2,state:'move',spot:null,hd_:false,seen:false,lastSeen:-99,shots:0,ammo:K.ammo,atg:K.atg,smoke:K.smoke,mob:1,trail:[],agg:rnd()}; }
+  function mk(i,a,W,x,y){ var K=gndKit(a,W); return {i:i,a:a,K:K,sn:shortN(a),x:x,y:y,hd:0,tur:0,hp:1,alive:true,rl:2+rnd()*2,state:'move',spot:null,hd_:false,seen:false,lastSeen:-99,shots:0,ammo:K.ammo,atg:K.atg,smoke:K.smoke,mob:1,trail:[],agg:rnd(),mix:K.mix?Object.assign({},K.mix):null,rd:{}}; }
   function spawn(side){ for(var k=0;k<80;k++){ var x=side?MW-200-rnd()*500:200+rnd()*500, y=side?150+rnd()*600:MH-150-rnd()*600; if(!inHouse(x,y,12)&&!inWood(x,y)) return [x,y]; } return side?[MW-300,300]:[300,MH-300]; }
   var pa=spawn(0), pb=spawn(1); var a=mk(0,A,WA,pa[0],pa[1]), b=mk(1,B,WB,pb[0],pb[1]); S.U=[a,b];
   a.hd=a.tur=Math.atan2(b.y-a.y,b.x-a.x); b.hd=b.tur=Math.atan2(a.y-b.y,a.x-b.x);
@@ -624,18 +624,20 @@ function GNDsim(A,B,WA,WB,seed,night){
   function pick(u,t,closer){ var L=spots(u,t), dT=dist(u,t), best=null, bs=1e9; L.forEach(function(s){ var dU=Math.hypot(s.x-u.x,s.y-u.y), dE=Math.hypot(s.x-t.x,s.y-t.y); if(dU<40) return; if(closer&&dE>dT-150) return; if(dE<500) return;
       var sc=dU*0.8+Math.abs(dE-(u.K.rng*0.75))*0.5+(s.hd?0:400)+rnd()*250; if(sc<bs){ bs=sc; best=s; } }); return best; }
   function hullDown(u,t){ var s=u.spot; if(!s||!s.hd||u.state!=='hold') return false; var nb=Math.atan2(u.y-s.h.y,u.x-s.h.x), bt=brg(u,t); return Math.abs(ang(bt-nb))<0.9&&dist(u,{x:s.h.x,y:s.h.y})<s.h.r*0.75; }
+  function gR(u){ if(!u.mix) return u.K.rng; var r=0; Object.keys(u.mix).forEach(function(k){ if(u.mix[k]>0&&u.K.R[k].rng>r) r=u.K.R[k].rng; }); return r; }
   function fire(u,t,kind){ var d=dist(u,t), w=kind==='atgm'?u.K.atgm:(u.K.main.k==='ke'||!u.K.heat?u.K.main:u.K.main);
+    var rd=null; if(kind!=='atgm'&&u.mix){ /* el cargador mete lo que lleva a mano: más probable el tipo del que hay más, y el que sirve contra ese blindaje */ var ks=Object.keys(u.mix).filter(function(k){return u.mix[k]>0&&u.K.R[k].rng>=d;}); if(!ks.length) ks=Object.keys(u.mix).filter(function(k){return u.mix[k]>0;}); var tw=0, wt=ks.map(function(k){ var am=(k==='heat'?t.K.ce:t.K.ke)||1, x=u.mix[k]*(u.K.R[k].pm>=am?1:0.3); tw+=x; return x; }); var q=rnd()*tw; for(var ii=0;ii<ks.length;ii++){ q-=wt[ii]; if(q<=0||ii===ks.length-1){ rd=ks[ii]; break; } } if(rd){ u.mix[rd]--; u.rd[rd]=(u.rd[rd]||0)+1; w=u.K.R[rd].w; } }
     var st=S.st[u.i]; st.sh++; u.shots++; if(kind==='atgm'){ u.atg--; u.rl=12; } else { u.ammo--; u.rl=u.K.rl*(0.92+rnd()*0.16)/(u.mob<1?1.3:1); }
     if(S.first==null){ S.first=u.i; S.firstD=d; S.firstW={w:{n:w.n},km:d/1000,src:'est'}; }
     var mv=u.state==='move', tmv=t.state==='move', thd=t.hd_;
     var p=kind==='atgm'?0.82:Math.max(0.25,0.95-0.17*(d/1000)); if(!u.K.fcs) p-=0.15; if(mv) p*=u.K.fcs?0.65:0.35; if(tmv) p*=0.75; if(thd) p*=0.6; if(S.night&&!u.K.therm) p*=0.6;
-    var P={x:u.x,y:u.y,own:u,tgt:t,kind:kind,w:w,t:0,d:d,v:kind==='atgm'?300:1650,hitp:p,hd:brg(u,t),trail:[]};
+    var P={x:u.x,y:u.y,own:u,tgt:t,kind:kind,w:w,t:0,d:d,v:kind==='atgm'?300:1650,hitp:p,hd:brg(u,t),trail:[],pm:rd?u.K.R[rd].pm:null};
     S.P.push(P); S.FX.push({k:'flash',x:u.x+Math.cos(u.tur)*8,y:u.y+Math.sin(u.tur)*8,t:0,life:0.35});
     log('El '+u.sn+(kind==='atgm'?' lanza un misil '+w.n.replace(/^Misil /,'')+' a ':' dispara con el cañón ('+short(w.n.replace(/\s*\(.*$/,''),22)+') a ')+fmtD(d)+(mv?' en marcha':''),u.sn+(kind==='atgm'?' fires a '+w.n.replace(/^Misil /,'')+' missile at ':' fires its main gun ('+short(wN(w.n).replace(/\s*\(.*$/,''),22)+') at ')+fmtD(d)+(mv?' on the move':''),u.i?'r':'b'); }
   function impact(P){ var u=P.own, t=P.tgt, st=S.st[u.i]; if(!t.alive) return;
     if(rnd()>P.hitp){ S.FX.push({k:'dust',x:t.x+(rnd()-0.5)*40,y:t.y+(rnd()-0.5)*40,t:0,life:1.2}); log('El disparo del '+u.sn+' falla'+(t.hd_?': el '+t.sn+' solo asoma la torre':(t.state==='move'?': el '+t.sn+' está en movimiento':'')),u.sn+'’s shot misses'+(t.hd_?': only the '+t.sn+'’s turret shows':(t.state==='move'?': the '+t.sn+' is moving':'')),u.i?'r':'b'); return; }
     st.hit++; var rel=Math.abs(ang(brg(t,u)-t.hd)), z=t.hd_?ZONES[0]:rel<0.87?ZONES[0]:rel<2.27?ZONES[1]:ZONES[2];
-    var isCE=P.kind==='atgm'||(P.w&&P.w.k==='heat'), Pm=P.kind==='atgm'?u.K.pa:u.K.pm, Am=Math.round((isCE?t.K.ce:t.K.ke)*z[2]), wh=t.hd_?LL2('en la torre','on the turret'):LL2('en '+z[3],'on the '+({frontal:'front',lateral:'side',trasera:'rear'})[z[0]]);
+    var isCE=P.kind==='atgm'||(P.w&&P.w.k==='heat'), Pm=P.kind==='atgm'?u.K.pa:(P.pm!=null?P.pm:u.K.pm), Am=Math.round((isCE?t.K.ce:t.K.ke)*z[2]), wh=t.hd_?LL2('en la torre','on the turret'):LL2('en '+z[3],'on the '+({frontal:'front',lateral:'side',trasera:'rear'})[z[0]]);
     if(z[0]!=='frontal') st.flank++;
     S.FX.push({k:'hit',x:t.x,y:t.y,t:0,life:0.9});
     if(Pm>=Am){ st.pen++; var kill=rnd()<0.62; t.hp-=kill?1:0.45;
@@ -659,7 +661,7 @@ function GNDsim(A,B,WA,WB,seed,night){
       u.rl-=dt;
       if(see&&u.rl<=0&&S.T>=(u.react||0)&&Math.abs(ang(brg(u,t)-u.tur))<0.05){
         if(u.atg>0&&d>2400) fire(u,t,'atgm');
-        else if(u.ammo>0&&u.K.main&&d<=u.K.rng&&(u.state==='hold'||u.K.fcs)) { fire(u,t,'gun'); if(u.state==='hold'&&u.shots%2===0&&rnd()<0.35+u.agg*0.3){ var sp2=pick(u,t,u.agg>0.6); if(sp2){ u.spot=sp2; u.state='move'; log('El '+u.sn+' dispara y cambia de posición','The '+u.sn+' shoots and moves to new cover',u.i?'r':'b'); } } } }
+        else if(u.ammo>0&&u.K.main&&d<=gR(u)&&(u.state==='hold'||u.K.fcs)) { fire(u,t,'gun'); if(u.state==='hold'&&u.shots%2===0&&rnd()<0.35+u.agg*0.3){ var sp2=pick(u,t,u.agg>0.6); if(sp2){ u.spot=sp2; u.state='move'; log('El '+u.sn+' dispara y cambia de posición','The '+u.sn+' shoots and moves to new cover',u.i?'r':'b'); } } } }
       if(!u.trail.length||Math.hypot(u.x-u.trail[u.trail.length-1][0],u.y-u.trail[u.trail.length-1][1])>15){ u.trail.push([u.x,u.y]); if(u.trail.length>80) u.trail.shift(); }
     });
     S.P.forEach(function(P){ if(P.done) return; P.t+=dt; var tt=P.tgt; var tof=P.d/P.v; var f=Math.min(1,P.t/tof); P.x=P.own.x+(tt.x-P.own.x)*f; P.y=P.own.y+(tt.y-P.own.y)*f; if(P.kind==='atgm'){ P.trail.push([P.x,P.y]); if(P.trail.length>30) P.trail.shift(); } if(f>=1){ P.done=true; P.fade=0; impact(P); } });
@@ -756,7 +758,7 @@ function MARsim(A,B,WA,WB,seed,night){
     st:[{ml:0,mh:0,sam:0,ciws:0,chaff:0,fuel:0,gs:0,gh:0,det:null,fire:null},{ml:0,mh:0,sam:0,ciws:0,chaff:0,fuel:0,gs:0,gh:0,det:null,fire:null}]};
   function log(es,en,cls){ var L=S.ev[S.ev.length-1]; if(L&&L.es===es&&S.T-L.t<20) return; S.ev.push({t:S.T,es:es,en:en,cls:cls||''}); }
   var nA=mShort(A), nB=mShort(B); if(nA===nB){ nA+=LL2(' (azul)',' (blue)'); nB+=LL2(' (rojo)',' (red)'); }
-  [A,B].forEach(function(a,i){ var K=marKit(a,I); S.U.push({i:i,a:a,sn:i?nB:nA,K:K,x:0,y:0,hd:0,hp:1,alive:true,ash:K.ash?K.ash.N:0,sam:K.sam?K.sam.N:0,chaff:K.chaff,grd:K.gun?K.gun.rd:0,gcd:0,scd:0,ccd:0,salvo:0,q:[],trk:false,trail:[]}); });
+  [A,B].forEach(function(a,i){ var K=loMar(marKit(a,I),i?WB:WA); S.U.push({i:i,a:a,sn:i?nB:nA,K:K,x:0,y:0,hd:0,hp:1,alive:true,ash:K.ash?K.ash.N:0,sam:K.sam?K.sam.N:0,chaff:K.chaff,grd:K.gun?K.gun.rd:0,gcd:0,scd:0,ccd:0,salvo:0,q:[],trk:false,trail:[]}); });
   var U=S.U, a0=U[0], b0=U[1];
   function eff(u,t){ var d=marDet(u.K,t.K,S.night); return Math.max(u.K.ash?Math.min(u.K.ash.km*1000,d):0, u.K.gun?u.K.gun.km*1000:0, d*0.6); }
   var D0=Math.max(60000,Math.min(230000,Math.max(eff(a0,b0),eff(b0,a0))+40000+rnd()*20000));
@@ -887,17 +889,183 @@ function MARview(cv,S){ var g=cv.getContext('2d'), W=0,H=0,dpr=1, cam={x:0,y:0,s
   layout(); return {draw:draw,layout:layout,tx:tx}; }
 function tF(t){ t=Math.floor(t); var h=Math.floor(t/3600), m=Math.floor(t%3600/60), s=String(t%60).padStart(2,'0'); return h?h+':'+String(m).padStart(2,'0')+':'+s:m+':'+s; }
 function dCSS(){ if(document.getElementById('d2css')) return; var s=document.createElement('style'); s.id='d2css'; s.textContent='.d2-q{color:var(--dim,#9aa3ad);font-size:12px;line-height:1.35;display:block;margin-top:2px;overflow-wrap:anywhere}.d2-card{border:1px solid var(--line,#3a424c);border-radius:12px;padding:12px;margin:12px 0;scroll-margin-top:64px}.d2-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.d2-chip{border:1px solid var(--line,#3a424c);background:transparent;color:inherit;border-radius:999px;padding:7px 12px;font-size:14px;cursor:pointer}.d2-chip[aria-pressed=true]{background:#2f6e3a;border-color:#2f6e3a;color:#fff}.d2-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.d2-side h3{margin:0 0 6px;font-size:15px}.d2-side ul{margin:0;padding-left:18px;font-size:13px}.d2-side li{margin:3px 0}.d2-est{display:inline-block;font-size:10.5px;font-weight:700;border:1px solid #d6b25e;color:#d6b25e;border-radius:5px;padding:0 4px;margin-left:3px}.d2-stage{position:relative;width:100%;height:min(62vh,520px);border-radius:12px;overflow:hidden;background:#222;margin-top:8px}.d2-stage canvas{width:100%;height:100%;display:block}.d2-tools{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}.d2-tools button{background:rgba(10,14,18,.75);color:#fff;border:0;border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer}.d2-hud{position:absolute;left:8px;top:8px;background:rgba(10,14,18,.65);color:#fff;border-radius:8px;padding:4px 8px;font-size:12px}.d2-ahud{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0 0;font-size:12px;line-height:1.35}.d2-ah{border-left:3px solid #4f95ff;padding:2px 0 2px 7px}.d2-ah.r{border-color:#ff5a4a}.d2-ah span{color:var(--mu,#9aa3ab)}@media (max-width:560px){.d2-ahud{grid-template-columns:1fr}}.d2-log{list-style:none;padding:0;margin:6px 0;max-height:200px;overflow:auto;font-size:12.5px}.d2-log li{padding:3px 0;border-bottom:1px solid rgba(127,127,127,.15)}.d2-log li.b{color:#7fb4ff}.d2-log li.r{color:#ff8f86}.d2-log li.end{font-weight:700}.d2-btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font-size:15px;font-weight:700;cursor:pointer;margin:4px 6px 4px 0;text-decoration:none;background:#2f6e3a;color:#fff}.d2-btn.sec{background:transparent;color:inherit;border:1px solid var(--line,#3a424c)}@media (max-width:560px){.d2-two{grid-template-columns:1fr}}'; document.head.appendChild(s); }
+
+// ---------- ARMAMENTO ELEGIDO (carga del duelo; nov 2026) ----------
+var LO_SYN={AMRAAM:'AIM-120',Sparrow:'AIM-7',Sidewinder:'AIM-9',Phoenix:'AIM-54','RVV-AE':'R-77'};
+var ASHN=/Harpoon|Exocet|NSM|Naval Strike|Kalibr|Klub|Oniks|Yakhont|BrahMos|Granit|Moskit|Uran|Kh-35|P-15|P-500|P-700|P-800|P-270|Termit|Styx|SS-N-|YJ-|C-80\d|Otomat|Teseo|RBS[- ]?15|Gabriel|Hsiung|Type 90 SSM|SSM-|Penguin|Zircon|Tsirkon|Bazalt|Sea Skua/i;
+var SAMN2=/\b(?:RIM-\d+\w*|Standard|SM-[1-6]\w*|ESSM|Sea Sparrow|Aster ?\d*|Barak ?\w*|Sea Wolf|Sea Dart|Sea Ceptor|CAMM|S-300F?M?|Shtil-?\d?|Kinzhal|Kortik|OSA-?MA?|Tor-?M?\d?|Klinok|HHQ-?\d+\w*|HQ-\d+\w*|Aspide|Albatros|Crotale|Mistral|Sadral|Redut|Poliment|Sea ?Cat|Terrier|Tartar|Talos|Volna|Shtorm|Uragan|Umkhonto)(?![A-Za-zñ])/i;
+var GLM=/Refleks|Svir|Invar|Bastion|Kobra|Sheksna|LAHAT|Falarick|9M119|9M117|9M112|9M128|Agona|KSTAM|GLATGM|a trav[eé]s del cañ[oó]n|por el cañ[oó]n|desde el cañ[oó]n|through the (?:main )?gun|gun-launched|tubo del cañ/i;
+var VLSSAM=/ESSM|RIM-1[5-7]\d|RIM-66|RIM-67|CAMM|Sea Ceptor|SM-[1-6]|Standard|Aster|Barak ?8|Redut|HHQ-9|HHQ-16|Shtil-1|Poliment|Umkhonto/i, PACK4=/ESSM|RIM-162|CAMM|Sea Ceptor/i, VLSASH=/Kalibr|Klub|Oniks|Yakhont|BrahMos|Zircon|Tsirkon|YJ-18|P-800|3M54/i;
+var LOPN={eq:['Equilibrado','Balanced'],lr:['Largo alcance','Long range'],df:['Dogfight','Dogfight'],pf:['Perforante','Armour-piercing'],mp:['Multipropósito','Multi-purpose'],gm:['Misil guiado','Guided missile'],as:['Ataque antibuque','Anti-ship strike'],da:['Defensa aérea','Air defence']};
+function loTok(lines,re,canon){ var out=[],seen={}; lines.forEach(function(l){ var g=new RegExp(re.source,'gi'),m; while((m=g.exec(l))){ var t=m[0].trim(); if(/-$/.test(t)) t=ext(l,m); if(/-$/.test(t)||t.length<2) continue; if(canon) t=canon(t,l); if(t&&!seen[t.toUpperCase()]){ seen[t.toUpperCase()]=1; out.push({tok:t,line:l}); } if(g.lastIndex===m.index) g.lastIndex++; } }); return out; }
+function loCnt(lines,toks){ var best=0; toks.forEach(function(tok){ if(!tok) return; var re=new RegExp('(?:^|[^\\w\\-./])(\\d{1,3})\\s*(?:[×x]\\s*)?(?:misiles\\s+|missiles\\s+)?[^,;|×()]{0,24}?(?:^|[^A-Za-z0-9])?'+reEsc(tok).replace(/[-\s]/g,'[-\\s]?')+'(?![0-9A-Za-z])','gi'); var tr=new RegExp(reEsc(tok).replace(/[-\s]/g,'[-\\s]?')+'(?![0-9A-Za-z])','i'); lines.forEach(function(l){ var m,s=esN(l); re.lastIndex=0; while((m=re.exec(s))){ var v=parseInt(m[1],10); if(v>best&&v<=128) best=v; if(re.lastIndex===m.index) re.lastIndex++; } var lm=s.match(/^\s*(\d{1,3})\s*\(\s*\d{1,2}\s*[×x]\s*\d{1,2}\s*\)/); if(lm&&tr.test(s)&&+lm[1]<=128&&+lm[1]>best) best=+lm[1]; }); }); return best||null; }
+function hardpts(lines){ var t=lines.join(' | '); var m=t.match(/(\d{1,2})\s*(?:×\s*)?(?:puntos de anclaje|puntos de carga|soportes|pilones|hardpoints)/i); if(m){ var v=+m[1]; if(v>=1&&v<=20) return v; }
+  m=t.match(/(?:puntos de anclaje|hardpoints)\s*[:(]\s*([^|]{0,170})/i); if(m){ var s=0,g=/(\d{1,2})\s*×?\s*(?:en |bajo|sub|ventral|ra[ií]l|rail|on |under|wing|fuselaje)/gi,x; while((x=g.exec(m[1]))) s+=+x[1]; if(s>=1&&s<=20) return s; } return null; }
+function spdOf(tok){ var sp=null; MSPD.forEach(function(q){ if(!sp&&q[0].test(tok)) sp=q[1]; }); return sp; }
+function loI(){ return (window.MAT_DATA&&window.MAT_DATA.items)||[]; }
+/* opciones de carga de un modelo en un modo: solo armas que salen en su ficha */
+function loOpts(a,mode,W){ var key='_lo_'+mode+(LGE()?'en':'es'); if(a[key]) return a[key]; var L=linesOf(a), I=loI(), O={mode:mode,G:[],fixed:[],info:[],cap:null,P:{}};
+  if(mode==='cielo'){
+    var K0=airKit(a,(W||[]).filter(function(w){return true;}));
+    var cv=function(t){ return LO_SYN[t]||t; };
+    var mkT=function(x,k){ var arm=wlink(x.tok,I,k), km=arm&&arm.walc?arm.walc:RANGE_DEF[k], sp=spdOf(x.tok), mx=loCnt(L,[x.tok].concat(Object.keys(LO_SYN).filter(function(s){return LO_SYN[s]===x.tok;}))); return {tok:x.tok,n:arm?arm.n:x.tok,arm:arm,km:km,src:arm&&arm.walc?'ficha':'est',mach:sp||3,msrc:sp?'wiki':'est',max:mx,maxsrc:mx?'ficha':'est',all:k==='wvr'?(ALLASP.test(x.tok)||era(a)>=1978):false,line:x.line}; };
+    var B=loTok(L,AAM_BVR,cv).map(function(x){return mkT(x,'bvr');}), Ir=loTok(L,AAM_WVR,cv).filter(function(x){return !/Stinger|Mistral|Igla|Strela/i.test(x.tok)||a.cat!=='aviones';}).map(function(x){return mkT(x,'wvr');});
+    var dA_=function(L_){ var s={}; return L_.filter(function(x){ var k=x.arm?x.arm.id:x.tok.toUpperCase(); if(s[k]) return false; s[k]=1; return true; }); }; B=dA_(B); Ir=dA_(Ir);
+    if(!B.length&&K0.bvr) B=[mkT({tok:K0.bvr.n,line:''},'bvr')]; if(!Ir.length&&K0.ir) Ir=[{tok:K0.ir.n,n:K0.ir.n,arm:K0.ir.arm,km:K0.ir.km,src:K0.ir.src,mach:K0.ir.mach,msrc:K0.ir.msrc,max:null,maxsrc:'est',all:K0.ir.all,gen:1}];
+    var hp=hardpts(L), e=era(a), est=e>=1980?8:e>=1965?6:e>=1955?4:2, mxl=0; B.concat(Ir).forEach(function(t){ if(t.max&&t.max>mxl) mxl=t.max; });
+    O.cap=mxl?{n:Math.min(12,hp?Math.min(hp,mxl):mxl),src:'ficha',u:['misiles aire-aire (máximo de su ficha)','air-to-air missiles (its data-sheet maximum)'],nosrc:1,raw:hp}:{n:Math.min(12,hp||est),src:hp?'ficha':'est',u:['puntos de anclaje','hardpoints'],raw:hp};
+    B.forEach(function(t){ if(!t.max) t.max=O.cap.n; t.max=Math.min(t.max,O.cap.n); }); Ir.forEach(function(t){ if(!t.max) t.max=O.cap.n; t.max=Math.min(t.max,O.cap.n); });
+    if(B.length) O.G.push({k:'bvr',lab:['Misiles de largo alcance (BVR, guiados por radar)','Long-range missiles (BVR, radar-guided)'],T:B,step:1,cost:1});
+    if(Ir.length) O.G.push({k:'ir',lab:['Misiles de corto alcance (infrarrojos)','Short-range missiles (infrared)'],T:Ir,step:1,cost:1});
+    if(K0.gun) O.fixed.push([LL2('Cañón','Gun')+' '+K0.gun.n+': '+K0.gun.rounds+LL2(' proyectiles',' rounds')+(K0.gun.src==='wiki'?' (Wikipedia)':' · Estimación'),'gun']);
+    var oth=L.filter(function(l){ return /bomba|bomb|AGM-|Kh-\d|Maverick|antibuque|anti-?ship|aire-superficie|air-to-surface|cohete|rocket|Exocet|Harpoon|Paveway|JDAM|Taurus|Storm Shadow|SCALP/i.test(l)&&!/^\s*(?:Misiles aire-aire|Air-to-air)/i.test(l); });
+    oth.slice(0,3).forEach(function(l){ O.info.push(short(l.replace(/^\s*\w[^:]{0,24}:\s*/,''),90)); });
+    var cap=O.cap.n, mB=B.length?B[0].max:0, mI=Ir.length?Ir[0].max:0;
+    function preset(bt,it_,nb,ni){ var c={},t={}; if(B.length){ t.bvr=bt.tok; c.bvr=nb; } if(Ir.length){ t.ir=it_.tok; c.ir=ni; } return {t:t,c:c}; }
+    var bL=B.slice().sort(function(x,y){return y.km-x.km;})[0], iA=Ir.slice().sort(function(x,y){return (y.all?1:0)-(x.all?1:0)||y.km-x.km;})[0];
+    if(B.length||Ir.length){ var b1=B[0], i1=Ir[0];
+      var nb=B.length?Math.min(b1.max,Ir.length?Math.ceil(cap/2):cap):0, ni=Ir.length?Math.min(i1.max,cap-nb):0; if(B.length&&nb+ni<cap) nb=Math.min(b1.max,cap-ni);
+      O.P.eq=preset(b1,i1,nb,ni);
+      if(B.length){ var lb=Math.min(bL.max,cap-(Ir.length?Math.min(2,i1.max,Math.floor(cap/3)):0)), li=Ir.length?Math.min(i1.max,cap-lb):0; O.P.lr=preset(bL,i1,lb,li); }
+      if(Ir.length){ var di=Math.min(iA.max,cap-(B.length?Math.min(2,b1.max,Math.floor(cap/3)):0)), db=B.length?Math.min(b1.max,cap-di):0; O.P.df=preset(b1,iA,db,di); }
+    }
+  } else if(mode==='suelo'){
+    var K=gndKit(a,(W||[]).slice()), F=a.F||{};
+    var ord=['ke','heat','hesh','ap','he','gun','ac'], Rk={};
+    (W||[]).forEach(function(w){ if(ord.indexOf(w.k)>=0&&!Rk[w.k]) Rk[w.k]=w; });
+    if(K.main&&!Rk[K.main.k]) Rk[K.main.k]=K.main;
+    var lab={ke:['APFSDS · perforante cinético','APFSDS · kinetic penetrator'],heat:['HEAT · carga hueca','HEAT · shaped charge'],hesh:['HESH · cabeza aplastante','HESH · squash head'],ap:['Perforante (AP)','Armour-piercing (AP)'],he:['HE · explosivo','HE · high explosive'],gun:['Proyectiles del cañón','Main gun rounds'],ac:['Cañón automático','Autocannon']};
+    var ac_=Object.assign({},a,{cal:K.cal||a.cal}), tank=a.cat==='tanques', AMN=K.ammo, AMS=K.ammosrc;
+    if(AMS!=='ficha'){ var am_=String(F.arm_principal||'')+' '+String(F.municion||''), mm_=am_.match(/(\d{2,3})\s*(?:rounds|disparos|proyectiles)/i); if(mm_&&+mm_[1]>=8&&+mm_[1]<=200){ AMN=+mm_[1]; AMS='ficha'; } }
+    var gunK=ord.filter(function(k){return Rk[k]&&(K.main||k==='ac');});
+    if(!K.main&&!gunK.length&&Rk.ac) gunK=['ac']; if(!AMN&&gunK.length){ AMN=30; AMS='est'; }
+    gunK.forEach(function(k){ var w=Rk[k], pm=Math.round(w.penmm||pen(w,ac_)); O.G.push({k:k,lab:lab[k],T:[{tok:k,n:wN(w.n),w:w,pm:pm,pmsrc:w.penmm?'ficha':'est',rng:(k==='ke'&&K.fcs)?3000:k==='ac'?2000:2200,max:AMN,maxsrc:AMS,gen:!!w.gen}],step:AMN>=30?2:1,cost:1,round:1}); });
+    if(K.atgm){ var gl=GLM.test((K.atgm.line||'')+' '+(K.atgm.tok||''))||(tank&&GLM.test(armTxt(a))); var mx=loCnt(L,[K.atgm.tok]); var am=mx||(gl?Math.min(6,AMN||6):4);
+      O.G.push({k:'atgm',lab:gl?['Misil guiado por el cañón','Gun-launched guided missile']:['Misil contracarro','Anti-tank guided missile'],T:[{tok:'atgm',n:wN(K.atgm.n),w:K.atgm,pm:K.pa,pmsrc:K.pasrc,rng:5000,max:am,maxsrc:mx?'ficha':'est',gl:gl}],step:1,cost:gl?1:0}); }
+    if(gunK.length) O.cap={n:AMN,src:AMS,u:['disparos del cañón','main-gun rounds']};
+    L.filter(function(l){return /ametralladora|machine gun|\bMG\s?\d|PKT|NSVT|Kord|M2HB|M240|MAG\b/i.test(l);}).slice(0,2).forEach(function(l){ O.fixed.push([LL2('Ametralladora','Machine gun')+': '+short(l,70)+LL2(' (no perfora blindaje: no cuenta contra blindados en el duelo)',' (does not penetrate armour: not used against armour in the duel)'),'mg']); });
+    var G=O.G.filter(function(g){return g.round;}), cap2=AMN;
+    function mix(w){ var c={},t={},tot=0; G.forEach(function(g){ t[g.k]=g.k; }); var s=0; G.forEach(function(g){ s+=(w[g.k]||0); }); G.forEach(function(g){ c[g.k]=s?Math.floor(cap2*(w[g.k]||0)/s/g.step)*g.step:0; tot+=c[g.k]; }); if(G.length&&s){ var big=G.slice().sort(function(x,y){return (w[y.k]||0)-(w[x.k]||0);})[0]; c[big.k]+=Math.max(0,cap2-tot-(capAt?atU:0)); } return {t:t,c:c}; }
+    var capAt=false, atU=0, at=O.G.filter(function(g){return g.k==='atgm';})[0];
+    function withAt(p,n){ if(at){ p.t.atgm='atgm'; var n2=Math.min(at.T[0].max,n); p.c.atgm=n2; if(at.cost){ var over=0; G.forEach(function(g){over+=p.c[g.k]||0;}); over=over+n2-cap2; for(var i=G.length-1;i>=0&&over>0;i--){ var g=G[i], r=Math.min(over,p.c[g.k]||0); p.c[g.k]-=r; over-=r; } } } return p; }
+    if(G.length||at){ var hasHE=!!(Rk.he||Rk.hesh);
+      O.P.eq=withAt(mix({ke:5,heat:3,hesh:2,ap:5,he:2,gun:1,ac:1}),at&&at.cost?2:(at?at.T[0].max:0));
+      if(Rk.ke||Rk.ap||Rk.heat) O.P.pf=withAt(mix({ke:8,ap:8,heat:2,hesh:0,he:0,gun:1,ac:1}),at&&at.cost?0:(at?at.T[0].max:0));
+      if(hasHE||Rk.heat) O.P.mp=withAt(mix({ke:3,ap:3,heat:4,hesh:3,he:4,gun:1,ac:1}),at?at.T[0].max:0);
+      if(at&&at.cost) O.P.gm=withAt(mix({ke:5,heat:3,hesh:2,ap:5,he:1,gun:1,ac:1}),at.T[0].max);
+    }
+  } else {
+    var K1=marKit(a,I), cvS=function(t,l){ if(/RIM-161|SM-3|RIM-174|SM-6/i.test(t)) return null; return /SM-[12]\s?MR|RIM-66/i.test(t)?'SM-2MR':/SM-[12]\s?ER|RIM-67/i.test(t)?'SM-2ER':/^Standard$/i.test(t)?(/SM-[12]\s?ER|RIM-67/i.test(l)?'SM-2ER':'SM-2MR'):/^RIM-162$/i.test(t)?'ESSM':/^RIM-156/i.test(t)?'SM-2ER':(/^Sea Sparrow$/i.test(t)&&/Evolved|ESSM|RIM-162/i.test(l))?'ESSM':/^RIM-7\w*$/i.test(t)?'Sea Sparrow':t; };
+    var wkS=function(t){ return t==='SM-2MR'?'RIM-66':t==='SM-2ER'?'RIM-67':t==='ESSM'?'RIM-162':t; };
+    var cells=0; L.forEach(function(l){ if(/VLS|lanzamiento vertical|vertical launch|Mk ?41|Mark 41|Sylver|UKSK|3S14|celdas|cells/i.test(l)){ var c=cntIn(l,/(\d{1,3})\s*(?:celdas|cells)/)||cntIn(l,/(\d{1,3})[- ]cell/); if(c>cells) cells=c; } });
+    var As=loTok(L,ASHN,function(t){ return /^(Naval Strike)$/i.test(t)?'NSM':t; }).map(function(x){ var arm=wlink(x.tok,I,'ashm'), sup=SUPERS.test(x.tok+' '+x.line)||HEAVY.test(x.line), mx=loCnt(L,[x.tok])||(K1.ash&&K1.ash.tok===x.tok?(K1.ash.Nsrc==='ficha'?K1.ash.N:null):null); return {tok:x.tok,n:arm?arm.n:x.tok,arm:arm,km:arm&&arm.walc?arm.walc:(sup?300:120),src:arm&&arm.walc?'ficha':'est',sup:sup,v:sup?750:270,wh:HEAVY.test(x.line)?750:(sup?300:200),max:Math.max(2,Math.min(24,mx||8)),maxsrc:mx?'ficha':'est',vls:VLSASH.test(x.tok)&&cells>0,line:x.line}; });
+    if(!As.length&&K1.ash) As=[{tok:K1.ash.tok,n:K1.ash.n,arm:K1.ash.arm,km:K1.ash.km,src:K1.ash.src,sup:K1.ash.sup,v:K1.ash.v,wh:K1.ash.wh,max:K1.ash.N,maxsrc:K1.ash.Nsrc,vls:false}];
+    var Ss=loTok(L.filter(function(l){return !/^\W*\d*\W*(?:tubos?|torpedo)/i.test(l);}),SAMN2,cvS).map(function(x){ var arm=wlink(wkS(x.tok),I,'sam'), mx=loCnt(L,[x.tok,wkS(x.tok)].concat(x.tok==='SM-2MR'||x.tok==='SM-2ER'?['Standard']:[])); var pk=PACK4.test(x.tok)?4:1; return {tok:x.tok,n:x.tok,arm:arm,km:arm&&arm.walc?Math.min(arm.walc,400):40,src:arm&&arm.walc?'ficha':'est',max:Math.max(4,Math.min(96,mx||(K1.sam&&K1.sam.Nsrc==='ficha'?K1.sam.N:16))),maxsrc:mx||(K1.sam&&K1.sam.Nsrc==='ficha')?'ficha':'est',pack:pk,vls:cells>0&&VLSSAM.test(x.tok)}; });
+    if(!Ss.length&&K1.sam) Ss=[{tok:K1.sam.n,n:K1.sam.n,arm:K1.sam.arm,km:K1.sam.km,src:K1.sam.src,max:K1.sam.N,maxsrc:K1.sam.Nsrc,pack:1,vls:false}];
+    var dd_=function(L_){ var s={}; return L_.filter(function(x){ var k=x.arm?x.arm.id:x.tok.toUpperCase(); if(s[k]) return false; s[k]=1; return true; }); };
+    var fs_=function(L_){ return dd_(L_.filter(function(x){return x.src==='ficha';}).concat(L_.filter(function(x){return x.src!=='ficha';}))); }; As=fs_(As); Ss=fs_(Ss);
+    if(As.length) O.G.push({k:'ash',lab:['Misiles antibuque','Anti-ship missiles'],T:As,step:As[0].max>=12?2:1,cost:1});
+    if(Ss.length) O.G.push({k:'sam',lab:['Misiles antiaéreos (SAM): derriban los misiles que llegan','Surface-to-air missiles (SAM): shoot down incoming missiles'],T:Ss,step:Ss[0].max>=24?4:Ss[0].max>=12?2:1,cost:1});
+    if(cells&&(Ss.some(function(t){return t.vls;})||As.some(function(t){return t.vls;}))) O.cap={n:cells,src:'ficha',u:['celdas de lanzamiento vertical (VLS)','vertical launch cells (VLS)'],pool:1};
+    if(K1.gun) O.fixed.push([LL2('Cañón','Gun')+' '+K1.gun.cal+' mm'+(K1.gun.brl>1?' ×'+K1.gun.brl:'')+': '+nf(K1.gun.rd)+LL2(' proyectiles',' rounds')+(K1.gun.rdsrc==='ficha'?LL2(' (ficha)',' (data sheet)'):' · Estimación'),'gun']);
+    if(K1.ciws) O.fixed.push(['CIWS '+(K1.ciws.n||'')+LL2(' (ficha): defensa de punto contra misiles',' (data sheet): point defence against missiles'),'ciws']);
+    var tl=L.filter(function(l){return TORP.test(l);})[0]; if(tl) O.fixed.push([LL2('Torpedos','Torpedoes')+': '+short(tl,70)+LL2(' (antisubmarinos: no se usan contra buques en este duelo)',' (anti-submarine: not used against ships in this duel)'),'torp']);
+    if(K1.chaff) O.fixed.push([LL2('Chaff: ','Chaff: ')+K1.chaff+LL2(' cargas · Estimación',' loads · Estimate'),'chaff']);
+    var a1=As[0], s1=Ss[0], aL=As.slice().sort(function(x,y){return y.km-x.km;})[0], sL=Ss.slice().sort(function(x,y){return y.km-x.km;})[0];
+    function pr(at_,st_,fa,fs){ var t={},c={}; if(a1){ t.ash=at_.tok; c.ash=Math.round(at_.max*fa); } if(s1){ t.sam=st_.tok; c.sam=Math.round(st_.max*fs); } return {t:t,c:c}; }
+    var sM=Ss.slice().sort(function(x,y){return ((y.pack||1)-(x.pack||1))||(y.max-x.max)||(y.km-x.km);})[0];
+    if(a1||s1){ var pool=O.cap&&O.cap.pool; O.P.eq=pr(a1,s1,1,1); O.P.lr=pr(aL||a1,sL||s1,1,1); if(s1) O.P.da=pr(a1,sM,(pool&&a1&&a1.vls)?0.5:1,1); if(a1&&pool&&aL.vls) O.P.as=pr(aL,s1,1,0.5); }
+  }
+  Object.keys(O.P).forEach(function(k){ O.P[k]=loNorm(O,O.P[k]); });
+  var seenP={}; Object.keys(O.P).forEach(function(k){ var j=JSON.stringify(O.P[k]); if(seenP[j]&&k!=='eq') delete O.P[k]; else seenP[j]=1; });
+  a[key]=O; return O; }
+function loT(O,g,LO){ var t=LO&&LO.t&&LO.t[g.k]; return g.T.filter(function(x){return x.tok===t;})[0]||g.T[0]; }
+function loCost(O,g,LO,n){ if(O.mode==='mar'){ if(!(O.cap&&O.cap.pool)) return 0; var T_=loT(O,g,LO); if(!T_.vls) return 0; return g.k==='sam'?Math.ceil(n/(T_.pack||1)):n; } return g.cost?n:0; }
+function loUsed(O,LO){ var s=0; O.G.forEach(function(g){ s+=loCost(O,g,LO,(LO.c[g.k]||0)); }); return s; }
+function loNorm(O,LO){ LO=LO||{}; var R_={t:{},c:{}}; O.G.forEach(function(g){ var T_=loT(O,g,LO); R_.t[g.k]=T_.tok; var n=Math.round(+((LO.c||{})[g.k])||0); R_.c[g.k]=Math.max(0,Math.min(T_.max,n)); });
+  if(O.cap){ var over=loUsed(O,R_)-O.cap.n; for(var i=O.G.length-1;i>=0&&over>0;i--){ var g=O.G[i]; if(!loCost(O,g,R_,4)) continue; while(over>0&&R_.c[g.k]>0){ var b=loCost(O,g,R_,R_.c[g.k]); R_.c[g.k]--; over-=b-loCost(O,g,R_,R_.c[g.k]); } } }
+  return R_; }
+function loEnc(LO){ return Object.keys(LO.c).map(function(k){ return k+'~'+LO.t[k]+'~'+LO.c[k]; }).join('_'); }
+function loDec(O,s){ if(!s) return null; var LO={t:{},c:{}}; String(s).split('_').forEach(function(p){ var q=p.split('~'); if(q.length===3){ LO.t[q[0]]=q[1]; LO.c[q[0]]=parseInt(q[2],10)||0; } }); return loNorm(O,LO); }
+function loPname(O,LO){ var j=JSON.stringify(LO), r=null; Object.keys(O.P).forEach(function(k){ if(!r&&JSON.stringify(O.P[k])===j) r=k; }); return r; }
+function loAI(O,rnd){ var ks=Object.keys(O.P); if(!ks.length) return {lo:{t:{},c:{}},p:null}; var k=ks[Math.floor(rnd()*ks.length)], LO=JSON.parse(JSON.stringify(O.P[k])); var tw=false;
+  O.G.forEach(function(g){ if(rnd()<0.5&&LO.c[g.k]>g.step){ LO.c[g.k]-=g.step; tw=true; } }); LO=loNorm(O,LO); return {lo:LO,p:k,tw:tw&&loPname(O,LO)!==k}; }
+function loSum(O,LO){ return O.G.filter(function(g){return LO.c[g.k]>0;}).map(function(g){ var T_=loT(O,g,LO); return (O.mode==='suelo'?wN(T_.n).replace(/\s*\(.*$/,''):T_.n)+' ×'+LO.c[g.k]; }).join(' · ')||LL2('sin munición elegida','no ammunition chosen'); }
+/* aplica la carga al kit del motor (mismos valores del motor; solo cambian tipo y número) */
+function loAir(k,a,W){ var O=W&&W.loO, LO=W.lo; if(!O||!LO) return k;
+  O.G.forEach(function(g){ var T_=loT(O,g,LO), n=LO.c[g.k]||0, slot=g.k==='bvr'?'bvr':'ir'; if(!n){ k[slot]=null; return; }
+    k[slot]={w:{n:T_.n,tok:T_.tok,arm:T_.arm,k:g.k==='bvr'?'bvr':'wvr'},n:T_.arm?T_.arm.n:T_.n,km:T_.km,src:T_.src,mach:T_.mach,msrc:T_.msrc,arm:T_.arm,left:n,cnt:'lo',all:T_.all}; });
+  return k; }
+function loGnd(K,W){ var O=W&&W.loO, LO=W.lo; if(!O||!LO) return K; var mix={}, R2={}, tot=0, rmax=0;
+  O.G.forEach(function(g){ var T_=loT(O,g,LO), n=LO.c[g.k]||0; if(g.k==='atgm'){ K.atg=n; return; } mix[g.k]=n; R2[g.k]=T_; tot+=n; if(n&&T_.rng>rmax) rmax=T_.rng; });
+  if(!K.main){ var acg=O.G.filter(function(g){return g.k==='ac';})[0]; if(acg) K.main=acg.T[0].w; }
+  K.mix=mix; K.R=R2; K.ammo=tot; if(rmax) K.rng=rmax; return K; }
+function loMar(K,W){ var O=W&&W.loO, LO=W&&W.lo; if(!O||!LO) return K; K=Object.assign({},K);
+  O.G.forEach(function(g){ var T_=loT(O,g,LO), n=LO.c[g.k]||0; if(g.k==='ash'){ K.ash=n?{n:T_.n,tok:T_.tok,arm:T_.arm,km:T_.km,src:T_.src,N:n,Nsrc:'lo',sup:T_.sup,v:T_.v,wh:T_.wh}:null; }
+    if(g.k==='sam'){ var mod=K.mod; K.sam=n?{n:T_.n,arm:T_.arm,km:T_.km,src:T_.src,N:n,Nsrc:'lo',pk:mod?0.6:0.45,ch:mod?4:2}:null; } });
+  return K; }
+/* ¿pueden enfrentarse? (que los dos puedan disparar y hacerse daño en este modo) */
+function loW(a,mode){ var W=weaponsOf(a,mode).filter(function(w){return w.k!=='bomb_air';}); W.forEach(function(w){ if(w.tok&&!w.arm) w.arm=wlink(w.tok,loI(),w.k); }); return W; }
+
+function loProbe(A,B,mode,seed){ var WA=loW(A,mode), WB=loW(B,mode); WA.loO=loOpts(A,mode,WA); WB.loO=loOpts(B,mode,WB); WA.lo=JSON.parse(JSON.stringify(WA.loO.P.eq||{t:{},c:{}})); WB.lo=JSON.parse(JSON.stringify(WB.loO.P.eq||{t:{},c:{}}));
+  var R0=R, S=mode==='cielo'?AIRsim(A,B,WA,WB,seed):mode==='suelo'?GNDsim(A,B,WA,WB,seed,false):MARsim(A,B,WA,WB,seed,false), n=0; while(!S.over&&n++<80000) S.step(0.05); R=R0;
+  return {sh:S.st.map(function(x){ return mode==='cielo'?(x.sh+x.gunsh):mode==='suelo'?x.sh:(x.ml+x.gs); }), hit:S.st.map(function(x){ return mode==='cielo'?(x.hit+x.gunhit):mode==='suelo'?x.hit:(x.mh+x.gh); })}; }
+function canFight(A,B,mode,deep){ var r={ok:true,why:null};
+  if(!A||!B) return r;
+  function fires(a){ var W=loW(a,mode); if(mode==='cielo'){ var k=airKit(a,W); return !!(k.bvr||k.ir||k.gun); } if(mode==='mar'){ var K=marKit(a,loI()); return !!(K.ash||K.gun); } var g=gndKit(a,W); var O=loOpts(a,mode,W); return !!(g.main||g.atgm||O.G.length); }
+  function hurts(a,b){ if(mode!=='suelo') return true; var O=loOpts(a,mode,loW(a,mode)), Kb=gndKit(b,loW(b,mode)), need=Math.min(Kb.ke,Kb.ce)*0.2*0.6; return O.G.some(function(g){ return g.T.some(function(t){ return t.pm>=need; }); }); }
+  var fa=fires(A), fb=fires(B);
+  if(!fa||!fb){ var x=!fa?A:B; r.ok=false; r.why=LL2('El '+x.n+' no lleva en su ficha armas con las que disparar en este modo.','The '+x.n+' carries no weapon in its data sheet it can fire in this mode.'); return r; }
+  var ha=hurts(A,B), hb=hurts(B,A);
+  if(!ha||!hb){ r.ok=false; var x2=!ha?A:B, y2=!ha?B:A; r.why=LL2('Las armas del '+x2.n+' no pueden dañar el blindaje del '+y2.n+', ni siquiera por detrás.','The '+x2.n+'’s weapons cannot damage the '+y2.n+'’s armour, not even from behind.'); return r; }
+  if(deep){ var key='_pf_'+mode+'_'+B.id; if(A[key]==null){ var sOK=0,hOK=0,fa_=0,fb_=0,sd_=[4242,777,31337]; for(var q=0;q<sd_.length;q++){ var p=loProbe(A,B,mode,sd_[q]); if(p.sh[0]>0) fa_++; if(p.sh[1]>0) fb_++; if(p.sh[0]+p.sh[1]>0) sOK++; else break; if(p.hit[0]+p.hit[1]>0) hOK++; } A[key]=(sOK===sd_.length&&hOK>=sd_.length-1&&fa_>0&&fb_>0); } if(!A[key]){ r.ok=false; r.why=LL2('En este modo no llegan a dispararse los dos: uno de ellos (o ninguno) se pone a tiro del otro, y el duelo acabaría sin combate.','In this mode they do not both get to fire: one of them (or neither) gets within range of the other, and the duel would end without a fight.'); } }
+  return r; }
+
+window.MAT_DUELO_SIMTEST=function(ida,idb,mode,seed,pa,pb){ var I=loI(), A=null,B=null; I.forEach(function(x){ if(x.id===ida) A=x; if(x.id===idb) B=x; }); if(!A||!B) return {err:'id'};
+  var WA=loW(A,mode), WB=loW(B,mode); WA.loO=loOpts(A,mode,WA); WB.loO=loOpts(B,mode,WB);
+  WA.lo=JSON.parse(JSON.stringify(WA.loO.P[pa||'eq']||WA.loO.P.eq||{t:{},c:{}})); var ai=loAI(WB.loO,mkRng((seed*2654435761)>>>0)); WB.lo=pb?JSON.parse(JSON.stringify(WB.loO.P[pb]||WB.loO.P.eq||{t:{},c:{}})):ai.lo;
+  var S=mode==='cielo'?AIRsim(A,B,WA,WB,seed):mode==='suelo'?GNDsim(A,B,WA,WB,seed,false):MARsim(A,B,WA,WB,seed,false), n=0; while(!S.over&&n++<80000) S.step(0.05);
+  var sh=S.st.map(function(x){ return mode==='cielo'?(x.sh+x.gunsh):mode==='suelo'?x.sh:(x.ml+x.gs); }), hi=S.st.map(function(x){ return mode==='cielo'?(x.hit+x.gunhit):mode==='suelo'?x.hit:(x.mh+x.gh); });
+  return {st:S.st,T:Math.round(S.T),over:S.over,sh:sh,hit:hi,hp:S.U.map(function(u){return Math.round(u.hp*100);}),la:loSum(WA.loO,WA.lo),lb:loSum(WB.loO,WB.lo),pb:ai.p,pair:canFight(A,B,mode,true).ok,rd:S.U.map(function(u){return u.rd||null;})}; };
+window.MAT_DUELO_PAIR=function(A,B,m){ return canFight(A,B,m||'cielo'); };
+
 var D2ACTIVE=null;
 var DUELO_LIVE={cielo:1,suelo:1,mar:1};
 window.MAT_DUELO=function(app,X){
   if(D2ACTIVE){ D2ACTIVE(); D2ACTIVE=null; }
-  dCSS(); var o=X.qs(), A=X.BY[o.a], B=X.BY[o.b];
+  dCSS(); if(!document.getElementById('d2locss')){ var lcs=document.createElement('style'); lcs.id='d2locss'; lcs.textContent='.d2-lo h3.d2-loh{margin:0 0 4px;font-size:16px;overflow-wrap:anywhere}.d2-lop,.d2-lotys{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.d2-lob,.d2-loty{min-height:44px;padding:8px 14px;border-radius:22px;border:1px solid var(--line,#3a424c);background:transparent;color:inherit;font:inherit;font-size:14px;cursor:pointer;touch-action:manipulation;max-width:100%;overflow-wrap:anywhere;text-align:left}.d2-loty{min-height:40px;padding:6px 12px;font-size:13px}.d2-lob[aria-pressed=true],.d2-loty[aria-pressed=true]{background:#2f6e3a;border-color:#2f6e3a;color:#fff}.d2-log{border-top:1px solid var(--line,#3a424c);padding:10px 0 8px}.d2-lot{font-weight:700;font-size:14px;margin-bottom:4px}.d2-lorow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0}.d2-los{width:52px;height:46px;border-radius:12px;border:1px solid var(--line,#3a424c);background:var(--s2,#1a1d20);color:inherit;font-size:24px;line-height:1;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}.d2-los:disabled{opacity:.35;cursor:default}.d2-lon{min-width:2.2em;text-align:center;font-size:22px}.d2-lomx{font-size:12px;color:var(--dim,#9aa3ad)}.d2-locap{font-size:13px;margin:4px 0 2px}.d2-lofx{margin:0;padding-left:18px;font-size:13px}.d2-lofx li{margin:3px 0;overflow-wrap:anywhere}.d2-warn{color:#e8b04a;font-size:13px;margin:8px 0 0}.d2-warnc{border-color:#d6b25e}.d2-lonote{margin:0 0 6px;font-size:12.5px;overflow-wrap:anywhere}'; document.head.appendChild(lcs); } var o=X.qs(), A=X.BY[o.a], B=X.BY[o.b];
   if(X.ensure&&((A&&A.lz&&!A._full)||(B&&B.lz&&!B._full))){app.innerHTML='<p class="sub" style="padding:24px 0">'+LL2('Cargando…','Loading…')+'</p>'; return X.ensure([A,B],function(){window.MAT_DUELO(app,X);});}
   var MODE=o.m==='sub'?'mar':(MCAT[o.m]&&o.m!=='sub'?o.m:(A?(['cielo','suelo','mar'].filter(function(k){return MCAT[k].indexOf(A.cat)>=0;})[0]):'cielo')||'cielo');
   var okc=function(a){return MCAT[MODE].indexOf(a.cat)>=0&&combat(a)&&(MODE!=='cielo'||a.cat==='aviones')&&(MODE!=='mar'||a.cat==='buques');};
   if(A&&!okc(A)) A=null; if(B&&!okc(B)) B=null;
   var WA=A?weaponsOf(A,MODE).filter(function(w){return w.k!=='bomb_air';}):[], WB=B?weaponsOf(B,MODE).filter(function(w){return w.k!=='bomb_air';}):[];
   WA.concat(WB).forEach(function(w){if(w.tok) w.arm=wlink(w.tok,X.I,w.k);}); if(MODE==='suelo'){[A,B].forEach(function(a){if(a&&!a.blind){var b=blindMM(a); if(b) a.blind=b;}});}
+
+  var LOA=A?loOpts(A,MODE,WA):null, LOB=B?loOpts(B,MODE,WB):null, cl_=function(x){return JSON.parse(JSON.stringify(x||{t:{},c:{}}));};
+  var loA=LOA?(loDec(LOA,o.lo)||cl_(LOA.P.eq)):null; if(LOA){ WA.loO=LOA; WA.lo=loA; } if(LOB){ WB.loO=LOB; WB.lo=cl_(LOB.P.eq); }
+  var PAIR=(A&&B)?canFight(A,B,MODE,true):{ok:true};
+  function loFires(){ if(!LOA) return true; var n=0; LOA.G.forEach(function(g){ n+=loA.c[g.k]||0; }); if(n>0) return true; return LOA.fixed.some(function(f){return f[1]==='gun';})&&MODE!=='suelo'; }
+  function loHTML(){ if(!A||!LOA) return ''; var E2=function(s){return s==='ficha'?LL2('ficha','data sheet'):(s==='wiki'?'Wikipedia':'<span class="d2-est">'+LL2('Estimación','Estimate')+'</span>');}; var SR=function(s){ return s==='ficha'||s==='wiki'?' ('+E2(s)+')':' '+E2(s); }, DC=function(x){ return LGE()?String(x):String(x).replace('.',','); };
+    var pk=loPname(LOA,loA), h='<div class="d2-card d2-lo" id="dlo" data-noi18n><h3 class="d2-loh">'+LL2('Armamento del azul','Blue loadout')+': '+X.esc(A.n)+'</h3><p class="note" style="margin:0 0 6px">'+LL2('Solo las armas que lleva según su ficha. El rojo (la máquina) elige su propia carga al empezar.','Only the weapons its data sheet lists. Red (the computer) picks its own load when the duel starts.')+'</p>';
+    var ks=Object.keys(LOA.P); if(ks.length) h+='<div class="d2-lop">'+ks.map(function(k){ return '<button type="button" class="d2-lob" data-p="'+k+'" aria-pressed="'+(pk===k)+'">'+LL2(LOPN[k][0],LOPN[k][1])+'</button>'; }).join('')+'</div>';
+    if(LOA.cap&&LOA.G.length){ var us=loUsed(LOA,loA); h+='<p class="d2-locap" id="dlocap">'+LL2('Ocupado','Used')+': <b>'+us+' / '+LOA.cap.n+'</b> '+LL2(LOA.cap.u[0],LOA.cap.u[1])+(LOA.cap.nosrc?'':SR(LOA.cap.src))+(LOA.cap.raw&&MODE==='cielo'?' · '+LOA.cap.raw+LL2(' puntos de anclaje (ficha)',' hardpoints (data sheet)'):'')+'</p>'; }
+    else if(MODE==='mar'&&LOA.G.length) h+='<p class="d2-locap">'+LL2('Sin celdas compartidas en su ficha: cada arma tiene su propio lanzador.','No shared cells in its data sheet: each weapon has its own launcher.')+'</p>';
+    LOA.G.forEach(function(g){ var T_=loT(LOA,g,loA), n=loA.c[g.k]||0, nx=JSON.parse(JSON.stringify(loA)); nx.c[g.k]=n+g.step; var canUp=loBump(g,1)>n;
+      h+='<div class="d2-log"><div class="d2-lot">'+LL2(g.lab[0],g.lab[1])+'</div>';
+      if(g.T.length>1) h+='<div class="d2-lotys">'+g.T.map(function(t){ return '<button type="button" class="d2-loty" data-g="'+g.k+'" data-ty="'+X.esc(t.tok)+'" aria-pressed="'+(t.tok===T_.tok)+'">'+X.esc(t.n)+'</button>'; }).join('')+'</div>';
+      h+='<div class="d2-lorow"><button type="button" class="d2-los" data-g="'+g.k+'" data-d="-1" aria-label="'+LL2('Menos','Fewer')+'"'+(n<=0?' disabled':'')+'>−</button><b class="d2-lon">'+n+'</b><button type="button" class="d2-los" data-g="'+g.k+'" data-d="1" aria-label="'+LL2('Más','More')+'"'+(canUp?'':' disabled')+'>+</button><span class="d2-lomx">'+LL2('máx. ','max ')+T_.max+SR(T_.maxsrc)+'</span></div>';
+      var d='';
+      if(MODE==='cielo') d=X.esc(T_.n)+': '+nf(T_.km)+' km'+(T_.src==='ficha'&&T_.arm?' (<a href="#/a/'+T_.arm.id+'">'+LL2('ficha','data sheet')+'</a>)':' '+E2('est'))+' · Mach '+DC(T_.mach)+SR(T_.msrc)+(g.k==='ir'?' · '+(T_.all?LL2('todos los aspectos','all-aspect'):LL2('solo por la cola','rear-aspect only')):'');
+      else if(MODE==='suelo') d=X.esc(T_.n)+(T_.gen?' '+E2('est'):'')+' · '+LL2('perfora ≈','penetrates ≈')+nf(T_.pm)+' mm'+SR(T_.pmsrc)+' · '+LL2('alcance ','range ')+fmtD(T_.rng)+SR('est')+(g.k==='atgm'?' · '+(T_.gl?LL2('sale por el cañón y ocupa sitio en la munición','fired through the gun, it takes up ammunition space'):LL2('lanzador propio','own launcher')):'');
+      else d=X.esc(T_.n)+': '+nf(T_.km)+' km'+(T_.src==='ficha'&&T_.arm?' (<a href="#/a/'+T_.arm.id+'">'+LL2('ficha','data sheet')+'</a>)':' '+E2('est'))+(g.k==='ash'?' · '+(T_.sup?LL2('supersónico','supersonic'):LL2('subsónico, rasante','subsonic, sea-skimming')):'')+(T_.vls&&LOA.cap&&LOA.cap.pool?' · VLS'+(T_.pack>1?LL2(', '+T_.pack+' por celda',', '+T_.pack+' per cell'):''):'');
+      h+='<span class="d2-q">'+d+'</span></div>'; });
+    if(!LOA.G.length) h+='<p class="note">'+LL2('Su ficha no da armas que se puedan repartir: lleva su armamento fijo.','Its data sheet gives no weapons to share out: it carries its fixed armament.')+'</p>';
+    if(LOA.fixed.length) h+='<div class="d2-log"><div class="d2-lot">'+LL2('Lleva siempre','Always carried')+'</div><ul class="d2-lofx">'+LOA.fixed.map(function(f){return '<li>'+X.esc(f[0]).replace(/Estimación|Estimate/,'<span class="d2-est">$&</span>')+'</li>';}).join('')+'</ul></div>';
+    if(LOA.info.length) h+='<div class="d2-log"><div class="d2-lot">'+LL2('Otras cargas de su ficha (no sirven contra aviones)','Other stores in its data sheet (no use against aircraft)')+'</div><ul class="d2-lofx">'+LOA.info.map(function(f){return '<li>'+X.esc(f)+'</li>';}).join('')+'</ul></div>';
+    if(!loFires()) h+='<p class="d2-warn" role="alert">'+LL2('Con esta carga el azul no puede disparar: añade al menos un arma.','With this load blue cannot fire: add at least one weapon.')+'</p>';
+    return h+'</div>'; }
+  function loBump(g,d){ var T_=loT(LOA,g,loA), n=loA.c[g.k]||0, v=Math.max(0,Math.min(T_.max,n+d*g.step)); if(d<0) return v; var nx=JSON.parse(JSON.stringify(loA)); while(v>n){ nx.c[g.k]=v; if(!LOA.cap||loUsed(LOA,nx)<=LOA.cap.n) return v; v--; } return n; }
+  function sugg(){ var L=X.I.filter(okc).filter(function(x){return x!==A&&(!x.lz||x._full);}); for(var i=0;i<80&&L.length;i++){ var c=L[Math.floor(Math.random()*L.length)]; if(canFight(A,c,MODE,true).ok) return c; } return null; }
   var NIGHT=o.t==='noche';
   var seed=parseInt(o.s,10); var shared=seed>0; if(!(seed>0)) seed=1+Math.floor(Math.random()*99999);
   var E='<span class="d2-est">'+LL2('Estimación','Estimate')+'</span>';
@@ -910,7 +1078,7 @@ window.MAT_DUELO=function(app,X){
     if(!K.bvr&&!K.ir&&!K.gun) li.push('<li>'+LL2('Sin armas aire-aire en su ficha','No air-to-air weapons in its data sheet')+'</li>');
     li.push('<li>'+LL2('Contramedidas','Countermeasures')+': '+(K.cm.fl||K.cm.ch?K.cm.fl+LL2(' bengalas',' flares')+(K.cm.ch?' · '+K.cm.ch+' chaff':'')+' '+E:LL2('ninguna','none'))+' · '+LL2('combustible: rompe el combate al 22 %','fuel: breaks off at 22 %')+' '+E+'</li>');
     return '<div class="d2-side"><h3>'+col+' '+X.esc(a.n)+'</h3><ul>'+li.join('')+'</ul></div>'; }
-  function sideMar(a,col){ var K=marKit(a,X.I), li=[], FS=' ('+LL2('ficha','data sheet')+')';
+  function sideMar(a,col,W){ var K=loMar(marKit(a,X.I),W), li=[], FS=' ('+LL2('ficha','data sheet')+')';
     function lk(o){ return o&&o.arm?' (<a href="#/a/'+o.arm.id+'">'+LL2('ficha','data sheet')+'</a>)':''; }
     li.push('<li><b>'+LL2('Desplazamiento','Displacement')+':</b> '+(K.desp?nf(K.desp)+' t'+FS:'3.000 t '+E)+' · <b>'+LL2('Velocidad','Speed')+':</b> '+(K.kn?String(K.kn).replace('.',',')+LL2(' nudos',' knots')+FS:LL2('28 nudos ','28 knots ')+E)+'</li>');
     li.push('<li><b>'+LL2('Detección','Detection')+':</b> '+(K.radar?LL2('radar, limitado por el horizonte: ≈','radar, limited by the horizon: ≈')+fmtD(hzn(K.mast,K.mast))+LL2(' contra un buque parecido y ≈',' against a similar ship and ≈')+fmtD(hzn(K.mast,5))+LL2(' contra misiles rasantes',' against sea-skimming missiles')+' '+E:LL2('a simple vista: unos 20 km de día y 8 km de noche','by eye: about 20 km by day and 8 km at night')+' '+E)+(K.helo?' · '+LL2('helicóptero embarcado: ≈180 km','embarked helicopter: ≈180 km')+' '+E:'')+'</li>');
@@ -919,7 +1087,7 @@ window.MAT_DUELO=function(app,X){
     li.push('<li><b>'+LL2('Defensa','Defence')+':</b> '+(K.sam?X.esc(K.sam.n)+' ×'+K.sam.N+(K.sam.Nsrc==='ficha'?FS:' '+E)+', '+nf(K.sam.km)+' km'+(K.sam.src==='ficha'?lk(K.sam):' '+E):LL2('sin misiles antiaéreos','no SAMs'))+' · '+(K.ciws?'CIWS '+X.esc(K.ciws.n)+FS:LL2('sin CIWS','no CIWS'))+' · '+(K.chaff?K.chaff+' '+LL2('cargas de chaff','chaff loads')+' '+E:LL2('sin chaff','no chaff'))+'</li>');
     if(K.gun) li.push('<li><b>'+LL2('Cañón','Gun')+':</b> '+K.gun.cal+' mm'+(K.gun.brl>1?' ×'+K.gun.brl:'')+FS+' · '+LL2('alcance ≈','range ≈')+K.gun.km+' km, '+K.gun.rpm+LL2(' disparos/min',' rounds/min')+' '+E+'</li>');
     return '<div class="d2-side"><h3>'+col+' '+X.esc(a.n)+'</h3><ul>'+li.join('')+'</ul></div>'; }
-  function side(a,W,col){ if(!a) return '<div></div>'; if(MODE==='cielo') return sideAir(a,W,col); if(MODE==='mar') return sideMar(a,col); var c=cruise(a,MODE), li=[];
+  function side(a,W,col){ if(!a) return '<div></div>'; if(MODE==='cielo') return sideAir(a,W,col); if(MODE==='mar') return sideMar(a,col,W); var c=cruise(a,MODE), li=[];
     li.push('<li><b>'+LL2('Velocidad','Speed')+':</b> '+(c.src==='ficha'?Math.round(spd(a)).toLocaleString('es-ES')+' km/h '+LL2('máx. (ficha)','max (data sheet)')+'; '+LL2('en el duelo','in the duel')+' '+Math.round(c.v*3.6)+' km/h '+E:Math.round(c.v*3.6)+' km/h '+E)+'</li>');
     if(MODE==='cielo') li.push('<li><b>'+LL2('Giro sostenido','Sustained turn')+':</b> '+Math.round(turnRate(a)*57.3)+' °/s '+E+(era(a)>1965&&a.cat!=='helicopteros'?' · '+LL2('bengalas y señuelos','flares and chaff')+' '+E:'')+'</li>');
     if(MODE==='suelo'){ var K=gndKit(a,W), FS=' ('+LL2('ficha','data sheet')+')';
@@ -936,19 +1104,40 @@ window.MAT_DUELO=function(app,X){
   if(MODE!=='cielo') h+='<div class="d2-chips" id="dtime" data-noi18n>'+[['dia',LL2('Día','Day')],['noche',LL2('Noche','Night')]].map(function(q){return '<button class="d2-chip" data-t="'+q[0]+'" aria-pressed="'+((q[0]==='noche')===NIGHT)+'">'+q[1]+'</button>';}).join('')+'</div><p class="note" style="margin:0 0 8px">'+(MODE==='mar'?(NIGHT?LL2('De noche el radar ve igual que de día; los buques sin radar solo ven a unos 8 km. Estimación.','At night radar sees as well as by day; ships without radar only see about 8 km. Estimate.'):LL2('De día los buques con radar detectan hasta el horizonte de radar; uno con helicóptero embarcado ve mucho más lejos. Estimación.','By day ships with radar detect out to the radar horizon; one with an embarked helicopter sees much further. Estimate.')):NIGHT?LL2('De noche solo ven lejos los carros con cámara térmica (si la ficha no lo dice, de 1980 en adelante): unos 3 km; sin ella, unos 700 m. Estimación.','At night only tanks with a thermal sight see far (if the data sheet does not say, from 1980 onwards): about 3 km; without one, about 700 m. Estimate.'):LL2('De día se detectan a unos 3,5 km si nada tapa la línea de visión (colinas, casas, bosques o humo). Estimación.','By day they spot each other at about 3.5 km if nothing blocks the line of sight (hills, houses, woods or smoke). Estimate.'))+'</p>';
   if(!DUELO_LIVE[MODE]){ h+='<div class="d2-card" data-noi18n><p style="margin:0 0 6px"><b>'+LL2(MN2[MODE][0],MN2[MODE][1])+': '+LL2('próximamente','coming soon')+'</b></p><p class="note" style="margin:0 0 10px">'+LL2('Primero sale el duelo aéreo; tierra (carros de combate) y mar llegan en las próximas versiones.','The air duel comes first; ground (main battle tanks) and sea arrive in the next versions.')+'</p><a class="d2-btn" href="#/duelo?m=cielo">'+LL2('Ir al duelo aéreo','Go to the air duel')+'</a></div>'; X.set(h,LL2('Duelo','Duel')); Array.prototype.forEach.call(document.querySelectorAll('#dmode .d2-chip[data-m]'),function(b){b.addEventListener('click',function(){location.hash='#/duelo?m='+b.getAttribute('data-m');});}); return; }
   h+='<div class="cmp">'+X.pickBtn('a',A,LL2('🔵 Elegir modelo azul','🔵 Pick the blue model'))+X.pickBtn('b',B,LL2('🔴 Elegir modelo rojo','🔴 Pick the red model'))+'</div>';
-  if(A||B) h+='<div class="d2-card" data-noi18n><div class="d2-two">'+side(A,WA,'🔵')+side(B,WB,'🔴')+'</div><p class="note" style="margin:8px 0 0">'+LL2('Munición, cadencia, probabilidad de impacto y daño: reglas del juego de M.A.T (estimación). Los alcances con enlace salen de la ficha de Armamento del arma.','Ammunition, rate of fire, hit chance and damage: M.A.T game rules (estimate). Ranges with a link come from the weapon’s Armament data sheet.')+'</p></div>';
-  h+='<div class="btns" data-noi18n><button class="btn pri" id="dgo"'+(A&&B?'':' disabled')+'>'+LL2('⚔️ Combatir','⚔️ Fight')+'</button>'+(A?'<button class="btn" id="drr">'+LL2('Rival aleatorio','Random rival')+'</button>':'')+'<button class="btn" id="drand">'+LL2('Los dos al azar','Both at random')+'</button></div>';
+  if(A||B) h+='<div class="d2-card" data-noi18n id="dsides"><div class="d2-two">'+side(A,WA,'🔵')+side(B,WB,'🔴'+(B?' '+LL2('(máquina)','(computer)'):''))+'</div><p class="note" style="margin:8px 0 0">'+LL2('Munición, cadencia, probabilidad de impacto y daño: reglas del juego de M.A.T (estimación). Los alcances con enlace salen de la ficha de Armamento del arma.','Ammunition, rate of fire, hit chance and damage: M.A.T game rules (estimate). Ranges with a link come from the weapon’s Armament data sheet.')+'</p></div>';
+  var SUG=null; if(A&&B&&!PAIR.ok){ SUG=sugg(); h+='<div class="d2-card d2-warnc" data-noi18n role="alert"><p style="margin:0 0 6px"><b>'+LL2('Estos dos no pueden enfrentarse en este modo','These two cannot fight each other in this mode')+'</b></p><p class="note" style="margin:0 0 8px">'+X.esc(PAIR.why)+'</p>'+(SUG?'<a class="d2-btn" href="#/duelo?m='+MODE+'&a='+A.id+'&b='+SUG.id+'">'+LL2('Probar contra: ','Try against: ')+X.esc(SUG.n)+'</a>':'')+'</div>'; }
+  h+='<div id="dlowrap">'+loHTML()+'</div>';
+  h+='<div class="btns" data-noi18n><button class="btn pri" id="dgo"'+(A&&B&&loFires()?'':' disabled')+'>'+LL2('⚔️ Combatir','⚔️ Fight')+'</button>'+(A?'<button class="btn" id="drr">'+LL2('Rival aleatorio','Random rival')+'</button>':'')+'<button class="btn" id="drand">'+LL2('Los dos al azar','Both at random')+'</button></div>';
   h+='<div id="dfight"></div>';
   X.set(h,LL2('Duelo','Duel'));
+  function loRe(){ WA.lo=loA; var el=document.getElementById('dlowrap'); if(el) el.innerHTML=loHTML();
+    var sd_=document.getElementById('dsides'); if(sd_) sd_.querySelector('.d2-two').innerHTML=side(A,WA,'🔵')+side(B,WB,'🔴'+(B?' '+LL2('(máquina)','(computer)'):''));
+    var g_=document.getElementById('dgo'); if(g_) g_.disabled=!(A&&B&&loFires());
+    try{ var oo=X.qs(); oo.lo=loEnc(loA); oo.m=MODE; delete oo.go; history.replaceState(null,'',X.hashFor('#/duelo',oo)); }catch(e){} }
+  var LW_=document.getElementById('dlowrap'); if(LW_) LW_.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('button'); if(!b||b.disabled) return;
+    if(b.hasAttribute('data-p')){ loA=cl_(LOA.P[b.getAttribute('data-p')]); }
+    else if(b.hasAttribute('data-ty')){ loA.t[b.getAttribute('data-g')]=b.getAttribute('data-ty'); var g0=LOA.G.filter(function(g){return g.k===b.getAttribute('data-g');})[0]; if(MODE==='mar'&&g0){ loA.c[g0.k]=loT(LOA,g0,loA).max; } loA=loNorm(LOA,loA); }
+    else if(b.hasAttribute('data-d')){ var g1=LOA.G.filter(function(g){return g.k===b.getAttribute('data-g');})[0]; loA.c[g1.k]=loBump(g1,+b.getAttribute('data-d')); loA=loNorm(LOA,loA); }
+    else return; loRe(); });
   Array.prototype.forEach.call(document.querySelectorAll('#dmode .d2-chip'),function(b){b.addEventListener('click',function(){location.hash='#/duelo?m='+b.getAttribute('data-m');});});
   Array.prototype.forEach.call(document.querySelectorAll('#dtime .d2-chip'),function(b){b.addEventListener('click',function(){var oo=X.qs(); oo.t=b.getAttribute('data-t'); oo.m=MODE; delete oo.go; location.hash=X.hashFor('#/duelo',oo);});});
   Array.prototype.forEach.call(document.querySelectorAll('.pkbtn'),function(b){b.addEventListener('click',function(){var k=b.getAttribute('data-k'); X.openPicker(okc,LL2('Elegir modelo','Pick a model'),function(id){var oo=X.qs();oo[k]=id;delete oo.s;oo.m=MODE;location.hash=X.hashFor('#/duelo',oo);});});});
-  var rr_=document.getElementById('drr'); if(rr_) rr_.addEventListener('click',function(){var L=X.I.filter(okc).filter(function(x){return x!==A;}); var b=L[Math.floor(Math.random()*L.length)]; location.hash='#/duelo?m='+MODE+'&a='+A.id+'&b='+b.id;});
-  document.getElementById('drand').addEventListener('click',function(){var L=X.I.filter(okc);var a=L[Math.floor(Math.random()*L.length)],b;do{b=L[Math.floor(Math.random()*L.length)];}while(b===a);location.hash='#/duelo?m='+MODE+'&a='+a.id+'&b='+b.id;});
+  /* azar: solo parejas que pueden enfrentarse en este modo */
+  function rPair(fixA,btn){ var L=X.I.filter(okc); if(btn){ btn.disabled=true; btn.textContent=LL2('Buscando…','Searching…'); }
+    var go=function(){ L=X.I.filter(okc).filter(function(x){return !x.lz||x._full;}); var rp=function(){return L[Math.floor(Math.random()*L.length)];}, last=null;
+      for(var i=0;i<400&&L.length>1;i++){ var a=fixA||rp(), b=rp(); if(b===a) continue; last=[a,b]; if(canFight(a,b,MODE,true).ok){ location.hash='#/duelo?m='+MODE+'&a='+a.id+'&b='+b.id; return; } }
+      if(btn){ btn.disabled=false; btn.textContent=LL2('Sin rival válido','No valid rival'); } };
+    var go2=function(){ setTimeout(go,40); }; if(X.ensure) X.ensure(L,go2); else go2(); }
+  window.MAT_DUELO_RPAIR=function(fixA,cb){ var L=X.I.filter(okc); X.ensure(L,function(){ L=X.I.filter(okc); var rp=function(){return L[Math.floor(Math.random()*L.length)];}; for(var i=0;i<600;i++){ var a=fixA||rp(), b=rp(); if(b===a) continue; if(canFight(a,b,MODE,true).ok) return cb([a.id,b.id]); } cb(null); }); };
+  var rr_=document.getElementById('drr'); if(rr_) rr_.addEventListener('click',function(){ rPair(A,rr_); });
+  document.getElementById('drand').addEventListener('click',function(){ rPair(null,document.getElementById('drand')); });
   var raf=0, dead=false; D2ACTIVE=function(){ dead=true; cancelAnimationFrame(raf); };
   function fight(sd){ cancelAnimationFrame(raf); dead=false; seed=sd; var box=document.getElementById('dfight'); if(!box) return;
+    var AIP=null; if(LOB){ AIP=loAI(LOB,mkRng((sd*2654435761)>>>0)); WB.lo=AIP.lo; } if(LOA) WA.lo=loA;
+    var pA=LOA?loPname(LOA,loA):null, LOS=[A&&LOA?LL2('Azul','Blue')+(pA?' «'+LL2(LOPN[pA][0],LOPN[pA][1])+'»':' '+LL2('(a tu gusto)','(custom)'))+': '+loSum(LOA,loA):null, B&&LOB?LL2('Rojo (máquina)','Red (computer)')+(AIP&&AIP.p?' «'+LL2(LOPN[AIP.p][0],LOPN[AIP.p][1])+'»'+(AIP.tw?LL2(', retocada',', tweaked'):''):'')+': '+loSum(LOB,WB.lo):null].filter(Boolean);
+    var sd2=document.getElementById('dsides'); if(sd2) sd2.querySelector('.d2-two').innerHTML=side(A,WA,'🔵')+side(B,WB,'🔴 '+LL2('(máquina)','(computer)'));
     var S=MODE==='cielo'?AIRsim(A,B,WA,WB,seed):MODE==='suelo'?GNDsim(A,B,WA,WB,seed,NIGHT):MARsim(A,B,WA,WB,seed,NIGHT); var speed=1;
-    box.innerHTML='<div class="d2-card" data-noi18n><div class="d2-stage" id="dstage"><canvas id="dcv"></canvas>'+''+'<div class="d2-tools"><button type="button" id="dsp">×1</button><button type="button" id="dskip">'+LL2('⏭ Saltar','⏭ Skip')+'</button></div></div>'+'<div class="d2-ahud" id="dhud"></div>'+'<p class="note" style="margin:4px 0">'+(MODE==='mar'?LL2('Tiempo acelerado: muy rápido mientras navegan, más lento con misiles en el aire. Círculo discontinuo: alcance de sus misiles antibuque (ficha); punteado: hasta dónde detecta al rival. Blanco: misil antibuque; celeste: misil antiaéreo; nube gris: chaff.','Time sped up: very fast while sailing, slower with missiles in the air. Dashed circle: range of its anti-ship missiles (data sheet); dotted: how far it detects the rival. White: anti-ship missile; light blue: SAM; grey cloud: chaff.'):MODE==='cielo'?LL2('Tiempo acelerado: ×8 cuando están lejos, ×2 en el combate cerrado. Círculo discontinuo: alcance del misil de más alcance que le queda (ficha); punteado: cañón. Estela blanca: misil.','Time sped up: ×8 when far apart, ×2 in the close fight. Dashed circle: range of its longest-range missile left (data sheet); dotted: gun. White trail: missile.'):LL2('Tiempo acelerado ×'+TSC[MODE]+'. Círculo discontinuo: alcance del arma de más alcance que le queda.','Time sped up ×'+TSC[MODE]+'. Dashed circle: range of its longest-range weapon left.'))+' '+(function(){ var sp=MODE==='cielo'?[A,B].map(function(a){return sprOf(a).own;}):null; var gen=MODE==='cielo'?(sp[0]&&sp[1]?'':LL2(' Si un avión no tiene silueta propia, se usa la de su clase.',' An aircraft without its own silhouette uses its class silhouette.')):LL2(' Silueta según su clase.',' Silhouette by class.'); return LL2('Siluetas: modelo aproximado hecho por MAT a partir de medidas oficiales.','Silhouettes: approximate model made by MAT from official dimensions.')+gen; })()+'</p><ul class="d2-log" id="dlog"></ul></div><div id="dres"></div>';
+    box.innerHTML='<div class="d2-card" data-noi18n>'+(LOS.length?'<p class="note d2-lonote" id="dlos">'+LOS.map(function(s){return X.esc(s);}).join('<br>')+'</p>':'')+'<div class="d2-stage" id="dstage"><canvas id="dcv"></canvas>'+''+'<div class="d2-tools"><button type="button" id="dsp">×1</button><button type="button" id="dskip">'+LL2('⏭ Saltar','⏭ Skip')+'</button></div></div>'+'<div class="d2-ahud" id="dhud"></div>'+'<p class="note" style="margin:4px 0">'+(MODE==='mar'?LL2('Tiempo acelerado: muy rápido mientras navegan, más lento con misiles en el aire. Círculo discontinuo: alcance de sus misiles antibuque (ficha); punteado: hasta dónde detecta al rival. Blanco: misil antibuque; celeste: misil antiaéreo; nube gris: chaff.','Time sped up: very fast while sailing, slower with missiles in the air. Dashed circle: range of its anti-ship missiles (data sheet); dotted: how far it detects the rival. White: anti-ship missile; light blue: SAM; grey cloud: chaff.'):MODE==='cielo'?LL2('Tiempo acelerado: ×8 cuando están lejos, ×2 en el combate cerrado. Círculo discontinuo: alcance del misil de más alcance que le queda (ficha); punteado: cañón. Estela blanca: misil.','Time sped up: ×8 when far apart, ×2 in the close fight. Dashed circle: range of its longest-range missile left (data sheet); dotted: gun. White trail: missile.'):LL2('Tiempo acelerado ×'+TSC[MODE]+'. Círculo discontinuo: alcance del arma de más alcance que le queda.','Time sped up ×'+TSC[MODE]+'. Dashed circle: range of its longest-range weapon left.'))+' '+(function(){ var sp=MODE==='cielo'?[A,B].map(function(a){return sprOf(a).own;}):null; var gen=MODE==='cielo'?(sp[0]&&sp[1]?'':LL2(' Si un avión no tiene silueta propia, se usa la de su clase.',' An aircraft without its own silhouette uses its class silhouette.')):LL2(' Silueta según su clase.',' Silhouette by class.'); return LL2('Siluetas: modelo aproximado hecho por MAT a partir de medidas oficiales.','Silhouettes: approximate model made by MAT from official dimensions.')+gen; })()+'</p><ul class="d2-log" id="dlog"></ul></div><div id="dres"></div>';
     var cv=document.getElementById('dcv'), V=MODE==='cielo'?AIRview(cv,S):MODE==='suelo'?GNDview(cv,S):MARview(cv,S), logEl=document.getElementById('dlog'), nL=0, last=performance.now(), acc=0, shown=false, endT=0;
     function hud(){ if(S.hud){ var hh=S.hud(); document.getElementById('dhud').innerHTML=hh.map(function(x){return '<div class="d2-ah '+(x.c?'r':'b')+'"><b>'+(x.c?'🔴 ':'🔵 ')+X.esc(x.n)+'</b> · '+x.hp+' %'+(x.fuel!=null?' · '+LL2('combustible ','fuel ')+x.fuel+' %':'')+'<br><span>'+X.esc(x.txt)+'</span></div>';}).join(''); } else document.getElementById('dhud').textContent='🔵 '+Math.round(S.U[0].hp*100)+' %  ·  🔴 '+Math.round(S.U[1].hp*100)+' %  ·  '+fmtD(Math.hypot(S.U[1].x-S.U[0].x,S.U[1].y-S.U[0].y))+'  ·  '+Math.floor(S.T/60)+':'+String(Math.floor(S.T%60)).padStart(2,'0');
       while(nL<S.ev.length){ var e=S.ev[nL++]; var li=document.createElement('li'); li.className=e.cls; li.textContent=tF(e.t)+' · '+(LGE()?e.en:e.es); logEl.insertBefore(li,logEl.firstChild); } }
@@ -956,7 +1145,7 @@ window.MAT_DUELO=function(app,X){
     document.getElementById('dsp').addEventListener('click',function(e){ speed=speed===1?2:speed===2?4:1; e.target.textContent='×'+speed; });
     document.getElementById('dskip').addEventListener('click',function(){ var n=0; while(!S.over&&n++<60000) S.step(0.05); endT=performance.now()-2000; });
     var onR=function(){ V.layout(); }; window.addEventListener('resize',onR); var prevD=D2ACTIVE; D2ACTIVE=function(){ dead=true; cancelAnimationFrame(raf); window.removeEventListener('resize',onR); };
-    window.MAT_DUELO_DBG={S:S,V:V,setSpeed:function(v){speed=v;}};
+    window.MAT_DUELO_DBG={S:S,V:V,setSpeed:function(v){speed=v;},LOS:LOS,loA:loA,loB:WB.lo,AIP:AIP};
     try{ box.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
     raf=requestAnimationFrame(frame);
     function result(){ var w=S.over.w, U=S.U, win=U[w], los_=U[1-w], st=S.st; var R_=[]; if(S.reasons){ R_=S.reasons.slice(); } else {
@@ -968,12 +1157,14 @@ window.MAT_DUELO=function(app,X){
       if(MODE==='suelo'&&(U[0].hullT||U[1].hull)) {}
       if(MODE==='suelo'&&S.ev.some(function(e){return /desenfilada/.test(e.es);})) R_.push(LL2('Desde una posición desenfilada solo asoma la torre: es más difícil de alcanzar (×0,6, regla del juego) y siempre por el frente','From a hull-down position only the turret shows: harder to hit (×0.6, game rule) and always on the front'));
       }
+      LOS.slice().reverse().forEach(function(s){ R_.unshift(LL2('Carga · ','Load · ')+s); });
+      if(MODE==='suelo') U.forEach(function(u){ var ks=Object.keys(u.rd||{}); if(ks.length) R_.push(u.a.n+': '+LL2('disparos por tipo','rounds fired by type')+' — '+ks.map(function(k){ return (u.K.R&&u.K.R[k]?wN(u.K.R[k].n).replace(/\s*\(.*$/,''):k)+' ×'+u.rd[k]; }).join(', ')); });
       var wn=S.mode==='mar'?win.sn:win.a.n; var hd=S.over.how==='ko'?LL2('🏆 Gana el '+wn,'🏆 The '+wn+' wins'):LL2('🏆 Gana a los puntos el '+wn,'🏆 The '+wn+' wins on points');
       var el=document.getElementById('dres'); el.innerHTML='<div class="d2-card" data-noi18n><h2 style="margin:0 0 4px">'+X.esc(hd)+'</h2><p class="note">'+X.esc(LL2(MN2[MODE][0],MN2[MODE][1]))+' · '+tF(S.T)+' · '+LL2('semilla ','seed ')+seed+'</p><h3 style="font-size:14px;margin:8px 0 4px">'+LL2('Por qué','Why')+'</h3><ol style="padding-left:20px;margin:0">'+R_.map(function(r){return '<li style="margin:4px 0">'+X.esc(r)+'</li>';}).join('')+'</ol>'+
         '<div style="margin-top:10px"><button class="d2-btn" id="drev">'+LL2('🔁 Revancha','🔁 Rematch')+'</button><button class="d2-btn sec" id="drep">'+LL2('Repetir (misma semilla)','Replay (same seed)')+'</button><button class="d2-btn sec" id="dsw">'+LL2('Cambiar de lado','Swap sides')+'</button><button class="d2-btn sec" id="dsh">'+LL2('🔗 Compartir','🔗 Share')+'</button></div><p class="note" id="dshm" hidden></p></div>';
       document.getElementById('drev').onclick=function(){fight(1+Math.floor(Math.random()*99999));}; document.getElementById('drep').onclick=function(){fight(seed);};
       document.getElementById('dsw').onclick=function(){location.hash='#/duelo?m='+MODE+'&a='+B.id+'&b='+A.id+(MODE!=='cielo'&&NIGHT?'&t=noche':'')+'&go=1';};
-      document.getElementById('dsh').onclick=function(){ var u=location.origin+location.pathname+'#/duelo?m='+MODE+'&a='+A.id+'&b='+B.id+(MODE!=='cielo'&&NIGHT?'&t=noche':'')+'&s='+seed+'&go=1'; var m=document.getElementById('dshm'); var done=function(ok){ m.hidden=false; m.innerHTML=(ok?LL2('Enlace copiado: abre este mismo duelo.','Link copied: it opens this same duel.'):LL2('Copia este enlace: abre este mismo duelo.','Copy this link: it opens this same duel.'))+'<br><input type="text" readonly value="'+X.esc(u)+'" style="width:100%;font-size:12px" onclick="this.select()">'; };
+      document.getElementById('dsh').onclick=function(){ var u=location.origin+location.pathname+'#/duelo?m='+MODE+'&a='+A.id+'&b='+B.id+(MODE!=='cielo'&&NIGHT?'&t=noche':'')+'&s='+seed+(LOA?'&lo='+encodeURIComponent(loEnc(loA)):'')+'&go=1'; var m=document.getElementById('dshm'); var done=function(ok){ m.hidden=false; m.innerHTML=(ok?LL2('Enlace copiado: abre este mismo duelo.','Link copied: it opens this same duel.'):LL2('Copia este enlace: abre este mismo duelo.','Copy this link: it opens this same duel.'))+'<br><input type="text" readonly value="'+X.esc(u)+'" style="width:100%;font-size:12px" onclick="this.select()">'; };
         if(navigator.share){ navigator.share({title:'M.A.T · Duelo',url:u}).catch(function(){}); return; } if(navigator.clipboard) navigator.clipboard.writeText(u).then(function(){done(true);},function(){done(false);}); else done(false); };
       try{ el.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){} } }
   document.getElementById('dgo').addEventListener('click',function(){ var sd=shared?seed:1+Math.floor(Math.random()*99999); shared=false; fight(sd); });
