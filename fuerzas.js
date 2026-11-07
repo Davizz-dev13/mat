@@ -6,6 +6,8 @@ function QT(s){s=String(s);return /^\d+( \d+)+$/.test(s.trim())?s.trim().split('
 var IC=[['aviones_combate','Aviones de combate'],['aviones_otros','Otros aviones y drones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['artilleria','Artillería'],['antiaereos','Defensa antiaérea'],['armamento','Armamento aéreo'],['buques_portaaviones','Portaaviones'],['buques_destructores','Destructores'],['buques_cruceros','Cruceros'],['buques_fragatas','Fragatas'],['buques_corbetas','Corbetas'],['buques_anfibios','Anfibios'],['buques_patrulleros','Patrulleros'],['buques_minas','Guerra de minas'],['submarinos','Submarinos'],['buques_auxiliares','Auxiliares'],['buques_menores','Embarcaciones menores y de puerto']];
 var ICN={}; IC.forEach(function(c){ICN[c[0]]=c[1];});
 var MC=[['aviones','Aviones'],['helicopteros','Helicópteros'],['tanques','Carros de combate'],['blindados','Blindados'],['buques','Buques'],['submarinos','Submarinos'],['logistica','Logística y Sanidad'],['armamento','Armamento'],['armas','Armas de fuego'],['espacio','Carrera espacial']];
+// nov. 2026: Estados que ya no existen (su página muestra «Material histórico») y a qué páginas de país enlazar desde ella
+var MH_SEE={urss:['rusia','ucrania','bielorrusia','kazajistan','georgia','azerbaiyan','armenia','uzbekistan','turkmenistan','kirguistan','tayikistan','moldavia','estonia','letonia','lituania'],imperio_ruso:['urss','rusia'],checoslovaquia:['rep_checa','eslovaquia'],yugoslavia:['serbia','croacia','bosnia','eslovenia','macedonia','montenegro'],rodesia:['zimbabue'],vietnam_sur:['vietnam']};
 var DATA=null, DP=null;
 function load(){ if(DP) return DP; DP=window.MAT_GET('fuerzas.json.gz').then(function(d){DATA=d;return d;}); return DP; }
 function custom(){try{return JSON.parse(localStorage.getItem('mat_fac')||'[]');}catch(e){return [];}}
@@ -74,11 +76,35 @@ window.MAT_FUERZAS=function(app,X){
     X.set(h,'Países y facciones');
     Array.prototype.forEach.call(document.querySelectorAll('.fzbtn'),function(b){b.addEventListener('click',function(){var k=b.getAttribute('data-k'); picker(function(s){var oo={a:SA?SA.s:'',b:SB?SB.s:'',cmp:'1',bat:o.bat==='1'?'1':''}; oo[k]=s; location.hash=X.hashFor('#/fuerzas',oo);});});});
   }
+  // ---- nov. 2026: países que ya no existen → bloque «Material histórico» (solo añade; no quita nada) ----
+  function mhist(k){ var EN=L1(), L=I.filter(function(a){return a.ops&&a.ops[k];}); if(!L.length) return '';
+    var CNE={aviones:'Aircraft',helicopteros:'Helicopters',tanques:'Tanks',blindados:'Armoured vehicles',buques:'Ships',submarinos:'Submarines',logistica:'Logistics & Medical',armamento:'Armament',armas:'Firearms',espacio:'Space race'};
+    function own(a){return a.pais===k||(a.orig||[]).indexOf(k)>=0?1:0;}
+    function nop(a){return Object.keys(a.ops).length;}
+    L.sort(function(x,y){return (own(y)-own(x))||((y.img?1:0)-(x.img?1:0))||(nop(y)-nop(x))||((x.anio||9999)-(y.anio||9999))||x.n.localeCompare(y.n);});
+    var g={}; L.forEach(function(a){(g[a.cat]=g[a.cat]||[]).push(a);}); MHG=g;
+    var nm=esc(TT1(P[k].n)), cats=MC.filter(function(c){return g[c[0]];});
+    var h='<section class="mhist" data-nofold data-noi18n><div class="mh-k">'+(EN?'A state that no longer exists':'Un Estado que ya no existe')+'</div><h2>'+(EN?'Historical equipment':'Material histórico')+'</h2>'+
+      '<p class="mh-p">'+(EN?L.length+' systems in M.A.T whose entry lists '+nm+' as a user, by category: its own designs first, then the most widely used. Tap one to open its entry.':L.length+' sistemas de M.A.T cuya ficha cita a '+nm+' como usuario, por categorías: primero los de diseño propio y después los más extendidos. Toca uno para abrir su ficha.')+'</p>'+
+      '<div class="mh-stats">'+cats.map(function(c){return '<button type="button" class="mh-jump" data-c="'+c[0]+'">'+(EN?CNE[c[0]]:c[1])+' <b>'+nf(g[c[0]].length)+'</b></button>';}).join('')+'</div>';
+    cats.forEach(function(c){ var l=g[c[0]];
+      h+='<div class="mh-cat" id="mh-'+c[0]+'"><div class="mh-ch"><h3>'+(EN?CNE[c[0]]:c[1])+'</h3><span class="n">'+nf(l.length)+'</span></div><div class="mh-rail">'+l.slice(0,12).map(mhCard).join('')+'</div>'+
+        (l.length>12?'<button type="button" class="btn mh-more" data-c="'+c[0]+'">'+(EN?'See all '+l.length:'Ver los '+l.length)+' ›</button><div class="mh-all" hidden></div>':'')+'</div>'; });
+    var sv=(MH_SEE[k]||[]).filter(function(s){return P[s];});
+    if(sv.length) h+='<p class="mh-see">'+(EN?'See also: ':'Ver también: ')+sv.map(function(s){return '<a href="'+X.hashFor('#/fuerzas',{a:'p:'+s})+'">'+X.flag(s,'mini')+esc(TT1(P[s].n))+'</a>';}).join(' · ')+'</p>';
+    return h+'<p class="note" style="margin:8px 0 0">'+(EN?'Photos from Wikimedia Commons (author and licence on each entry). Number of distinct models, not of units.':'Fotos de Wikimedia Commons (autor y licencia en cada ficha). Número de modelos distintos, no de unidades.')+'</p></section>'; }
+  function mhCard(a){ return '<a class="mh-card" href="#/a/'+a.id+'"><div class="im">'+(a.img?'<img src="'+esc(a.img.th)+'" data-fb="'+esc(a.img.src)+'" alt="" loading="lazy" decoding="async">':(window.MAT_PH?window.MAT_PH(a):''))+'</div><div class="t">'+esc(a.n)+(a.anio?'<span>'+a.anio+'</span>':'')+'</div></a>'; }
+  function mhWire(){ Array.prototype.forEach.call(document.querySelectorAll('.mh-jump'),function(b){b.addEventListener('click',function(){var t=document.getElementById('mh-'+b.getAttribute('data-c')); if(t) t.scrollIntoView({behavior:'smooth',block:'start'});});});
+    Array.prototype.forEach.call(document.querySelectorAll('.mh-more'),function(b){ var lbl=b.textContent; b.addEventListener('click',function(){ var box=b.nextElementSibling, l=MHG[b.getAttribute('data-c')]||[]; if(!box) return;
+      if(box.hidden){ if(!box.firstChild) box.innerHTML=l.slice(12).map(mhCard).join(''); box.hidden=false; b.textContent=L1()?'Show less':'Ver menos'; } else { box.hidden=true; b.textContent=lbl; } }); }); }
+  var MHG={};
   function solo(S){ var EN=L1(); var I1=invSum(S), M1=opsOf(S);
+    var MHK=S.m.length===1&&MH_SEE[S.m[0]]?S.m[0]:null; if(MHK&&o.h!=='0'&&o.h!=='1') { modeH=true; M1=opsOf(S); }
     function bar1(v,mx,lab,sub){ return '<div class="fzrow"><div class="fzl">'+lab+(sub?'<span class="fzs">'+sub+'</span>':'')+'</div><div class="fzb fzb1"><div class="fzv a w"><span>'+nf(v)+'</span><i style="width:'+((v||0)/(mx||1)*100).toFixed(1)+'%"></i></div></div></div>'; }
     var h=X.crumbs([['Inicio','#/'],['Países y facciones','#/fuerzas'],[S.n]])+'<h1>'+flags(S,4)+' '+esc(S.n)+'</h1><p class="sub">'+esc(S.kind)+(S.m.length>1?' · '+S.m.length+' países':'')+'</p>';
     h+='<div class="btns" style="margin-top:8px" data-noi18n><button class="btn" id="fzchg1">'+(EN?'Change':'Cambiar')+'</button><button class="btn" id="fzcmp1">'+(EN?'Compare with…':'Comparar con…')+'</button><a class="btn" href="#/mapa?a='+encodeURIComponent(S.s)+'">'+(EN?'See on the map':'Ver en el mapa')+'</a></div>';
     if(S.fac){ var f=S.fac; h+='<p class="note" style="margin:6px 0 0">'+esc(TT1(f.n))+': '+S.m.map(function(k){return esc(TT1(P[k].n));}).join(', ')+'. '+(f.nota?esc(TT1(f.nota))+' ':'')+(EN?'Members per ':'Miembros según ')+'<a href="'+esc(f.src.url)+'" target="_blank" rel="noopener">Wikipedia: '+esc(f.src.t)+'</a> ('+esc(f.src.fecha)+').</p>'; }
+    if(MHK) h+=mhist(MHK);
     h+='<h2>Unidades en servicio (según Wikipedia, '+esc(DATA.fecha)+')</h2>';
     var mx=1; IC.forEach(function(c){ mx=Math.max(mx,I1.tot[c[0]]||0); }); var any=false;
     IC.forEach(function(c){ var k=c[0], v=I1.tot[k]; if(v==null&&!I1.rows[k]) return; any=true; var n=I1.noq[k]||0; h+=bar1(v,mx,c[1],n?(EN?n+' row'+(n>1?'s':'')+' with no figure':n+' fila'+(n>1?'s':'')+' sin cifra'):''); });
@@ -105,7 +131,8 @@ window.MAT_FUERZAS=function(app,X){
     X.set(h,S.n);
     document.getElementById('fzchg1').addEventListener('click',function(){picker(function(s){location.hash=X.hashFor('#/fuerzas',{a:s,h:modeH?'1':''});});});
     document.getElementById('fzcmp1').addEventListener('click',function(){picker(function(s){location.hash=X.hashFor('#/fuerzas',{a:S.s,b:s,h:modeH?'1':''});});});
-    Array.prototype.forEach.call(document.querySelectorAll('.fzh'),function(b){b.addEventListener('click',function(){location.hash=X.hashFor('#/fuerzas',{a:S.s,h:b.getAttribute('data-h')==='1'?'1':''});});});
+    Array.prototype.forEach.call(document.querySelectorAll('.fzh'),function(b){b.addEventListener('click',function(){location.hash=X.hashFor('#/fuerzas',{a:S.s,h:b.getAttribute('data-h')==='1'?'1':(MHK?'0':'')});});});
+    if(MHK) mhWire();
   }
   function flags(sd,max){max=max||8; return sd.m.slice(0,max).map(function(k){return X.flag(k,'mini');}).join('')+(sd.m.length>max?'<span class="cnt"> +'+(sd.m.length-max)+'</span>':'');}
   function sideBtn(k,sd){return '<div class="pick fzpick"><button class="btn fzbtn" data-k="'+k+'"><span class="fzf">'+flags(sd,6)+'</span><span class="fzn">'+esc(sd.n)+'</span><span class="cnt" style="margin-left:6px">cambiar</span></button><div class="note" style="margin:4px 2px 0">'+esc(sd.kind)+(sd.m.length>1?' · '+sd.m.length+' países':'')+'</div></div>';}

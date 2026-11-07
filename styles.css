@@ -1240,3 +1240,43 @@ html[lang=en] .rc.on .rt:after,html[lang=en] .ddfe.on .go:after{content:" · tap
 @media (hover:hover){.rc:hover .ri,.ddfe:hover .fi{filter:none;transform:scale(1.06)}.rc:hover .ri:after{opacity:.4}}
 @media (prefers-reduced-motion:reduce){.rc .ri,.ddfe .fi{transform:none!important}}
 .carta[href="#/armas"] .sm img{object-fit:cover;object-position:50% 45%}
+
+/* === M.A.T fichas: cifras clave y material histórico (nov. 2026) === */
+.kpis.kfig{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:none;border:0;border-radius:0;overflow:visible;margin:14px 0 12px}
+.kpis.kfig>div{position:relative;min-width:0;overflow:hidden;text-align:left;padding:11px 12px 10px 14px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(155deg,rgba(143,154,106,.17),rgba(143,154,106,.03) 62%),var(--s1);animation:kfin .55s cubic-bezier(.65,.05,0,1) both}
+.kpis.kfig>div::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--ac2)}
+.kpis.kfig>div:nth-child(2){animation-delay:.05s}.kpis.kfig>div:nth-child(3){animation-delay:.1s}.kpis.kfig>div:nth-child(4){animation-delay:.15s}
+.kpis.kfig .kv{font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:27px;line-height:1.08;letter-spacing:.01em;color:var(--tx);overflow-wrap:anywhere}
+.kpis.kfig .kv.kvs{font-size:20px;line-height:1.15}
+.kpis.kfig .kv small{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.03em;color:var(--ac2);margin-left:1px;white-space:nowrap}
+.kpis.kfig .kk{margin-top:5px;font-size:10.5px;line-height:1.3;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+.kpis.kfig.n1{grid-template-columns:minmax(0,1fr);max-width:260px}
+.kpis.kfig.n3>div:last-child{grid-column:1/-1}
+@media(min-width:760px){.kpis.kfig{gap:10px}.kpis.kfig>div{padding:13px 14px 12px 16px}.kpis.kfig .kv{font-size:29px}}
+@keyframes kfin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.kpis.kfig>div{animation:none}}
+.mhist{margin:20px 0 10px;padding:16px 14px 10px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,rgba(143,154,106,.12),rgba(143,154,106,0) 150px),var(--s1);min-width:0}
+.mhist .mh-k{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ac2)}
+.mhist h2{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.02em;font-size:30px;line-height:1.05;margin:4px 0 6px;border:0;padding:0}
+.mhist .mh-p{color:var(--mu);font-size:14px;line-height:1.45;margin:0 0 10px}
+.mhist .mh-stats{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.mhist .mh-stats button{font:inherit;cursor:pointer;display:inline-flex;align-items:baseline;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--s2);font-size:13px;text-decoration:none;color:var(--tx)}
+.mhist .mh-stats button b{font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:15px;color:var(--ac2);letter-spacing:.02em}
+.mhist .mh-see{font-size:13px;color:var(--mu);margin:8px 0 2px}.mhist .mh-see a{color:var(--tx)}
+.mh-cat{margin:18px 0 6px;scroll-margin-top:70px}
+.mh-ch{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.mh-ch h3{margin:0;font-size:14px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.mh-ch .n{color:var(--dim);font-size:13px;white-space:nowrap}
+.mh-rail{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:0 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.mh-card{flex:0 0 148px;scroll-snap-align:start;display:flex;flex-direction:column;text-decoration:none;color:var(--tx);background:var(--s2);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0;transition:border-color .2s,transform .2s}
+.mh-card:hover{border-color:var(--ac);transform:translateY(-2px)}
+.mh-card .im{aspect-ratio:4/3;background:#0e1012;overflow:hidden;position:relative}
+.mh-card .im img{width:100%;height:100%;object-fit:cover}
+.mh-card .im .nofoto{height:100%;min-height:0}
+.mh-card .t{padding:7px 9px 9px;font-size:13px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.mh-card .t span{display:block;color:var(--dim);font-weight:400;font-size:12px;margin-top:2px}
+.mh-more{margin-top:6px}
+.mh-all{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:10px}
+.mh-all .mh-card{flex:none}
+@media(min-width:900px){.mh-rail{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow:visible}.mh-card{flex:none}.mhist{padding:20px 20px 12px}.mhist h2{font-size:36px}}
+/* fin M.A.T fichas nov. 2026 */

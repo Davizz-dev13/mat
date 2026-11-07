@@ -273,6 +273,35 @@ function buscar(){ CUR='';
   var h=crumbs([['Inicio','#/'],['Buscar']])+'<h1>Buscar</h1><p class="sub">'+I.length+' modelos de '+Object.keys(P).length+' países y programas.</p>'+controls(I)+'<div id="onuhit"></div><div id="res"></div>';
   set(h,'Buscar'); bindControls(I,false); (function(){var oh=document.getElementById('onuhit'),qq=document.getElementById('q');if(!oh||!qq||!window.MAT_ONU)return;var K=['onu','un','unitednations','nacionesunidas','cascosazules','bluehelmets','peacekeeping','misionesdepaz','unifil','finul','undof','unficyp','minusca','monusco','unmiss','unisfa','minurso','unmik','untso','unmogip'];var f=function(){var s=norm(qq.value),hit=s.length>=2&&K.some(function(k){return k===s||k.indexOf(s)===0;});oh.innerHTML=hit?'<div class="list" style="margin-top:10px"><a class="row" href="#/onu"><div class="th"><img src="flags/un.png" alt="" style="object-fit:contain;background:#4b92db"></div><div class="m"><div class="nm">ONU · Naciones Unidas</div><div class="ds">Sección: material de la ONU y misiones de paz</div></div><div class="ch">›</div></a></div>':'';};qq.addEventListener('input',f);f();})(); var q=document.getElementById('q'); q.placeholder='Nombre, p. ej. Spitfire, MiG-29, Apache'; if(!('ontouchstart' in window)) q.focus();
 }
+/* M.A.T · fichas (nov. 2026): franja de 4 cifras clave bajo el título, elegidas por categoría. Solo cifras que están en los datos; si falta una, se omite. */
+function kfL(es,en){return window.MAT_LANG==='en'?en:es;}
+function kfN(n,d){ if(n==null||n===''||isNaN(+n)) return null; return (+n).toLocaleString(window.MAT_LANG==='en'?'en-US':'es-ES',{maximumFractionDigits:d||0}); }
+function kfY(s){ var m=String(s||'').match(/\b(1[6-9]\d\d|20\d\d)\b/); return m?m[1]:null; }
+var KFW={uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12};
+function kfCrew(t){ if(t==null||t==='') return null; if(typeof t==='number') return String(t); var s=String(t).trim(), rest, m=s.match(/^(\d{1,3})(?:\s*(?:–|-|o|a|or|to)\s*(\d{1,3}))?(?![\d.,])/);
+  if(m){ rest=s.slice(m[0].length); } else { var w=s.toLowerCase().match(/^[a-záéíóúñ]+/); if(!w||!KFW[w[0]]) return null; m=[w[0],String(KFW[w[0]])]; rest=s.slice(w[0].length); }
+  if(/\d|\+|\bm[aá]s\b|\b(uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|two|three|four|five)\b/i.test(rest)) return null;
+  return m[2]?m[1]+'–'+m[2]:m[1]; }
+function kfig(L){ var v=L.filter(function(x){return x&&x.v!=null&&x.v!=='';}).slice(0,4); if(!v.length) return '';
+  return '<div class="kpis kfig n'+v.length+'">'+v.map(function(x){ var s=String(x.v), lg=(s.length+(x.u?x.u.length-1:0))>8;
+    return '<div><div class="kv'+(lg?' kvs':'')+'"'+(x.t?'':' data-noi18n')+'>'+esc(s)+(x.u?'<small>'+esc(x.u)+'</small>':'')+'</div><div class="kk"'+(x.tk?'':' data-noi18n')+'>'+esc(x.k)+'</div></div>';}).join('')+'</div>'; }
+window.MAT_KFIG=kfig;
+function kfAir(a){
+  var spd=a.vel?{k:kfL('Velocidad máxima','Top speed'),v:kfN(a.vel),u:' km/h'}:(a.mach?{k:kfL('Velocidad máxima','Top speed'),v:'Mach '+kfN(a.mach,2)}:null);
+  var rg=a.alc?{k:kfL('Alcance','Range'),v:kfN(a.alc),u:' km'}:a.radio?{k:kfL('Alcance de combate','Combat range'),v:kfN(a.radio),u:' km'}:a.ferry?{k:kfL('Alcance en ferry','Ferry range'),v:kfN(a.ferry),u:' km'}:null;
+  return kfig([spd,rg,{k:kfL('Tripulación','Crew'),v:kfCrew(a.trip)},{k:kfL('Primer vuelo','First flight'),v:a.ff_year||kfY(a.pv)},
+    a.techo?{k:kfL('Techo de servicio','Service ceiling'),v:kfN(a.techo),u:' m'}:null,{k:kfL('Unidades fabricadas','Units produced'),v:kfN(a.uni_n)}]); }
+function kfGround(a){
+  var W={k:kfL('Peso','Weight'),v:kfN(a.peso,1),u:' t'}, V={k:kfL('Velocidad','Speed'),v:kfN(a.vel),u:' km/h'}, C={k:kfL('Tripulación','Crew'),v:kfCrew(a.trip)}, Y={k:kfL('Año','Year'),v:a.anio},
+      R={k:kfL('Alcance','Range'),v:kfN(a.alc),u:' km'}, G={k:kfL('Arma principal','Main armament'),v:kfN(a.cal,2),u:' mm'}, PA={k:kfL('Pasajeros','Passengers'),v:kfCrew(a.pas)};
+  if(a.cat==='tanques') return kfig([G,W,C,Y,V,R]);
+  if(a.cat==='logistica') return kfig([W,V,a.pas?PA:C,Y,R]);
+  if(a.atir||a.tipo==='b_mlr') return kfig([{k:a.tipo==='b_mlr'?kfL('Calibre (cohete)','Calibre (rocket)'):kfL('Calibre','Calibre'),v:kfN(a.cal,2),u:' mm'},{k:kfL('Alcance de tiro','Firing range'),v:kfN(a.atir,1),u:' km'},W,Y,C,V]);
+  return kfig([W,V,C,Y,G,PA,R]); }
+function kfShip(a){ return kfig([{k:kfL('Desplazamiento','Displacement'),v:kfN(a.desp),u:' t'},{k:kfL('Eslora','Length'),v:kfN(a.eslora,1),u:' m'},{k:kfL('Tripulación','Crew'),v:kfN(a.trip_n)},{k:kfL('Año','Year'),v:a.anio},
+  {k:kfL('Velocidad','Speed'),v:kfN(a.kn,1),u:kfL(' nudos',' kn')},{k:kfL('Unidades','Units'),v:kfN(a.uni_n)}]); }
+function kfArm(a,F){ var pe=F&&F.potencia_explosiva&&F.potencia_explosiva.length<30?F.potencia_explosiva:null;
+  return kfig([{k:kfL('Alcance','Range'),v:kfN(a.walc),u:' km'},{k:kfL('Peso','Weight'),v:kfN(a.wkg),u:' kg'},pe?{k:kfL('Potencia','Power'),v:pe,t:1}:null,{k:kfL('Año','Year'),v:a.anio},{k:kfL('Unidades fabricadas','Units produced'),v:kfN(a.uni_n)}]); }
 function sp(k,v){return '<div class="sp"><span class="k">'+k+'</span><span class="v">'+(v==null||v===''?'—':v)+'</span></div>';}
 function km(n,u){return n?fmt(n)+' '+(u||'km'):null;}
 function bl(arr,empty){return arr&&arr.length?'<ul class="bul">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'<p class="sub">'+(empty||'—')+'</p>';}
@@ -285,6 +314,7 @@ function detalle(id){
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.tags?a.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join(''):'')+'<span class="tag">'+svcL(a)+'</span></div>';
+  h+=kfAir(a);
   if(a.res) h+='<p class="lead">'+esc(a.res)+'</p>';
   h+='</div></div>';
   var vel=a.vel?fmt(a.vel)+' km/h':'—'; if(a.mach) vel+=(a.vel?' · ':'')+'Mach '+String(a.mach).replace('.',',');
@@ -320,9 +350,10 @@ function detalleS(a){
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>'+(a.en&&a.en!==a.n?'<div class="cnt">'+esc(a.en)+'</div>':'');
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.tags?a.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join(''):'')+'<span class="tag">'+svcL(a)+'</span></div>';
+  h+=kfShip(a);
   if(a.res) h+='<p class="lead">'+esc(a.res)+'</p>';
   var q=[['Desplazamiento',a.desp?fmt(a.desp)+' t':null],['Eslora',a.eslora?String(a.eslora).replace('.',',')+' m':null],['Velocidad',a.kn?String(a.kn).replace('.',',')+(window.MAT_LANG==='en'?' knots':' nudos'):null],['Tripulación',a.trip_n?fmt(a.trip_n):null]].filter(function(x){return x[1];});
-  if(q.length) h+='<div class="kpis">'+q.map(function(x){return '<div><div class="kv">'+esc(x[1])+'</div><div class="kk">'+x[0]+'</div></div>';}).join('')+'</div>';
+  /* cifras clave: ahora bajo el título (kfig) */
   h+='</div></div>';
   function blk(title,rows){var r=rows.filter(function(x){return x[1]!=null;}); return '<h2>'+title+'</h2><div class="specs">'+r.map(function(x){return sp(x[0],esc(x[1]||''));}).join('')+'</div>';}
   h+='<div class="grid2"><div><h2>Armamento</h2>'+bl(a.arm,'Sin armamento en la fuente')+(F.blindaje?blk('Protección',[['Blindaje',F.blindaje]]):'')+'</div><div>'+
@@ -351,9 +382,10 @@ function detalleT(a){
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.estado_pais?'<span class="tag">'+esc(pname(a))+'</span>':'')+(a.ptag?'<span class="tag on">'+esc(a.ptag)+'</span>':'')+'<span class="tag">'+svcL(a)+'</span></div>';
+  h+=kfGround(a);
   if(a.res) h+='<p class="lead">'+esc(a.res)+'</p>';
   var q=[[a.tipo==='b_mlr'?'Calibre (cohete)':'Calibre',a.cal?String(a.cal).replace('.',',')+' mm':null],['Alcance de tiro',a.atir?String(a.atir).replace('.',',')+' km':null],['Peso',a.peso?String(a.peso).replace('.',',')+' t':null],['Velocidad',a.vel?fmt(a.vel)+' km/h':null],['Tripulación',a.trip],['Pasajeros',a.pas]].filter(function(x){return x[1];});
-  if(q.length) h+='<div class="kpis">'+q.map(function(x){return '<div><div class="kv">'+esc(x[1])+'</div><div class="kk">'+x[0]+'</div></div>';}).join('')+'</div>';
+  /* cifras clave: ahora bajo el título (kfig) */
   h+='</div></div>';
   function blk(title,rows){var r=rows.filter(function(x){return x[1]!=null;}); if(!r.length) return ''; return '<h2>'+title+'</h2><div class="specs">'+r.map(function(x){return sp(x[0],esc(x[1]||''));}).join('')+'</div>';}
   h+='<div class="grid2"><div>'+blk('Armamento',[['Armamento principal',F.arm_principal||(LG?'Sin armamento en la fuente':null)],['Armamento secundario',F.arm_secundario],['Munición',F.municion],F.alcance_tiro?['Alcance de tiro',F.alcance_tiro]:['',null],F.cadencia?['Cadencia de tiro',F.cadencia]:['',null]])+'</div><div>'+
@@ -381,9 +413,10 @@ function detalleW(a){
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>';
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(a.ptag?'<span class="tag on">'+esc(a.ptag)+'</span>':'')+'<span class="tag">'+svcL(a)+'</span></div>';
+  h+=kfArm(a,F);
   if(a.res) h+='<p class="lead">'+esc(a.res)+'</p>';
   var q=[['Alcance',a.walc?fmt(a.walc)+' km':null],['Peso',a.wkg?fmt(a.wkg)+' kg':null],['Potencia',F.potencia_explosiva&&F.potencia_explosiva.length<40?F.potencia_explosiva:null],['Año',a.anio]].filter(function(x){return x[1];});
-  if(q.length) h+='<div class="kpis">'+q.map(function(x){return '<div><div class="kv">'+esc(x[1])+'</div><div class="kk">'+x[0]+'</div></div>';}).join('')+'</div>';
+  /* cifras clave: ahora bajo el título (kfig) */
   h+='</div></div>';
   function blk(title,rows){var r=rows.filter(function(x){return x[1];}); if(!r.length) return ''; return '<h2>'+title+'</h2><div class="specs">'+r.map(function(x){return sp(x[0],esc(x[1]));}).join('')+'</div>';}
   h+='<div class="grid2"><div>'+blk('Cabeza de guerra',[['Cabeza',F.cabeza],['Peso de la cabeza',F.peso_cabeza],['Potencia explosiva',F.potencia_explosiva],['Espoleta',F.espoleta]])+blk('Guiado y lanzamiento',[['Guiado',F.guiado],['Plataformas de lanzamiento',F.plataformas]])+'</div><div>'+
@@ -409,10 +442,10 @@ function detalleE(a){
   h+='</div><div>';
   h+='<div class="kicker">'+esc(TN[a.tipo])+(a.era?' · '+EN[a.era]:'')+'</div><h1>'+esc(a.n)+'</h1>'+(a.sub?'<p class="sub">'+esc(a.sub)+'</p>':'');
   h+='<div class="tags"><span class="tag on">'+flag(a.pais,'')+esc(stateLbl(a))+'</span>'+(estE(a)?'<span class="tag">'+esc(estE(a))+'</span>':'')+'</div>';
-  if(a.res) h+='<p class="lead">'+esc(a.res)+'</p>';
   var KL={e_lanz:['Carga a LEO','Altura','Lanzamientos totales'],e_nave:['Tripulación','Masa','Estado'],e_sat:['Masa','Órbita','Estado'],e_ag:['Empleados','Sede','Siglas'],e_emp:['Empleados','Sede','Satélites en órbita'],e_mil:['Fecha','País','Efectivos'],e_astro:['Misiones','Tiempo en el espacio','Nacionalidad']}, SM={}; S.forEach(function(x){SM[x[0]]=x[1];});
   var q=[[AL[a.tipo]||'Año',a.anio]].concat((KL[a.tipo]||[]).map(function(k){var v=SM[k]; return [k,v&&v.length<=22?v:null];})).filter(function(x){return x[1];}).slice(0,4);
-  if(q.length) h+='<div class="kpis">'+q.map(function(x){return '<div><div class="kv">'+esc(x[1])+'</div><div class="kk">'+esc(x[0])+'</div></div>';}).join('')+'</div>';
+  h+=kfig(q.map(function(x){return {k:x[0],v:x[1],t:1,tk:1};}));
+  if(a.res) h+='<p class="lead">'+esc(a.res)+'</p>';
   h+='</div></div>';
   h+='<h2>Ficha técnica</h2>'+(S.length?'<div class="specs">'+S.map(function(x){return sp(esc(x[0]),esc(x[1]));}).join('')+'</div>':'<p class="sub">—</p>');
   if(a.mil&&a.mil.length) h+='<div class="grid2"><div><h2>Historia</h2>'+bl(a.hist)+'</div><div><h2>Uso militar y de defensa</h2>'+bl(a.mil)+'</div></div>'; else h+='<h2>Historia</h2>'+bl(a.hist);

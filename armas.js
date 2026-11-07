@@ -206,9 +206,10 @@ function ficha(a){
  h+='</div><div><div class="kicker">'+esc(tn)+(a.era&&ERAM[a.era]?' · '+L(ERAM[a.era][0],ERAM[a.era][1]):'')+'</div><h1>'+esc(a.n)+'</h1>';
  var m=EN()?(a.mun_en||a.mun):a.mun;
  h+='<div class="tags"><span class="tag on">'+flag(a.pais)+esc(orgLbl(a))+'</span><span class="tag">'+svc(a)+'</span>'+(m?'<span class="tag">'+esc(m)+'</span>':'')+(a.anio?'<span class="tag">'+a.anio+'</span>':'')+'</div>';
- if(a.res) h+='<p class="lead">'+esc(a.res)+'</p>';
  var K=[[L('Munición','Cartridge'),m],[L('Cadencia','Rate of fire'),a.cad?nf(a.cad)+L(' disp./min',' rds/min'):first(F.cadencia,30)],[L('Vel. de boca','Muzzle velocity'),a.vb?nf(a.vb)+' m/s':first(F.velocidad_boca,26)],[L('Alcance eficaz','Effective range'),a.alc?nf(a.alc)+' m':first(F.alcance_eficaz,26)],[L('Peso','Weight'),a.peso?nf(a.peso,2)+' kg':first(F.peso,26)],[L('Alimentación','Feed'),first(F.alimentacion,40)]].filter(function(x){return x[1];});
- if(K.length) h+='<div class="gkpis">'+K.map(function(x){return '<div><div class="kv">'+esc(x[1])+'</div><div class="kk">'+x[0]+'</div></div>';}).join('')+'</div>';
+ var KF=window.MAT_KFIG?window.MAT_KFIG([{k:L('Calibre','Calibre'),v:m&&m.length<=20?m:(a.cal?nf(a.cal,2):null),u:m&&m.length<=20?'':(a.cal?' mm':'')},{k:L('Peso','Weight'),v:a.peso?nf(a.peso,2):null,u:' kg'},{k:L('Cadencia','Rate of fire'),v:a.cad?nf(a.cad):null,u:L(' disp./min',' rds/min')},{k:L('Año','Year'),v:a.anio||null},{k:L('Vel. de boca','Muzzle velocity'),v:a.vb?nf(a.vb):null,u:' m/s'},{k:L('Alcance eficaz','Effective range'),v:a.alc?nf(a.alc):null,u:' m'}]):'';
+ if(KF) h+=KF; else if(K.length) h+='<div class="gkpis">'+K.map(function(x){return '<div><div class="kv">'+esc(x[1])+'</div><div class="kk">'+x[0]+'</div></div>';}).join('')+'</div>';
+ if(a.res) h+='<p class="lead">'+esc(a.res)+'</p>';
  h+='</div></div>';
  h+=blk(L('Disparo y munición','Firing and ammunition'),[[L('Munición','Cartridge'),F.municion],[L('Mecanismo','Action'),F.mecanismo],[L('Cadencia de tiro','Rate of fire'),F.cadencia],[L('Velocidad de boca','Muzzle velocity'),F.velocidad_boca],[L('Alcance eficaz','Effective firing range'),F.alcance_eficaz],[L('Alcance máximo','Maximum firing range'),F.alcance_max],[L('Retroceso','Recoil'),F.retroceso],[L('Alimentación','Feed system'),F.alimentacion]]);
  h+=blk(L('Dimensiones y miras','Dimensions and sights'),[[L('Peso','Weight'),F.peso],[L('Longitud','Length'),F.longitud],[L('Longitud del cañón','Barrel length'),F.canon],[L('Miras','Sights'),F.miras]]);

@@ -63,7 +63,7 @@ function apply(){
   var P=parts(), p=P.p, k=p[0]||'';
   document.body.classList.toggle('r-home',!p.length);
   if(!p.length){ if(app.querySelector('.cats')) home(); return; }
-  if(k==='a'){ if(!app.querySelector('h1')) return; clampLead(); foldH2('a'); }
+  if(k==='a'){ if(!app.querySelector('h1')) return; clampLead(); foldH2('a',{firstOpen:true}); /* nov. 2026: la primera sección técnica de la ficha se abre por defecto */ }
   else if(k==='fuerzas'){ var isC=/(^|&)a=/.test(P.q); foldBoxes(isC?'fz':'fzl'); foldH2(isC?'fz':'fzl'); [].slice.call(app.querySelectorAll('.fold .fb > .list')).forEach(function(l){ if(!isC&&l.querySelectorAll('.row').length>40) l.classList.add('cgrid'); }); }
   else if(k==='gasto'&&p.length===1){ foldBoxes('gasto'); foldH2('gasto',{firstOpen:true}); }
   else if(k==='guerras'&&p.length===1){ foldH2('guerras',{firstOpen:true}); }
