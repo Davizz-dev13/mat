@@ -631,10 +631,10 @@ function drawBulletCam(c,W,H,dpr){ const B=G.bcam; const st=palSt(); const pn=pe
   const u=clamp(el/B.D,0,1); const w=u-0.8*Math.sin(2*Math.PI*u)/(2*Math.PI); const tau=T*w;
   const Rt=B.rec.R; const bp=camAt(B,tau); const ahead=camAt(B,Math.min(T,tau+0.02)); let dir=vnorm(vsub(ahead,bp)); if(tau>=T) dir=B.lastDir||dir; B.lastDir=dir;
   /* la cámara va 2,4 m detrás y algo por encima; a 9 m de la placa se queda quieta y la bala se aleja hacia el impacto */
-  const camFor=x=>{ const p=camAt(B,x); const a=camAt(B,Math.min(T,x+0.02)); const d=vnorm(vsub(a,p)); const r0=vnorm(vcross(d,[0,1,0])); return vadd(vadd(vadd(p,vmul(d,-0.9)),[0,0.06,0]),vmul(r0,-0.07)); };
+  const camFor=x=>{ const p=camAt(B,x); const a=camAt(B,Math.min(T,x+0.02)); const d=vnorm(vsub(a,p)); const r0=vnorm(vcross(d,[0,1,0])); return vadd(vadd(vadd(p,vmul(d,-0.7)),[0,0.06,0]),vmul(r0,-0.12)); };
   let tStop=T; for(let i=B.pts.length-1;i>0;i--){ if(B.pts[i][0]<Rt-B.stopD){ const a=B.pts[i],b=B.pts[i+1]||a; const f=b[0]>a[0]?(Rt-B.stopD-a[0])/(b[0]-a[0]):0; tStop=a[3]+(b[3]-a[3])*clamp(f,0,1); break; } }
   const cam=camFor(Math.min(tau,tStop)); const t=B.t; const tgt=[t.d,t.zc,(B.rec.uA!=null?B.rec.uA:t.u)/1000*t.d];
-  const k=clamp((tau-tStop*0.55)/(tStop*0.4+1e-6),0,1); const kk=k*k*(3-2*k); let look=vnorm(vadd(vadd(vmul(dir,1-kk),vmul(vnorm(vsub(tgt,cam)),kk)),[0,-0.02*(1-kk),0]));
+  const k=clamp((tau-tStop*0.55)/(tStop*0.4+1e-6),0,1); const kk=k*k*(3-2*k); let look=vnorm(vadd(vadd(vmul(dir,1-kk),vmul(vnorm(vsub(tgt,cam)),kk)),[0,-0.01*(1-kk),0]));
   if(tau>tStop){ look=vnorm(vsub(tgt,cam)); }
   const up0=[0,1,0]; const rgt=vnorm(vcross(look,up0)); const upv=vcross(rgt,look); const F=Math.max(W,H)*1.3; const cx=W/2, cy=H*0.5;
   const pr=P_=>{ const d=vsub(P_,cam); const z=vdot(d,look); if(z<0.25) return null; return [cx+vdot(d,rgt)/z*F, cy-vdot(d,upv)/z*F, z]; };
@@ -649,7 +649,7 @@ function drawBulletCam(c,W,H,dpr){ const B=G.bcam; const st=palSt(); const pn=pe
   G.targets.forEach(tt=>objs.push({d:tt.d,t:tt})); G.flags.forEach(f=>objs.push({d:f.d,f:f})); objs.sort((a,b)=>b.d-a.d); let oi=0; while(oi<objs.length&&objs[oi].d>x1) oi++;
   for(let kb=0;kb<NBc;kb++){ const X=x0+(x1-x0)*Math.pow(1-kb/(NBc-1),2.6); while(oi<objs.length&&objs[oi].d>=X){ camObj(c,pr,objs[oi],st,pn,B); oi++; }
     const dd=X; let col; if(dd>1500) col=mix(mix(mid,far,0.35),hz,clamp((dd-1500)/9000,0,0.75)); else col=mix(near,mid,clamp(Math.log(Math.max(40,dd)/40)/Math.log(1500/40),0,1));
-    const kz=0.94+0.1*hash(Math.floor(X/3),7); const spread=(X-cam[0])*1.4+6; c.beginPath(); c.moveTo(-5,H+5); let any=false;
+    const kz=0.985+0.03*Math.sin(X*0.013); const spread=(X-cam[0])*1.4+6; c.beginPath(); c.moveTo(-5,H+5); let any=false;
     for(let i=0;i<=28;i++){ const L_=cam[2]+(i/28-0.5)*2*spread; const u_=L_/Math.max(X,1)*1000; const p=pr([X,terrain(G.st,X,u_),L_]); if(p){ c.lineTo(p[0],p[1]); any=true; } }
     c.lineTo(W+5,H+5); c.closePath(); if(any){ c.fillStyle=rgb(col,kz); c.fill(); }
     /* matas cercanas: dan la sensación de velocidad */
@@ -664,11 +664,14 @@ function drawBulletCam(c,W,H,dpr){ const B=G.bcam; const st=palSt(); const pn=pe
   const hitT=tau>=T; const bs=pr(bp);
   if(bs&&!hitT){ const back=pr(vadd(bp,vmul(dir,-1.2))), tip=pr(vadd(bp,vmul(dir,0.06))); const vNow=Math.hypot(...vsub(camAt(B,Math.min(T,tau+0.002)),bp))/0.002||0; const M=vNow/G.env.a;
     const bk=pr(vadd(bp,vmul(dir,-0.22))); if(bk){ const g=c.createLinearGradient(bk[0],bk[1],bs[0],bs[1]); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(1,'rgba(255,250,235,.45)'); c.strokeStyle=g; c.lineCap='round'; c.lineWidth=Math.max(2,0.012/bs[2]*F*3); c.beginPath(); c.moveTo(bk[0],bk[1]); c.lineTo(bs[0],bs[1]); c.stroke(); }
-    if(M>1.02&&tip){ const mu=Math.asin(1/M); const Lc=1.1; const sideV=vnorm(vcross(dir,[0,1,0])); for(const sgn of [-1,1]){ for(const ax of [sideV,upv]){ const e=pr(vadd(vadd(bp,vmul(dir,-Lc*Math.cos(mu))),vmul(ax,sgn*Lc*Math.sin(mu)))); if(e){ c.strokeStyle='rgba(255,255,255,.16)'; c.lineWidth=1.2; c.beginPath(); c.moveTo(tip[0],tip[1]); c.lineTo(e[0],e[1]); c.stroke(); } } } }
-    const sz=Math.max(6,(G.rf.dIn*0.0254)/bs[2]*F*2.2); const ang=tip?Math.atan2(tip[1]-bs[1],tip[0]-bs[0]):-Math.PI/2; c.save(); c.translate(bs[0],bs[1]); c.rotate(ang);
-    const bg=c.createLinearGradient(0,-sz*0.5,0,sz*0.5); bg.addColorStop(0,'#f7d9a8'); bg.addColorStop(0.45,'#c98a4a'); bg.addColorStop(1,'#6e4320'); c.fillStyle=bg;
-    c.beginPath(); c.moveTo(sz*1.9,0); c.quadraticCurveTo(sz*1.1,-sz*0.5,0,-sz*0.5); c.lineTo(-sz*0.9,-sz*0.4); c.lineTo(-sz*0.9,sz*0.4); c.lineTo(0,sz*0.5); c.quadraticCurveTo(sz*1.1,sz*0.5,sz*1.9,0); c.fill();
-    const ph=(tau*G.rf.mv/(G.rf.twistIn*0.0254))*2*Math.PI; c.strokeStyle='rgba(255,240,210,.55)'; c.lineWidth=1; c.beginPath(); const yy=Math.sin(ph)*sz*0.4; c.moveTo(-sz*0.8,yy); c.lineTo(sz*0.6,yy*0.9); c.stroke(); c.restore(); }
+    if(M>1.02&&!RM()){ const rr2=Math.max(4,G.rf.dIn*0.0254*2.2/bs[2]*F); c.strokeStyle='rgba(255,255,255,.18)'; c.lineWidth=1; for(let i=0;i<3;i++){ const ph=((pn/1000)*3+i/3)%1; c.globalAlpha=1-ph; c.beginPath(); c.arc(bs[0],bs[1],rr2*(1.6+ph*3.2),0,2*Math.PI); c.stroke(); } c.globalAlpha=1; }
+    /* proyectil visto desde atrás: base, cuerpo y ojiva proyectados en 3D (escala ×2,2 para que se lea) */
+    const cal=G.rf.dIn*0.0254*2.2, Lb=cal*3.4; const pB=pr(vadd(bp,vmul(dir,-Lb*0.5))), pT=pr(vadd(bp,vmul(dir,Lb*0.5)));
+    if(pB&&pT){ const rB=Math.max(3,cal/2/pB[2]*F), rT=Math.max(1,cal*0.12/pT[2]*F); const ang=Math.atan2(pT[1]-pB[1],pT[0]-pB[0]); const len=Math.hypot(pT[0]-pB[0],pT[1]-pB[1]);
+      c.save(); c.translate(pB[0],pB[1]); c.rotate(ang); const bg=c.createLinearGradient(0,-rB,0,rB); bg.addColorStop(0,'#f6d7a2'); bg.addColorStop(0.42,'#c78748'); bg.addColorStop(1,'#5d391b'); c.fillStyle=bg;
+      c.beginPath(); c.moveTo(0,-rB); c.lineTo(len*0.55,-rB*0.98); c.quadraticCurveTo(len*0.92,-rB*0.7,len,-rT); c.lineTo(len,rT); c.quadraticCurveTo(len*0.92,rB*0.7,len*0.55,rB*0.98); c.lineTo(0,rB); c.closePath(); c.fill();
+      c.fillStyle='#4a2d15'; c.beginPath(); c.ellipse(0,0,Math.max(1,rB*Math.min(1,0.25+0.75*rB/Math.max(rB,len))),rB,0,0,2*Math.PI); c.fill();
+      const ph=(tau*G.rf.mv/(G.rf.twistIn*0.0254))*2*Math.PI; c.strokeStyle='rgba(255,236,200,.5)'; c.lineWidth=1; c.beginPath(); const yy=Math.sin(ph)*rB*0.7; c.moveTo(len*0.05,yy); c.lineTo(len*0.6,yy*0.95); c.stroke(); c.restore(); } }
   /* impacto */
   if(hitT){ const ps=pr(tgt); const a=el-B.D*1; if(ps){ const R0=Math.max(8,t.w/ps[2]*F*0.5); if(a<0.22){ c.fillStyle='rgba(255,248,215,'+(1-a/0.22)+')'; c.beginPath(); c.arc(ps[0],ps[1],R0*1.4,0,2*Math.PI); c.fill(); }
       for(let i=0;i<3;i++){ const b=a-i*0.14; if(b<0||b>1) continue; c.strokeStyle='rgba(255,232,160,'+(0.6*(1-b))+')'; c.lineWidth=2*(1-b)+0.5; c.beginPath(); c.arc(ps[0],ps[1],R0*(0.8+b*3),0,2*Math.PI); c.stroke(); }
@@ -691,13 +694,15 @@ function camObj(c,pr,o,st,pn,B){ if(o.f){ const f=o.f; const L_=f.u/1000*f.d; co
     if(tip&&lo&&b2){ c.fillStyle='#e0472f'; c.beginPath(); c.moveTo(b[0],b[1]); c.lineTo(tip[0],tip[1]); c.lineTo(lo[0],lo[1]); c.lineTo(b2[0],b2[1]); c.closePath(); c.fill(); } return; }
   const t=o.t; const uu=(t===B.t&&B.rec.uA!=null)?B.rec.uA:t.u; const L_=uu/1000*t.d; const L0=(t.mv?t.u0:t.u)/1000*t.d;
   const base=pr([t.d,t.gy,L_]), top=pr([t.d,t.zc,L_]); if(!base||!top) return; const sc=(top[1]-base[1])/(t.zc-t.gy||1); const px=Math.abs(sc);
-  /* talud detrás */ const tb=pr([t.d+8,t.gy,L0]); if(tb){ const ww=(t.mv?t.mv.open+6:t.w*4.5)*Math.abs((pr([t.d+8,t.gy+1,L0])||tb)[1]-tb[1]); c.fillStyle=st.berm||(st.ter==='artico'?'#c9d3dc':(st.ter==='desierto'?'#b58a57':'#7a6a48')); c.beginPath(); c.ellipse(tb[0],tb[1],ww/2,(t.post+t.h*1.6)*Math.abs((pr([t.d+8,t.gy+1,L0])||tb)[1]-tb[1]),0,Math.PI,2*Math.PI); c.fill(); }
+  /* talud detrás: perfil bajo proyectado de verdad */ { const hw=(t.mv?t.mv.open/2+3:t.w*2.2), hh=t.post+t.h*1.3; c.beginPath(); let ok=false; for(let i=0;i<=16;i++){ const f=i/16*2-1; const p=pr([t.d+7,t.gy+hh*Math.sqrt(Math.max(0,1-f*f)),L0+f*hw]); if(p){ if(!ok){ c.moveTo(p[0],p[1]); ok=true; } else c.lineTo(p[0],p[1]); } } const pe=pr([t.d+7,t.gy,L0+hw]), ps0=pr([t.d+7,t.gy,L0-hw]); if(ok&&pe&&ps0){ c.lineTo(pe[0],pe[1]); c.lineTo(ps0[0],ps0[1]); c.closePath(); c.fillStyle=st.berm||(st.ter==='artico'?'#c9d3dc':(st.ter==='desierto'?'#b58a57':'#7a6a48')); c.fill(); } }
   c.strokeStyle='#2f2b25'; c.lineWidth=Math.max(1,0.06*px); c.beginPath(); c.moveTo(base[0],base[1]); c.lineTo(top[0],top[1]+t.h/2*px); c.stroke();
   let sw=1; if(t===B.t&&pn-B.t0>B.D*1000){ const a=(pn-B.t0)/1000-B.D; sw=Math.cos(a*8)*Math.exp(-a*1.6)*0.55+0.45+(1-Math.exp(-a*2))*0.55; sw=clamp(Math.abs(sw),0.12,1); }
   const sx=t.w*px, sy=t.h*px*sw; c.save(); if(st.night&&G.sensor==='th'){ c.shadowColor='rgba(255,255,255,.85)'; c.shadowBlur=Math.max(3,sx*0.3); }
   const pg=c.createLinearGradient(top[0]-sx/2,top[1]-sy/2,top[0]+sx/2,top[1]+sy/2); if(st.night){ pg.addColorStop(0,st.plate); pg.addColorStop(1,st.plate); } else { pg.addColorStop(0,'#fbfaf4'); pg.addColorStop(0.55,'#e9e7de'); pg.addColorStop(1,'#cfccc1'); } c.fillStyle=pg; c.strokeStyle=st.edge||'#5c5a52'; c.lineWidth=Math.max(0.6,sx*0.03);
   if(t.shape==='gong'){ c.beginPath(); c.ellipse(top[0],top[1],sx/2,Math.max(0.5,sy/2),0,0,2*Math.PI); c.fill(); c.stroke(); } else { c.fillRect(top[0]-sx/2,top[1]-sy/2,sx,sy); c.strokeRect(top[0]-sx/2,top[1]-sy/2,sx,sy); }
   c.restore();
+  /* marca del impacto en el acero, en el punto exacto calculado */
+  if(t===B.t&&pn-B.t0>B.D*1000&&B.rec.hit){ const mx=top[0]+B.rec.dxm*px, my=top[1]-B.rec.dym*px*sw; c.fillStyle='rgba(70,62,52,.9)'; c.beginPath(); c.arc(mx,my,Math.max(1.5,0.045*px),0,2*Math.PI); c.fill(); c.strokeStyle='rgba(120,110,95,.6)'; c.lineWidth=1; c.beginPath(); c.arc(mx,my,Math.max(2.5,0.08*px),0,2*Math.PI); c.stroke(); }
   if(t.mv){ [-1,1].forEach(sg=>{ const Lc=L0+sg*(t.mv.open/2+1.25); const a=pr([t.d-1,t.gy,Lc]), b=pr([t.d-1,t.gy+t.post+t.h+0.45,Lc]); if(a&&b){ const hw=1.25*Math.abs(b[1]-a[1])/(t.post+t.h+0.45); c.fillStyle=st.night?'#3b4038':'#8d877a'; c.fillRect(a[0]-hw,b[1],hw*2,a[1]-b[1]); } }); } }
 function hudScope(c,P,W,H,tm){ c.save(); c.font='600 12px system-ui,sans-serif'; c.textBaseline='alphabetic';
   const pill=(txt,x,y,al,col)=>{ c.font='700 11.5px system-ui,sans-serif'; const w=c.measureText(txt).width+12; const x0=al==='right'?x-w:(al==='center'?x-w/2:x); c.fillStyle='rgba(0,0,0,.55)'; c.beginPath(); if(c.roundRect) c.roundRect(x0,y-14,w,19,9); else c.rect(x0,y-14,w,19); c.fill(); c.fillStyle=col||'rgba(235,240,225,.95)'; c.textAlign='left'; c.fillText(txt,x0+6,y); };
