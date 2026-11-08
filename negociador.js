@@ -562,13 +562,17 @@ function choose(i){
  if(G.tension>=100) G.end='fracaso';
  else if(o.exit&&e.q==='good'&&G.tension<70){ P.host.forEach(h=>{ if(!h.out){ h.out=true; G.rel.push(h.n); } }); G.end='rendicion'; }
  else if(G.turn>=(phase()>=3&&G.tension<60?17:14)) G.end=inside().length?'tiempo':'liberados';
+ tacUpd(rec);
  return rec;
 }
 function score(){
  const n=Math.max(1,G.log.length), g=G.log.filter(r=>r.q==='good').length, b=G.log.filter(r=>r.q==='bad').length;
  let s=8+46*Math.max(-1,(g-1.3*b)/n);
- s+={rendicion:40,liberados:22,tiempo:4,fracaso:-6}[G.end]||0;
+ s+={rendicion:40,liberados:22,tiempo:4,fracaso:-6,tactico:30,prematuro:-20}[G.end]||0;
+ s-=10*((G.tac||[]).filter(r=>r.res==='nolinea').length);
  s+=G.apFit*5+(G.end==='rendicion'?Math.max(0,13-n):0);
+ if(G.end==='prematuro') s=Math.min(s,15);
+ if(G.end==='tactico') s=Math.max(s,20);
  return clamp(Math.round(s),0,100);
 }
 /* enfoque inicial */
@@ -619,7 +623,7 @@ function pickCase(){
  if(G.ill) tg.push('enfermo');
  if(G.qpq) tg.push('qpq');
  if(P.nh>=4) tg.push('muchos');
- if(G.end==='fracaso'||G.end==='tiempo') tg.push('fracaso');
+ if(G.end==='fracaso'||G.end==='tiempo'||G.end==='tactico'||G.end==='prematuro') tg.push('fracaso');
  if(G.end==='rendicion') tg.push('rendicion');
  if(G.log.some(r=>r.k==='promesa')) tg.push('promesa');
  if(G.log.filter(r=>['tiempo','autor','noplazo','pausa'].includes(r.k)).length>=1) tg.push('tiempo');
@@ -671,7 +675,7 @@ function css(){ if(document.getElementById('ng-css')) return; const s=document.c
  '.ngap b{display:block;font-size:15px}.ngap span{font-size:13px;color:var(--mu)}',
  '.ngap.on{border-color:var(--ac2);background:#262b20;box-shadow:inset 0 0 0 1px var(--ac2)}',
  '.ngscn{position:relative;margin:0 0 8px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0e1013}',
- '.ngscn canvas{display:block;width:100%;height:150px}',
+ '.ngscn canvas{display:block;width:100%;height:196px}',
  '.ngscn.off{display:none}',
  '.ngxp[aria-pressed="false"]{color:var(--mu)}',
  '.ngty span{color:var(--mu);font-style:italic}',
@@ -704,6 +708,16 @@ function css(){ if(document.getElementById('ng-css')) return; const s=document.c
  '.ngopt{display:block;width:100%;text-align:left;padding:12px 14px;min-height:52px;border-radius:var(--r);border:1px solid var(--line);background:var(--s2);color:var(--tx);font:inherit;font-size:15px;line-height:1.4;margin:8px 0;cursor:pointer;transition:border-color .2s,background .2s}',
  '@media(hover:hover){.ngopt:hover{border-color:var(--ac2);background:#20251c}}',
  '.ngopt:disabled{opacity:.45;cursor:default}',
+ '.ngtac{margin:14px 0 4px;padding:10px 12px;border:1px dashed #4a4f55;border-radius:var(--r);background:#121416}',
+ '.ngtac .q{font-size:12px;color:var(--mu);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}',
+ '.ngtac .st{font-size:13px;color:var(--mu);line-height:1.4;margin-bottom:8px}',
+ '.ngtac.crit{border:1px solid #c8473a;background:#1d1312}.ngtac.crit .st{color:#f0b2a8}',
+ '.ngtac .row{display:flex;gap:8px;flex-wrap:wrap}',
+ '.ngtb{flex:1 1 140px;min-height:44px;padding:10px 12px;border-radius:var(--r);border:1px solid #5a6068;background:#1a1d20;color:var(--tx);font:inherit;font-size:14px;font-weight:700;cursor:pointer}',
+ '.ngtac.crit .ngtb{border-color:#c8473a}',
+ '.ngtb:disabled{opacity:.45;cursor:default}',
+ '.ngtac .cf{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:14px}.ngtac .cf:empty{display:none}.ngtac .cf span{flex:1 1 100%}',
+ '.ngtb.go{background:#5a1f1a;border-color:#c8473a}.ngtb.no{font-weight:400}',
  '.ngov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);display:flex;align-items:flex-start;justify-content:center;padding:max(12px,env(safe-area-inset-top)) 10px 10px;overflow:auto}',
  '.ngov .in{width:100%;max-width:720px}',
  '.ngres{border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:10px 0;background:var(--s1)}',
@@ -774,7 +788,7 @@ function startCase(seed){
   '<div class="ngrow"><button type="button" class="ngbtn" id="ngCall" disabled>'+L('Llamar al sujeto ›','Call the subject ›')+'</button><button type="button" class="ngbtn sec" id="ngNew">'+L('Otro expediente','Another dossier')+'</button></div></div>';
  X.set(h,L('Negociador','Negotiator'));
  APP.querySelectorAll('.ngap').forEach(b=>b.onclick=()=>{ APP.querySelectorAll('.ngap').forEach(x=>x.classList.remove('on')); b.classList.add('on'); G.ap=b.getAttribute('data-ap'); document.getElementById('ngCall').disabled=false; });
- document.getElementById('ngCall').onclick=()=>{ if(!G.ap) return; const a=apEval(G.ap); G.apFit=a[0]; G.tension=clamp(P.tension0+a[1],0,95); G.trust=clamp(5+a[2],0,30); G.apNote=a[3]; buildTurn(); play(); };
+ document.getElementById('ngCall').onclick=()=>{ if(!G.ap) return; const a=apEval(G.ap); G.apFit=a[0]; G.tension=clamp(P.tension0+a[1],0,95); G.trust=clamp(5+a[2],0,30); G.apNote=a[3]; tacInit(); buildTurn(); play(); };
  document.getElementById('ngNew').onclick=()=>startCase(null);
 }
 function barMeters(){
@@ -789,7 +803,7 @@ function metaHTML(){ const ph=phase(), ins=inside().length, hrs=Math.floor(G.min
  return '<span class="ngsp">'+L('Peldaño','Step')+' '+(ph+1)+'/5 · '+esc(T(PH[ph]))+'</span><br>'+hrs+':'+mm+' h · '+L('Retenidos','Held')+' '+ins+'/'+P.host.length; }
 function scnOff(){ try{ return localStorage.getItem('mat_ng_scn')==='0'; }catch(e){ return false; } }
 function barHTML(){
- return '<div class="ngbar" id="ngBar"><div class="ngscn'+(scnOff()?' off':'')+'" id="ngScn"><canvas role="img" aria-label="'+esc(L('Escena de la negociación: el sujeto dentro, el negociador y la patrulla fuera','Negotiation scene: the subject inside, the negotiator and the patrol outside'))+'"></canvas></div>'+barMeters()+'</div>';
+ return '<div class="ngbar" id="ngBar"><div class="ngscn'+(scnOff()?' off':'')+'" id="ngScn"><canvas role="img" aria-label="'+esc(L('Mapa táctico visto desde arriba: el sujeto, las personas retenidas, tu puesto de mando, el perímetro y los equipos, cada uno como un punto','Top-down tactical map: the subject, the people held, your command post, the perimeter and the teams, each shown as a dot'))+'"></canvas></div>'+barMeters()+'</div>';
 }
 /* actualiza el panel en su sitio: las barras se deslizan en vez de saltar */
 function barUpd(dT,dC){
@@ -812,7 +826,7 @@ function recHTML(r){
 }
 function curHTML(){
  const m=G.cur;
- return '<div class="ngb '+(m.cmd?'c':'s')+'" id="ngCur"><small>'+(m.cmd?L('Mando','Command'):esc(P.name))+'</small>'+TXT(m.say)+'</div><div class="ngopts" id="ngOpts"><div class="q">'+L('¿Qué respondes?','What do you say?')+'</div>'+m.opts.map((o,i)=>'<button type="button" class="ngopt" data-i="'+i+'">'+TXT(o.t)+'</button>').join('')+'</div>';
+ return '<div class="ngb '+(m.cmd?'c':'s')+'" id="ngCur"><small>'+(m.cmd?L('Mando','Command'):esc(P.name))+'</small>'+TXT(m.say)+'</div><div class="ngopts" id="ngOpts"><div class="q">'+L('¿Qué respondes?','What do you say?')+'</div>'+m.opts.map((o,i)=>'<button type="button" class="ngopt" data-i="'+i+'">'+TXT(o.t)+'</button>').join('')+tacHTML()+'</div>';
 }
 function play(){
  const h='<div class="ngw" data-noi18n>'+crumbs()+barHTML()+'<div class="nglog" id="ngLog"><div class="ngev">'+esc(L('Llamada en curso con ','Call in progress with ')+P.name+' · '+T(P.place))+'</div>'+G.log.map(recHTML).join('')+curHTML()+'</div></div>';
@@ -823,6 +837,7 @@ function wire(){
  const x=document.getElementById('ngXp'); if(x) x.onclick=showDossier;
  const sc=document.getElementById('ngSc'); if(sc) sc.onclick=()=>{ const w=document.getElementById('ngScn'); if(!w) return; const off=!w.classList.contains('off'); w.classList.toggle('off',off); sc.setAttribute('aria-pressed',off?'false':'true'); try{ localStorage.setItem('mat_ng_scn',off?'0':'1'); }catch(e){} if(!off&&SC.on) scnLayout(false); };
  APP.querySelectorAll('.ngopt').forEach(b=>b.onclick=()=>pickOpt(+b.getAttribute('data-i')));
+ wireTac();
 }
 function showDossier(){
  const ov=document.createElement('div'); ov.className='ngov'; ov.setAttribute('data-noi18n',''); ov.innerHTML='<div class="in">'+dossierHTML()+'<div class="ngrow"><button type="button" class="ngbtn" id="ngXc">'+L('Volver a la llamada','Back to the call')+'</button></div></div>';
@@ -832,7 +847,7 @@ function showDossier(){
 }
 function pickOpt(i){
  if(G.busy||G.end) return; G.busy=1;
- APP.querySelectorAll('.ngopt').forEach(b=>b.disabled=true);
+ APP.querySelectorAll('.ngopt,.ngtb').forEach(b=>b.disabled=true);
  const t0=G.tension, c0=G.trust, said=G.cur&&G.cur.opts[i]?G.cur.opts[i].t:null;
  const r=choose(i);
  const FAST=!!window.MAT_NG_FAST;
@@ -852,23 +867,26 @@ function pickOpt(i){
    const evs=r.events.slice(); let k=0;
    const nextEv=()=>{ if(k<evs.length){ const d=document.createElement('div'); d.className='ngev'; d.innerHTML=TXT(evs[k++]); log.appendChild(d); after(260,nextEv); return; } finish(); };
    const finish=()=>{
-    if(G.end){ const end=document.createElement('div'); end.innerHTML='<div class="ngev ngend">'+esc(T(ENDS[G.end][0]))+'</div><div class="ngrow" style="justify-content:center"><button type="button" class="ngbtn" id="ngRep">'+L('Ver el informe ›','See the debrief ›')+'</button></div>'; while(end.firstChild) log.appendChild(end.firstChild); document.getElementById('ngRep').onclick=debrief; after(1400,()=>toCur(document.querySelector('.ngend'))); G.busy=0; return; }
+    if(G.end){ endBlock(log); G.busy=0; return; }
     buildTurn();
     const c=document.createElement('div'); c.innerHTML=curHTML(); while(c.firstChild) log.appendChild(c.firstChild);
-    APP.querySelectorAll('.ngopt').forEach(b=>b.onclick=()=>pickOpt(+b.getAttribute('data-i')));
+    APP.querySelectorAll('.ngopt').forEach(b=>b.onclick=()=>pickOpt(+b.getAttribute('data-i'))); wireTac();
     const cu=document.getElementById('ngCur'); if(cu) after(60,()=>toCur(cu));
     G.busy=0;
    };
    after(evs.length?300:420,nextEv);
  });
 }
-const ENDS={rendicion:[S2("Rendición pacífica","Peaceful surrender"),'ok'],liberados:[S2("Rehenes liberados","Hostages released"),'mid'],tiempo:[S2("Se agotó el tiempo","Time ran out"),'ko'],fracaso:[S2("La situación se descontroló","The situation spiralled"),'ko']};
+const ENDS={rendicion:[S2("Rendición pacífica","Peaceful surrender"),'ok'],liberados:[S2("Rehenes liberados","Hostages released"),'mid'],tiempo:[S2("Se agotó el tiempo","Time ran out"),'ko'],fracaso:[S2("La situación se descontroló","The situation spiralled"),'ko'],tactico:[S2("Resolución táctica","Tactical resolution"),'mid'],prematuro:[S2("Intervención no justificada","Unjustified intervention"),'ko']};
 function endText(){
  const n=P.name, hrs=Math.max(1,Math.round(G.mins/60));
  return {rendicion:S2(`${n} sale con las manos vacías y a la vista, detrás de las personas que retenía. Nadie ha resultado herido.`,`${n} walks out, hands empty and visible, behind the people being held. Nobody was hurt.`),
   liberados:S2(`Todas las personas retenidas están a salvo. ${n} sigue dentro y el relevo continúa la negociación.`,`Everyone who was held is safe. ${n} is still inside and the next shift carries on negotiating.`),
   tiempo:S2(`Tras unas ${hrs} horas sin avances suficientes, el mando decidió intervenir. El caso no se resolvió hablando.`,`After about ${hrs} hours without enough progress, command decided to intervene. The case wasn’t resolved by talking.`),
-  fracaso:S2("La situación se descontroló. El mando ordenó la entrada del grupo de intervención y el caso no se resolvió hablando.","The situation spiralled. Command sent in the intervention team and the case wasn’t resolved by talking.")}[G.end];
+  fracaso:S2("La situación se descontroló. El mando ordenó la entrada del grupo de intervención y el caso no se resolvió hablando.","The situation spiralled. Command sent in the intervention team and the case wasn’t resolved by talking."),
+  tactico:G.endK==='tir'?S2(`Con la tensión disparada y sin margen para hablar, un tirador ${P.rural?'de la UEI':'del GEO'} tuvo línea limpia por la ventana, sin ningún rehén en ella. Sujeto neutralizado. El equipo entró y las personas retenidas salieron escoltadas, a salvo.`,`With tension through the roof and no room left to talk, ${P.rural?'a UEI':'a GEO'} sniper had a clean line through the window with no hostage in it. Subject neutralised. The team went in and the people held were escorted out safely.`)
+   :S2(`Con la tensión disparada y la negociación agotada, ${FZa()[0]} entró por la puerta principal. ${n} fue reducid{o} y detenid{o}, y las personas retenidas salieron escoltadas, a salvo.`,`With tension through the roof and negotiation exhausted, ${FZa()[1]} went in through the front door. ${n} was overpowered and detained, and the people held were escorted out safely.`),
+  prematuro:S2(`Ordenaste ${G.endK==='tir'?'el disparo':'el asalto'} con la negociación todavía viable. Las personas retenidas salieron, pero se asumió un riesgo para ellas y para los agentes que hablar todavía podía evitar.`,`You ordered ${G.endK==='tir'?'the shot':'the assault'} while negotiation was still viable. The people held came out, but a risk was taken with them and with the officers that talking could still have avoided.`)}[G.end];
 }
 function debrief(){
  const sc=score(), ng=G.log.filter(r=>r.q==='good').length, nb=G.log.filter(r=>r.q==='bad').length, ph=Math.max.apply(null,G.log.map(r=>r.ph).concat([phase()]));
@@ -887,7 +905,7 @@ function debrief(){
   '<div class="ngres '+E[1]+'"><b class="big">'+esc(T(E[0]))+'</b><p>'+esc(T(endText()))+'</p></div>'+
   '<div class="ngkp"><div><b>'+sc+'</b><span>/100 · '+esc(T(rank))+'</span></div><div><b>'+Math.floor(G.mins/60)+':'+String(G.mins%60).padStart(2,'0')+'</b><span>'+L('horas de negociación','hours negotiating')+'</span></div><div><b>'+ng+' / '+nb+'</b><span>'+L('respuestas buenas / malas','good / bad replies')+'</span></div><div><b>'+(ph+1)+'/5</b><span>'+esc(T(PH[ph]))+'</span></div></div>'+
   '<div class="ngsec">'+L('Tu enfoque','Your approach')+'</div><p><b>'+esc(T(APS[G.ap][0]))+'</b>: '+TXT(G.apNote)+'</p>'+
-  '<div class="ngsec">'+L('Lo que importaba del expediente','What mattered in the dossier')+'</div><ul class="ngkey">'+(keys.join('')||'<li>'+L('Un perfil sin anclas ni detonantes claros: la escucha era la única llave.','A profile with no clear anchors or triggers: listening was the only key.')+'</li>')+'</ul>'+
+  tacSec()+'<div class="ngsec">'+L('Lo que importaba del expediente','What mattered in the dossier')+'</div><ul class="ngkey">'+(keys.join('')||'<li>'+L('Un perfil sin anclas ni detonantes claros: la escucha era la única llave.','A profile with no clear anchors or triggers: listening was the only key.')+'</li>')+'</ul>'+
   '<div class="ngsec">'+L('Turno a turno','Turn by turn')+'</div>'+turns+
   (cs?'<div class="ngsec">'+L('Caso real parecido','A similar real case')+'</div><div class="ngcase"><b class="t">'+esc(T(cs.c.t))+'</b><p>'+esc(T(cs.c.s))+'</p>'+(cs.sh.length?'<p style="font-size:14px;color:var(--mu)">'+L('Se parece en: ','Similar in: ')+cs.sh.map(t=>esc(T(TAGTXT[t]))).join(', ')+'.</p>':'')+'<p style="font-size:13px">'+L('Fuente: ','Source: ')+'<a href="'+esc(cs.c.u)+'" target="_blank" rel="noopener">'+esc(cs.c.src)+' ›</a></p></div>':'')+
   '<p class="sub" style="font-size:13px;margin-top:14px">'+L('Los medidores y las reacciones del sujeto son una','The meters and the subject’s reactions are an')+' <span class="ngest">'+L('Estimación','Estimate')+'</span> '+L('de M.A.T basada en la doctrina citada. El caso real es documentado; el de la partida es inventado.','by M.A.T based on the doctrine cited. The real case is documented; the game case is invented.')+'</p>'+
@@ -901,172 +919,227 @@ export function route(app,x){ APP=app; X=x; css();
  if(P_.s&&/^\d+$/.test(P_.s)) startCase(parseInt(P_.s,10)>>>0); else intro();
 }
 
-/* ---------------- escena animada (solo dibujo: no cambia la partida ni sus números) ----------------
-   Corte de la fachada: dentro, el sujeto y las personas retenidas; fuera, el negociador, la patrulla y los sanitarios.
-   El sujeto reacciona a lo que pasa en la llamada: su postura, su distancia a la cristalera, su cara y su voz salen de la
-   tensión y la confianza (suavizadas) y de cada respuesta tuya. Cuando la escena está tensa nadie se queda congelado:
-   el sujeto vigila la puerta, la ventana o a los retenidos; la patrulla se agacha; los retenidos agachan la cabeza.
-   Usa su propio generador (no toca RND), así que la partida es idéntica con o sin escena. */
+
+/* ---------------- opciones tácticas (último recurso) ----------------
+   Regla de la partida (determinista, sin dados): hay CRISIS CRÍTICA cuando, después de tu respuesta, la tensión lleva
+   2 turnos seguidos en 70 o más y ahora está en 85 o más, con la confianza en 25 o menos y sin subir respecto al turno
+   anterior (la tensión no baja y hablar ya no la está bajando).
+   Solo entonces una resolución táctica está justificada: el asalto (GEO si el caso es de la Policía Nacional, UEI si es
+   de la Guardia Civil; la UIP mantiene el perímetro y no asalta) o el tirador de precisión, que además necesita una
+   línea limpia: el sujeto en la ventana y ningún rehén en la línea. Bien usada en su momento, SIEMPRE sale bien.
+   Usarla antes de tiempo, o pedir un disparo sin línea, es un error del jugador y el informe explica por qué. */
+const CRIT_T=85, CRIT_P=70, CRIT_C=25;
+const FZ=()=>P.rural?S2('UEI','UEI'):S2('GEO','GEO');
+const FZa=()=>P.rural?S2('la UEI','the UEI'):S2('el GEO','the GEO');
+const FZl=()=>P.rural?S2('la UEI (Unidad Especial de Intervención de la Guardia Civil)','the UEI (the Guardia Civil’s Special Intervention Unit)'):S2('el GEO (Grupo Especial de Operaciones de la Policía Nacional)','the GEO (the National Police Special Operations Group)');
+/* dónde está el sujeto en el plano: sale del estado de la partida (tensión, confianza y turno), nunca del azar */
+function subPos(){ const ins=inside().length, off=(P.seed>>>5)%3; let z;
+ if(G.tension>=85) z=['ventana','ventanaR','ventana','rehenes'][(G.turn+off)%4];
+ else if(G.tension>=80) z=['ventana','rehenes','ventanaR'][(G.turn+off)%3];
+ else if(G.tension>=60) z=['rehenes','centro','ventana'][(G.turn+off)%3];
+ else if(G.trust>=50) z='puerta'; else z='centro';
+ if(!ins&&z==='ventanaR') z='ventana'; if(!ins&&z==='rehenes') z='centro';
+ return z; }
+function tacInit(){ G.critN=0; G.crit=false; G.dep=false; G.tac=[]; G.critTurns=0; G.trPrev=G.trust; G.tPrev=G.tension; G.tacT=-1; G.spos=subPos(); }
+function tacUpd(rec){
+ if(G.critN==null) tacInit();
+ const was=G.crit, hi=G.tension>=CRIT_T&&G.tPrev>=CRIT_P&&G.trust<=CRIT_C&&G.trust<=G.trPrev;
+ const dep0=G.dep;
+ if(!G.dep&&(G.turn>=2||G.tension>=70)&&!G.end){ G.dep=true;
+  rec.events.push(P.rural?S2('La UEI toma posiciones: dos tiradores de precisión y el equipo de intervención en el punto de reunión. Las patrullas de la Guardia Civil mantienen el perímetro.','The UEI takes up positions: two snipers and the intervention team at the staging point. Guardia Civil patrols hold the perimeter.')
+   :S2('El GEO toma posiciones: dos tiradores de precisión y el equipo de intervención en el punto de reunión. La UIP mantiene el perímetro.','The GEO takes up positions: two snipers and the intervention team at the staging point. The UIP holds the perimeter.')); }
+ G.critN=hi?G.critN+1:0; G.crit=!G.end&&hi; if(G.crit) G.critTurns++; G.critPrevT=G.tPrev;
+ if(G.crit&&!was) rec.events.push(S2('Crisis crítica: la tensión lleva dos turnos por encima de 70 y ya pasa de 85, y la confianza sigue baja sin subir. El mando autoriza la resolución táctica como último recurso.','Critical crisis: tension has been above 70 for two turns and is now past 85, and trust is still low and not rising. Command authorises a tactical resolution as a last resort.'));
+ if(was&&!G.crit&&!G.end) rec.events.push(S2('La tensión vuelve a bajar: hablar funciona otra vez y el mando retira la autorización táctica.','Tension is coming down again: talking works again and command withdraws the tactical authorisation.'));
+ G.trPrev=G.trust; G.tPrev=G.tension; if(!G.end) G.spos=subPos(); rec.crit=G.crit; rec.spos=G.spos;
+}
+/* la orden táctica: el resultado sale solo del estado de la partida */
+function tacOrder(k){
+ if(!G||!G.dep||G.end) return null;
+ const r={k:k,turn:G.turn,crit:G.crit,spos:G.spos,tension:G.tension,trust:G.trust,prevT:G.critPrevT,inside:inside().length};
+ if(k==='tir'&&G.spos!=='ventana'){ r.res='nolinea'; G.tacT=G.turn; G.tac.push(r); return r; }
+ r.res=G.crit?'ok':'prematuro'; G.tac.push(r);
+ G.end=G.crit?'tactico':'prematuro'; G.endK=k; G.crit=false;
+ P.host.forEach(h=>{ if(!h.out){ h.out=true; h.esc=1; G.rel.push(h.n); } });
+ return r;
+}
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+function tacMsg(r){ const F=FZa();
+ if(r.res==='nolinea') return r.spos==='ventanaR'?S2('Tirador 1: «Sin línea limpia: tiene a un rehén delante, en la línea de tiro.» No dispara.','Sniper 1: “No clean line: there’s a hostage in front of him, in the line of fire.” No shot.')
+  :S2('Tirador 1: «Sin línea: el sujeto no está en la ventana y no lo tengo a la vista desde ninguna posición.» No dispara.','Sniper 1: “No line: the subject isn’t at the window and I can’t see them from any position.” No shot.');
+ const pre=r.res==='prematuro'?S2(' (La negociación todavía era viable.)',' (Negotiation was still viable.)'):S2('','');
+ if(r.k==='tir') return S2('Luz verde. Línea limpia por la ventana: sujeto neutralizado. '+cap(F[0])+' entra y saca a las personas retenidas.'+pre[0],'Green light. Clean line through the window: subject neutralised. '+cap(F[1])+' goes in and brings the people held out.'+pre[1]);
+ return S2(cap(F[0])+' entra por la puerta principal: el sujeto es reducido y detenido y las personas retenidas salen escoltadas.'+pre[0],cap(F[1])+' goes in through the front door: the subject is overpowered and detained and the people held are escorted out.'+pre[1]);
+}
+function tacHTML(){ if(!G||!G.dep||G.end) return ''; const c=G.crit, nl=G.tacT===G.turn;
+ return '<div class="ngtac'+(c?' crit':'')+'" id="ngTac"><div class="q">'+L('Opciones tácticas','Tactical options')+' · '+esc(T(FZ()))+'</div>'+
+  '<div class="st">'+(c?L('Crisis crítica: la tensión no baja (dos turnos por encima de 70, ahora más de 85) y la confianza no sube. Resolución táctica autorizada como último recurso.','Critical crisis: tension isn’t coming down (two turns above 70, now over 85) and trust isn’t rising. Tactical resolution authorised as a last resort.')
+   :L('Negociación en curso. La resolución táctica es el último recurso.','Negotiation under way. Tactical resolution is the last resort.'))+'</div>'+
+  '<div class="row"><button type="button" class="ngtb" data-t="tir"'+(nl?' disabled':'')+'>'+L('Tirador de precisión','Sniper')+'</button><button type="button" class="ngtb" data-t="asalto">'+L('Asalto táctico','Tactical assault')+'</button></div><div class="cf" id="ngTcf"></div></div>'; }
+function wireTac(){ const tb=document.getElementById('ngTac'); if(!tb) return;
+ tb.querySelectorAll('.ngtb[data-t]').forEach(b=>b.onclick=()=>{ if(G.busy||G.end) return; const k=b.getAttribute('data-t'); const cf=document.getElementById('ngTcf'); if(!cf) return;
+  cf.innerHTML='<span>'+(k==='tir'?L('¿Ordenar el disparo al tirador de precisión?','Order the sniper to take the shot?'):esc(T(S2('¿Ordenar el asalto? Entra '+FZa()[0]+'.','Order the assault? '+cap(FZa()[1])+' goes in.'))))+'</span><button type="button" class="ngtb go" id="ngTgo">'+L('Confirmar','Confirm')+'</button><button type="button" class="ngtb no" id="ngTno">'+L('Cancelar','Cancel')+'</button>';
+  document.getElementById('ngTgo').onclick=()=>tacGo(k); document.getElementById('ngTno').onclick=()=>{ cf.innerHTML=''; }; }); }
+function endBlock(log){ const FAST=!!window.MAT_NG_FAST; const after=(ms,f)=>FAST?f():setTimeout(f,ms);
+ const end=document.createElement('div'); end.innerHTML='<div class="ngev ngend">'+esc(T(ENDS[G.end][0]))+'</div><div class="ngrow" style="justify-content:center"><button type="button" class="ngbtn" id="ngRep">'+L('Ver el informe ›','See the debrief ›')+'</button></div>'; while(end.firstChild) log.appendChild(end.firstChild); document.getElementById('ngRep').onclick=debrief; after(1400,()=>toCur(document.querySelector('.ngend'))); }
+function tacGo(k){
+ if(G.busy||G.end) return; const r=tacOrder(k); if(!r) return; G.busy=1;
+ const FAST=!!window.MAT_NG_FAST, after=(ms,f)=>FAST?f():setTimeout(f,ms);
+ const log=document.getElementById('ngLog'); if(!log){ G.busy=0; return; }
+ const y=document.createElement('div'); y.className='ngb y'; y.innerHTML='<small>'+L('Tú','You')+'</small>'+(k==='tir'?L('Al tirador de precisión: dispara si tienes línea limpia.','To the sniper: take the shot if you have a clean line.'):esc(T(S2('Orden de asalto: entra '+FZa()[0]+'.','Assault order: '+FZa()[1]+' goes in.'))));
+ if(r.res==='nolinea'){ const tb=document.getElementById('ngTac'); log.insertBefore(y,document.getElementById('ngOpts')); const d=document.createElement('div'); d.className='ngev'; d.innerHTML=TXT(tacMsg(r)); log.insertBefore(d,document.getElementById('ngOpts'));
+  if(tb){ const w=document.createElement('div'); w.innerHTML=tacHTML(); tb.replaceWith(w.firstChild); wireTac(); }
+  scnTac(r); barUpd(0,0); G.busy=0; return; }
+ const opts=document.getElementById('ngOpts'); if(opts) opts.remove(); const cur=document.getElementById('ngCur'); if(cur) cur.removeAttribute('id');
+ log.appendChild(y); toCur(y); scnTac(r);
+ after(r.k==='tir'?2600:2200,()=>{ const d=document.createElement('div'); d.className='ngev'; d.innerHTML=TXT(tacMsg(r)); log.appendChild(d); barUpd(0,0); after(2400,()=>{ endBlock(log); G.busy=0; }); });
+}
+
+function tacSec(){ if(!G.tac) return ''; const out=[];
+ const RULE=S2('La regla de la partida: la resolución táctica solo está justificada en crisis crítica, cuando la tensión lleva dos turnos seguidos en 70 o más, llega a 85 o más y la confianza está baja (25 o menos) y sin subir.','The game’s rule: a tactical resolution is only justified in a critical crisis, when tension has been at 70 or more for two turns in a row, reaches 85 or more and trust is low (25 or less) and not rising.');
+ G.tac.forEach(r=>{
+  if(r.res==='nolinea') out.push(['bad',S2('Disparo sin línea · turno '+r.turn,'Shot with no line · turn '+r.turn),r.spos==='ventanaR'
+   ?S2('Tenía a un rehén delante, en la línea de tiro. Un tirador de precisión no dispara con un rehén en la línea: el riesgo para esa persona lo impide. Había que esperar a verle solo en la ventana (línea verde en el mapa) o, si la crisis era crítica, ordenar el asalto.','There was a hostage in front of him, in the line of fire. A sniper doesn’t shoot with a hostage in the line: the risk to that person rules it out. You had to wait until he was alone at the window (green line on the map) or, if the crisis was critical, order the assault.')
+   :S2('No estaba en la ventana: ninguna posición de tiro le tenía a la vista. Sin línea limpia no hay disparo. En el mapa, la línea verde marca cuándo hay tiro.','He wasn’t at the window: no firing position could see him. No clean line, no shot. On the map, the green line shows when there is a shot.')]);
+  else if(r.res==='ok') out.push(['good',S2('Resolución táctica en su momento · turno '+r.turn,'Tactical resolution at the right time · turn '+r.turn),
+   S2('Era el momento: la tensión llevaba dos turnos por encima de 70 ('+r.prevT+' y '+r.tension+') y la confianza estaba en '+r.trust+', sin subir. '+(r.k==='tir'?'Y había línea limpia: el sujeto en la ventana y ningún rehén en la línea. ':'')+'Aun así, el mejor final es el que no llega aquí: la rendición.','It was the moment: tension had been above 70 for two turns ('+r.prevT+' and '+r.tension+') and trust was at '+r.trust+', not rising. '+(r.k==='tir'?'And there was a clean line: the subject at the window and no hostage in it. ':'')+'Even so, the best ending is the one that never gets here: surrender.')]);
+  else out.push(['bad',S2((r.k==='tir'?'Disparo':'Asalto')+' antes de tiempo · turno '+r.turn,(r.k==='tir'?'Shot':'Assault')+' too early · turn '+r.turn),
+   S2('La negociación seguía siendo viable: tensión '+r.tension+' y confianza '+r.trust+'. '+RULE[0]+' Mientras se pueda hablar, una intervención pone en riesgo a las personas retenidas y a los agentes sin necesidad.','Negotiation was still viable: tension '+r.tension+' and trust '+r.trust+'. '+RULE[1]+' While talking is still possible, an intervention puts the people held and the officers at risk for no need.')]);
+ });
+ if(!G.tac.some(r=>r.res!=='nolinea')&&G.critTurns>0&&(G.end==='fracaso'||G.end==='tiempo')) out.push(['mid',S2('Hubo una ventana táctica','There was a tactical window'),S2('Durante '+G.critTurns+' turno(s) hubo crisis crítica y una resolución táctica controlada estaba justificada. Si la tensión llega al máximo sin control, la entrada se hace sin poder elegir el momento.','For '+G.critTurns+' turn(s) the crisis was critical and a controlled tactical resolution was justified. If tension peaks out of control, the entry happens without choosing the moment.')]);
+ if(!out.length) return '';
+ const QN={good:S2('Bien','Good'),mid:S2('Regular','So-so'),bad:S2('Mal','Bad')};
+ return '<div class="ngsec">'+L('Decisión táctica','Tactical decision')+'</div>'+out.map(o=>'<div class="ngturn '+o[0]+'"><p><span class="ngtag '+o[0]+'">'+esc(T(QN[o[0]]))+'</span><b>'+esc(T(o[1]))+'</b></p><p>'+TXT(o[2])+'</p></div>').join('')+
+  '<p style="font-size:14px">'+esc(L('Doctrina: en una crisis con rehenes se negocia primero y la intervención táctica es el último recurso, cuando hablar ya no reduce el riesgo para la vida de las personas retenidas (FBI; McMains y Mullins). Mientras la negociación avanza, el tiempo juega a favor: baja la tensión y aparecen salidas. En España, el asalto lo hace ','Doctrine: in a hostage crisis you negotiate first and tactical intervention is the last resort, used when talking no longer reduces the risk to the lives of the people held (FBI; McMains and Mullins). While negotiation is moving, time is on your side: tension falls and exits appear. In Spain, the assault is carried out by ')+T(FZl())+L(P.rural?'; las patrullas mantienen el perímetro.':'; la UIP mantiene el perímetro y no asalta.',P.rural?'; patrols hold the perimeter.':'; the UIP holds the perimeter and does not assault.'))+'</p>'; }
+
+/* ---------------- mapa táctico por puntos (vista desde arriba; solo dibujo: no cambia la partida ni sus números) ----------------
+   Plano del sitio según el caso (sucursal bancaria, tienda, oficina, piso o casa aislada) con sus salas, mostrador o cámara,
+   puertas, ventanas y la calle. Cada persona es un punto: el sujeto (rojo), cada persona retenida (amarillo), tú en el puesto
+   de mando (azul), la patrulla y el perímetro, los sanitarios y, cuando se despliegan, el equipo de intervención y los dos
+   tiradores con sus líneas de tiro. El sujeto se mueve según la tensión y la confianza (su sitio en el plano sale del estado
+   de la partida, G.spos): con la tensión alta se pega a los rehenes o vigila desde la ventana; con confianza se acerca a la
+   puerta. Nada se queda congelado con la tensión alta y no hay balanceo en reposo: cada movimiento va a un sitio.
+   Usa su propio generador (no toca RND), así que la partida es idéntica con o sin mapa. */
 const SC={on:0};
 const RM_=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
 const lerp=(a,b,t)=>a+(b-a)*t, sstep=(a,b,x)=>{ const t=clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); };
-const AR={DOWN:[0.08,0.12],PHONE:[0.8,2.85],GEST:[1.3,0.3],FIST:[0.55,1.5],CROSS:[0.3,1.85],HEAD:[2.45,2.1],UP:[2.8,0.2],NOTE:[0.55,1.35],KNEE:[0.75,0.35],LOW:[0.35,0.9]};
-function scnApp(vr,o){ const SK=['#e9c4a1','#d9a982','#c48d66','#a8714c','#8a5a3c','#f0d0b4'], HR=['#2a211b','#3b2b20','#5a4030','#1d1d1f','#7a5a36','#9a8f84'];
- const TOP=['#5b6f8a','#7a4d4a','#4f6b52','#6d6a7c','#8a7a5a','#3f5a74','#7c6450','#566f6e','#8c5f72','#4d566a'], LEG=['#2c3340','#3a3a3e','#4a4236','#2f3a33','#33302e'];
- const p=x=>x[Math.floor(vr()*x.length)];
- return Object.assign({skin:p(SK),hair:p(HR),top:p(TOP),legs:p(LEG),long:vr()<0.15,hood:false,grey:false,cap:false},o||{}); }
-function scnPerson(o){ const P0={hip:0.5,lean:0,tilt:0,f1:AR.DOWN[0],f2:AR.DOWN[1],b1:AR.DOWN[0],b2:AR.DOWN[1],brow:0,smile:0,phone:0};
- return Object.assign({x:0,z:1,inside:false,path:[],v:0,face:1,tface:1,ph:0,alpha:1,cur:Object.assign({},P0),tg:Object.assign({},P0),talk:null,mv:0,lastMove:0,look:0},o); }
+const MW=48, MH=26;
+/* geometría común: el edificio (8..32 × 2..15), la fachada mira a la calle (abajo), la puerta y la ventana de la esquina */
+const DOOR=[18.5,20.5], WINF=[[9.4,12.2],[27.4,31.6]];
+const ZN={ventana:[[29.9,13.3],[28.9,13.7],[30.8,12.6]],ventanaR:[[29.4,12.6],[30.2,12.2]],rehenes:[[17.2,11.2],[16.4,12.6],[17.6,12.4]],centro:[[21.5,10.4],[23.4,11.4],[22.2,12.4]],puerta:[[19.3,13.7],[20.6,13.4]]};
+const SEATS=[[11.2,11.0],[12.6,12.6],[13.8,11.2],[14.9,12.8],[10.6,13.2]];
+const SHIELD=[0.05,0.8];
+const SNP=[[26,24.4],[34,24.4]];
+function scnPlan(){ if(P.sit==='banco'||P.motive==='desahucio') return 'banco'; if(P.sit==='tienda') return 'tienda'; if(P.sit==='agravio') return 'oficina'; return P.rural?'rural':'piso'; }
+function scnWalls(plan){ const S=[]; const H=(y,x0,x1,t)=>S.push([x0,y,x1,y,t]), V=(x,y0,y1,t)=>S.push([x,y0,x,y1,t]);
+ /* fachada con huecos */ let cur=8; [[WINF[0][0],WINF[0][1],'win'],[DOOR[0],DOOR[1],'door'],[WINF[1][0],WINF[1][1],'win']].forEach(g=>{ H(15,cur,g[0],'w'); H(15,g[0],g[1],g[2]); cur=g[1]; }); H(15,cur,32,'w');
+ H(2,8,32,'w'); V(8,2,15,'w'); V(32,2,15,'w');
+ /* tabiques interiores (dejan abierta la sala principal, y 9..15) */
+ if(plan==='banco'){ V(14,2,6.4,'iw'); H(6.4,8,11.4,'iw'); H(6.4,12.6,14,'iw'); V(26.4,2,7.6,'iw2'); H(7.6,26.4,28.3,'iw2'); H(7.6,29.5,32,'iw2'); }
+ else if(plan==='tienda'){ V(15,2,6.6,'iw'); H(6.6,8,12.6,'iw'); H(6.6,13.8,15,'iw'); }
+ else if(plan==='oficina'){ V(15,2,8.4,'iw'); H(8.4,8,12.4,'iw'); H(8.4,13.6,15,'iw'); V(27,2,6,'iw'); H(6,27,28.6,'iw'); H(6,29.8,32,'iw'); }
+ else { H(8.6,8,10.6,'iw'); H(8.6,12,16.4,'iw'); V(15.5,2,8.6,'iw'); H(8.6,17.8,24,'iw'); V(24,2,8.6,'iw'); H(8.6,25.4,28.6,'iw'); V(28.6,2,8.6,'iw'); H(5.6,24,28.6,'iw'); H(8.6,30,32,'iw'); }
+ return S; }
+function segX(p,q,r,s){ const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]); const d1=cr(r,s,p), d2=cr(r,s,q), d3=cr(p,q,r), d4=cr(p,q,s); return d1*d2<0&&d3*d4<0; }
+function dSeg(p,a,b){ const dx=b[0]-a[0], dy=b[1]-a[1]; const t=clamp(((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy||1),0,1); return Math.hypot(p[0]-(a[0]+t*dx),p[1]-(a[1]+t*dy)); }
+/* línea de tiro de un tirador al sujeto: 'clear' (limpia), 'host' (un rehén en medio) o 'wall' (pared o puerta) */
+function scnLos(sn,sub){ for(const w of SC.walls){ if(w[4]!=='win'&&segX(sn,sub,[w[0],w[1]],[w[2],w[3]])) return 'wall'; }
+ for(const h of SC.hos){ if(h.inside&&!h.gone&&dSeg([h.x,h.y],sn,sub)<0.8) return 'host'; } return 'clear'; }
+function scnDot(o){ return Object.assign({x:0,y:0,path:[],v:0,vmax:1.4,alpha:1,mv:0,ring:0,ringT:-9,lab:'',vis:1,tvis:1},o); }
 function scnInit(){
  const wrap=document.getElementById('ngScn'); if(!wrap||!P||!G) return;
+ if(G.critN==null) tacInit();
  if(SC.raf) cancelAnimationFrame(SC.raf);
  const vr=rng((P.seed^0x5bd1e995)>>>0);
  const cv=wrap.querySelector('canvas');
- Object.assign(SC,{on:1,wrap:wrap,cv:cv,ctx:cv.getContext('2d'),vr:vr,t:0,last:0,bgKey:'',ev:[],end:null,endT:0,a:G.tension/100,r:G.trust/100,
-  hourV:null,blind:0,blindT:0,nextAct:2+vr()*2,act:null,hang:0,stillMax:0,stillT:0,subStillMax:0,frames:0,listen:0,glAt:0,ofcAlert:0,medOn:0,stepFx:0,ph0:null,lastAct:null,endT:0,
-  pace:P.impulsive>=2?0.6:P.mood==='frio'?1.35:P.mood==='apatia'||P.mood==='triste'?1.2:1, /* cada sujeto se mueve a su ritmo */
-  quirk:Math.floor(vr()*3)});
- const fem=P.fem, band=P.band;
- SC.sub=scnPerson({chair:1,inside:true,x:0,z:0.45,face:-1,tface:-1,app:scnApp(vr,{long:fem?vr()<0.8:false,grey:band==='mayor'||(band==='maduro'&&vr()<0.5),hood:band==='joven'&&vr()<0.5,cap:!fem&&band!=='mayor'&&vr()<0.2,H:1})});
- SC.sub.cur.phone=SC.sub.tg.phone=1;
- SC.hos=P.host.map((h,i)=>{ const p=scnPerson({inside:true,h:h,app:scnApp(vr,{long:h.f?vr()<0.85:false,grey:h.age>=58,H:h.age<30?0.96:1}),face:-1,tface:-1}); p.cur.hip=p.tg.hip=0.12; p.gone=!!h.out; p.alpha=h.out?0:1; return p; });
- SC.neg=scnPerson({x:0,face:1,tface:1,app:scnApp(vr,{top:'#2f3b4f',legs:'#22262e',long:/^(Laura|Ana|Beatriz|Elena)$/.test(P.yo),hair:'#2b211a'})});
- SC.neg.cur.phone=SC.neg.tg.phone=1;
- const uni=P.rural?'#3d5a3c':'#1f2e4a';
- SC.ofc=[scnPerson({face:1,tface:1,app:scnApp(vr,{top:uni,legs:uni,cap:true,uni:1})}),scnPerson({face:1,tface:1,app:scnApp(vr,{top:uni,legs:uni,cap:true,uni:1})})];
- SC.med=scnPerson({face:1,tface:1,app:scnApp(vr,{top:'#d8892a',legs:'#2b3a52',vis:1})});
+ const plan=scnPlan();
+ Object.assign(SC,{on:1,wrap:wrap,cv:cv,ctx:cv.getContext('2d'),vr:vr,t:0,last:0,ev:[],end:null,a:G.tension/100,r:G.trust/100,plan:plan,walls:scnWalls(plan),
+  stillMax:0,stillT:0,subStillMax:0,frames:0,talkT:-9,talkW:null,tight:0,bgKey:'',zone:null,nextPace:0,react:0,crit:!!G.crit,flash:-9,mark:null,shotAt:0,losMis:0,losChk:0,dep:!!G.dep,
+  pace:P.impulsive>=2?0.65:P.mood==='frio'?1.35:P.mood==='apatia'||P.mood==='triste'?1.2:1});
+ const z0=ZN[G.spos||'centro'][0];
+ SC.sub=scnDot({x:z0[0],y:z0[1],vmax:1.8,col:'#e5483b',kind:'sub'});
+ SC.hos=P.host.map((h,i)=>{ const s=SEATS[i%SEATS.length]; const d=scnDot({x:s[0],y:s[1],h:h,seat:s,vmax:1.25,col:'#f2cf6b',kind:'hos',inside:!h.out}); if(h.out){ const q=scnSafe(i); d.x=q[0]; d.y=q[1]; d.inside=false; d.safe=1; } return d; });
+ SC.neg=scnDot({x:41.2,y:12.2,col:'#4f9bff',kind:'neg'});
+ const cars=P.rural?[[12,19.6],[37.5,19.6]]:[[12.5,19.4],[36.5,19.4]];
+ SC.cars=cars.map(c=>({x:c[0],y:c[1],x0:c[0],y0:c[1]}));
+ SC.ofc=[0,1,2,3].map(i=>{ const c=SC.cars[i>>1]; return scnDot({x:c.x+(i%2?1.6:-1.6),y:c.y-1.5,col:P.rural?'#3f7a4a':'#2f5fb3',kind:'ofc',ci:i>>1,side:i%2?1:-1}); });
+ SC.uip=P.rural?[]:[0,1,2].map(i=>scnDot({x:4+i*0.8,y:24.6,col:'#2f5fb3',kind:'uip',vis:0,tvis:0}));
+ SC.med=[scnDot({x:43.4,y:17.8,col:'#e9eef2',kind:'med'}),scnDot({x:44.6,y:17.9,col:'#e9eef2',kind:'med'})];
+ SC.team=[0,1,2,3,4].map(i=>scnDot({x:46+i*0.7,y:3.2+i*0.3,vmax:2.2,col:'#9aa6ae',kind:'team',vis:G.dep?1:0,tvis:G.dep?1:0}));
+ if(G.dep) SC.team.forEach((d,i)=>{ const p=scnStage(i); d.x=p[0]; d.y=p[1]; });
+ SC.snp=SNP.map((s,i)=>scnDot({x:s[0],y:s[1],col:'#9aa6ae',kind:'snp',vis:G.dep?1:0,tvis:G.dep?1:0,i:i}));
+ SC.uip.forEach((d,i)=>{ if(G.dep){ d.vis=d.tvis=1; } });
  SC.layK=''; scnLayout(true);
  if(!SC.ro&&window.ResizeObserver){ SC.ro=new ResizeObserver(()=>scnLayout(false)); }
  if(SC.ro){ SC.ro.disconnect(); SC.ro.observe(wrap); }
+ scnZone(true);
  SC.last=performance.now(); SC.raf=requestAnimationFrame(scnFrame);
 }
+function scnStage(i){ return [36.6+(i%3)*0.9,4.2+Math.floor(i/3)*1.0]; }
+function scnStack(i){ return [21.6+i*0.85,15.8+(i%2)*0.35]; }
+function scnSafe(i){ return [41.6+(i%3)*0.9,18.6+Math.floor(i/3)*0.9]; }
 function scnLayout(first){
- const w=Math.max(200,Math.round(SC.wrap.clientWidth)), h=w<520?(innerHeight<720?128:150):w<760?190:220, d=Math.min(2,window.devicePixelRatio||1);
+ const w=Math.max(200,Math.round(SC.wrap.clientWidth)), h=w<520?(innerHeight<700?172:200):w<760?250:290, d=Math.min(2,window.devicePixelRatio||1);
  const k=w+'x'+h+'@'+d; if(k===SC.layK) return; SC.layK=k;
- SC.cw=w; SC.ch=h; SC.dpr=d; SC.cv.width=Math.round(w*d); SC.cv.height=Math.round(h*d); SC.cv.style.height=h+'px';
- const L={}; L.gy=Math.round(h*0.86); L.bx0=Math.round(w*(w<520?0.40:0.44)); const bw=w-L.bx0;
- L.dx0=L.bx0+Math.round(bw*0.05); L.dx1=L.dx0+Math.round(Math.max(26,bw*0.15)); L.dTop=Math.round(h*0.20);
- L.wx0=L.dx1+Math.round(bw*0.04); L.wx1=w-Math.round(bw*0.035); L.wTop=Math.round(h*0.17); L.wBot=L.gy-Math.round(h*0.07);
- L.fB=L.gy-Math.round(h*0.30); L.fF=L.gy-Math.round(h*0.02); /* suelo interior: fondo y cristalera */
- L.ix0=L.dx0+4; L.ix1=L.wx1-4; L.H=h*0.56; /* altura de una persona de pie en la acera */
- L.car1=Math.round(w*(w<520?0.33:0.31)); L.car0=Math.round(L.car1-Math.max(L.H*2.15,w*0.28));
- SC.L=L; SC.bgKey='';
- const s=SC.sub, ix=f=>L.ix0+(L.ix1-L.ix0)*f;
- SC.ix=ix;
- if(first){ s.x=ix(0.62); s.z=0.45;
-  const n=SC.hos.length; SC.hos.forEach((p,i)=>{ p.home=0.58+0.36*(n>1?i/(n-1):0.5); p.x=ix(p.home); p.z=0.12+0.16*((i+1)%2); });
-  SC.neg.x=Math.max(w*0.12,L.car0+(L.car1-L.car0)*0.42); SC.ofc[0].x=L.car1-(L.car1-L.car0)*0.10; SC.ofc[1].x=L.car1-(L.car1-L.car0)*0.30; SC.med.x=w*0.03; SC.med.alpha=0;
- } else { SC.hos.forEach(p=>{ if(p.inside&&!p.path.length) p.x=ix(p.home); }); SC.neg.x=Math.max(w*0.12,L.car0+(L.car1-L.car0)*0.42); SC.ofc[0].x=L.car1-(L.car1-L.car0)*0.10; SC.ofc[1].x=L.car1-(L.car1-L.car0)*0.30; SC.med.x=w*0.03; }
+ SC.cv.style.height=h+'px'; SC.cv.width=Math.round(w*d); SC.cv.height=Math.round(h*d); SC.cw=w; SC.ch=h; SC.dpr=d;
+ const sc=Math.min(w/MW,h/MH); SC.sc=sc; SC.ox=(w-MW*sc)/2; SC.oy=(h-MH*sc)/2; SC.nar=w<520; SC.bgKey='';
 }
-/* ---- emoción visible del sujeto: estado suavizado -> postura, distancia, cara y voz ---- */
-function scnVoice(){
- const a=SC.a*100, r=SC.r*100, m=P.mood; let k;
- if(SC.end==='rendicion') k=S2('Sale con las manos a la vista','Walking out, hands visible');
- else if(SC.hang>0) k=S2('Ha colgado','Has hung up');
- else if(a>=75) k=m==='panico'?S2('Fuera de sí · grita, mira a la puerta','Beside {self} · shouting, eyeing the door'):S2('Fuera de sí · grita','Beside {self} · shouting');
- else if(a>=55) k=m==='frio'?S2('Tens{o} · voz cortante','Tense · clipped voice'):m==='triste'||m==='apatia'?S2('Desbordad{o} · llora a ratos','Overwhelmed · crying at times'):S2('Alterad{o} · voz alta','Agitated · raised voice');
- else if(a>=35) k=r>=40?S2('Más calmad{o} · escucha','Calmer · listening'):m==='triste'||m==='apatia'?S2('Abatid{o} · habla muy bajo','Downcast · speaking very low'):S2('Desconfiad{o} · a la defensiva','Wary · defensive');
- else k=r>=60?S2('Tranquil{o} · habla despacio contigo','Calm · talking slowly with you'):(m==='triste'||m==='apatia')&&r<40?S2('Apagad{o} · apenas habla','Flat · barely speaking'):S2('Calmad{o} · voz baja','Settled · quiet voice');
- return fill(k).replace('{self}',P.fem?'herself':'himself');
+/* el sitio del sujeto en el plano (de la partida) y sus paseos dentro de esa zona */
+function scnZone(snap){ const s=SC.sub, z=G.spos||'centro'; const ch=z!==SC.zone; SC.zone=z; SC.zi=0;
+ const pts=ZN[z]; const p=pts[0];
+ const pre=SC.flinch; SC.flinch=null;
+ if(snap){ s.x=p[0]; s.y=p[1]; s.path=[]; SC.arr=1; } else if(ch||pre||!pts.some(q=>Math.hypot(q[0]-s.x,q[1]-s.y)<0.05)){ SC.arr=0; scnGo(s,(pre?[pre]:[]).concat([p]),SC.a>0.6?3.3:2.2); s.path[s.path.length-1].fn=()=>{ SC.arr=1; }; }
+ /* rehén escudo: en «ventanaR» el sujeto lleva a una persona retenida delante, en la línea de la ventana */
+ const ins=SC.hos.filter(h=>h.inside&&!h.gone&&!h.leaving);
+ SC.hos.forEach(h=>{ if(h.shield&&z!=='ventanaR'){ h.shield=0; if(h.inside&&!h.leaving){ h.ret=1; scnGo(h,[h.seat],1.4); h.path[0].fn=q=>{ q.ret=0; }; } } });
+ if(z==='ventanaR'&&ins.length&&!ins.some(h=>h.shield)){ const h=ins[ins.length-1]; h.shield=1; if(snap){ h.x=p[0]+SHIELD[0]; h.y=p[1]+SHIELD[1]; h.path=[]; } }
+ SC.nextPace=SC.t+1.4*SC.pace;
 }
-function scnTargets(dt){
- const s=SC.sub, a=SC.a, r=SC.r, m=P.mood, tg=s.tg, now=SC.t, L=SC.L;
- if(SC.end==='rendicion') return;
- const ov=s.ov&&s.ov.until>now?s.ov:null;
- /* distancia: con confianza se acerca a la cristalera y a la puerta (hacia ti); con tensión se repliega junto a los retenidos */
- const close=clamp(r*1.15-a*0.45,0,1);
- const sitting=(a<0.30&&r>0.5)||((m==='triste'||m==='apatia')&&a<0.62&&r<0.6&&!SC.act);
- tg.hip=sitting?0.30:0.5;
- tg.lean=m==='ira'&&a>0.5?0.10:(m==='triste'||m==='apatia')?0.06:a<0.35?0.02:0;
- tg.tilt=(m==='triste'||m==='apatia')?0.32*(1-r)+0.05:a>0.7&&m==='panico'?-0.08:0.02;
- tg.brow=m==='ira'||m==='frio'?-0.95*a-0.1:(m==='panico'||m==='triste'||m==='apatia')?0.95*Math.max(a,0.35):-0.4*a;
- tg.brow=lerp(tg.brow,0,sstep(0.45,0.85,r)*0.7);
- tg.smile=-0.9*a+(r>0.6?0.35:0)-((m==='triste'||m==='apatia')?0.35:0);
- const B=sitting?AR.KNEE:a>0.72?(m==='panico'?AR.HEAD:m==='ira'?AR.FIST:m==='frio'?AR.CROSS:AR.LOW):m==='frio'?AR.CROSS:AR.DOWN;
- tg.b1=B[0]; tg.b2=B[1];
- const F=SC.hang>0?AR.DOWN:AR.PHONE; tg.f1=F[0]; tg.f2=F[1]; tg.phone=SC.hang>0?0.6:1;
- if(s.talk&&!SC.hang&&a>0.5&&m!=='frio'&&!sitting){ const g=m==='ira'?AR.GEST:AR.FIST; tg.b1=g[0]; tg.b2=g[1]; tg.lean+=0.05; }
- if(ov) Object.assign(tg,ov.pose);
- /* blinds: con mucha tensión baja la persiana a medias; con confianza la vuelve a subir */
- SC.blindT=a>0.62&&r<0.45?0.26:a>0.45&&r<0.3?0.14:0;
- /* hacia dónde ir */
- if(!s.path.length&&!SC.act&&!(ov&&ov.stay)){
-  const bf=0.70-0.50*close+(m==='panico'?-0.05:0), bz=0.30+0.62*close;
-  const tx=SC.ix(clamp(bf,0.08,0.56));
-  if(Math.abs(tx-s.x)>SC.cw*0.02||Math.abs(bz-s.z)>0.06) scnGo(s,[{x:tx,z:bz,inside:true}],0.9);
- }
- /* qué mira: a la puerta/ventana (a ti) al escuchar o hablar; a los retenidos cuando la tensión sube */
- if(!s.path.length&&!(ov&&ov.face!=null)) s.tface=(s.talk||SC.listen>now||SC.hang<=0)?-1:1;
- if(ov&&ov.face!=null) s.tface=ov.face;
-}
-/* acciones con propósito mientras esperas tu respuesta (nunca un balanceo en bucle): solo si la escena está tensa */
-function scnAct(dt){
- const s=SC.sub, a=SC.a, now=SC.t, vr=SC.vr;
- if(SC.end||s.talk||SC.listen>now) return;
- if(SC.act){ if(!s.path.length&&now>=SC.act.until){ SC.act=null; SC.nextAct=now+SC.pace*(a>0.6?2.2+vr()*2.6:5+vr()*4); } return; }
- if(a<0.34||now<SC.nextAct) return;
- if(a<0.55&&vr()<0.35){ SC.nextAct=now+SC.pace*(4+vr()*4); return; }
- const opts=['ventana','puerta','retenidos','paso'].concat(P.mood==='panico'?['puerta']:P.mood==='ira'?['paso','ventana']:P.mood==='frio'?['ventana']:['retenidos']);
- let k=opts[Math.floor(vr()*opts.length)]; if(SC.lastAct===k&&vr()<0.7) k=opts[(opts.indexOf(k)+1)%opts.length]; SC.lastAct=k;
- const ix=SC.ix;
- if(k==='ventana'){ scnGo(s,[{x:ix(0.22+vr()*0.32),z:0.93,inside:true}],1.1); SC.act={k:k,until:now+1.4+vr()*1.2}; s.ov={until:now+99,face:-1,stay:1,pose:{tilt:-0.05,lean:0.06}}; }
- else if(k==='puerta'){ scnGo(s,[{x:ix(0.05),z:0.78,inside:true}],1.2); SC.act={k:k,until:now+1.1+vr()*0.8}; s.ov={until:now+99,face:-1,stay:1,pose:{lean:0.08}}; }
- else if(k==='retenidos'){ const h=SC.hos.filter(p=>p.inside&&!p.gone); const tx=h.length?h[Math.floor(vr()*h.length)].x-SC.cw*0.06:ix(0.6); scnGo(s,[{x:tx,z:0.42,inside:true}],0.9); SC.act={k:k,until:now+1.2+vr()}; s.ov={until:now+99,face:1,stay:1,pose:{tilt:0.12}}; }
- else { scnGo(s,[{x:ix(0.12+vr()*0.46),z:0.35+vr()*0.45,inside:true}],1.0); SC.act={k:k,until:now+0.6+vr()*0.8}; s.ov={until:now+99,stay:1}; }
- SC.actEndOv=1;
-}
-function scnGo(p,pts,sp){ p.path=pts.slice(); p.vmax=(sp||1)*SC.L.H*0.9/(SC.pace||1); }
+function scnGo(p,pts,vmax){ p.path=pts.map(q=>Array.isArray(q)?{x:q[0],y:q[1]}:q); if(vmax) p.vmax=vmax; }
 function scnMove(p,dt){
- if(!p.path.length){ p.v=Math.max(0,p.v-dt*SC.L.H*3); return; }
- const w=p.path[0]; const dx=w.x-p.x, dz=(w.z==null?p.z:w.z)-p.z;
- const dist=Math.abs(dx)+Math.abs(dz)*SC.L.H*0.8;
- if(dist<0.6){ p.x=w.x; if(w.z!=null) p.z=w.z; if(w.inside!=null) p.inside=w.inside; p.path.shift(); if(w.fn) w.fn(p); return; }
- const acc=SC.L.H*2.2, dec=SC.L.H*2.6, vm=p.vmax||SC.L.H*0.9;
- const vStop=Math.sqrt(2*dec*dist); p.v=Math.min(vm,vStop,p.v+acc*dt);
- const step=Math.min(dist,p.v*dt), k=step/dist;
- p.x+=dx*k; p.z+=dz*k; p.ph+=step/(SC.L.H*0.30); p.mv=SC.t;
- if(Math.abs(dx)>0.5) p.tface=dx<0?-1:1;
- if(w.inside===false&&p.inside&&p.x<=SC.L.dx1-2) p.inside=false;
+ if(!p.path.length){ p.v=0; return; }
+ const q=p.path[0], dx=q.x-p.x, dy=q.y-p.y, d=Math.hypot(dx,dy);
+ if(d<0.04){ p.x=q.x; p.y=q.y; p.path.shift(); if(q.fn) q.fn(p); if(!p.path.length) p.v=0; return; }
+ const acc=2.2, last=p.path.length===1;
+ p.v=Math.min(p.vmax,p.v+acc*dt); if(last) p.v=Math.min(p.v,Math.sqrt(2*acc*d)+0.05);
+ if(RM_()) p.v=p.vmax*3;
+ const st=Math.min(d,p.v*dt); p.x+=dx/d*st; p.y+=dy/d*st; p.mv=SC.t;
 }
-function scnEase(p,dt){
- const c=p.cur, t=p.tg, RMv=RM_();
- for(const k in t){ const tau=k==='hip'?0.45:k==='brow'||k==='smile'?0.5:k==='phone'?0.3:0.24; const e=RMv?1:1-Math.exp(-dt/tau); const d=t[k]-c[k]; if(Math.abs(d)>0.002) p.mv=SC.t; c[k]+=d*e; }
- const df=p.tface-p.face; if(Math.abs(df)>0.01){ p.face+=Math.sign(df)*Math.min(Math.abs(df),dt*5); p.mv=SC.t; } else p.face=p.tface;
-}
-/* ---- eventos de la partida -> reacciones ---- */
-function scnTalk(p,txt,minD){ const s=String(txt||''); p.talk={t0:SC.t,txt:s,dur:clamp(s.length/17,minD||1,3.6)}; }
-function scnOnPick(said){ if(!SC.on) return; scnTalk(SC.neg,T(said),0.9); SC.listen=SC.t+1.2; SC.act=null; SC.sub.ov=null; SC.sub.path=[]; }
+function scnOnPick(said){ if(!SC.on) return; SC.talkT=SC.t; SC.talkW='neg'; SC.neg.ringT=SC.t; }
 function scnOnReply(r){
- if(!SC.on) return; const s=SC.sub, now=SC.t, vr=SC.vr, rp=T(r.reply)||'';
- SC.act=null; SC.nextAct=now+3+vr()*2;
- const hung=/Cuelga|line goes dead/.test(rp);
- if(hung){ SC.hang=4.5; s.ov={until:now+4.5,face:1,pose:{tilt:0.2}}; scnGo(s,[{x:SC.ix(0.78),z:0.35,inside:true}],1.2); }
- else if(!r.rcmd){ scnTalk(s,rp.replace(/\(.*?\)/g,''),1.0);
-  if(r.q==='bad'){ s.ov={until:now+1.8,pose:{lean:-0.12,brow:-1,smile:-1}}; scnGo(s,[{x:s.x+SC.cw*0.04*(vr()<0.5?1:-1),z:clamp(s.z-0.18,0.2,0.95),inside:true}],1.5); }
-  else if(r.q==='good'){ s.ov={until:now+0.5,face:-1,pose:{tilt:0.2}}; s.ov2={at:now+0.5,until:now+0.9,pose:{tilt:-0.02}}; }
-  else { s.ov={until:now+1.2,face:-1,pose:{tilt:0.1,lean:-0.03}}; }
- }
- /* la patrulla y los retenidos reaccionan a lo que oyen */
- if(r.q==='bad') SC.ofcAlert=now+3;
- /* liberaciones */
- SC.hos.forEach((p,i)=>{ if(p.h.out&&!p.gone&&!p.leaving){ scnRelease(p,i*0.8+0.6); } });
- if(r.ph>(SC.ph0==null?r.ph:SC.ph0)) SC.stepFx=now; SC.ph0=r.ph;
+ if(!SC.on) return; const s=SC.sub, now=SC.t, rp=T(r.reply)||'';
+ SC.talkT=now; SC.talkW=/Cuelga|line goes dead/.test(rp)?null:'sub'; s.ringT=now;
+ /* reacción a tu respuesta: un paso atrás, hacia los rehenes, si le ha sentado mal; hacia la puerta si le ha llegado */
+ if(r.q==='bad'&&!G.end) SC.flinch={x:clamp(s.x-0.8,9,31),y:clamp(s.y-0.5,9.6,14.2)};
+ else if(r.q==='good'&&!G.end) SC.flinch={x:clamp(s.x+0.5,9,31),y:clamp(s.y+0.6,9.6,14.2)};
+ if(!G.end) scnZone(false);
+ if(G.dep&&!SC.dep){ SC.dep=1; scnDeploy(); }
+ SC.hos.forEach((p,i)=>{ if(p.h.out&&!p.leaving&&!p.safe){ scnRelease(p,i*0.9+0.6); } });
  if(G.end) scnEnd(G.end);
 }
-function scnRelease(p,delay){ p.leaving=1; const L=SC.L, at=SC.t+delay;
- SC.ev.push({at:at,fn:()=>{ p.tg.hip=0.5; p.tg.tilt=0; p.tg.b1=p.tg.f1=AR.DOWN[0]; p.tg.b2=p.tg.f2=AR.DOWN[1]; p.tg.brow=0.2; p.tg.smile=0; p.ov={until:SC.t+99};
-  SC.ev.push({at:SC.t+0.7,fn:()=>{ SC.medOn=1; scnGo(p,[{x:(L.dx0+L.dx1)/2,z:0.92,inside:true},{x:L.dx0-L.H*0.15,z:1,inside:false},{x:SC.med.x+L.H*0.22,z:1,inside:false,fn:q=>{ q.gone=1; q.fade=SC.t; }}],0.9); }}); }});
+function scnDeploy(){ SC.team.forEach((d,i)=>{ d.tvis=1; d.x=47.5; d.y=2+i*0.5; scnGo(d,[scnStage(i)],2); }); SC.snp.forEach(d=>d.tvis=1); SC.uip.forEach((d,i)=>{ d.tvis=1; }); }
+function scnRelease(p,delay,esc){ p.leaving=1; p.shield=0; const at=SC.t+delay;
+ SC.ev.push({at:at,fn:()=>{ const sf=scnSafe(SC.hos.filter(h=>h.safe||h.leaving).indexOf(p));
+  scnGo(p,[[19.5,13.9],[19.5,16.3],[24,16.6],[34,16.6],[sf[0],sf[1],]].map(q=>({x:q[0],y:q[1]})),esc?3.4:1.6); p.path[p.path.length-1].fn=q=>{ q.safe=1; q.inside=false; };
+  p.path[1].fn=q=>{ q.inside=false; }; if(esc){ const t=SC.team[esc]; if(t) scnGo(t,[[19.5,16.6],[33,17]],3.4); } }});
 }
-function scnEnd(k){ SC.end=k; SC.endT=SC.t+1.2; const s=SC.sub, L=SC.L;
- if(k==='rendicion'){ const n=SC.hos.filter(p=>p.leaving&&!p.gone).length;
-  SC.ev.push({at:SC.t+1.4+n*0.8,fn:()=>{ s.ov={until:SC.t+99,pose:{}}; s.tg.phone=0; s.tg.f1=AR.UP[0]; s.tg.f2=AR.UP[1]; s.tg.b1=AR.UP[0]; s.tg.b2=AR.UP[1]; s.tg.hip=0.5; s.tg.brow=0.3; s.tg.smile=-0.2; s.tg.tilt=0.12;
-   scnGo(s,[{x:(L.dx0+L.dx1)/2,z:0.92,inside:true},{x:L.dx0-L.H*0.35,z:1,inside:false}],0.55);
-   SC.ofc.forEach((o,i)=>SC.ev.push({at:SC.t+1.2+i*0.4,fn:()=>{ o.tg.hip=0.5; scnGo(o,[{x:L.dx0-L.H*(0.9+i*0.35),z:1}],0.6); }}));
-   SC.neg.tg.phone=0; SC.neg.tg.f1=AR.DOWN[0]; SC.neg.tg.f2=AR.DOWN[1]; }});
- } else if(k==='fracaso'||k==='tiempo'){
-  SC.ofc.forEach((o,i)=>SC.ev.push({at:SC.t+0.8+i*0.5,fn:()=>{ o.tg.hip=0.36; scnGo(o,[{x:L.dx0-L.H*(0.12+i*0.22),z:1}],1.3); }}));
-  SC.neg.tg.phone=0;
- } else { SC.neg.tg.phone=0; }
+/* final de la partida en el mapa */
+function scnEnd(k){ if(SC.end) return; SC.end=k; SC.endT=SC.t; const s=SC.sub;
+ if(k==='rendicion'){ SC.ev.push({at:SC.t+2.4,fn:()=>{ SC.mark={k:'out',t:SC.t}; scnGo(s,[[19.5,13.9],[19.5,16.3],[SC.cars[0].x+2.2,17.6]],1.0); s.path[s.path.length-1].fn=()=>{ SC.ofc.slice(0,2).forEach((o,i)=>scnGo(o,[[SC.cars[0].x+1.6+i*1.4,17.2]],1.2)); }; }}); }
+ else if(k==='fracaso'||k==='tiempo'){ SC.ev.push({at:SC.t+1.0,fn:()=>scnAssault(false)}); }
+}
+function scnAssault(sec){ /* el equipo entra por la puerta principal; sec: se lleva al sujeto y a las personas retenidas */
+ const s=SC.sub; SC.team.forEach((d,i)=>{ d.tvis=1; const tgt=i<3?[s.x+[-0.9,0.9,0][i],s.y+[0.6,0.6,-0.9][i]]:SEATS[(i-3)%SEATS.length];
+  SC.ev.push({at:SC.t+i*0.25,fn:()=>{ scnGo(d,[[d.x<33?d.x:33.5,16.4],[20.4,16.2],[19.5,15.6],[19.5,14.2],[tgt[0],tgt[1]]],3.4); }}); });
+ if(!sec) return;
+ SC.ev.push({at:SC.t+3.0,fn:()=>{ if(SC.mark&&SC.mark.k==='neu') return; SC.mark={k:'det',t:SC.t}; }});
+ SC.hos.forEach((p,i)=>{ if(p.inside&&!p.safe&&!p.leaving){ SC.ev.push({at:SC.t+3.0+i*0.4,fn:()=>scnRelease(p,0,3+(i%2))}); } });
+}
+function scnTac(r){ if(!SC.on) return; const s=SC.sub;
+ if(r.res==='nolinea'){ SC.noLine={t:SC.t,why:r.spos}; return; }
+ SC.end=G.end; SC.endT=SC.t;
+ if(r.k==='tir'){ SC.pendShot={t:SC.t}; }
+ else scnAssault(true);
 }
 /* ---- bucle ---- */
 function scnFrame(ts){
@@ -1076,196 +1149,164 @@ function scnFrame(ts){
  SC.raf=requestAnimationFrame(scnFrame);
 }
 function scnStep(dt){
- const now=SC.t, e=1-Math.exp(-dt/1.1);
+ const now=SC.t, e=1-Math.exp(-dt/1.1), s=SC.sub;
  SC.a+=(G.tension/100-SC.a)*e; SC.r+=(G.trust/100-SC.r)*e;
- SC.blind+=((SC.blindT||0)-SC.blind)*(1-Math.exp(-dt/0.9));
- if(SC.hang>0){ SC.hang-=dt; if(SC.hang<=0){ SC.hang=0; SC.sub.ov=null; } }
  for(let i=SC.ev.length-1;i>=0;i--){ if(now>=SC.ev[i].at){ const f=SC.ev[i].fn; SC.ev.splice(i,1); f(); } }
- const s=SC.sub;
- if(SC.act&&!s.path.length&&now>=SC.act.until){ s.ov=null; }
- scnAct(dt); scnTargets(dt);
- /* vigilancia: con tensión alta, mientras está quieto, mira a un lado y a otro (miradas sueltas, no un bucle) */
- if(SC.a>0.55&&!SC.end&&!s.path.length&&!s.talk&&!SC.hang&&now>=(SC.glAt||0)){ const vr=SC.vr; const k=Math.floor(vr()*4);
-  s.ov2={at:now,until:now+0.45+vr()*0.5,pose:k===0?{tilt:-0.12}:k===1?{tilt:0.16}:k===2?{lean:0.07,tilt:0.04}:{tilt:-0.04,lean:-0.04}}; if(k===3&&!(s.ov&&s.ov.face!=null)) s.tface=-s.tface;
-  SC.glAt=now+(0.8+vr()*0.7)*SC.pace; }
- if(s.ov2&&now>=s.ov2.at){ if(now<s.ov2.until) Object.assign(s.tg,s.ov2.pose); else s.ov2=null; }
-
- [s].concat(SC.hos,[SC.neg],SC.ofc,[SC.med]).forEach(p=>{ scnMove(p,dt); scnEase(p,dt); if(p.talk){ p.mv=now; if(now>p.talk.t0+p.talk.dur) p.talk=null; } });
- /* retenidos: cabeza baja con tensión; miran al sujeto cuando se mueve cerca o grita */
- SC.hos.forEach(p=>{ if(!p.inside||p.leaving) { if(p.fade!=null) p.alpha=Math.max(0,1-(now-p.fade)/1.2); return; }
-  const near=Math.abs(s.x-p.x)<SC.cw*0.16; p.tg.tilt=SC.a>0.6&&!(near&&s.talk)?0.38:0.08; p.tface=s.x<p.x?-1:1;
-  p.tg.b1=SC.a>0.6?0.9:AR.KNEE[0]; p.tg.b2=SC.a>0.6?1.6:AR.KNEE[1]; p.tg.f1=p.tg.b1; p.tg.f2=p.tg.b2; p.tg.brow=0.7*SC.a; p.tg.smile=-0.6*SC.a; });
- /* patrulla: se cubre tras el coche cuando la tensión sube; de pie cuando baja */
- if(!SC.end) SC.ofc.forEach((o,i)=>{ const crouch=SC.a>0.55||(SC.ofcAlert||0)>now; o.tg.hip=crouch?0.30+i*0.04:0.5; o.tg.lean=crouch?0.18:0.02; o.tg.f1=crouch?0.95:0.12; o.tg.f2=crouch?0.75:0.55; o.tg.b1=crouch?0.7:0.08; o.tg.b2=crouch?0.9:0.3; o.tface=1; });
- /* negociador: teléfono en la oreja; mira el expediente cuando espera; se inclina hacia la fachada al hablar */
- const n=SC.neg; if(!SC.end||SC.end==='liberados'){ n.tg.lean=n.talk?0.06:0; n.tg.tilt=n.talk?-0.02:0.14; n.tg.b1=n.talk?0.5:0.35; n.tg.b2=n.talk?0.9:1.25; n.tg.f1=AR.PHONE[0]; n.tg.f2=AR.PHONE[1]; }
- { const mt=SC.medOn&&!SC.hos.every(p=>!p.leaving||(p.gone&&p.alpha<=0.01))?1:SC.medOn&&SC.end!=='rendicion'?0:SC.medOn?1:0; SC.med.alpha+=(mt-SC.med.alpha)*(1-Math.exp(-dt/0.5)); }
- /* medida para QA: tiempo máximo sin que nada se mueva en escena con tensión alta */
- const anyMv=[s].concat(SC.hos,SC.ofc,[n]).some(p=>now-p.mv<0.05);
+ SC.crit=!!G.crit;
+ /* disparo ordenado: el tirador espera a tener la línea limpia en el mapa (la partida ya dice que la hay) */
+ if(SC.pendShot&&((SC.arr&&!SC.hos.some(h=>h.ret)&&scnLos(SNP[0],[s.x,s.y])==='clear')||now-SC.pendShot.t>6)){ SC.pendShot=null; SC.flash=now; SC.ev.push({at:now+0.35,fn:()=>{ SC.mark={k:'neu',t:SC.t}; s.path=[]; }}); SC.ev.push({at:now+1.6,fn:()=>scnAssault(true)}); }
+ /* el sujeto: con tensión alta no para quieto; recorre su zona (vigila la ventana, la puerta, a los rehenes) */
+ if(!SC.end&&SC.arr&&!s.path.length&&now>=SC.nextPace&&now>=SC.react){ const pts=ZN[SC.zone]||ZN.centro; const tense=SC.a>0.5;
+  if(tense||SC.zone==='puerta'){ SC.zi=(SC.zi+1+Math.floor(SC.vr()*(pts.length-1)))%pts.length; scnGo(s,[pts[SC.zi]],tense?1.6:0.9); }
+  SC.nextPace=now+(tense?(0.9+SC.vr()*1.1):(2.6+SC.vr()*2))*SC.pace; }
+ /* el rehén escudo va pegado delante del sujeto (si el que tenía sale, coge a otro) */
+ if(SC.zone==='ventanaR'&&!SC.end&&!SC.hos.some(h=>h.shield)){ const ins=SC.hos.filter(h=>h.inside&&!h.gone&&!h.leaving&&!h.safe); if(ins.length){ const h=ins[ins.length-1]; h.shield=1; h.ret=0; h.path=[]; } }
+ SC.hos.forEach(h=>{ if(h.shield&&!h.leaving){ const tx=s.x+SHIELD[0], ty=s.y+SHIELD[1]; const k=1-Math.exp(-dt/0.18); const ox=h.x, oy=h.y; h.x+=(tx-h.x)*k; h.y+=(ty-h.y)*k; if(Math.hypot(h.x-ox,h.y-oy)>0.002) h.mv=now; } });
+ /* rehenes: con tensión se encogen hacia la pared del fondo; con calma vuelven a su sitio */
+ SC.hos.forEach((h,i)=>{ if(!h.inside||h.leaving||h.shield||h.path.length) return; const k=SC.a>0.6?1:0; const tx=h.seat[0]-0.35*k, ty=h.seat[1]-0.45*k;
+  if(Math.hypot(tx-h.x,ty-h.y)>0.08&&!h.path.length) scnGo(h,[[tx,ty]],0.6); });
+ /* perímetro: se cierra según avanzan las horas y la tensión */
+ const tt=clamp(G.turn/6,0,1)*0.55+(SC.a>0.72?0.45:SC.a>0.55?0.25:0); SC.tight+=(tt-SC.tight)*(1-Math.exp(-dt/2.5));
+ SC.cars.forEach((c,i)=>{ const tx=i?c.x0-3.2*SC.tight:c.x0+3.0*SC.tight; const ox=c.x; c.x+=(tx-c.x)*(1-Math.exp(-dt/1.6)); c.mv=Math.abs(c.x-ox)>0.002?now:c.mv; });
+ if(!SC.end||SC.end==='liberados') SC.ofc.forEach((o,i)=>{ const c=SC.cars[o.ci]; const cover=SC.a>0.55; const tx=c.x+o.side*(cover?1.0:1.7), ty=c.y+(cover?1.6:-1.5);
+  if(Math.hypot(tx-o.x,ty-o.y)>0.1&&!o.path.length) scnGo(o,[[tx,ty]],1.3); });
+ const R=scnPerim(); SC.uip.forEach((d,i)=>{ if(!d.tvis) return; const tx=R[0]+(R[2]-R[0])*(0.18+i*0.32), ty=R[3]; if(Math.hypot(tx-d.x,ty-d.y)>0.12&&!d.path.length) scnGo(d,[[tx,ty]],1.1); });
+ /* equipo: en crisis crítica se acerca a la puerta (en columna, pegado a la fachada); si baja la tensión vuelve */
+ if(SC.dep&&!SC.end) SC.team.forEach((d,i)=>{ const p=SC.crit?scnStack(i):scnStage(i); if(Math.hypot(p[0]-d.x,p[1]-d.y)>0.1&&!d.path.length) scnGo(d,SC.crit?[[33.6,6+i*0.4],[33.6,16.2],p]:[[33.6,16.2],[33.6,6],p],1.9); });
+ [s].concat(SC.hos,[SC.neg],SC.ofc,SC.uip,SC.med,SC.team).forEach(p=>scnMove(p,dt));
+ [s].concat(SC.hos,[SC.neg],SC.ofc,SC.uip,SC.med,SC.team,SC.snp).forEach(p=>{ p.vis+=(p.tvis-p.vis)*(1-Math.exp(-dt/0.4)); });
+ /* QA: comprobar que la línea dibujada coincide con la de la partida cuando el sujeto ha llegado a su zona */
+ if(SC.dep&&!SC.end&&SC.arr&&now>SC.react){ const los=scnLos(SNP[0],[s.x,s.y]); const want=G.spos==='ventana'?'clear':G.spos==='ventanaR'?'host':'wall';
+  if(SC.zone===G.spos&&!SC.hos.some(h=>h.ret)&&!SC.hos.some(h=>h.shield&&Math.hypot(h.x-s.x-SHIELD[0],h.y-s.y-SHIELD[1])>0.12)){ SC.losChk++; if(los!==want){ SC.losMis++; (SC.misS=SC.misS||[]).push([G.spos,+s.x.toFixed(2),+s.y.toFixed(2),los,SC.hos.map(h=>[+h.x.toFixed(2),+h.y.toFixed(2),h.shield?1:0,h.inside?1:0,h.ret?1:0,h.path.length])]); } } }
+ /* medida para QA: tiempo máximo sin que nada se mueva en el mapa con tensión alta */
+ const anyMv=[s].concat(SC.hos,SC.ofc,SC.uip,SC.team,[SC.neg],SC.cars).some(p=>now-(p.mv||-9)<0.05);
  if(SC.a>0.55&&!SC.end){ if(anyMv) SC.stillT=0; else { SC.stillT+=dt; SC.stillMax=Math.max(SC.stillMax,SC.stillT); } } else SC.stillT=0;
  SC.subStill=(SC.a>0.55&&!SC.end)?(now-s.mv):0; SC.subStillMax=Math.max(SC.subStillMax||0,SC.subStill);
 }
+function scnPerim(){ const k=SC.tight; return [lerp(2.4,5.4,k),lerp(0.6,1.0,k),lerp(46,38.5,k),lerp(25.4,22.2,k)]; }
 function scnHour(){ const h0=7+(P.seed%13)+((P.seed>>>3)%60)/60; return h0+G.mins/60; }
 function scnSky(hh){ const h=((hh%24)+24)%24; const day=sstep(6.4,8.2,h)*(1-sstep(18.2,20.6,h)); const dusk=Math.max(0,1-Math.abs(h-19.3)/1.4)*(h>16?1:0); return {day:day,dusk:dusk}; }
-function scnBg(){
- const L=SC.L, w=SC.cw, h=SC.ch, d=SC.dpr; const hh=SC.hourV; const sky=scnSky(hh);
- const key=SC.layK+'|'+Math.round(hh*6); if(key===SC.bgKey&&SC.bg) return; SC.bgKey=key;
- const c=SC.bg||(SC.bg=document.createElement('canvas')); c.width=w*d; c.height=h*d; const x=c.getContext('2d'); x.setTransform(d,0,0,d,0,0);
- const day=sky.day, dusk=sky.dusk, mix=(a,b,t)=>'rgb('+[0,1,2].map(i=>Math.round(a[i]+(b[i]-a[i])*t)).join(',')+')';
- /* cielo */
- const g=x.createLinearGradient(0,0,0,L.gy); g.addColorStop(0,mix(mix2([16,22,38],[86,128,176],day),[120,78,92],dusk*0.7)); g.addColorStop(1,mix(mix2([28,34,52],[170,190,205],day),[214,138,92],dusk*0.8));
- function mix2(a,b,t){ return [0,1,2].map(i=>a[i]+(b[i]-a[i])*t); }
- x.fillStyle=g; x.fillRect(0,0,w,L.gy);
- /* edificios del fondo */
- const vr=rng((P.seed^0x1234567)>>>0); x.fillStyle=mix([22,26,34],[118,126,136],day*0.85);
- for(let bx=-10;bx<L.bx0;){ const bw=20+vr()*40, bh=h*(0.25+vr()*0.35); if(!P.rural) x.fillRect(bx,L.gy-h*0.16-bh,bw,bh+2); bx+=bw+2; }
- if(P.rural){ x.fillStyle=mix([20,30,24],[96,124,84],day); x.beginPath(); x.moveTo(0,L.gy-h*0.14); for(let i=0;i<=8;i++) x.lineTo(L.bx0*i/8,L.gy-h*(0.16+0.06*Math.sin(i*1.7+P.seed%7))); x.lineTo(L.bx0,L.gy); x.lineTo(0,L.gy); x.fill(); }
- if(!P.rural&&day<0.6){ x.fillStyle='rgba(255,214,140,'+(0.5*(1-day))+')'; for(let i=0;i<14;i++){ const wx=vr()*L.bx0, wy=L.gy-h*0.18-vr()*h*0.4; x.fillRect(wx,wy,2,3); } }
- /* calle y acera */
- x.fillStyle=P.rural?mix([40,36,30],[124,110,88],day):mix([26,28,32],[78,82,88],day); x.fillRect(0,L.gy,w,h-L.gy);
- x.fillStyle=P.rural?mix([52,46,38],[150,134,108],day):mix([44,46,50],[136,138,140],day); x.fillRect(0,L.gy,w,Math.max(3,h*0.035));
- if(!P.rural){ x.fillStyle='rgba(230,230,220,'+(0.18+0.25*day)+')'; for(let i=0;i<w;i+=26) x.fillRect(i,h-5,13,2); }
- /* fachada */
- const fac={banco:[[52,58,66],[176,170,160]],tienda:[[60,52,46],[188,160,128]],agravio:[[44,52,62],[150,160,170]],fugado:[[58,50,44],[196,176,150]]}[P.sit];
- x.fillStyle=mix(fac[0],fac[1],0.25+0.75*day); x.fillRect(L.bx0,0,w-L.bx0,L.gy);
- x.fillStyle='rgba(0,0,0,.18)'; x.fillRect(L.bx0,0,4,L.gy);
- if(P.rural){ x.fillStyle=mix([60,34,28],[150,82,60],day); x.beginPath(); x.moveTo(L.bx0-8,h*0.10); x.lineTo(w+4,h*0.02); x.lineTo(w+4,h*0.10); x.lineTo(L.bx0-8,h*0.14); x.fill(); }
- else if(P.sit!=='fugado'){ x.fillStyle=mix([30,34,40],[70,80,92],day); x.fillRect(L.bx0+6,h*0.035,w-L.bx0-12,h*0.075); x.fillStyle='rgba(255,255,255,'+(0.10+0.15*(1-day))+')'; x.fillRect(L.bx0+10,h*0.06,(w-L.bx0)*0.3,2); }
- if(P.sit==='tienda'){ /* toldo */ const n=Math.max(5,Math.round((L.wx1-L.dx0)/22)); for(let i=0;i<n;i++){ x.fillStyle=i%2?mix([60,30,28],[170,70,56],day):mix([70,66,60],[222,214,200],day); x.fillRect(L.dx0+(L.wx1-L.dx0)*i/n,L.wTop-h*0.07,(L.wx1-L.dx0)/n+1,h*0.06); } }
- /* interior (detrás del cristal) */
- const ig=x.createLinearGradient(0,L.wTop,0,L.wBot); const iw=P.sit==='fugado'?[[226,206,170],[150,126,100]]:P.sit==='tienda'?[[236,228,206],[168,160,140]]:[[220,216,204],[150,150,146]];
- ig.addColorStop(0,mix(iw[0],iw[1],0)); ig.addColorStop(0.62,mix(iw[0],iw[1],0.55)); ig.addColorStop(1,mix([60,56,50],[90,84,74],0.5));
- x.save(); x.beginPath(); x.rect(L.wx0,L.wTop,L.wx1-L.wx0,L.wBot-L.wTop); x.rect(L.dx0,L.dTop,L.dx1-L.dx0,L.gy-L.dTop); x.clip();
- x.fillStyle=ig; x.fillRect(L.dx0,L.wTop,L.wx1-L.dx0,L.gy-L.wTop);
- x.fillStyle='rgba(70,60,50,.35)'; x.fillRect(L.dx0,L.fB,L.wx1-L.dx0,L.gy-L.fB); /* suelo */
- x.fillStyle='rgba(255,255,255,.08)'; for(let i=0;i<6;i++) x.fillRect(L.dx0,L.fB+(L.gy-L.fB)*i/6,L.wx1-L.dx0,1);
- const ix=SC.ix, top=L.fB-h*0.22;
- x.fillStyle='rgba(40,36,32,.55)';
- if(P.sit==='banco'){ x.fillRect(ix(0.30),L.fB-h*0.15,ix(0.95)-ix(0.30),h*0.15); x.fillStyle='rgba(180,210,230,.25)'; x.fillRect(ix(0.30),L.fB-h*0.30,ix(0.95)-ix(0.30),h*0.15); x.fillStyle='rgba(30,30,30,.35)'; for(let i=0;i<4;i++) x.fillRect(ix(0.33+i*0.17),L.fB-h*0.30,2,h*0.15); }
- else if(P.sit==='tienda'){ for(let r_=0;r_<3;r_++){ x.fillStyle='rgba(60,50,40,.5)'; x.fillRect(ix(0.45),top+r_*h*0.07,ix(0.98)-ix(0.45),3); for(let i=0;i<10;i++){ x.fillStyle=['#b85c4a','#4f7aa8','#d0b040','#6b9a5b','#c08060'][(i+r_)%5]; x.fillRect(ix(0.46)+i*(ix(0.98)-ix(0.46))/10,top+r_*h*0.07-h*0.04,(ix(0.98)-ix(0.46))/12,h*0.04); } } x.fillStyle='rgba(50,40,34,.6)'; x.fillRect(ix(0.12),L.fB-h*0.13,ix(0.36)-ix(0.12),h*0.13); }
- else if(P.sit==='agravio'){ for(let i=0;i<3;i++){ const dx=ix(0.22+i*0.27); x.fillStyle='rgba(60,54,48,.6)'; x.fillRect(dx,L.fB-h*0.12,h*0.30,h*0.025); x.fillRect(dx+3,L.fB-h*0.10,2,h*0.10); x.fillRect(dx+h*0.30-5,L.fB-h*0.10,2,h*0.10); x.fillStyle='rgba(30,34,40,.75)'; x.fillRect(dx+h*0.08,L.fB-h*0.21,h*0.13,h*0.09); x.fillStyle='rgba(120,170,220,.45)'; x.fillRect(dx+h*0.09,L.fB-h*0.20,h*0.11,h*0.07); } }
- else { x.fillStyle='rgba(90,70,60,.6)'; x.fillRect(ix(0.55),L.fB-h*0.13,ix(0.92)-ix(0.55),h*0.13); x.fillRect(ix(0.55),L.fB-h*0.22,ix(0.92)-ix(0.55),h*0.06); x.fillStyle='rgba(60,50,40,.5)'; x.fillRect(ix(0.2),top-h*0.06,h*0.16,h*0.12); x.fillStyle='rgba(200,190,170,.5)'; x.fillRect(ix(0.2)+3,top-h*0.06+3,h*0.16-6,h*0.12-6); }
- /* luz interior cálida */
- const lg=x.createRadialGradient(ix(0.5),L.wTop,4,ix(0.5),L.wTop,(L.wx1-L.dx0)*0.9); lg.addColorStop(0,'rgba(255,236,190,'+(0.30+0.25*(1-day))+')'); lg.addColorStop(1,'rgba(255,236,190,0)'); x.fillStyle=lg; x.fillRect(L.dx0,L.wTop,L.wx1-L.dx0,L.gy-L.wTop);
- x.restore();
- /* marcos (el cristal y los reflejos se pintan encima de las personas) */
- /* farola */
- const px=Math.round(L.bx0-w*0.035); x.fillStyle='#2a2d31'; x.fillRect(px,h*0.12,2.5,L.gy-h*0.12); x.fillRect(px-8,h*0.12,10,2.5);
- SC.lampX=px-7; SC.lampY=h*0.12+3; SC.night=1-day; SC.dayV=day;
-}
-function scnPersonDraw(x,p,H,fx,fy,dark){
- const c=p.cur, A=p.app, fs=p.face<0?-1:1, wdt=Math.max(0.38,Math.abs(p.face));
- if(p.alpha<=0.01) return; x.save(); x.globalAlpha=p.alpha; x.translate(fx,fy); x.scale(wdt*fs,1);
- const hipY=-H*c.hip, moving=p.path.length&&p.v>H*0.05;
- /* sombra */
- x.fillStyle='rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(0,0,H*0.16/wdt,H*0.025,0,0,7); x.fill();
- if(p.chair&&c.hip<0.46&&c.hip>0.2){ x.fillStyle='rgba(50,42,36,.95)'; const sy=-H*(c.hip-0.03); x.fillRect(-H*0.10,sy,H*0.22,H*0.035); x.fillRect(-H*0.09,sy,H*0.025,-sy); x.fillRect(H*0.09,sy,H*0.025,-sy); x.fillRect(-H*0.11,sy-H*0.20,H*0.03,H*0.20); }
- /* piernas (IK de 2 tramos, rodilla hacia delante) */
- const lt=H*0.255, sh=c.hip<0.2;
- const legs=[[Math.sin(p.ph)*0.11,Math.max(0,Math.cos(p.ph))],[Math.sin(p.ph+Math.PI)*0.11,Math.max(0,Math.cos(p.ph+Math.PI))]];
- const col=A.legs; x.lineCap='round'; x.lineJoin='round';
- legs.forEach((l,i)=>{ let fx_=moving?l[0]*H:(i?-0.035:0.035)*H, fy_=moving?-l[1]*H*0.035:0;
-  if(sh){ fx_=H*(0.30+i*0.04); fy_=0; } else if(c.hip<0.42){ fx_=H*(0.18+0.04*i); }
-  const hx=0, hy=hipY, dx=fx_-hx, dy=fy_-hy, D=Math.hypot(dx,dy);
-  let kx, ky; if(D>=2*lt*0.999){ kx=hx+dx/2; ky=hy+dy/2; } else { const a=Math.atan2(dy,dx), b=Math.acos(clamp(D/(2*lt),-1,1)); kx=hx+Math.cos(a-b)*lt; ky=hy+Math.sin(a-b)*lt; if(sh){ kx=hx+Math.cos(a-b)*lt; ky=hy+Math.sin(a-b)*lt; } }
-  x.strokeStyle=i?shade(col,-18):col; x.lineWidth=H*0.095; x.beginPath(); x.moveTo(hx,hy); x.lineTo(kx,ky); x.lineTo(fx_,fy_); x.stroke();
-  x.strokeStyle='#1b1b1d'; x.lineWidth=H*0.06; x.beginPath(); x.moveTo(fx_-H*0.005,fy_-H*0.01); x.lineTo(fx_+H*0.05,fy_-H*0.01); x.stroke(); });
- /* tronco */
- x.translate(0,hipY); x.rotate(c.lean);
- const shY=-H*0.30, arm=(a1,a2,back)=>{ const L1=H*0.19, L2=H*0.18, sx=back?-H*0.01:H*0.012, sy=shY+H*0.02;
-  const ex=sx+Math.sin(a1)*L1, ey=sy+Math.cos(a1)*L1, a=a1+a2, hx=ex+Math.sin(a)*L2, hy=ey+Math.cos(a)*L2;
-  x.strokeStyle=back?shade(A.top,-26):shade(A.top,8); x.lineWidth=H*0.085; x.beginPath(); x.moveTo(sx,sy); x.lineTo(ex,ey); x.lineTo(hx,hy); x.stroke();
-  x.fillStyle=A.skin; x.beginPath(); x.arc(hx,hy,H*0.038,0,7); x.fill(); return [hx,hy]; };
- arm(c.b1,c.b2,1);
- const tg=x.createLinearGradient(-H*0.09,0,H*0.09,0); tg.addColorStop(0,shade(A.top,-22)); tg.addColorStop(1,shade(A.top,14));
- x.fillStyle=tg; x.beginPath(); x.moveTo(-H*0.095,H*0.01); x.lineTo(H*0.09,H*0.01); x.lineTo(H*0.11,shY+H*0.03); x.quadraticCurveTo(0,shY-H*0.03,-H*0.115,shY+H*0.03); x.closePath(); x.fill();
- if(A.vis){ x.fillStyle='rgba(235,235,210,.9)'; x.fillRect(-H*0.08,shY*0.45,H*0.16,H*0.022); }
- if(A.uni){ x.fillStyle='rgba(220,220,220,.55)'; x.fillRect(H*0.02,shY*0.75,H*0.035,H*0.02); }
- /* cabeza */
- const hr=H*0.074; x.save(); x.translate(H*0.01,shY-hr*0.95); x.rotate(c.tilt);
- scnHead(x,p,hr,A,c,1);
- x.restore();
- const hnd=arm(c.f1,c.f2,0);
- if(c.phone>0.05){ x.globalAlpha=p.alpha*clamp(c.phone,0,1); x.fillStyle='#121416'; x.save(); x.translate(hnd[0],hnd[1]); x.rotate(-0.5); x.fillRect(-H*0.015,-H*0.05,H*0.03,H*0.07); x.restore(); }
- if(dark>0){ /* luz exterior de noche: las figuras de fuera se oscurecen */ }
- x.restore();
-}
-function scnHead(x,p,hr,A,c,neck){
- x.fillStyle=A.skin; if(neck) x.fillRect(-hr*0.3,hr*0.5,hr*0.6,hr*0.6); x.beginPath(); x.arc(0,0,hr,0,7); x.fill();
- const hair=A.grey?'#b9b4ad':A.hair; x.fillStyle=hair;
- if(A.hood){ x.fillStyle=shade(A.top,-12); x.beginPath(); x.arc(-hr*0.15,-hr*0.05,hr*1.18,Math.PI*0.55,Math.PI*2.05); x.fill(); }
- else if(A.cap){ x.fillStyle=A.uni?'#1a2436':'#33363c'; x.beginPath(); x.arc(0,-hr*0.15,hr*1.02,Math.PI,0); x.fill(); x.fillRect(0,-hr*0.25,hr*1.5,hr*0.22); }
- else { x.beginPath(); x.arc(0,-hr*0.12,hr*1.04,Math.PI*0.92,Math.PI*1.95); x.fill(); if(A.long){ x.fillRect(-hr*1.02,-hr*0.2,hr*0.75,hr*1.7); } else x.fillRect(-hr*1.02,-hr*0.2,hr*0.6,hr*0.75); }
- if((Math.abs(p.face)>0.35||!neck)&&hr*SC.dpr>5){ /* cara: ceja, ojo, boca */
-  const br=c.brow; x.strokeStyle='rgba(20,16,14,.9)'; x.lineWidth=Math.max(0.8,hr*0.16);
-  x.beginPath(); x.moveTo(hr*0.18,-hr*0.32+br*hr*0.10); x.lineTo(hr*0.70,-hr*0.32-br*hr*0.14); x.stroke();
-  x.fillStyle='#16110f'; x.beginPath(); x.arc(hr*0.48,-hr*0.08,Math.max(0.7,hr*0.11),0,7); x.fill();
-  let mo=0; if(p.talk){ const k=Math.floor((SC.t-p.talk.t0)*14), ch=p.talk.txt.charAt(k%Math.max(1,p.talk.txt.length)).toLowerCase(); mo=/[aeoáéó]/.test(ch)?1:/[iuíú]/.test(ch)?0.6:/[a-zñ]/.test(ch)?0.3:0; }
-  const sm=c.smile; x.strokeStyle='rgba(60,24,20,.95)'; x.lineWidth=Math.max(0.8,hr*0.13);
-  if(mo>0.05){ x.fillStyle='#3a1714'; x.beginPath(); x.ellipse(hr*0.55,hr*0.42,hr*0.17,hr*0.07+hr*0.17*mo,0,0,7); x.fill(); }
-  else { x.beginPath(); x.moveTo(hr*0.36,hr*0.42-sm*hr*0.06); x.quadraticCurveTo(hr*0.55,hr*0.42+sm*hr*0.16,hr*0.76,hr*0.40-sm*hr*0.06); x.stroke(); }
+/* ---- dibujo ---- */
+function shade(hex,k){ const n=parseInt(hex.slice(1),16); let r=n>>16, g=(n>>8)&255, b=n&255; const f=v=>Math.round(clamp(k>0?v+(255-v)*k:v*(1+k),0,255)); return 'rgb('+f(r)+','+f(g)+','+f(b)+')'; }
+function scnBg(night){
+ const c=SC.bg||(SC.bg=document.createElement('canvas')); c.width=SC.cv.width; c.height=SC.cv.height; const x=c.getContext('2d'); const d=SC.dpr, sc=SC.sc;
+ x.setTransform(1,0,0,1,0,0); x.fillStyle='#0e1013'; x.fillRect(0,0,c.width,c.height);
+ x.setTransform(sc*d,0,0,sc*d,SC.ox*d,SC.oy*d); const plan=SC.plan, px=1/sc;
+ const R=(a,b,w,h,f)=>{ x.fillStyle=f; x.fillRect(a,b,w,h); };
+ const rural=plan==='rural';
+ const EX=60; if(rural){ R(-EX,-EX,MW+2*EX,MH+2*EX,'#4f5b3c'); R(-EX,17.6,EX,4.4,'#8a7655'); R(MW,17.6,EX,4.4,'#8a7655'); const rn=rng(P.seed^77); for(let i=0;i<260;i++){ x.fillStyle=rn()<0.5?'rgba(30,40,20,0.25)':'rgba(150,160,100,0.12)'; x.beginPath(); x.ellipse(rn()*MW,rn()*MH,0.3+rn()*0.9,0.2+rn()*0.5,rn()*3,0,7); x.fill(); }
+  /* camino de tierra y patio */ R(0,17.6,MW,4.4,'#8a7655'); R(0,18.4,MW,0.25,'rgba(60,45,30,0.35)'); R(0,21.1,MW,0.25,'rgba(60,45,30,0.35)'); R(18.4,15,2.2,2.6,'#8a7655'); R(6.6,0.8,27,15.8,'rgba(120,100,70,0.28)');
+  x.strokeStyle='rgba(200,190,160,0.5)'; x.lineWidth=0.12; x.setLineDash([0.5,0.35]); x.strokeRect(6.6,0.8,27,15.8); x.setLineDash([]);
+  [[3,4],[4.4,9],[2.6,14],[40,2.6],[45,6],[43.6,9.4],[46,13],[25,24],[37,23.6],[8,24.3],[15,24.8]].forEach(t=>{ x.fillStyle='rgba(0,0,0,0.3)'; x.beginPath(); x.arc(t[0]+0.25,t[1]+0.25,1.1,0,7); x.fill(); x.fillStyle='#38502e'; x.beginPath(); x.arc(t[0],t[1],1.1,0,7); x.fill(); x.fillStyle='rgba(120,160,90,0.35)'; x.beginPath(); x.arc(t[0]-0.3,t[1]-0.3,0.55,0,7); x.fill(); });
+  R(24,23.1,12,0.7,'#7c7a72'); /* murete */
+ } else {
+  R(-EX,-EX,MW+2*EX,MH+2*EX,'#30343a'); R(-EX,15,MW+2*EX,2.2,'#585c61'); R(-EX,22.6,MW+2*EX,1.0,'#585c61'); R(-EX,17.2,MW+2*EX,5.4,'#2a2d31'); R(-EX,23.6,MW+2*EX,EX,'#3b3f45');
+  /* manzanas vecinas */ R(0,0,7.4,14.6,'#3b3f45'); R(0,23.6,MW,2.4,'#3b3f45'); R(39,0,9,8.4,'#3b3f45');
+  for(let i=0;i<6;i++) R(0.6,0.6+i*2.35,6.2,1.9,'rgba(255,255,255,0.025)');
+  /* acera, calzada y marcas */ R(0,15,MW,2.2,'#585c61'); R(0,22.6,MW,1.0,'#585c61'); R(32,0,1.2,15,'#585c61'); R(38.2,0,0.8,15,'#585c61'); R(33.2,0,5,15,'#3a3e44');
+  R(0,17.2,MW,5.4,'#2a2d31'); x.fillStyle='rgba(235,235,225,0.55)'; for(let k=-EX;k<MW+EX;k+=3) x.fillRect(k,19.85,1.6,0.14);
+  x.fillStyle='rgba(235,235,225,0.4)'; for(let k=0;k<6;k++) x.fillRect(17+k*0.9,17.3,0.5,5.2);
+  if(/gasolinera/.test(P.place[0])){ R(9.5,16.0,4,0.7,'#6a6e73'); R(22,16.0,4,0.7,'#6a6e73'); }
  }
+ /* edificio: suelos */
+ const FL={banco:'#8e8a80',tienda:'#a49c8c',oficina:'#878d94',piso:'#9a8a72',rural:'#977f63'}[plan];
+ R(8,2,24,13,FL); R(8,9,24,6,shade(FL,0.06));
+ if(plan==='banco'){ R(8,2,6,4.4,'#7f766b'); R(26.4,2,5.6,5.6,'#6b6e72'); x.strokeStyle='#2b2d30'; x.lineWidth=0.25; x.strokeRect(26.9,2.5,4.6,4.6);
+  R(9,8.2,15.6,0.8,'#6b4f37'); for(let k=0;k<4;k++) R(10+k*3.6,7.2,1.8,0.6,'#5a5f66'); R(15,3,3,1.4,'#5d5248'); R(19.5,3,3,1.4,'#5d5248'); }
+ else if(plan==='tienda'){ R(8,2,7,4.6,'#8a8172'); const j=/joyer/.test(P.place[0]); for(let k=0;k<3;k++) R(16.5,3+k*1.8,8.5,0.7,j?'#7c8b94':'#6b625a'); R(22,7.6,5,1.0,'#6b4f37'); R(9,3,2.6,1.2,'#6b625a'); }
+ else if(plan==='oficina'){ R(8,2,7,6.4,'#7b8188'); R(9.5,3.6,4,2.2,'#5f554b'); for(let a=0;a<3;a++) for(let b=0;b<2;b++) R(16+a*3.4,3+b*2.6,2.2,1.1,'#5f554b'); R(27,2,5,4,'#7b8188'); R(21.6,13.3,2.6,0.8,'#5f554b'); }
+ else { R(8,2,7.5,6.6,'#b2aa9b'); R(15.5,2,8.5,6.6,'#8b7660'); R(24,2,4.6,3.6,'#b9c1c4'); R(28.6,2,3.4,6.6,'#8b7660'); R(9,2.4,5.6,0.9,'#7d7468'); R(17,3,3.2,2.6,'#6d5b4a'); R(29,3,2.6,2,'#6d5b4a'); R(22.5,10.2,4,1.6,'#5c4b3c'); R(10,9.5,3,0.8,'#5c4b3c'); }
+ /* paredes */
+ SC.walls.forEach(w=>{ const t=w[4]; if(t==='win'){ x.strokeStyle='#9fd0e6'; x.lineWidth=0.22; } else if(t==='door'){ x.strokeStyle='#b07a4a'; x.lineWidth=0.3; } else if(t==='iw'){ x.strokeStyle='#d8d4cc'; x.lineWidth=0.2; } else if(t==='iw2'){ x.strokeStyle='#e8e6e0'; x.lineWidth=0.5; } else { x.strokeStyle='#e8e6e0'; x.lineWidth=0.42; }
+  x.beginPath(); x.moveTo(w[0],w[1]); x.lineTo(w[2],w[3]); x.stroke(); });
+ /* rótulos de salas */
+ x.setTransform(d,0,0,d,0,0); const W=(a,b)=>[SC.ox+a*sc,SC.oy+b*sc];
+ const lab=(t,a,b,col,sz,al)=>{ const p=W(a,b); x.font=(al||'')+' '+sz+'px system-ui,sans-serif'; x.fillStyle=col; x.textAlign='center'; x.textBaseline='middle'; x.fillText(T(t),p[0],p[1]); };
+ const fs=SC.nar?8:10, rc='rgba(30,30,30,0.62)';
+ const RL={banco:[[S2('Despacho','Office'),11,4.2],[S2('Puestos de caja','Teller desks'),19.5,6.1],[S2('Cámara acorazada','Vault'),29.2,4.8],[S2('Mostrador','Counter'),16.5,9.6],[S2('Vestíbulo','Hall'),24.5,10.0]],
+  tienda:[[S2('Almacén','Storeroom'),11.5,4.6],[/joyer/.test(P.place[0])?S2('Vitrinas','Display cases'):/farmacia/.test(P.place[0])?S2('Estanterías','Shelves'):S2('Lineales','Aisles'),20.5,5.5],[S2('Caja','Till'),24.5,9.4],[S2('Sala de venta','Shop floor'),23,13.6]],
+  oficina:[[S2('Sala de reuniones','Meeting room'),11.5,7.2],[S2('Puestos','Desks'),21,7.5],[S2('Despacho','Office'),29.5,4.2],[S2('Recepción','Reception'),23,12.6]],
+  piso:[[S2('Cocina','Kitchen'),11.8,5.5],[S2('Dormitorio','Bedroom'),19.8,6.2],[S2('Baño','Bath'),26.3,3.8],[S2('Dorm.','Bed'),30.3,6.4],[S2('Salón','Living room'),25,10.4]],
+  rural:[[S2('Cocina','Kitchen'),11.8,5.5],[S2('Dormitorio','Bedroom'),19.8,6.2],[S2('Baño','Bath'),26.3,3.8],[S2('Dorm.','Bed'),30.3,6.4],[S2('Salón','Living room'),25,10.4]]}[plan];
+ RL.forEach(r=>lab(r[0],r[1],r[2],rc,fs,'600'));
+ const oc='rgba(220,222,218,0.55)';
+ if(rural){ lab(S2('Camino','Track'),5,19.8,oc,fs); lab(S2('Puesto de mando','Command post'),41.2,10.4,oc,fs); }
+ else { lab(S2('Calle','Street'),4,19.9,oc,fs); lab(S2('Edificio de enfrente','Building opposite'),14,24.8,oc,fs); lab(S2('Puesto de mando','Command post'),41.4,10.4,oc,fs); }
+ lab(S2('Puerta','Door'),19.5,16.4,'rgba(230,200,160,0.8)',fs-1);
+ lab(S2('Ventana','Window'),29.5,16.4,'rgba(170,215,235,0.8)',fs-1);
+ /* noche: oscurece el mapa; las ventanas iluminadas brillan */
+ if(night>0.02){ x.setTransform(1,0,0,1,0,0); x.fillStyle='rgba(5,10,25,'+(0.5*night).toFixed(3)+')'; x.fillRect(0,0,c.width,c.height);
+  x.setTransform(sc*d,0,0,sc*d,SC.ox*d,SC.oy*d); x.fillStyle='rgba(255,215,140,'+(0.18*night).toFixed(3)+')'; WINF.forEach(wf=>x.fillRect(wf[0],15,wf[1]-wf[0],1.4)); }
 }
-function shade(hex,amt){ const n=parseInt(hex.slice(1),16); const r=clamp((n>>16)+amt,0,255), g=clamp(((n>>8)&255)+amt,0,255), b=clamp((n&255)+amt,0,255); return 'rgb('+r+','+g+','+b+')'; }
 function scnDraw(){
- const x=SC.ctx, L=SC.L, w=SC.cw, h=SC.ch, d=SC.dpr, now=SC.t, RMv=RM_();
- const hT=scnHour(); SC.hourV=SC.hourV==null?hT:SC.hourV+(hT-SC.hourV)*0.02; scnBg();
- x.setTransform(d,0,0,d,0,0); x.clearRect(0,0,w,h); x.drawImage(SC.bg,0,0,w,h);
- const night=SC.night;
- /* personas dentro (por profundidad), recortadas por la puerta y la cristalera */
- const ins=[SC.sub].concat(SC.hos).filter(p=>p.inside).sort((a,b)=>a.z-b.z);
- x.save(); x.beginPath(); x.rect(L.wx0,L.wTop,L.wx1-L.wx0,L.wBot-L.wTop); x.rect(L.dx0,L.dTop,L.dx1-L.dx0,L.gy-L.dTop); x.clip();
- ins.forEach(p=>{ const fy=L.fB+(L.fF-L.fB)*p.z, H=L.H*(0.70+0.24*p.z)*(p.app.H||1); scnPersonDraw(x,p,H,p.x,fy,0); });
- /* persiana */
- if(SC.blind>0.01){ const nm_=Math.max(1,Math.round((L.wx1-L.wx0)/(h*0.75))), bx=L.wx0+(L.wx1-L.wx0)*nm_/(nm_+1), bh=(L.wBot-L.wTop)*Math.min(0.45,SC.blind*1.7); x.fillStyle='rgba(196,188,170,.94)'; x.fillRect(bx,L.wTop,L.wx1-bx,bh); x.fillStyle='rgba(90,84,74,.5)'; for(let y=L.wTop+3;y<L.wTop+bh;y+=4) x.fillRect(bx,y,L.wx1-bx,1); x.fillStyle='rgba(60,54,46,.9)'; x.fillRect(bx,L.wTop+bh-2,L.wx1-bx,2); }
- x.restore();
- /* cristal: reflejo, marcos, puerta */
- x.fillStyle='rgba(150,190,220,'+(0.10+0.06*SC.dayV)+')'; x.fillRect(L.wx0,L.wTop,L.wx1-L.wx0,L.wBot-L.wTop); x.fillRect(L.dx0,L.dTop,L.dx1-L.dx0,L.gy-L.dTop);
- x.save(); x.beginPath(); x.rect(L.wx0,L.wTop,L.wx1-L.wx0,L.wBot-L.wTop); x.clip(); x.fillStyle='rgba(255,255,255,.10)'; x.beginPath(); x.moveTo(L.wx0+w*0.05,L.wTop); x.lineTo(L.wx0+w*0.12,L.wTop); x.lineTo(L.wx0+w*0.02,L.wBot); x.lineTo(L.wx0-w*0.05,L.wBot); x.fill(); x.restore();
- x.strokeStyle='#2b2e33'; x.lineWidth=3; x.strokeRect(L.wx0,L.wTop,L.wx1-L.wx0,L.wBot-L.wTop); x.strokeRect(L.dx0,L.dTop,L.dx1-L.dx0,L.gy-L.dTop);
- x.lineWidth=2; const nm=Math.max(1,Math.round((L.wx1-L.wx0)/(h*0.75))); for(let i=1;i<=nm;i++){ const mx=L.wx0+(L.wx1-L.wx0)*i/(nm+1); x.beginPath(); x.moveTo(mx,L.wTop); x.lineTo(mx,L.wBot); x.stroke(); }
- x.fillStyle='#c9ccd0'; x.fillRect(L.dx1-6,L.dTop+(L.gy-L.dTop)*0.5,2,8);
- x.fillStyle='rgba(30,30,32,.9)'; x.fillRect(L.wx0-2,L.wBot,L.wx1-L.wx0+4,3);
- /* fuera: ambulancia y sanitario (lejos), negociador, coche, patrulla, personas que salen */
- const out=[SC.med,SC.neg].concat(SC.ofc,[SC.sub],SC.hos).filter(p=>!p.inside);
- out.filter(p=>SC.ofc.includes(p)&&p.x<L.car1+L.H*0.3).forEach(p=>scnPersonDraw(x,p,L.H*0.95,p.x,L.gy+h*0.005,night));
- /* coche patrulla genérico */
- const c0=L.car0, c1=L.car1, cy=L.gy+h*0.03, ch_=L.H*0.74;
- x.fillStyle='rgba(0,0,0,.35)'; x.beginPath(); x.ellipse((c0+c1)/2,cy,(c1-c0)*0.55,h*0.025,0,0,7); x.fill();
- x.fillStyle=P.rural?'#2f4a33':'#e8ebee'; x.beginPath(); x.moveTo(c0,cy-ch_*0.25); x.lineTo(c0+3,cy-ch_*0.62); x.lineTo(c0+(c1-c0)*0.22,cy-ch_*0.68); x.lineTo(c0+(c1-c0)*0.34,cy-ch_); x.lineTo(c0+(c1-c0)*0.74,cy-ch_); x.lineTo(c0+(c1-c0)*0.86,cy-ch_*0.66); x.lineTo(c1,cy-ch_*0.58); x.lineTo(c1,cy-ch_*0.25); x.closePath(); x.fill();
- x.fillStyle=P.rural?'#e8e0c8':'#2c4f8f'; x.fillRect(c0+1,cy-ch_*0.50,c1-c0-2,ch_*0.10);
- x.fillStyle='rgba(30,40,55,.85)'; x.beginPath(); x.moveTo(c0+(c1-c0)*0.37,cy-ch_*0.93); x.lineTo(c0+(c1-c0)*0.71,cy-ch_*0.93); x.lineTo(c0+(c1-c0)*0.80,cy-ch_*0.68); x.lineTo(c0+(c1-c0)*0.28,cy-ch_*0.68); x.fill();
- x.fillStyle='#16181b'; [0.2,0.8].forEach(f=>{ x.beginPath(); x.arc(c0+(c1-c0)*f,cy-ch_*0.22,ch_*0.20,0,7); x.fill(); }); x.fillStyle='#6b7077'; [0.2,0.8].forEach(f=>{ x.beginPath(); x.arc(c0+(c1-c0)*f,cy-ch_*0.22,ch_*0.08,0,7); x.fill(); });
- /* rotativos azules (entorno, no personaje) */
- const lb0=c0+(c1-c0)*0.42, lb1=c0+(c1-c0)*0.66, ly=cy-ch_-3; const ph=RMv?0:Math.floor(now*6)%8, on1=RMv?1:(ph===0||ph===2)?1:0.15, on2=RMv?1:(ph===4||ph===6)?1:0.15;
- x.fillStyle='rgba(60,120,255,'+(0.35+0.65*on1)+')'; x.fillRect(lb0,ly,(lb1-lb0)/2-1,3); x.fillStyle='rgba(60,120,255,'+(0.35+0.65*on2)+')'; x.fillRect(lb0+(lb1-lb0)/2+1,ly,(lb1-lb0)/2-1,3);
- const glow=(0.06+0.16*night)*Math.max(on1,on2); if(glow>0.02){ const gg=x.createRadialGradient(lb0+(on1>on2?0:(lb1-lb0)/2),ly,2,lb0,ly,w*0.55); gg.addColorStop(0,'rgba(70,130,255,'+glow+')'); gg.addColorStop(1,'rgba(70,130,255,0)'); x.fillStyle=gg; x.fillRect(0,0,w,h); }
- out.filter(p=>p===SC.med||p===SC.neg).forEach(p=>scnPersonDraw(x,p,L.H*0.97,p.x,L.gy+h*0.05,night));
- out.filter(p=>p!==SC.med&&p!==SC.neg&&!(SC.ofc.includes(p)&&p.x<L.car1+L.H*0.3)).forEach(p=>scnPersonDraw(x,p,L.H*(p.app.H||1),p.x,L.gy+h*0.035,night));
- /* farola de noche */
- if(night>0.3){ const fg=x.createRadialGradient(SC.lampX,SC.lampY,1,SC.lampX,SC.lampY+h*0.4,h*0.6); fg.addColorStop(0,'rgba(255,220,150,'+(0.35*night)+')'); fg.addColorStop(1,'rgba(255,220,150,0)'); x.fillStyle=fg; x.fillRect(0,0,w,h); x.fillStyle='rgba(255,236,190,'+night+')'; x.beginPath(); x.arc(SC.lampX,SC.lampY,2,0,7); x.fill(); }
- /* ondas de voz en el teléfono de quien habla */
- [SC.sub,SC.neg].forEach(p=>{ if(!p.talk||p.cur.phone<0.5) return; const inS=p.inside, H=inS?L.H*(0.70+0.24*p.z):L.H*0.96, fy=inS?L.fB+(L.fF-L.fB)*p.z:L.gy+h*0.02; const hx=p.x+Math.sign(p.face)*H*0.12, hy=fy-H*(p.cur.hip+0.36); const k=(now-p.talk.t0)/p.talk.dur; x.strokeStyle='rgba(255,255,255,'+(0.55*(1-k))+')'; x.lineWidth=1.2; for(let i=0;i<2;i++){ x.beginPath(); x.arc(hx,hy,4+i*4+k*4,-0.7+(p.face<0?Math.PI:0),0.7+(p.face<0?Math.PI:0)); x.stroke(); } });
- /* viñeta y tono nocturno */
- const vg=x.createLinearGradient(0,0,0,h); vg.addColorStop(0,'rgba(0,0,10,'+(0.10+0.22*night)+')'); vg.addColorStop(0.5,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.22)'); x.fillStyle=vg; x.fillRect(0,0,w,h);
- /* subida de peldaño: destello suave del marco */
- if(SC.stepFx&&now-SC.stepFx<1.2){ x.strokeStyle='rgba(169,196,127,'+(0.8*(1-(now-SC.stepFx)/1.2))+')'; x.lineWidth=3; x.strokeRect(1.5,1.5,w-3,h-3); }
- /* final */
- let cap=null;
- if(SC.end&&now>SC.endT){ const k=clamp((now-SC.endT)/2.5,0,1);
-  if(SC.end==='fracaso'||SC.end==='tiempo'){ x.fillStyle='rgba(6,8,12,'+(0.6*k)+')'; x.fillRect(0,0,w,h); cap=S2('Interviene el grupo de intervención','The intervention team goes in'); }
-  else if(SC.end==='rendicion'){ cap=S2('Rendición: nadie herido','Surrender: nobody hurt'); }
-  else cap=S2('Todas las personas retenidas, a salvo','Everyone who was held is safe');
-  cap=T(cap); x.globalAlpha=k; x.font='700 '+(w<520?13:15)+'px system-ui,sans-serif'; const tw=x.measureText(cap).width; x.fillStyle='rgba(10,12,14,.78)'; const cyy=h-15; x.fillRect((w-tw)/2-10,cyy-12,tw+20,24); x.fillStyle='#f2f2ee'; x.textBaseline='middle'; x.fillText(cap,(w-tw)/2,cyy); x.globalAlpha=1; }
- /* ficha de estado: nombre y voz */
- const vtx=scnVoice(); x.font='700 '+(w<520?11:12)+'px system-ui,sans-serif'; const nmw=x.measureText(P.name).width; x.font=(w<520?11:12)+'px system-ui,sans-serif'; const vw=x.measureText(vtx).width;
- const nar=w<520, chH=nar?40:46, pr=nar?13:15, px0=6+4+pr+2, tx0=px0+pr+8;
- const bw_=Math.max(nmw,vw)+(tx0-6)+10; x.fillStyle='rgba(8,10,12,.74)'; x.fillRect(6,6,bw_,chH);
- const ac=SC.a>0.62?'#e0705f':SC.a>0.38?'#d6a24e':'#a9c47f'; x.fillStyle=ac; x.fillRect(6,6,3,chH);
- /* retrato: la cara del sujeto en grande (ceño, boca) para leer su estado en el móvil */
- const s_=SC.sub; x.save(); x.beginPath(); x.arc(px0,6+chH/2,pr+1,0,7); x.fillStyle='rgba(255,236,190,.16)'; x.fill(); x.clip(); x.translate(px0-pr*0.12,6+chH/2+pr*0.18); x.rotate(s_.cur.tilt*0.6); scnHead(x,s_,pr*0.78,s_.app,s_.cur,0); x.restore();
- x.textBaseline='top'; x.fillStyle='#f2f2ee'; x.font='700 '+(nar?11:12)+'px system-ui,sans-serif'; x.fillText(P.name,tx0,10); x.fillStyle='#cfd1cd'; x.font=(nar?11:12)+'px system-ui,sans-serif'; x.fillText(vtx,tx0,nar?25:28);
+ const x=SC.ctx, d=SC.dpr, sc=SC.sc, now=SC.t; if(!x) return;
+ const sky=scnSky(scnHour()), night=Math.round((1-sky.day)*10)/10;
+ const bk=SC.layK+'|'+night; if(bk!==SC.bgKey){ SC.bgKey=bk; scnBg(night); }
+ x.setTransform(1,0,0,1,0,0); x.drawImage(SC.bg,0,0);
+ x.setTransform(sc*d,0,0,sc*d,SC.ox*d,SC.oy*d);
+ const px=1/sc;
+ /* perímetro (cinta) */
+ const Rp=scnPerim(); x.strokeStyle='rgba(232,178,58,0.85)'; x.lineWidth=1.6*px; x.setLineDash([5*px,4*px]); x.strokeRect(Rp[0],Rp[1],Rp[2]-Rp[0],Rp[3]-Rp[1]); x.setLineDash([]);
+ /* vehículos */
+ const car=(cx,cy,w,h,col,lt)=>{ x.fillStyle='rgba(0,0,0,0.35)'; x.fillRect(cx-w/2+0.15,cy-h/2+0.15,w,h); x.fillStyle=col; x.fillRect(cx-w/2,cy-h/2,w,h); x.fillStyle='rgba(255,255,255,0.18)'; x.fillRect(cx-w/2+w*0.28,cy-h/2+0.15,w*0.36,h-0.3);
+  if(lt){ const on=Math.floor(now*2.2)%2; x.fillStyle=on?'#3d7bff':'#d8e4ff'; x.fillRect(cx-0.35,cy-h/2+0.2,0.3,h-0.4); x.fillStyle=on?'#d8e4ff':'#3d7bff'; x.fillRect(cx+0.05,cy-h/2+0.2,0.3,h-0.4); } };
+ SC.cars.forEach(c=>car(c.x,c.y,4.2,1.9,P.rural?'#2f5a3a':'#1f3d73',1));
+ car(44,19.6,4.8,2.1,'#e6e6e0',0); x.fillStyle='#c8473a'; x.fillRect(43.85,18.8,0.3,1.6); x.fillRect(43.2,19.45,1.6,0.3);
+ car(41.2,13.8,4.6,2.0,'#3a3f46',0);
+ /* tiradores: cono y línea de tiro */
+ const s=SC.sub, settled=SC.arr&&now>SC.react;
+ SC.snp.forEach((sn,i)=>{ if(sn.vis<0.05) return; const p=SNP[i]; x.globalAlpha=sn.vis;
+  const ang=Math.atan2(13.4-p[1],29.6-p[0]); x.fillStyle='rgba(200,210,220,0.05)'; x.beginPath(); x.moveTo(p[0],p[1]); x.arc(p[0],p[1],8.5,ang-0.16,ang+0.16); x.closePath(); x.fill();
+  sn.los=null; if(SC.dep&&(!SC.end||SC.pendShot||now-SC.flash<0.5)&&!(SC.mark&&SC.mark.k==='neu')){ const los=settled&&!SC.hos.some(h=>h.ret)||SC.pendShot||now-SC.flash<0.5?scnLos(p,[s.x,s.y]):null;
+   if(los==='clear'){ x.strokeStyle=SC.crit?'rgba(120,230,130,0.95)':'rgba(120,230,130,0.6)'; x.lineWidth=(SC.crit?2:1.4)*px; x.setLineDash([]); x.beginPath(); x.moveTo(p[0],p[1]); x.lineTo(s.x,s.y); x.stroke(); }
+   else if(los==='host'){ x.strokeStyle='rgba(240,110,90,0.85)'; x.lineWidth=1.3*px; x.setLineDash([3*px,3*px]); x.beginPath(); x.moveTo(p[0],p[1]); x.lineTo(s.x,s.y); x.stroke(); x.setLineDash([]); }
+   sn.los=los; }
+  if(now-SC.flash<0.18&&i===0){ x.fillStyle='rgba(255,250,220,0.95)'; x.beginPath(); x.arc(p[0],p[1]-0.2,0.7,0,7); x.fill(); }
+  x.globalAlpha=1; });
+ /* línea de teléfono entre tú y el sujeto mientras se habla */
+ if(now-SC.talkT<2.2&&SC.talkW&&!SC.end){ x.strokeStyle='rgba(120,170,255,0.55)'; x.lineWidth=1.1*px; x.setLineDash([2.5*px,3*px]); x.lineDashOffset=-now*14*px*(SC.talkW==='neg'?1:-1); x.beginPath(); x.moveTo(SC.neg.x,SC.neg.y); x.lineTo(s.x,s.y); x.stroke(); x.setLineDash([]); x.lineDashOffset=0; }
+ /* puntos */
+ const R0=Math.max(0.5,(SC.nar?4.4:4.8)*px), dot=(p,col,r,edge)=>{ if(p.vis<0.03) return; x.globalAlpha=p.vis*(p.alpha==null?1:p.alpha); x.fillStyle='rgba(0,0,0,0.4)'; x.beginPath(); x.arc(p.x+0.12,p.y+0.14,r,0,7); x.fill(); x.fillStyle=col; x.beginPath(); x.arc(p.x,p.y,r,0,7); x.fill(); x.strokeStyle=edge||'rgba(0,0,0,0.6)'; x.lineWidth=1*px; x.stroke(); x.globalAlpha=1; };
+ const ring=(p,col)=>{ const k=(now-p.ringT)/0.9; if(k<0||k>1) return; x.strokeStyle=col; x.globalAlpha=1-k; x.lineWidth=1.2*px; x.beginPath(); x.arc(p.x,p.y,R0*(1.2+1.6*k),0,7); x.stroke(); x.globalAlpha=1; };
+ SC.ofc.forEach(o=>dot(o,o.col,R0*0.85,'#cfd8e8')); SC.uip.forEach(o=>dot(o,o.col,R0*0.85,'#cfd8e8'));
+ SC.med.forEach(o=>dot(o,o.col,R0*0.85,'#c8473a'));
+ SC.snp.forEach(o=>{ if(o.vis<0.03) return; x.globalAlpha=o.vis; x.fillStyle='#9aa6ae'; x.save(); x.translate(o.x,o.y); x.rotate(Math.atan2(13.4-o.y,29.6-o.x)); x.beginPath(); x.moveTo(R0*1.3,0); x.lineTo(-R0*0.8,R0*0.85); x.lineTo(-R0*0.8,-R0*0.85); x.closePath(); x.fill(); x.strokeStyle='#111'; x.lineWidth=px; x.stroke(); x.restore(); x.globalAlpha=1; });
+ SC.team.forEach(o=>dot(o,o.col,R0*0.9,'#1b1f22'));
+ dot(SC.neg,SC.neg.col,R0,'#d8e6ff'); ring(SC.neg,'rgba(140,190,255,0.9)');
+ SC.hos.forEach(h=>dot(h,h.col,R0*0.9,h.safe?'#7fd08a':'rgba(40,30,0,0.7)'));
+ const mk=SC.mark;
+ if(mk&&mk.k==='neu'){ const k=clamp((now-mk.t)/1.2,0,1); x.globalAlpha=1-0.45*k; dot(s,'#8a8f94',R0,'#e8e8e8'); x.globalAlpha=1; x.strokeStyle='rgba(235,235,235,'+(0.85*k).toFixed(2)+')'; x.lineWidth=1.2*px; x.beginPath(); x.arc(s.x,s.y,R0*2.1,0,7); x.stroke(); }
+ else if(mk&&mk.k==='det'){ dot(s,'#b0473e',R0,'#ffffff'); x.strokeStyle='rgba(255,255,255,0.85)'; x.lineWidth=1.1*px; x.setLineDash([2*px,2*px]); x.beginPath(); x.arc(s.x,s.y,R0*1.9,0,7); x.stroke(); x.setLineDash([]); }
+ else { const tr=SC.a; if(tr>0.55&&!SC.end){ x.fillStyle='rgba(229,72,59,'+(0.12+0.25*(tr-0.55)/0.45).toFixed(2)+')'; x.beginPath(); x.arc(s.x,s.y,R0*(1.7+tr),0,7); x.fill(); } dot(s,s.col,R0,'#fff'); ring(s,'rgba(255,120,110,0.9)'); }
+ /* rótulos */
+ x.setTransform(d,0,0,d,0,0); const fs=SC.nar?9:11; const W=(a,b)=>[SC.ox+a*sc,SC.oy+b*sc];
+ const tag=(t,a,b,col,dx,dy,bold)=>{ const p=W(a,b); x.font=(bold?'700 ':'')+fs+'px system-ui,sans-serif'; x.textAlign='center'; x.textBaseline='middle'; const w=x.measureText(t).width+6; const X0=clamp(p[0]+(dx||0),w/2+1,SC.cw-w/2-1), Y0=clamp(p[1]+(dy||0),fs/2+2,SC.ch-fs/2-2); x.fillStyle='rgba(10,12,14,0.72)'; x.fillRect(X0-w/2,Y0-fs/2-2,w,fs+4); x.fillStyle=col; x.fillText(t,X0,Y0); };
+ const sl=mk&&mk.k==='neu'?L('Sujeto neutralizado','Subject neutralised'):mk&&mk.k==='det'?L('Sujeto detenido','Subject detained'):mk&&mk.k==='out'?L('Se entrega','Surrenders'):L('Sujeto','Subject');
+ tag(sl,s.x,s.y,mk&&mk.k==='neu'?'#e6e6e6':'#ff9b90',0,-fs-3,1);
+ const ins=SC.hos.filter(h=>h.inside&&!h.leaving&&!h.safe), safe=SC.hos.filter(h=>h.safe);
+ if(ins.length){ const cx=ins.reduce((a,h)=>a+h.x,0)/ins.length, cy=Math.min.apply(null,ins.map(h=>h.y)); tag(L('Rehenes ','Hostages ')+ins.length,cx,cy,'#f2cf6b',0,-fs-1); }
+ tag(L('Tú','You'),SC.neg.x,SC.neg.y,'#9cc4ff',0,fs+3,1);
+ tag(L('Sanitarios','Paramedics')+(safe.length?' · '+safe.length+' '+L('a salvo','safe'):''),44,17.2,'#e9eef2',-6,-fs-2);
+ tag(P.rural?'Guardia Civil':L('Policía','Police'),SC.cars[0].x,SC.cars[0].y,'#a9c2ee',0,fs+5);
+ if(SC.uip.length&&SC.uip[0].vis>0.3){ const u=SC.uip; tag('UIP',u[1].x,u[1].y,'#a9c2ee',0,-fs-2); }
+ if(SC.dep){ const tm=SC.team; const cx=tm.reduce((a,h)=>a+h.x,0)/tm.length, cy=Math.min.apply(null,tm.map(h=>h.y)); if(tm[0].vis>0.3&&!(SC.end&&SC.end!=='liberados'&&SC.end!=='rendicion')) tag(T(FZ()),cx,cy,'#c9d3da',0,-fs-1,1);
+  SC.snp.forEach((sn,i)=>{ if(sn.vis<0.3) return; const st=SC.end||!sn.los?'':sn.los==='clear'?L(' · línea limpia',' · clean line'):sn.los==='host'?L(' · rehén en la línea',' · hostage in line'):L(' · sin línea',' · no line'); tag(L('T','S')+(i+1)+(i===0?st:''),sn.x,sn.y,sn.los==='clear'&&!SC.end?'#8fe39a':sn.los==='host'&&!SC.end?'#ff9b90':'#c9d3da',0,fs+3); }); }
+ /* cabecera: sitio, hora y estado */
+ x.font='700 '+fs+'px system-ui,sans-serif'; x.textAlign='left'; x.textBaseline='top';
+ const hh=scnHour(), hs=String(Math.floor(((hh%24)+24)%24)).padStart(2,'0')+':'+String(Math.floor((hh%1)*60)).padStart(2,'0');
+ const PL={banco:S2('Sucursal bancaria','Bank branch'),tienda:S2('Tienda','Shop'),oficina:S2('Oficinas','Offices'),piso:S2('Piso','Flat'),rural:S2('Casa aislada','Isolated house')}[SC.plan];
+ const head=T(PL)+' · '+P.city+' · '+hs; const hw=x.measureText(head).width+10; x.fillStyle='rgba(10,12,14,0.72)'; x.fillRect(4,4,hw,fs+6); x.fillStyle='#e8e8e2'; x.fillText(head,9,7);
+ let st=null, col='#e8e8e2', bg='rgba(10,12,14,0.72)';
+ if(SC.end==='tactico'||SC.end==='prematuro'){ st=G.endK==='tir'?L('Tirador de precisión','Sniper'):L('Asalto táctico','Tactical assault'); bg='rgba(60,20,18,0.85)'; }
+ else if(SC.end==='rendicion'){ st=L('Rendición','Surrender'); bg='rgba(25,60,30,0.85)'; }
+ else if(SC.end){ st=T(ENDS[SC.end][0]); }
+ else if(SC.crit){ st=L('CRISIS CRÍTICA','CRITICAL CRISIS'); bg='rgba(150,30,25,0.9)'; col='#fff'; }
+ else if(SC.a>0.7){ st=L('Tensión muy alta','Very high tension'); col='#ffb0a6'; }
+ if(st){ const w=x.measureText(st).width+10; x.fillStyle=bg; x.fillRect(SC.cw-w-4,4,w,fs+6); x.fillStyle=col; x.fillText(st,SC.cw-w+1,7); }
+ if(SC.noLine&&now-SC.noLine.t<3.2){ const m=L('T1: sin línea limpia · no dispara','S1: no clean line · no shot'); x.font='700 '+fs+'px system-ui,sans-serif'; const w=x.measureText(m).width+12; x.fillStyle='rgba(120,30,25,0.9)'; x.fillRect((SC.cw-w)/2,SC.ch-fs-12,w,fs+8); x.fillStyle='#fff'; x.textAlign='center'; x.fillText(m,SC.cw/2,SC.ch-fs-8); x.textAlign='left'; }
 }
 
 /* para QA automática */
-window.__SCP=()=>[SC.sub].concat(SC.hos,SC.ofc,[SC.neg,SC.med]).map(p=>({x:Math.round(p.x),z:+p.z.toFixed(2),in:p.inside,path:p.path.length,a:+p.alpha.toFixed(2),hip:+p.cur.hip.toFixed(2),f1:+p.cur.f1.toFixed(2),gone:!!p.gone,leaving:!!p.leaving})); window.__SC=SC; window.MAT_NG={scene:()=>SC.on?{a:SC.a,r:SC.r,stillMax:SC.stillMax,subStillMax:SC.subStillMax||0,frames:SC.frames,t:SC.t,act:SC.act&&SC.act.k,sub:{x:SC.sub.x,z:SC.sub.z,hip:SC.sub.cur.hip},blind:SC.blind,end:SC.end,out:SC.hos.filter(p=>!p.inside||p.gone).length,voice:scnVoice()}:null,resetStill:()=>{SC.stillMax=0;SC.subStillMax=0;},sceneStep:(sec)=>{ if(!SC.on) return 0; const n=Math.round(sec*60); for(let i=0;i<n;i++){ SC.t+=1/60; scnStep(1/60); } return SC.subStillMax; },state:()=>({P:P,G:G}),choose:i=>pickOpt(i),start:s=>startCase(s),ev:i=>evalOpt(Object.assign({},G.cur.opts[i]))};
+window.__SC=SC; window.MAT_NG={scene:()=>SC.on?{a:SC.a,r:SC.r,stillMax:SC.stillMax,subStillMax:SC.subStillMax||0,frames:SC.frames,t:SC.t,end:SC.end,out:SC.hos.filter(p=>p.safe).length,spos:G.spos,crit:!!G.crit,zone:SC.zone,losChk:SC.losChk,losMis:SC.losMis,los:SC.snp.map(s=>s.los||null),sub:{x:SC.sub.x,y:SC.sub.y,moving:SC.sub.path.length>0},mark:SC.mark&&SC.mark.k,plan:SC.plan}:null,
+ resetStill:()=>{SC.stillMax=0;SC.subStillMax=0;},sceneStep:(sec)=>{ if(!SC.on) return 0; const n=Math.round(sec*60); for(let i=0;i<n;i++){ SC.t+=1/60; scnStep(1/60); } return SC.subStillMax; },
+ state:()=>({P:P,G:G}),choose:i=>pickOpt(i),start:s=>startCase(s),ev:i=>evalOpt(Object.assign({},G.cur.opts[i])),tac:k=>tacGo(k),order:k=>tacOrder(k)};
