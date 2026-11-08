@@ -287,7 +287,7 @@ function css(){ if(document.getElementById('fr-css')) return; const s=document.c
  '.frin{width:100%;box-sizing:border-box;background:#0c0e0a;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:10px;font:16px ui-monospace,Menlo,monospace;min-height:44px}',
  '.frbig{font-size:15px;line-height:1.5}',
  '.frok{color:#d6f09a}.frko{color:#f2b19e}',
-  '.frcoach{margin-top:10px;border:1px solid var(--ac);border-radius:var(--r);background:#13160f;padding:12px 12px 4px;min-width:0}',
+  '.frcoach{scroll-margin-top:76px;margin-top:10px;border:1px solid var(--ac);border-radius:var(--r);background:#13160f;padding:12px 12px 4px;min-width:0}',
   '.frcoach h3{margin:8px 0 4px;font-size:18px;line-height:1.25}',
   '.frco-hd{display:grid;gap:5px;font-size:12.5px;color:#a8ad98}',
   '.frco-bar{height:4px;background:#2a2e24;border-radius:2px;overflow:hidden}.frco-bar i{display:block;height:100%;background:var(--ac)}',
