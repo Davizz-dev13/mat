@@ -72,10 +72,28 @@ const PATROLS=[
   ships:[{k:'merc',tgt:1,b:120,r:21000,c:330,v:16},{k:'frig',esc:1,ahead:2800,side:2000,zz:1300,zp:600,v:17,ping:60}]}
 ];
 
+
+/* ===== Modo «Aprende»: patrulla de instrucción fija (siempre la misma) y las cuentas que enseña el tutor ===== */
+const LEARN_PT={id:'learn',seed:5501,n:['Aprende · Patrulla de instrucción','Learn · Training patrol'],layer:60,dep:50,crs:0,lim:9000,
+ d:['Un mercante escoltado por una fragata. El tutor te guía paso a paso.','An escorted merchant. The tutor guides you step by step.'],
+ ships:[{k:'merc',tgt:1,b:45,r:9000,c:270,v:14},{k:'frig',esc:1,ahead:2400,side:3200,zz:500,zp:480,v:14}]};
+function lnTgt(){ return G.ships.find(s=>s.tgt); }
+function brgNear(s,t){ let best=null; (s.brgs||[]).forEach(q=>{ if(!best||Math.abs(q.t-t)<Math.abs(best.t-t)) best=q; }); return best; }
+/* demora prevista desde el punto q de una derrota recta (dot en la demora k a R, rumbo C, velocidad V) */
+function fitErr(s,k,R,C,V,t0){ const q=s.brgs[k]; const x0=q.ox+Math.sin(q.b*D2R)*R, y0=q.oy+Math.cos(q.b*D2R)*R; const vx=Math.sin(C*D2R)*V*KN, vy=Math.cos(C*D2R)*V*KN;
+ let e=0,n=0; s.brgs.forEach(p=>{ if(p.t<t0) return; const x=x0+vx*(p.t-q.t), y=y0+vy*(p.t-q.t); e+=Math.abs(dAng(brgOf(x-p.ox,y-p.oy),p.b)); n++; }); return n?e/n:99; }
+function bestC(s,k,R,V,t0){ let bc=0,be=1e9; for(let c=0;c<360;c++){ const e=fitErr(s,k,R,c,V,t0); if(e<be){ be=e; bc=c; } } return {c:bc,e:be}; }
+/* Ekelund: R = (S2 − S1) / (Ḃ1 − Ḃ2); con nudos y °/min, R (m) ≈ 1.769 × ΔS ÷ ΔḂ */
+function ekelund(s,T){ const a1=brgNear(s,T.turn-120), b1=brgNear(s,T.turn), a2=brgNear(s,T.turn+120), b2=brgNear(s,T.turn+240);
+ const r1=dAng(b1.b,a1.b)/((b1.t-a1.t)/60), r2=dAng(b2.b,a2.b)/((b2.t-a2.t)/60);
+ const S1=T.v*Math.sin((T.c1-(a1.b+b1.b)/2)*D2R), S2=T.v*Math.sin((T.c2-(a2.b+b2.b)/2)*D2R);
+ const K=KN*60/D2R; const R=(S2-S1)*K/(r1-r2);
+ return {a1:a1,b1:b1,a2:a2,b2:b2,r1:r1,r2:r2,S1:S1,S2:S2,K:K,R:R}; }
+
 /* ===== Estado del juego ===== */
 let G=null;
 function newGame(cfg){
- const pt=PATROLS.find(p=>p.id===cfg.patrol)||PATROLS[0]; const sub=SUBS.find(s=>s.id===cfg.sub)||SUBS[0];
+ const pt=cfg.patrol==='learn'?LEARN_PT:(PATROLS.find(p=>p.id===cfg.patrol)||PATROLS[0]); const sub=SUBS.find(s=>s.id===cfg.sub)||SUBS[0];
  const seed=cfg.seed!=null?cfg.seed:pt.seed; const R=rng(seed); const base=seed===pt.seed;
  const j=(a)=>base?0:(R()*2-1)*a;
  const layer=Math.round(pt.layer+j(10));
@@ -263,7 +281,7 @@ function hit(tp,s){ const g=G; tp.done=true; tp.wire=false; tp.res=s.tgt?'hit':'
 
 function endGame(why){ const g=G; if(g.over) return; g.over=why; g.tEnd=g.t; stopLoop(); const sc=score(); g.sc=sc;
  const B=bests(); const k=g.pt.id+'|'+g.mode+'|'+g.sub.id+(g.seed!==g.pt.seed?'|'+g.seed:''); g.newBest=false; if(!B[k]||sc.total>B[k]){ B[k]=sc.total; g.newBest=true; saveBests(B); } g.best=B[k];
- if(APP) setTimeout(debrief,10); }
+ if(APP) setTimeout(g.mode==='aprende'?lnAfterEnd:debrief,10); }
 function score(){ const g=G; const avg=g.noiseN?g.noiseSum/g.noiseN:0; let pts=0; const items=[];
  const add=(es,en,v)=>{ items.push([es,en,Math.round(v)]); pts+=v; };
  add('Impactos en blancos designados','Hits on designated targets',g.hits*1000);
@@ -283,6 +301,189 @@ function bests(){ try{ return JSON.parse(localStorage.getItem('mat_sub_best')||'
 function saveBests(b){ try{ localStorage.setItem('mat_sub_best',JSON.stringify(b)); }catch(e){} }
 function loadCfg(){ let c={mode:'facil',sub:'t209',patrol:'p1',seed:null}; try{ Object.assign(c,JSON.parse(localStorage.getItem('mat_sub_cfg')||'{}')); }catch(e){} c.seed=null; return c; }
 function saveCfg(){ try{ localStorage.setItem('mat_sub_cfg',JSON.stringify({mode:CFG.mode,sub:CFG.sub,patrol:CFG.patrol})); }catch(e){} }
+
+
+/* ===== Modo «Aprende»: tutor paso a paso sobre la patrulla de instrucción (determinista) ===== */
+let LN=null, LNBTN='';
+const LN_STEPS=[['Escuchar','Listening'],['Tu ruido','Your noise'],['La capa térmica','The thermal layer'],['TMA a mano','TMA by hand'],['Torpedo','Torpedo'],['Evasión','Evasion'],['Informe','Debrief']];
+const LN_TOL={r:5,c:4,v:0.4,act0:500,act1:1500,dep6:150,turn0:60,turn1:120};
+function lnStart(){ G=newGame({mode:'aprende',sub:'s80',patrol:'learn'}); LN={step:1,ph:'a',ok:false,msg:'',mk:'',snaps:{},run:null,t0:null,c1:null,turn:null,lad1:null,lad2:null,fine:null,inp:''};
+ lnSnap(); TAB='sonar'; PAUSED=false; game(); }
+function lnPlain(){ const o={}; Object.keys(LN).forEach(k=>{ if(k!=='snaps'&&k!=='run') o[k]=LN[k]; }); return JSON.parse(JSON.stringify(o)); }
+function lnSnap(){ LN.snaps[LN.step]={g:structuredClone(G),ln:lnPlain()}; }
+function lnRepeat(){ const sn=LN.snaps[LN.step]; if(!sn) return; const snaps=LN.snaps; G=structuredClone(sn.g); LN=Object.assign(JSON.parse(JSON.stringify(sn.ln)),{snaps:snaps,run:null}); stopLoop(); TAB=lnTab(); game(); lnScroll(); }
+function lnNext(){ if(!LN.ok) return; LN.step++; LN.ph='a'; LN.ok=false; LN.msg=''; LN.mk=''; LN.inp='';
+ if(LN.step===4){ LN.t0=G.t; LN.c1=n360(Math.round(G.own.oc)); }
+ if(LN.step>=7){ stopLoop(); debrief(); return; }
+ lnSnap(); TAB=lnTab(); game(); lnScroll(); }
+function lnScroll(){ try{ const el=document.getElementById('sbtut'); if(!el) return; el.scrollIntoView({block:'start'}); const tp=APP.querySelector('.sbtop'); const hb=tp?tp.getBoundingClientRect().bottom:0; const y=el.getBoundingClientRect().top; if(y<hb+6) window.scrollBy(0,y-hb-6); }catch(e){} }
+function lnTab(){ const s=LN.step; return s===1?'sonar':(s===2||s===3||s===6)?'mando':s===4?(LN.ph==='c'?'tma':(LN.ph==='b'?'mando':'tma')):s===5?'armas':'sonar'; }
+function lnSetTab(t){ TAB=t; if(!APP) return; APP.querySelectorAll('.sbtabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===TAB)); APP.querySelectorAll('.sbpan').forEach(p=>p.classList.toggle('on',p.dataset.pan===TAB)); draw(); }
+/* ejecutar tiempo de simulación de forma animada; el tutor decide cuánto */
+function lnRun(sec,until,rate,then){ LN.run={end:G.t+sec,until:until||'',rate:rate||Math.max(30,sec/6),then:then||''}; LN.msg=''; ACC=0; LAST=0; if(!RAF) RAF=requestAnimationFrame(loop); lnRender(); }
+function lnRunDone(){ const r=LN.run; if(!r) return true; if(G.t>=r.end) return true; if(r.until==='torp') return G.torps.length>0&&G.torps.every(t=>t.done); if(r.until==='over') return !!G.over; return false; }
+function lnTick(dt){ ACC+=dt*LN.run.rate; let n=0; while(ACC>=1&&n<800){ step(); ACC-=1; n++; if(G.over||lnRunDone()) break; } if(!G.over&&lnRunDone()) lnRunEnd(); }
+function lnFinish(){ if(!LN||!LN.run) return; let n=0; while(!lnRunDone()&&!G.over&&n<20000){ step(); n++; } if(!G.over) lnRunEnd(); }
+function lnRunEnd(){ const r=LN.run; LN.run=null; if(!r) return; const th=r.then;
+ if(th==='s1b'){ LN.ph='b'; const s=lnTgt(); if(s&&s.cid) G.sel=s.cid; }
+ else if(th==='s4b'){ LN.ph='b'; LN.lad1=lnLadder(LN.t0,3000,12000,1000); lnSetTab('mando'); }
+ else if(th==='s4c'){ LN.ph='c'; const s=lnTgt(); G.sel=s.cid; const n=s.brgs.length; G.man[s.cid]={k:n-1,R:8000,C:n360(Math.round(s.brgs[n-1].b+90)),V:10};
+  LN.lad2=lnLadder(LN.t0,3000,12000,1000); const best=LN.lad2.reduce((a,b)=>b[2]<a[2]?b:a); LN.fine=lnLadder(LN.t0,best[0]-500,best[0]+500,100); lnSetTab('tma'); }
+ else if(th==='s5b'){ LN.ph='b'; const tp=G.torps[0]; LN.ok=!!(tp&&tp.res==='hit'); LN.mk=LN.ok?'good':'bad'; }
+ ui(true); draw(); lnRender(); }
+function lnAfterEnd(){ if(!LN) return; LN.run=null; if(LN.step===6){ LN.ph='b'; LN.ok=G.over==='escaped'; LN.mk=LN.ok?'good':'bad'; } ui(true); draw(); lnRender(); }
+function lnLadder(t0,from,to,stp){ const s=lnTgt(); const k=s.brgs.length-1; const V=lnV(s); const out=[]; for(let R=from;R<=to;R+=stp){ if(R<500) continue; const b=bestC(s,k,R,V,t0); out.push([R,b.c,Math.round(b.e*100)/100]); } return out; }
+function lnV(s){ const T_=SHIPS[s.k]; return Math.round(T_.tpk*s.v*10)/10/T_.tpk; }
+function lnSolErr(){ const s=lnTgt(); const so=manualSolution(s); if(!so) return null; const O=G.own; const tr=dist(s,O); return {so:so,dr:(so.r-tr)/tr*100,dc:dAng(so.c,s.c),dv:so.v-s.v,fit:fitErr(s,G.man[s.cid].k,G.man[s.cid].R,G.man[s.cid].C,G.man[s.cid].V,LN.t0)}; }
+function lnTorpCourse(){ const s=lnTgt(); const so=manualSolution(s); const O=G.own; if(!so) return null; const ip=intercept(so.x,so.y,so.vx,so.vy,O.x,O.y,TORP.v*KN); if(!ip) return null;
+ const across=so.v*Math.sin((so.c-so.b)*D2R); const lead=Math.asin(clamp(across/TORP.v,-1,1))/D2R; return {so:so,ip:ip,across:across,lead:lead,hand:n360(so.b+lead),fc:brgOf(ip.x-O.x,ip.y-O.y),run:Math.hypot(ip.x-O.x,ip.y-O.y)}; }
+/* qué controles del juego puede tocar el alumno en cada paso */
+function lnAllow(d,b){ if(!LN) return true; if(LN.run) return !!d.tab; if(d.tab) return true; if(G.over) return false; const s=LN.step, ph=LN.ph;
+ if(d.dv||b.hasAttribute('data-sil')) return s===2||s===6; if(d.dd||d.ddr) return s===3||s===6; if(d.dc) return s===4&&ph==='b';
+ if(d.mk||d.mr||d.mc||d.mv) return s===4&&ph==='c'; if(d.act) return s===5&&ph==='a'; if(b.hasAttribute('data-fire')) return s===5&&ph==='a'&&LN.ok; if(d.sel) return s===1; return false; }
+function lnCheck(){ const s=LN.step, O=G.own, g=G; let ok=false, m='';
+ const box=document.getElementById('sblnin'); if(box) LN.inp=box.value;
+ const num=parseFloat(String(LN.inp||'').replace(',','.'));
+ if(s===1){ const t=lnTgt(); const T_=SHIPS[t.k]; const rpm=Math.round(T_.tpk*t.v*10)/10; const v=rpm/T_.tpk; const hz=rpm*T_.bl/60;
+  if(!isFinite(num)) m=L('Escribe un número: la velocidad de S1 en nudos.','Type a number: S1’s speed in knots.');
+  else if(Math.abs(num-v)<=0.3){ ok=true; m=L('Correcto. ','Correct. ')+nf(rpm,1)+' ÷ '+T_.tpk+' = '+nf(v,1)+' '+L('nudos','knots')+'.'; }
+  else if(Math.abs(num-rpm)<1) m=L('Esas son las rpm. Divídelas entre las rpm por nudo del mercante (8).','Those are the rpm. Divide them by the merchant’s rpm per knot (8).');
+  else if(Math.abs(num-hz)<0.3) m=L('Esos son los Hz (el tono). Para la velocidad usa las rpm: rpm ÷ 8.','That is the Hz (the tone). For speed use the rpm: rpm ÷ 8.');
+  else if(Math.abs(num-rpm/10)<0.3) m=L('Has usado la regla de la fragata (10). S1 es un mercante: 8 rpm por nudo.','You used the frigate rule (10). S1 is a merchant: 8 rpm per knot.');
+  else m=L('No. Pista: ','No. Hint: ')+nf(rpm,1)+' ÷ 8 = ?'; }
+ else if(s===2){ if(!O.sil&&O.ov>5) m=L('Aún vas a ','You are still ordering ')+nf(O.ov,1)+L(' nudos y sin Silencio. En MANDO pulsa «4 kn» y activa Silencio.',' knots with Silent off. In CONN tap «4 kn» and switch Silent on.');
+  else if(O.ov>5) m=L('Silencio bien, pero la velocidad sigue alta. Pulsa «4 kn».','Silent is good, but the speed is still high. Tap «4 kn».');
+  else if(O.ov<3) m=L('Muy silencioso, pero para el TMA del paso 4 necesitas moverte. Pon 4 nudos.','Very quiet, but you need to move for the TMA in step 4. Set 4 knots.');
+  else if(!O.sil) m=L('La velocidad está bien. Falta activar Silencio (−6 dB).','The speed is right. Now switch Silent on (−6 dB).');
+  else { ok=true; m=L('Correcto. ','Correct. ')+lnNoiseTxt(O.ov,O.od,true); } }
+ else if(s===3){ if(O.od<g.layer+10) m=L('Aún estás ordenando ','You are still ordering ')+Math.round(O.od)+' m. '+L('La capa está a ','The layer is at ')+g.layer+' m: '+L('baja al menos a ','go down to at least ')+(g.layer+10)+' m ('+L('por ejemplo «100 m»','for example «100 m»')+').';
+  else { ok=true; m=L('Correcto: a ','Correct: at ')+Math.round(O.od)+' m '+L('estarás por debajo de la capa (','you will be below the layer (')+g.layer+' m). '+L('Quien esté encima te oye 15 dB peor.','Anyone above it hears you 15 dB worse.'); } }
+ else if(s===4&&LN.ph==='b'){ const dc=dAng(O.oc,LN.c1);
+  if(dc>=LN_TOL.turn0&&dc<=LN_TOL.turn1){ ok=true; m=L('Correcto: virarás ','Correct: you will turn ')+Math.round(dc)+L('° a estribor, al ','° to starboard, to ')+p3(O.oc)+'°.'; }
+  else if(dc<0&&dc<=-LN_TOL.turn0) m=L('Eso es a babor (izquierda). En esta patrulla vira a estribor: +90°.','That is to port (left). In this patrol turn to starboard: +90°.');
+  else if(Math.abs(dc)<LN_TOL.turn0) m=L('El giro es pequeño (','The turn is small (')+Math.round(dc)+L('°). Necesitas entre 60° y 120°: pulsa «+90°».','°). You need 60° to 120°: tap «+90°».');
+  else m=L('Demasiado giro (','Too much turn (')+Math.round(dc)+L('°). Entre 60° y 120°: lo ideal es +90°.','°). Between 60° and 120°: +90° is ideal.'); }
+ else if(s===4&&LN.ph==='c'){ const e=lnSolErr(); const t=lnTgt();
+  if(!e) m=L('Pon tu solución en el TMA.','Set your solution on the TMA.');
+  else if(Math.abs(e.dv)>LN_TOL.v) m=L('La velocidad no cuadra. Usa la de las palas del paso 1: ','The speed does not match. Use the blade count from step 1: ')+nf(lnV(t),1)+' kn.';
+  else if(Math.abs(e.dr)>LN_TOL.r) m=(e.dr>0?L('Tu distancia es demasiado larga.','Your range is too long.'):L('Tu distancia es demasiado corta.','Your range is too short.'))+' '+L('Busca en la tabla fina la fila con el menor desajuste y pon esa distancia.','Find the fine-table row with the smallest misfit and use that range.');
+  else if(Math.abs(e.dc)>LN_TOL.c) m=L('La distancia ya está cerca. Ahora el rumbo: pon el de esa misma fila de la tabla.','The range is close now. Now the course: use the one from that same table row.');
+  else { ok=true; m=L('Correcto: tu derrota cruza todas las demoras (desajuste ','Correct: your track crosses every bearing (misfit ')+nf(e.fit,2)+'°). '+L('Error real: distancia ','True error: range ')+(e.dr>=0?'+':'')+nf(e.dr,1)+' %, '+L('rumbo ','course ')+(e.dc>=0?'+':'')+nf(e.dc,1)+'°, '+L('velocidad ','speed ')+(e.dv>=0?'+':'')+nf(e.dv,1)+' kn.'; } }
+ else if(s===5&&LN.ph==='a'){ const tc=lnTorpCourse(); const act=g.actSet!=null?g.actSet:1200;
+  if(!tc) m=L('Sin solución de tiro.','No firing solution.');
+  else if(!isFinite(num)) m=L('Escribe el rumbo del torpedo en grados.','Type the torpedo course in degrees.');
+  else if(Math.abs(dAng(num,tc.fc))>2) m=L('Ese rumbo no apunta al punto de interceptación. Pista: demora ','That course does not point at the intercept. Hint: bearing ')+p3(tc.so.b)+'° '+(tc.lead>=0?'+':'−')+' '+nf(Math.abs(tc.lead),1)+'° = ?';
+  else if(act>LN_TOL.act1) m=L('Rumbo bien. Pero ','Course right. But ')+ni(act)+L(' m es demasiado pronto: más allá de 1.500 m el buscador no ve al blanco y sus pings le avisan. Baja con «−250 m».',' m is too early: beyond 1,500 m the seeker cannot see the target and its pings warn it. Lower it with «−250 m».');
+  else if(act<LN_TOL.act0) m=L('Rumbo bien. Pero ','Course right. But ')+ni(act)+L(' m es demasiado tarde: el blanco puede quedar fuera del cono de ±30°. Sube con «+250 m».',' m is too late: the target may fall outside the ±30° cone. Raise it with «+250 m».');
+  else { ok=true; m=L('Correcto: torpedo al ','Correct: torpedo to ')+p3(tc.fc)+'°, '+L('buscador a ','seeker at ')+ni(act)+' m '+L('del punto previsto. Ya puedes pulsar LANZAR TORPEDO.','from the predicted point. You can now press FIRE TORPEDO.'); } }
+ else if(s===6&&LN.ph==='a'){ const bad=[]; if(O.od<LN_TOL.dep6) bad.push(L('profundidad (','depth (')+Math.round(O.od)+' m; '+L('baja a 150 m o más','go down to 150 m or more')+')'); if(O.ov>4) bad.push(L('velocidad (','speed (')+nf(O.ov,1)+' kn; '+L('pon 4 kn o menos','set 4 kn or less')+')'); if(!O.sil) bad.push(L('Silencio desactivado','Silent is off'));
+  if(bad.length) m=L('Te falta: ','Still to fix: ')+bad.join(' · ')+'.'; else { ok=true; m=L('Correcto: profundo, lento y en silencio. Pulsa «Esperar en silencio».','Correct: deep, slow and silent. Tap «Wait in silence».'); } }
+ LN.ok=ok; LN.msg=m; LN.mk=ok?'good':'bad'; ui(true); draw(); lnRender(); return ok; }
+function lnNoiseTxt(v,d,sil){ const sub=G.sub; const base=sub.sl4+40*lg(Math.max(v,1)/4); const cav=v>vcav(sub,d); const sl=ownSL(sub,v,d,sil);
+ return nf(sub.sl4,0)+' + 40·log('+nf(v,1)+'/4)'+(cav?' + 15':'')+(sil?' − 6':'')+' = '+nf(sl,1)+' dB'; }
+function lnRange(m){ return m<1000?ni(Math.round(m/10)*10)+' m':nf(m/1000,1)+' km'; }
+function lnLadTbl(rows,hi){ const best=rows.reduce((a,b)=>b[2]<a[2]?b:a); return '<table class="sbtbl sblad"><tr><td>'+L('Distancia del punto','Dot range')+'</td><td>'+L('Mejor rumbo','Best course')+'</td><td>'+L('Desajuste','Misfit')+'</td></tr>'+
+ rows.map(r=>'<tr'+(hi&&r===best?' class="on"':'')+'><td>'+ni(r[0])+' m</td><td>'+p3(r[1])+'°</td><td>'+nf(r[2],2)+'°</td></tr>').join('')+'</table>'; }
+function lnW(rows){ return '<div class="sbwork">'+rows.join('<br>')+'</div>'; }
+function lnPanel(){ const s=LN.step, ph=LN.ph, g=G, O=g.own; const t=lnTgt(); const T_=SHIPS[t.k]; let ex='', wk='', task='', inp='', btn='';
+ const B=(a,txt,cls)=>'<button type="button" class="sbbtn'+(cls?' '+cls:'')+'" data-ln="'+a+'">'+txt+'</button>';
+ const running=!!LN.run; const chk=()=>B('check',L('Comprobar','Check'),'pri'); LNBTN='';
+ if(s===1){
+  ex='<p>'+L('Bajo el agua no ves nada: solo oyes. La <b>cascada</b> del sonar dibuja lo que oyes: en horizontal la <b>demora</b> (la dirección, de 000° a 359°) y hacia abajo el <b>tiempo</b> (lo más nuevo arriba). Un buque es una <b>línea vertical</b> brillante que se mantiene en su demora o se desplaza poco a poco.','Under water you see nothing: you only listen. The sonar <b>waterfall</b> draws what you hear: across is the <b>bearing</b> (direction, 000° to 359°) and down is <b>time</b> (newest at the top). A ship is a bright <b>vertical line</b> that stays on its bearing or drifts slowly.')+'</p>';
+  if(ph==='a'){ task=L('Escucha 3 minutos y mira cómo aparecen las líneas.','Listen for 3 minutes and watch the lines appear.'); btn=B('run1',L('Escuchar 3 minutos','Listen for 3 minutes'),'pri'); }
+  else { const fr=g.ships.find(x=>x.esc); const rpm=Math.round(T_.tpk*t.v*10)/10, hz=rpm*T_.bl/60;
+   ex+='<p>'+L('Han aparecido ','')+g.cont.map(c=>c.cid+' ('+p3(c.brg)+'°)').join(L(' y ',' and '))+L('.',' have appeared.')+' '+L('Tras 1 minuto de escucha el sonar cuenta las <b>palas</b> de la hélice y sus <b>vueltas por minuto</b> (rpm). Con eso sabes qué es y a qué velocidad va: cada clase gira unas rpm fijas por nudo.','After 1 minute of listening the sonar counts the propeller <b>blades</b> and its <b>revolutions per minute</b> (rpm). That tells you what it is and how fast it goes: each class turns a fixed rpm per knot.')+'</p>';
+   wk=lnW([L('S1 · mercante: ','S1 · merchant: ')+T_.bl+' '+L('palas','blades')+', '+nf(rpm,1)+' rpm',
+    L('Tono: Hz = rpm × palas ÷ 60 = ','Tone: Hz = rpm × blades ÷ 60 = ')+nf(rpm,1)+' × '+T_.bl+' ÷ 60 = '+nf(hz,1)+' Hz',
+    L('Regla del juego: mercante 8 rpm por nudo · fragata 10 · pesquero 35','Game rule: merchant 8 rpm per knot · frigate 10 · fishing boat 35'),
+    L('Velocidad = rpm ÷ rpm por nudo = ','Speed = rpm ÷ rpm per knot = ')+nf(rpm,1)+' ÷ 8 = '+(LN.ok?'<b>'+nf(rpm/8,1)+' kn</b>':'?')].concat(LN.ok&&fr&&fr.cid?[fr.cid+L(' · fragata: ',' · frigate: ')+nf(SHIPS.frig.tpk*fr.v,1)+' rpm ÷ 10 = '+nf(fr.v,1)+' kn: '+L('va con el mercante, es su escolta.','it sails with the merchant: it is the escort.')]:[]));
+   task=L('¿A qué velocidad va S1? Escríbela en nudos.','How fast is S1 going? Type it in knots.');
+   inp='<label class="sbin">'+L('Velocidad de S1 (kn)','S1 speed (kn)')+' <input id="sblnin" type="text" inputmode="decimal" autocomplete="off" value="'+esc(LN.inp||'')+'"></label>'; btn=chk(); } }
+ else if(s===2){ const vc=vcav(g.sub,O.d); const rkA=riskRanges(g.sub,5,O.d,false,g.layer), rkB=riskRanges(g.sub,4,O.d,true,g.layer);
+  ex='<p>'+L('Igual que tú oyes a los buques, la escolta puede oírte a ti. Tu ruido sube con la velocidad: <b>+40·log(v/4)</b> sobre el ruido base de tu submarino a 4 nudos. Si vas más rápido de lo que aguanta la hélice a esa profundidad, <b>cavita</b> (forma burbujas) y sumas +15 dB. <b>Silencio</b> apaga bombas y ventilación: −6 dB.','Just as you hear the ships, the escort can hear you. Your noise rises with speed: <b>+40·log(v/4)</b> above your submarine’s base noise at 4 knots. If you go faster than the propeller can take at that depth it <b>cavitates</b> (makes bubbles) and adds +15 dB. <b>Silent</b> shuts down pumps and fans: −6 dB.')+'</p>';
+  wk=lnW([g.sub.n+': '+L('ruido base ','base noise ')+g.sub.sl4+L(' dB a 4 nudos',' dB at 4 knots'),
+   L('Ahora (5 kn, sin silencio): ','Now (5 kn, silent off): ')+lnNoiseTxt(5,O.d,false),
+   L('Cavitas a partir de v₀·√(1 + prof/10) = ','You cavitate above v₀·√(1 + depth/10) = ')+nf(g.sub.vc0,1)+' · √(1 + '+Math.round(O.d)+'/10) = '+nf(vc,1)+' kn',
+   L('Con 4 kn y Silencio: ','With 4 kn and Silent: ')+lnNoiseTxt(4,O.d,true),
+   L('Una fragata escuchando te oiría a ≈ ','A listening frigate would hear you at ≈ ')+lnRange(rkA.pas)+' → ≈ '+lnRange(rkB.pas)]);
+  task=L('En MANDO pon una velocidad silenciosa (4 nudos) y activa Silencio. Luego pulsa Comprobar.','In CONN set a quiet speed (4 knots) and switch Silent on. Then tap Check.'); btn=chk(); }
+ else if(s===3){ const rkA=riskRanges(g.sub,O.ov,O.d,O.sil,g.layer), rkB=riskRanges(g.sub,O.ov,Math.max(100,g.layer+10),O.sil,g.layer); const fr=g.ships.find(x=>x.esc);
+  ex='<p>'+L('El mar no es igual a todas las profundidades. A '+g.layer+' m hay una <b>capa térmica</b>: el agua de abajo está más fría y el sonido se dobla al cruzarla. Entre un lado y el otro se pierden <b>15 dB</b>. Si te escondes debajo, la escolta (en superficie) te oye mucho peor. Ojo: tú también oyes peor a los buques.','The sea is not the same at every depth. At '+g.layer+' m there is a <b>thermal layer</b>: the water below is colder and sound bends as it crosses. Going from one side to the other loses <b>15 dB</b>. If you hide below it, the escort (on the surface) hears you far worse. Careful: you hear the ships worse too.')+'</p>';
+  wk=lnW([L('Capa a ','Layer at ')+g.layer+' m · '+L('tú a ','you at ')+Math.round(O.d)+' m ('+(O.d>=g.layer?L('debajo','below'):L('encima','above'))+')',
+   L('Te oirían en pasivo: encima ≈ ','They would hear you on passive: above ≈ ')+lnRange(rkA.pas)+L(' · debajo ≈ ',' · below ≈ ')+lnRange(rkB.pas),
+   L('Señal de S1 ahora: ','S1 signal now: ')+(t.se>=0?'+':'')+Math.round(t.se)+L(' dB → debajo: ',' dB → below: ')+(t.se-15>=0?'+':'')+Math.round(t.se-15)+L(' dB (se sigue oyendo: más de 0 dB)',' dB (still heard: above 0 dB)'),
+   (fr&&fr.cid?fr.cid+L(' (fragata): ',' (frigate): ')+(fr.se>=0?'+':'')+Math.round(fr.se)+' → '+Math.round(fr.se-15)+L(' dB: desaparecerá de tu cascada',' dB: it will vanish from your waterfall'):'')]);
+  task=L('En MANDO ordena una profundidad por debajo de la capa (al menos ','In CONN order a depth below the layer (at least ')+(g.layer+10)+L(' m; por ejemplo «100 m»). Luego Comprobar.',' m; for example «100 m»). Then Check.'); btn=chk(); }
+ else if(s===4){ const own=g.sub; 
+  ex='<p>'+L('El pasivo solo te da la <b>demora</b>, no la distancia. Para saber dónde está y adónde va el blanco (distancia, rumbo y velocidad) se hace el <b>TMA</b>: se prueban derrotas rectas y se mira cuál cruza todas las demoras medidas. El «desajuste» es cuántos grados se separa, de media, la derrota probada de tus demoras.','Passive gives you only the <b>bearing</b>, not the range. To learn where the target is and where it goes (range, course and speed) you do <b>TMA</b>: you try straight tracks and see which one crosses every measured bearing. The «misfit» is how many degrees, on average, the tried track misses your bearings.')+'</p>';
+  if(ph==='a'){ wk=lnW([L('Rumbo propio ','Own course ')+p3(O.oc)+'° · '+nf(O.ov,1)+' kn · '+L('velocidad del blanco por palas: ','target speed from blades: ')+nf(lnV(t),1)+' kn']);
+   task=L('Navega un primer tramo recto de 5 minutos tomando demoras.','Run a first straight 5-minute leg taking bearings.'); btn=B('run4a',L('Navegar el primer tramo (5 min)','Run the first leg (5 min)'),'pri'); }
+  else if(ph==='b'){ ex+='<p>'+L('<b>¿Por qué no basta un tramo?</b> Mira la tabla: con las demoras de un solo tramo, distancias muy distintas encajan casi igual (desajuste por debajo de 0,5°). Un blanco cerca y lento y otro lejos y rápido dibujan las mismas demoras. Si cambias de rumbo, tu movimiento cambia y solo una solución encaja con los dos tramos.','<b>Why is one leg not enough?</b> Look at the table: with the bearings of a single leg, very different ranges fit almost equally (misfit under 0.5°). A close slow target and a far fast one draw the same bearings. If you change course, your own motion changes and only one solution fits both legs.')+'</p>';
+   wk=lnLadTbl(LN.lad1||[],false)+lnW([L('Velocidad usada: ','Speed used: ')+nf(lnV(t),1)+' kn ('+L('palas','blades')+') · '+L('demoras del tramo 1: ','leg 1 bearings: ')+t.brgs.filter(q=>q.t>=LN.t0).length]);
+   if(LN.ok){ task=L('Ahora navega el segundo tramo con el nuevo rumbo.','Now run the second leg on the new course.'); btn=B('run4b',L('Navegar el segundo tramo (5 min)','Run the second leg (5 min)'),'pri'); }
+   else { task=L('En MANDO vira a estribor entre 60° y 120° (lo ideal: «+90°», rumbo ','In CONN turn to starboard between 60° and 120° (ideal: «+90°», course ')+p3(LN.c1+90)+'°). '+L('Luego Comprobar.','Then Check.'); btn=chk(); } }
+  else { const e=lnSolErr(); const best=(LN.fine||[[0,0,0]]).reduce((a,b)=>b[2]<a[2]?b:a);
+   ex+='<p>'+L('Con dos tramos ya solo hay un mínimo. Primero la tabla gruesa (cada 1 km) dice dónde está; luego la fina (cada 100 m) lo afina. Tu punto va sobre la <b>última demora</b>.','With two legs there is only one minimum. The coarse table (every 1 km) shows where it is; the fine one (every 100 m) pins it down. Your dot sits on the <b>latest bearing</b>.')+'</p>';
+   wk=lnLadTbl(LN.lad2||[],true)+lnLadTbl(LN.fine||[],true)+lnW([L('Fila con menos desajuste: ','Row with the smallest misfit: ')+ni(best[0])+' m · '+p3(best[1])+'° · '+nf(best[2],2)+'°',L('Velocidad: ','Speed: ')+nf(T_.tpk*t.v,1)+' rpm ÷ 8 = '+nf(lnV(t),1)+' kn',
+    '<span id="sblnlive">'+lnLive4()+'</span>']);
+   task=L('En TMA pon: distancia = la de la fila con menos desajuste; rumbo = el de esa fila; velocidad = la de las palas. Luego Comprobar.','In TMA set: range = the row with the smallest misfit; course = that row’s course; speed = the blade speed. Then Check.'); btn=chk(); } }
+ else if(s===5){ const tc=lnTorpCourse(); const act=g.actSet!=null?g.actSet:1200;
+  ex='<p>'+L('El torpedo (50 nudos) no se apunta al blanco, sino al <b>punto de interceptación</b>: donde estará el blanco cuando llegue el torpedo. Se adelanta un ángulo que depende de cuánto se mueve el blanco de lado.','The torpedo (50 knots) is not aimed at the target but at the <b>intercept point</b>: where the target will be when the torpedo gets there. You lead it by an angle that depends on how fast the target moves sideways.')+'</p>'+
+   '<p>'+L('El <b>buscador</b> solo ve 1.500 m (±30°). Si lo enciendes <b>demasiado pronto</b> (más de 1.500 m antes del punto previsto) no ve al blanco, sus pings avisan a la escolta y el mercante vira 60°. Si lo enciendes <b>demasiado tarde</b> (menos de ~500 m), el blanco puede quedar fuera del cono y el torpedo pasa de largo. Ventana buena: 500–1.500 m.','The <b>seeker</b> sees only 1,500 m (±30°). Switch it on <b>too early</b> (more than 1,500 m before the predicted point) and it cannot see the target, its pings warn the escort and the merchant turns 60°. Switch it on <b>too late</b> (under ~500 m) and the target may fall outside the cone and the torpedo runs past. Good window: 500–1,500 m.')+'</p>';
+  if(ph==='a'&&tc){ wk=lnW([L('Tu solución: demora ','Your solution: bearing ')+p3(tc.so.b)+'°, '+L('distancia ','range ')+ni(tc.so.r)+' m, '+L('rumbo ','course ')+p3(tc.so.c)+'°, '+nf(tc.so.v,1)+' kn',
+    L('Velocidad lateral = V · sen(rumbo − demora) = ','Sideways speed = V · sin(course − bearing) = ')+nf(tc.so.v,1)+' · sen('+p3(tc.so.c)+'° − '+p3(tc.so.b)+'°) = '+nf(tc.across,1)+' kn',
+    L('Ángulo de adelanto = arcsen(lateral ÷ 50) = arcsen(','Lead angle = arcsin(sideways ÷ 50) = arcsin(')+nf(tc.across,1)+' ÷ 50) = '+nf(tc.lead,1)+'°',
+    L('Rumbo del torpedo = demora + adelanto = ','Torpedo course = bearing + lead = ')+p3(tc.so.b)+'° '+(tc.lead>=0?'+':'−')+' '+nf(Math.abs(tc.lead),1)+'° = '+(LN.ok?'<b>'+p3(tc.fc)+'°</b>':'?'),
+    L('Recorrido previsto: ','Predicted run: ')+ni(tc.run)+' m ('+hhmmss(tc.ip.t)+')',
+    L('Buscador elegido: ','Seeker set at: ')+ni(act)+' m '+L('del punto previsto','from the predicted point')]);
+   task=L('Escribe el rumbo del torpedo y elige en ARMAS cuándo se enciende el buscador (botones ±250 m, entre 500 y 1.500 m). Comprobar y después LANZAR TORPEDO.','Type the torpedo course and choose in WEAPONS when the seeker switches on (±250 m buttons, between 500 and 1,500 m). Check, then FIRE TORPEDO.');
+   inp='<label class="sbin">'+L('Rumbo del torpedo (°)','Torpedo course (°)')+' <input id="sblnin" type="text" inputmode="decimal" autocomplete="off" value="'+esc(LN.inp||'')+'"></label>'; btn=chk()+(LN.ok?B('fire',L('LANZAR TORPEDO','FIRE TORPEDO'),'fire'):''); }
+  else if(ph==='b'){ const tp=G.torps[0]; wk=lnW([L('Torpedo 1: ','Torpedo 1: ')+(tp.res==='hit'?'<b>'+L('IMPACTO','HIT')+'</b>':L('fallo','miss')),L('Buscador encendido a ','Seeker switched on at ')+ni(tp.seekAt||0)+' m '+L('del punto previsto','from the predicted point')+(tp.hitT?' · '+L('impacto a los ','hit after ')+hhmmss(tp.hitT-tp.t0):'')]);
+   task=LN.ok?L('El blanco está detenido. Pero la escolta ha oído el lanzamiento: siguiente paso, escapar.','The target is stopped. But the escort heard the launch: next step, get away.'):L('El torpedo ha fallado. Repite el paso y revisa la solución y el buscador.','The torpedo missed. Repeat the step and check the solution and the seeker.'); } }
+ else if(s===6){ const fr=g.ships.find(x=>x.esc); const rkUp=riskRanges(g.sub,O.ov,40,O.sil,g.layer), rkDn=riskRanges(g.sub,O.ov,150,O.sil,g.layer);
+  ex='<p>'+L('Al lanzar, la escolta oyó el torpedo y corre hacia el <b>punto de disparo</b> transmitiendo en <b>activo</b> (pings) cada 15 s. El activo no escucha tu ruido: manda un pulso y espera el eco. Bajo la capa el pulso pierde 30 dB a la ida y 30 a la vuelta, así que casi no te encuentra. Profundo, lento y en silencio, y espera a que se canse de buscar.','When you fired, the escort heard the torpedo and is racing to the <b>firing point</b>, transmitting <b>active</b> sonar (pings) every 15 s. Active does not listen to your noise: it sends a pulse and waits for the echo. Below the layer the pulse loses 30 dB going and 30 coming back, so it can hardly find you. Deep, slow and silent, and wait until it gives up.')+'</p>';
+  wk=lnW([(fr?L('Fragata: a ','Frigate: at ')+lnRange(dist(fr,O))+L(' de ti, estado: ',' from you, state: ')+({hunt:L('caza','hunting'),alert:L('va al punto de disparo','heading for the firing point'),search:L('busca en cuadrado','square search'),return:L('vuelve','returning'),patrol:L('patrulla','patrolling')}[fr.st]||fr.st):''),
+   L('Su activo te encuentra: encima de la capa ≈ ','Its active finds you: above the layer ≈ ')+lnRange(rkUp.act)+L(' · debajo ≈ ',' · below ≈ ')+lnRange(rkDn.act),
+   L('Tu ruido: ','Your noise: ')+lnNoiseTxt(O.ov,O.od,O.sil)+' · '+L('pasivo te oiría a ≈ ','passive would hear you at ≈ ')+lnRange(riskRanges(g.sub,O.ov,O.d,O.sil,g.layer).pas)]);
+  if(ph==='a'){ if(LN.ok){ task=L('Ya estás listo. Espera en silencio hasta «Contacto perdido».','You are ready. Wait in silence until «Contact lost».'); btn=B('run6',L('Esperar en silencio','Wait in silence'),'pri'); }
+   else { task=L('En MANDO: profundidad 150 m o más, velocidad 4 nudos o menos y Silencio activado. Mantén el rumbo. Luego Comprobar.','In CONN: depth 150 m or more, speed 4 knots or less and Silent on. Keep your course. Then Check.'); btn=chk(); } }
+  else { task=LN.ok?L('«Contacto perdido»: la escolta abandonó la búsqueda sin encontrarte. Misión cumplida.','«Contact lost»: the escort gave up the search without finding you. Mission complete.'):L('Te han encontrado. Repite el paso: más profundo, más lento y en silencio.','You were found. Repeat the step: deeper, slower and silent.'); } }
+ const dots=LN_STEPS.map((x,i)=>'<span class="'+(i+1<s?'d':i+1===s?'c':'')+'">'+(i+1)+'</span>').join('');
+ let h='<div class="sbtsteps">'+dots+'</div><h3>'+L('Paso ','Step ')+s+L(' de 7 · ',' of 7 · ')+esc(L(LN_STEPS[s-1][0],LN_STEPS[s-1][1]))+'</h3>'+ex+wk;
+ if(running) h+='<p class="sbtask">'+L('Navegando… ','Under way… ')+'<span id="sblnclk">'+hhmmss(G.t)+'</span></p>';
+ else { if(task) h+='<p class="sbtask"><b>'+L('Tu turno: ','Your turn: ')+'</b>'+task+'</p>'; h+=inp; }
+ LNBTN=btn; h+=lnBar(btn); return h; }
+function lnLive4(){ const e=lnSolErr(); if(!e) return ''; const m=G.man[lnTgt().cid]; return L('Tu solución ahora: ','Your solution now: ')+ni(m.R)+' m · '+p3(m.C)+'° · '+nf(m.V,1)+' kn → '+L('desajuste ','misfit ')+nf(e.fit,2)+'°'; }
+function lnBar(btn){ const running=!!LN.run; let h='';
+ if(LN.msg) h+='<p class="sbfb '+(LN.mk||'')+'">'+LN.msg+'</p>';
+ h+='<div class="sbrow">'+(running?'':btn)+(running?'':(LN.ok&&!LN.run&&lnCanNext()?'<button type="button" class="sbbtn pri" data-ln="next">'+(LN.step===6?L('Ver el informe','See the debrief'):L('Siguiente paso','Next step'))+'</button>':''))+(running?'':'<button type="button" class="sbbtn" data-ln="rep">'+L('Repetir paso','Repeat step')+'</button>')+'</div>'; return h; }
+function lnCanNext(){ const s=LN.step, ph=LN.ph; if(s===1) return ph==='b'; if(s===4) return ph==='c'; if(s===5) return ph==='b'; if(s===6) return ph==='b'; return true; }
+function lnRender(){ if(!LN||!APP||!G) return; const a=document.getElementById('sbtut'); if(!a) return; const ib=document.getElementById('sblnin'); if(ib) LN.inp=ib.value; a.innerHTML=lnPanel();
+ const b=document.getElementById('sbtut2'); if(b){ b.innerHTML=LN.run?'':'<div class="sbtut sbtutb">'+lnBar(LNBTN)+'</div>'; } }
+function lnLive(){ if(!LN) return; const c=document.getElementById('sblnclk'); if(c) c.textContent=hhmmss(G.t); const l=document.getElementById('sblnlive'); if(l) l.textContent=lnLive4(); }
+function lnAction(a){ if(!LN||!G) return; if(LN.run&&a!=='quit') return;
+ if(a==='check') lnCheck();
+ else if(a==='rep') lnRepeat();
+ else if(a==='next') lnNext();
+ else if(a==='run1') lnRun(180,'',30,'s1b');
+ else if(a==='run4a') lnRun(300,'',50,'s4b');
+ else if(a==='run4b'){ LN.turn=G.t; LN.ok=false; LN.msg=''; lnRun(300,'',50,'s4c'); }
+ else if(a==='fire'){ lnFire(); }
+ else if(a==='run6'){ lnRun(9000,'over',90,''); }
+ else if(a==='quit'){ LN=null; stopLoop(); CFG.mode='facil'; saveCfg(); intro(); } }
+function lnFire(){ if(!(LN.step===5&&LN.ph==='a'&&LN.ok)) return; const r=fire(lnTgt()); if(!r||!r.ok){ LN.msg=L('No se pudo lanzar.','Could not fire.'); LN.mk='bad'; lnRender(); return; } LN.ok=false; LN.msg=''; lnRun(4000,'torp',40,'s5b'); }
+
+function lnExplain(es){ const m=[['Impactos en blancos','+1.000 por cada impacto en el blanco designado.','+1,000 for each hit on the designated target.'],
+ ['Precisión de la solución','Hasta +300: se restan 10 por cada 1 % de error en distancia, 5 por cada grado de rumbo y 20 por cada nudo, medidos al disparar.','Up to +300: minus 10 per 1 % range error, 5 per degree of course and 20 per knot, measured at firing.'],
+ ['Torpedos fallados','−150 por cada torpedo que no da en el blanco.','−150 for each torpedo that misses.'],
+ ['Impactos en buques no','−800 por alcanzar un buque que no era el blanco.','−800 for hitting a ship that was not the target.'],
+ ['Veces detectado','−120 por cada vez que la escolta te detectó.','−120 for each time the escort detected you.'],
+ ['Ruido medio alto','−25 por cada dB de ruido medio por encima del ruido base + 8 dB.','−25 per dB of average noise above base noise + 8 dB.'],
+ ['Rapidez','Hasta +400 según el tiempo de patrulla que te sobró.','Up to +400 for the patrol time you had left.'],
+ ['Evasión completada','+500 por escapar: la escolta te perdió.','+500 for escaping: the escort lost you.'],
+ ['La escolta te fijó','−600: te mantuvo en contacto a menos de 2 km.','−600: it held you within 2 km.'],
+ ['Multiplicador Veterano','En Veterano todo vale ×1,5.','In Veteran everything counts ×1.5.']];
+ const f=m.find(x=>es.indexOf(x[0])===0); return f?L(f[1],f[2]):''; }
 
 /* ===== Interfaz ===== */
 let APP=null,X=null,CFG=null,RAF=0,LAST=0,ACC=0,SPEED=10,PAUSED=false,TAB='sonar',LASTDRAW=0,LASTUI=0,SIG='';
@@ -352,23 +553,41 @@ function css(){ if(document.getElementById('sb-css')) return; const s=document.c
  '.sbtbl{width:100%;border-collapse:collapse;font-size:14.5px;font-variant-numeric:tabular-nums}',
  '.sbtbl td{padding:6px 4px;border-bottom:1px solid #20241b}.sbtbl td:last-child{text-align:right;font-weight:650}',
  '.sbbig{font-family:Anton,Impact,sans-serif;font-size:clamp(30px,7vw,46px);letter-spacing:.03em;line-height:1.05;margin:6px 0}',
- '.sbbig.good{color:#c8f03c}.sbbig.bad{color:#ff8a70}'
+   '.sbbig.good{color:#c8f03c}.sbbig.bad{color:#ff8a70}',
+  '@media(min-width:900px){.sbgr.c3{grid-template-columns:repeat(3,1fr)}}@media(min-width:640px) and (max-width:899px){.sbgr.c3{grid-template-columns:repeat(2,1fr)}}',
+  '.sbtut{border:1px solid var(--ac);border-radius:var(--r);background:#13160f;padding:10px 12px;margin:0 0 10px;min-width:0}',
+  '.sbtutb{border-color:var(--line);padding:4px 10px;margin:8px 0}',
+  '.sbtut h3{margin:4px 0 8px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#c8f03c;font-weight:700}',
+  '.sbtut p{font-size:14.5px;line-height:1.5;color:#dcdfd2;margin:6px 0}',
+  '.sbtsteps{display:flex;gap:5px;flex-wrap:wrap}.sbtsteps span{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:1px solid var(--line);font-size:12px;color:#a3a796}',
+  '.sbtsteps span.d{background:#2a3220;border-color:#55602f;color:#c8f03c}.sbtsteps span.c{background:var(--ac);border-color:var(--ac);color:#0b0c0d;font-weight:700}',
+  '.sbwork{background:#0b0d09;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:8px 0;font-size:13.5px;line-height:1.6;color:#e6e8dc;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}',
+  '.sbwork b{color:#c8f03c}',
+  '.sbtask{font-size:14.5px;color:#eef0e4;margin:8px 0}',
+  '.sbfb{font-size:14.5px;line-height:1.45;padding:8px 10px;border-radius:6px;margin:8px 0;background:#1a1d14}',
+  '.sbfb.good{color:#c8f03c;border:1px solid #55602f}.sbfb.bad{color:#ffb39f;border:1px solid #6a3a2e}',
+  '.sbin{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14.5px;color:#dcdfd2;margin:8px 0}',
+  '.sbin input{width:110px;min-height:44px;font:inherit;font-size:17px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:#0b0d09;color:#eef0e4}',
+  '.sblad{font-size:13.5px;margin:6px 0}.sblad td{padding:4px}.sblad tr:first-child td{color:#a3a796;font-weight:600}.sblad tr.on td{color:#c8f03c;font-weight:700}',
+  '.sbexp{display:block;font-size:12.5px;color:#a3a796;font-weight:400;margin-top:2px}'
  ].join('\n'); document.head.appendChild(s); }
 function stopLoop(){ if(RAF) cancelAnimationFrame(RAF); RAF=0; }
 function hhmmss(t){ t=Math.round(t); const h=Math.floor(t/3600), m=Math.floor(t/60)%60, s=t%60; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
 const opt=(on,attr,b,s)=>'<button type="button" class="sbopt'+(on?' on':'')+'" '+attr+'><b>'+b+'</b><span>'+s+'</span></button>';
 function crumbs(){ return X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Submarino','Submarine')]]); }
 
-function intro(){ stopLoop(); G=null; const B=bests(); const sub=SUBS.find(s=>s.id===CFG.sub)||SUBS[0];
+function intro(){ stopLoop(); G=null; LN=null; const B=bests(); const sub=SUBS.find(s=>s.id===CFG.sub)||SUBS[0];
  let h='<div class="sbw" data-noi18n>'+crumbs()+
  '<div class="sbhero"><img src="img/juegos/submarino.webp" width="640" height="400" alt="'+esc(L(CARD_ALT[0],CARD_ALT[1]))+'"><div class="ht"><b>'+L('SUBMARINO','SUBMARINE')+'</b><span>'+L('No ves nada: solo oyes. Escucha con el sonar, calcula a qué distancia y rumbo va el blanco, lanza un torpedo filoguiado y escapa de la escolta.','You see nothing: you only listen. Track with sonar, work out the target’s range and course, fire a wire-guided torpedo and slip away from the escort.')+'</span></div></div>';
- h+='<div class="sbsec">'+L('Modo','Mode')+'</div><div class="sbgr c2">'+
+   h+='<div class="sbsec">'+L('Modo','Mode')+'</div><div class="sbgr c3">'+
+  opt(CFG.mode==='aprende','data-m="aprende"',L('Aprende','Learn'),L('Tutorial guiado para quien empieza: el tutor te explica cada paso (sonar, ruido, capa, TMA, torpedo y evasión) con las cuentas hechas y comprueba lo que haces.','Guided tutorial for beginners: the tutor explains each step (sonar, noise, layer, TMA, torpedo and evasion) with the worked numbers and checks what you do.'))+
   opt(CFG.mode==='facil','data-m="facil"',L('Fácil','Easy'),L('La computadora de tiro calcula la solución cuando tienes datos suficientes y guía el torpedo sola.','The fire-control computer works out the solution once you have enough data and guides the torpedo itself.'))+
   opt(CFG.mode==='veterano','data-m="veterano"',L('Veterano','Veteran'),L('Pones tú el punto de distancia, el rumbo y la velocidad sobre el plot. La calidad de tu solución solo se ve tras disparar.','You place the range dot, course and speed on the plot yourself. Your solution’s quality is shown only after firing.'))+'</div>';
- h+='<div class="sbsec">'+L('Submarino','Submarine')+'</div><div class="sbgr c2">'+SUBS.map(s=>opt(CFG.sub===s.id,'data-s="'+s.id+'"',esc(s.n),esc(L(s.note[0],s.note[1]))+'<br>'+L('Máx.','Max')+' '+nf(s.vmax,1)+' '+L('nudos','kn')+' · '+L('prueba','test')+' '+ni(s.test)+' m · '+s.tubes+' '+L('tubos','tubes')+'<br>'+L('Ruido a 4 nudos','Noise at 4 kn')+' '+s.sl4+' dB · '+L('cavita desde','cavitates from')+' '+nf(vcav(s,50),1)+' '+L('nudos a 50 m','kn at 50 m')+' '+EST())).join('')+'</div>';
+   if(CFG.mode==='aprende'){ h+='<p class="sbnote">'+L('Aprende usa siempre la misma patrulla de instrucción con el S-80 Plus «Isaac Peral»: un mercante escoltado por una fragata y la capa térmica a 60 m. Siete pasos, unos 10 minutos. Si sigues lo que te enseña, impactas y escapas siempre.','Learn always uses the same training patrol with the S-80 Plus Isaac Peral: a merchant escorted by a frigate and the thermal layer at 60 m. Seven steps, about 10 minutes. Follow what it teaches and you always hit and escape.')+'</p>'; }
+  else { h+='<div class="sbsec">'+L('Submarino','Submarine')+'</div><div class="sbgr c2">'+SUBS.map(s=>opt(CFG.sub===s.id,'data-s="'+s.id+'"',esc(s.n),esc(L(s.note[0],s.note[1]))+'<br>'+L('Máx.','Max')+' '+nf(s.vmax,1)+' '+L('nudos','kn')+' · '+L('prueba','test')+' '+ni(s.test)+' m · '+s.tubes+' '+L('tubos','tubes')+'<br>'+L('Ruido a 4 nudos','Noise at 4 kn')+' '+s.sl4+' dB · '+L('cavita desde','cavitates from')+' '+nf(vcav(s,50),1)+' '+L('nudos a 50 m','kn at 50 m')+' '+EST())).join('')+'</div>';
  h+='<p class="sbnote">'+L('Fichas','Entries')+': '+SUBS.map(s=>'<a href="#/a/'+s.ficha+'">'+esc(s.n)+'</a>').join(' · ')+'</p>';
- h+='<div class="sbsec">'+L('Patrulla','Patrol')+'</div><div class="sbgr c2">'+PATROLS.map(p=>{ const k=p.id+'|'+CFG.mode+'|'+CFG.sub; const b=B[k]; return opt(CFG.patrol===p.id,'data-p="'+p.id+'"',esc(L(p.n[0],p.n[1])),esc(L(p.d[0],p.d[1]))+'<br>'+L('Capa térmica a','Thermal layer at')+' '+p.layer+' m · '+L('semilla','seed')+' '+p.seed+(b!=null?' · '+L('Tu récord','Your best')+': '+ni(b):'')); }).join('')+'</div>';
- h+='<div class="sbrow" style="margin-top:14px"><button type="button" class="sbbtn pri" data-go style="flex:1 1 100%;min-height:52px;font-size:17px">'+L('Empezar patrulla','Start patrol')+'</button></div>';
+ h+='<div class="sbsec">'+L('Patrulla','Patrol')+'</div><div class="sbgr c2">'+PATROLS.map(p=>{ const k=p.id+'|'+CFG.mode+'|'+CFG.sub; const b=B[k]; return opt(CFG.patrol===p.id,'data-p="'+p.id+'"',esc(L(p.n[0],p.n[1])),esc(L(p.d[0],p.d[1]))+'<br>'+L('Capa térmica a','Thermal layer at')+' '+p.layer+' m · '+L('semilla','seed')+' '+p.seed+(b!=null?' · '+L('Tu récord','Your best')+': '+ni(b):'')); }).join('')+'</div>'; }
+ h+='<div class="sbrow" style="margin-top:14px"><button type="button" class="sbbtn pri" data-go style="flex:1 1 100%;min-height:52px;font-size:17px">'+(CFG.mode==='aprende'?L('Empezar el tutorial','Start the tutorial'):L('Empezar patrulla','Start patrol'))+'</button></div>';
  h+=howItWorks();
  h+='</div>';
  X.set(h,L('Submarino','Submarine'));
@@ -400,26 +619,26 @@ function howItWorks(){ const E=EST();
  '<li>'+L('Submarinos: fichas de M.A.T del Tipo 209 y del S-80 Plus (Wikipedia). Torpedo: cifras públicas de los torpedos pesados de 533 mm (Wikipedia: DM2A4, Mk 48), redondeadas.','Submarines: M.A.T entries for the Type 209 and S-80 Plus (Wikipedia). Torpedo: public figures for 533 mm heavyweight torpedoes (Wikipedia: DM2A4, Mk 48), rounded.')+E+'</li></ul>'+
  '<p class="sbnote">'+L('Todo lo marcado «Estimación» son valores redondos de M.A.T para el juego, no datos oficiales de ningún buque.','Everything marked «Estimate» is a round M.A.T value for the game, not official data for any ship.')+'</p></details>';
 }
-function start(){ G=newGame(CFG); TAB='sonar'; PAUSED=false; SPEED=10; game(); }
-function game(){ const g=G; SIG='';
+function start(){ if(CFG.mode==='aprende'){ lnStart(); return; } LN=null; G=newGame(CFG); TAB='sonar'; PAUSED=false; SPEED=10; game(); }
+function game(){ const g=G; SIG=''; const LRN=g.mode==='aprende'&&!!LN;
  const tabs=[['sonar','SONAR'],['tma','TMA'],['armas',L('ARMAS','WEAPONS')],['mando',L('MANDO','CONN')]];
  let h='<div class="sbw" data-noi18n>'+crumbs()+
- '<div class="sbtop"><div class="r1"><span class="sbclk" id="sbclk">00:00:00</span><div class="sbseg" id="sbspd">'+[1,5,10,30].map(v=>'<button type="button" data-spd="'+v+'"'+(v===SPEED?' class="on"':'')+'>×'+v+'</button>').join('')+'</div>'+
- '<button type="button" class="sbbtn sm" data-pause style="padding:6px 8px;min-width:0">'+L('Pausa','Pause')+'</button><button type="button" class="sbbtn sm" data-end style="margin-left:auto;padding:6px 8px;min-width:0">'+L('Terminar','End')+'</button></div>'+
+ '<div class="sbtop"><div class="r1"><span class="sbclk" id="sbclk">00:00:00</span>'+(LRN?'<span class="sbtag t">'+L('APRENDE','LEARN')+'</span><button type="button" class="sbbtn sm" data-ln="quit" style="margin-left:auto;padding:6px 8px;min-width:0">'+L('Salir del tutorial','Leave tutorial')+'</button></div>':'<div class="sbseg" id="sbspd">'+[1,5,10,30].map(v=>'<button type="button" data-spd="'+v+'"'+(v===SPEED?' class="on"':'')+'>×'+v+'</button>').join('')+'</div>'+
+ '<button type="button" class="sbbtn sm" data-pause style="padding:6px 8px;min-width:0">'+L('Pausa','Pause')+'</button><button type="button" class="sbbtn sm" data-end style="margin-left:auto;padding:6px 8px;min-width:0">'+L('Terminar','End')+'</button></div>')+
  '<div class="sbmini" id="sbmini"></div>'+
- '<div class="sbtabs">'+tabs.map(t=>'<button type="button" data-tab="'+t[0]+'"'+(t[0]===TAB?' class="on"':'')+'>'+t[1]+'</button>').join('')+'</div></div>'+
+ '<div class="sbtabs">'+tabs.map(t=>'<button type="button" data-tab="'+t[0]+'"'+(t[0]===TAB?' class="on"':'')+'>'+t[1]+'</button>').join('')+'</div></div>'+(LRN?'<div class="sbtut" id="sbtut"></div>':'')+
  '<div class="sbgrid">'+
  '<section class="sbpan'+(TAB==='sonar'?' on':'')+'" data-pan="sonar"><h3>'+L('Sonar pasivo · cascada','Passive sonar · waterfall')+'</h3><canvas class="sbcv" id="sbwf" height="300"></canvas><div id="sbcon"></div></section>'+
  '<section class="sbpan'+(TAB==='tma'?' on':'')+'" data-pan="tma"><h3>'+L('TMA · plot','TMA · plot')+' <span id="sbtmasel"></span></h3><canvas class="sbcv" id="sbplot" height="330"></canvas><div id="sbtma"></div><div id="sbtmactl"></div></section>'+
  '<section class="sbpan'+(TAB==='armas'?' on':'')+'" data-pan="armas"><h3>'+L('Armas · torpedo pesado filoguiado','Weapons · wire-guided heavyweight torpedo')+'</h3><div id="sbfc"></div><div id="sbfctl"></div><div id="sbtorp"></div></section>'+
  '<section class="sbpan'+(TAB==='mando'?' on':'')+'" data-pan="mando"><h3>'+L('Mando · rumbo, profundidad, velocidad','Conn · course, depth, speed')+'</h3>'+ctlHTML()+'<div id="sbrisk"></div></section>'+
- '</div><div class="sblog" id="sblog"></div>'+
- '<p class="sbnote">'+L('Consejo: haz un tramo de 4–5 min, cambia el rumbo 40–90° y haz otro. Antes de disparar, piensa por dónde vas a escapar.','Tip: run a 4–5 min leg, change course 40–90° and run another. Before you fire, plan your escape.')+'</p>'+howItWorks()+'</div>';
+ '</div>'+(LRN?'<div id="sbtut2"></div>':'')+'<div class="sblog" id="sblog"></div>'+
+ (LRN?'':'<p class="sbnote">'+L('Consejo: haz un tramo de 4–5 min, cambia el rumbo 40–90° y haz otro. Antes de disparar, piensa por dónde vas a escapar.','Tip: run a 4–5 min leg, change course 40–90° and run another. Before you fire, plan your escape.')+'</p>')+howItWorks()+'</div>';
  X.set(h,L('Submarino','Submarine'));
  const root=APP.querySelector('.sbw'); root.addEventListener('click',onClick);
  const pc=document.getElementById('sbplot'); pc.addEventListener('click',onPlotTap);
- if(!g.over){ LAST=0; ACC=0; RAF=requestAnimationFrame(loop); }
- ui(true); draw(); }
+ if(!g.over&&!RAF){ LAST=0; ACC=0; RAF=requestAnimationFrame(loop); }
+ ui(true); draw(); if(LRN) lnRender(); }
 function ctlHTML(){ const g=G; const sub=g.sub;
  const b=(attr,txt,cls)=>'<button type="button" class="sbbtn sm'+(cls?' '+cls:'')+'" '+attr+'>'+txt+'</button>';
  return '<div class="sbctl">'+
@@ -430,9 +649,9 @@ function ctlHTML(){ const g=G; const sub=g.sub;
  '</div>'; }
 function loop(ts){ RAF=requestAnimationFrame(loop); if(!G||G.over){ stopLoop(); return; }
  if(!LAST) LAST=ts; const dt=Math.min(0.25,(ts-LAST)/1000); LAST=ts;
- if(!PAUSED){ ACC+=dt*SPEED; let n=0; while(ACC>=1&&n<400){ step(); ACC-=1; n++; if(G.over) break; } }
+ if(G.mode==='aprende'){ if(LN&&LN.run) lnTick(dt); } else if(!PAUSED){ ACC+=dt*SPEED; let n=0; while(ACC>=1&&n<400){ step(); ACC-=1; n++; if(G.over) break; } }
  if(G.over) return;
- if(ts-LASTDRAW>120){ LASTDRAW=ts; draw(); } if(ts-LASTUI>300){ LASTUI=ts; ui(); } }
+ if(ts-LASTDRAW>120){ LASTDRAW=ts; draw(); } if(ts-LASTUI>300){ LASTUI=ts; ui(); if(G.mode==='aprende') lnLive(); } }
 function selS(){ return G.cont.find(s=>s.cid===G.sel)||null; }
 function cls(s){ return s.cid&&G.t-s.t0>=60; }
 function shipName(s){ return cls(s)?L(SHIPS[s.k].n[0],SHIPS[s.k].n[1]):L('Sin clasificar','Unclassified'); }
@@ -501,20 +720,25 @@ function fcUI(force){ const g=G, s=selS(); const box=document.getElementById('sb
    h+='<dt>'+L('Solución','Solution')+'</dt><dd>'+ni(so.r)+' m · '+p3(so.c)+'° · '+nf(so.v,1)+' kn</dd>';
    if(ip){ const run=Math.hypot(ip.x-O.x,ip.y-O.y); h+='<dt>'+L('Rumbo del torpedo','Torpedo course')+'</dt><dd>'+p3(brgOf(ip.x-O.x,ip.y-O.y))+'°</dd><dt>'+L('Recorrido previsto','Predicted run')+'</dt><dd>'+ni(run)+' m · '+hhmmss(ip.t)+(run>TORP.range?' · <span style="color:#ff8a70">'+L('FUERA DE ALCANCE','OUT OF RANGE')+'</span>':'')+'</dd>'; }
    if(g.tubes<=0){ can=false; why=L('No quedan torpedos.','No torpedoes left.'); } } }
- h+='<dt>'+L('Buscador se activa a','Seeker switches on at')+'</dt><dd>'+ni(g.mode==='facil'?1200:(g.actSet!=null?g.actSet:1200))+' m '+L('del punto previsto','from the predicted point')+'</dd></dl>';
+ h+='<dt>'+L('Buscador se activa a','Seeker switches on at')+'</dt><dd>'+ni(g.mode==='facil'?1200:(g.actSet!=null?g.actSet:1200))+' m '+L('del punto previsto','from the predicted point')+'</dd></dl>'; if(g.mode==='aprende'&&LN&&LN.step<5) can=false;
  if(why) h+='<p class="sbnote">'+why+'</p>';
  if(O.v>12) h+='<p class="sbnote" style="color:#e8b040">'+L('A más de 12 nudos el cable se rompe.','Above 12 knots the wire breaks.')+'</p>';
  box.innerHTML=h;
  const csig='c'+g.mode;
- if(ctl.dataset.sig!==csig){ ctl.dataset.sig=csig; ctl.innerHTML='<div class="sbrow">'+(g.mode==='veterano'?'<span class="sbnote">'+L('Activación','Enable')+'</span><button type="button" class="sbbtn sm" data-act="-250">−250 m</button><button type="button" class="sbbtn sm" data-act="250">+250 m</button>':'')+'<button type="button" class="sbbtn fire" data-fire>'+L('LANZAR TORPEDO','FIRE TORPEDO')+'</button></div>'; }
+ if(ctl.dataset.sig!==csig){ ctl.dataset.sig=csig; ctl.innerHTML='<div class="sbrow">'+(g.mode!=='facil'?'<span class="sbnote">'+L('Activación','Enable')+'</span><button type="button" class="sbbtn sm" data-act="-250">−250 m</button><button type="button" class="sbbtn sm" data-act="250">+250 m</button>':'')+'<button type="button" class="sbbtn fire" data-fire>'+L('LANZAR TORPEDO','FIRE TORPEDO')+'</button></div>'; }
  const fb=ctl.querySelector('[data-fire]'); if(fb) fb.disabled=!can;
  const live=g.torps; const tsig=live.map(t=>t.id+(t.done?'d':'')+(t.seek?'s':'')+(t.wire?'w':'')).join(',');
- if(tb.dataset.sig!==tsig){ tb.dataset.sig=tsig; tb.innerHTML=live.map(t=>'<div class="sbc" style="cursor:default"><span class="a">'+L('Torpedo','Torpedo')+' '+t.id+' → '+t.cid+'</span><span class="b" id="sbtp-'+t.id+'"></span>'+(!t.done?'<div class="sbrow">'+(!t.seek?'<button type="button" class="sbbtn sm" data-seek="'+t.id+'">'+L('Activar buscador','Seeker on')+'</button>':'')+(t.wire?'<button type="button" class="sbbtn sm" data-wire="'+t.id+'" data-w="-5">'+L('Cable','Wire')+' ◀ 5°</button><button type="button" class="sbbtn sm" data-wire="'+t.id+'" data-w="5">5° ▶</button>':'')+'</div>':'')+'</div>').join(''); }
+ if(tb.dataset.sig!==tsig){ tb.dataset.sig=tsig; tb.innerHTML=live.map(t=>'<div class="sbc" style="cursor:default"><span class="a">'+L('Torpedo','Torpedo')+' '+t.id+' → '+t.cid+'</span><span class="b" id="sbtp-'+t.id+'"></span>'+(!t.done&&g.mode!=='aprende'?'<div class="sbrow">'+(!t.seek?'<button type="button" class="sbbtn sm" data-seek="'+t.id+'">'+L('Activar buscador','Seeker on')+'</button>':'')+(t.wire?'<button type="button" class="sbbtn sm" data-wire="'+t.id+'" data-w="-5">'+L('Cable','Wire')+' ◀ 5°</button><button type="button" class="sbbtn sm" data-wire="'+t.id+'" data-w="5">5° ▶</button>':'')+'</div>':'')+'</div>').join(''); }
  live.forEach(t=>{ const el=document.getElementById('sbtp-'+t.id); if(!el) return;
   const st=t.res==='hit'?L('IMPACTO','HIT'):t.res==='neutral'?L('impacto en un no designado','hit a non-designated ship'):t.res==='fuel'?L('fallo: sin combustible','miss: out of fuel'):t.lock?L('blanco adquirido','target acquired'):t.seek?L('buscador activo, buscando','seeker active, searching'):t.wire?L('guiado por cable','wire-guided'):L('autónomo','autonomous');
   el.innerHTML=st+' · '+L('recorrido','run')+' '+nf(t.run/1000,1)+'/'+(TORP.range/1000)+' km'+(t.togo!=null&&!t.done&&!t.lock?' · '+L('al punto previsto','to predicted point')+' '+ni(t.togo)+' m':'')+(t.off?' · '+L('corrección','offset')+' '+(t.off>0?'+':'')+t.off+'°':''); });
 }
 function onClick(ev){ const b=ev.target.closest('button'); if(!b||!G) return; const g=G, O=g.own, d=b.dataset;
+ if(d.ln){ lnAction(d.ln); return; }
+ const LRN=g.mode==='aprende'&&!!LN;
+ if(LRN&&!d.tab){ if(!lnAllow(d,b)){ if(!LN.run&&!g.over&&(d.dc||d.dd||d.ddr||d.dv||d.mk||d.mr||d.mc||d.mv||d.act||d.sel||b.hasAttribute('data-sil')||b.hasAttribute('data-fire'))){ LN.msg=L('Ahora no: este control se usa en otro paso. Sigue lo que dice el tutor.','Not now: this control belongs to another step. Follow the tutor.'); LN.mk='bad'; lnRender(); } return; }
+  if(b.hasAttribute('data-fire')){ lnFire(); return; }
+  if(!d.sel){ LN.ok=false; LN.msg=''; } }
  if(d.tab){ TAB=d.tab; APP.querySelectorAll('.sbtabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===TAB)); APP.querySelectorAll('.sbpan').forEach(p=>p.classList.toggle('on',p.dataset.pan===TAB)); draw(); try{ const tp=APP.querySelector('.sbtop'), pn=APP.querySelector('.sbpan.on'); if(tp&&pn){ const y=pn.getBoundingClientRect().top; const hb=tp.getBoundingClientRect().bottom; if(y<hb) window.scrollBy(0,y-hb-6); } }catch(e){} return; }
  if(d.spd){ SPEED=+d.spd; APP.querySelectorAll('[data-spd]').forEach(x=>x.classList.toggle('on',+x.dataset.spd===SPEED)); return; }
  if(b.hasAttribute('data-pause')){ PAUSED=!PAUSED; ui(); return; }
@@ -532,11 +756,11 @@ function onClick(ev){ const b=ev.target.closest('button'); if(!b||!G) return; co
  else if(b.hasAttribute('data-fire')){ fire(selS()); }
  else if(d.seek){ const t=g.torps.find(x=>x.id===+d.seek); if(t) activateSeeker(t,'man'); }
  else if(d.wire){ const t=g.torps.find(x=>x.id===+d.wire); if(t&&t.wire) t.off=clamp(t.off+(+d.w),-60,60); }
- ui(true); draw(); }
+ ui(true); draw(); if(LRN) lnRender(); }
 let PLOTV=null;
-function onPlotTap(ev){ const g=G; if(!g||g.mode!=='veterano'||!PLOTV) return; const s=selS(); if(!s||!s.brgs.length) return; const r=ev.currentTarget.getBoundingClientRect();
+function onPlotTap(ev){ const g=G; if(!g||g.mode==='facil'||!PLOTV) return; if(g.mode==='aprende'){ if(!LN||LN.run||!(LN.step===4&&LN.ph==='c')) return; LN.ok=false; LN.msg=''; } const s=selS(); if(!s||!s.brgs.length) return; const r=ev.currentTarget.getBoundingClientRect();
  const px=ev.clientX-r.left, py=ev.clientY-r.top; const wx=PLOTV.x0+(px-PLOTV.ox)/PLOTV.k, wy=PLOTV.y0-(py-PLOTV.oy)/PLOTV.k;
- const m=manOf(s); const q=s.brgs[m.k]; const R=(wx-q.ox)*Math.sin(q.b*D2R)+(wy-q.oy)*Math.cos(q.b*D2R); m.R=clamp(Math.round(R/10)*10,100,60000); ui(true); draw(); }
+ const m=manOf(s); const q=s.brgs[m.k]; const R=(wx-q.ox)*Math.sin(q.b*D2R)+(wy-q.oy)*Math.cos(q.b*D2R); m.R=clamp(Math.round(R/10)*10,100,60000); ui(true); draw(); if(g.mode==='aprende') lnRender(); }
 function sizeCv(cv,h){ const w=Math.max(200,cv.clientWidth||cv.parentNode.clientWidth||300); const dpr=Math.min(2,window.devicePixelRatio||1); if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); cv.style.height=h+'px'; } const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); return {c:c,w:w,h:h}; }
 let WFC=null;
 function draw(){ const g=G; if(!g) return; const wide=window.innerWidth>=1000;
@@ -571,7 +795,7 @@ function drawPlot(cv,H,recon){ const g=G,O=g.own; const {c,w,h}=sizeCv(cv,H); co
  for(let gy=Math.floor((cy-span)/gs)*gs;gy<cy+span;gy+=gs){ const p=P(0,gy); c.moveTo(0,p[1]); c.lineTo(w,p[1]); } c.stroke();
  c.fillStyle='#80846f'; c.font='500 11px system-ui,sans-serif'; c.fillText(L('cuadrícula','grid')+' '+gs/1000+' km · N ↑',8,h-8);
  if(s&&s.brgs.length){ const L2=span*1.5; const n=s.brgs.length; const from=Math.max(0,n-60); c.lineWidth=1;
-  for(let i=from;i<n;i++){ const q=s.brgs[i]; const a=P(q.ox,q.oy), b=P(q.ox+Math.sin(q.b*D2R)*L2,q.oy+Math.cos(q.b*D2R)*L2); c.strokeStyle=(g.mode==='veterano'&&g.man[s.cid]&&g.man[s.cid].k===i)?'rgba(232,176,64,.9)':'rgba(143,154,106,'+(0.25+0.5*(i-from)/(n-from))+')'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); }
+  for(let i=from;i<n;i++){ const q=s.brgs[i]; const a=P(q.ox,q.oy), b=P(q.ox+Math.sin(q.b*D2R)*L2,q.oy+Math.cos(q.b*D2R)*L2); c.strokeStyle=(g.mode!=='facil'&&g.man[s.cid]&&g.man[s.cid].k===i)?'rgba(232,176,64,.9)':'rgba(143,154,106,'+(0.25+0.5*(i-from)/(n-from))+')'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); }
   if(so&&so.ok){ const st=so.st; c.strokeStyle='#e8b040'; c.lineWidth=2; const t0=s.brgs[from].t, t1=g.t+600; const a=P(st.x+st.vx*(t0-st.t),st.y+st.vy*(t0-st.t)), b=P(st.x+st.vx*(t1-st.t),st.y+st.vy*(t1-st.t)); c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke();
    c.fillStyle='#e8b040'; for(let i=from;i<n;i+=Math.max(1,Math.floor((n-from)/12))){ const q=s.brgs[i]; const p=P(st.x+st.vx*(q.t-st.t),st.y+st.vy*(q.t-st.t)); c.fillRect(p[0]-2,p[1]-2,4,4); }
    const pn=P(so.x,so.y); c.beginPath(); c.arc(pn[0],pn[1],5,0,7); c.fill(); c.font='700 12px system-ui,sans-serif'; { const lb=s.cid+(g.mode==='facil'?'':' ('+L('tu solución','your solution')+')'); const tw=c.measureText(lb).width; c.fillText(lb,clamp(pn[0]+8,4,w-tw-4),clamp(pn[1]-6,14,h-20)); }
@@ -585,23 +809,23 @@ function drawPlot(cv,H,recon){ const g=G,O=g.own; const {c,w,h}=sizeCv(cv,H); co
  const me=P(O.x,O.y); c.save(); c.translate(me[0],me[1]); c.rotate(O.c*D2R); c.fillStyle='#c8f03c'; c.beginPath(); c.moveTo(0,-9); c.lineTo(6,7); c.lineTo(-6,7); c.closePath(); c.fill(); c.restore(); }
 function debrief(){ const g=G; if(!APP||!g) return; const sc=g.sc;
  const tt={escaped:[L('MISIÓN CUMPLIDA','MISSION COMPLETE'),'good',L('Blanco alcanzado y la escolta te ha perdido.','Target hit and the escort has lost you.')],fixed:[L('TE HAN FIJADO','PINNED'),'bad',L('La escolta te mantuvo en contacto a menos de 2 km: en combate real lanzaría sus armas.','The escort held you within 2 km: in real combat it would launch its weapons.')],time:[L('TIEMPO AGOTADO','TIME UP'),'bad',L('Se acabó el tiempo de la patrulla.','The patrol time ran out.')],quit:[L('PATRULLA TERMINADA','PATROL ENDED'),g.hits?'good':'bad',L('Has terminado la patrulla.','You ended the patrol.')]}[g.over];
- let h='<div class="sbw" data-noi18n>'+crumbs()+'<div class="sbbig '+tt[1]+'">'+tt[0]+'</div><p class="sbnote" style="font-size:15px">'+tt[2]+'</p>';
- h+='<div class="sbpan on"><h3>'+L('Informe','Debrief')+' · '+esc(L(g.pt.n[0],g.pt.n[1]))+' · '+esc(g.sub.n)+' · '+(g.mode==='facil'?L('Fácil','Easy'):L('Veterano','Veteran'))+'</h3><table class="sbtbl">'+
+   let h='<div class="sbw" data-noi18n>'+crumbs()+(g.mode==='aprende'?'<div class="sbtut"><div class="sbtsteps">'+LN_STEPS.map((x,i)=>'<span class="'+(i<6?'d':'c')+'">'+(i+1)+'</span>').join('')+'</div><h3>'+L('Paso 7 de 7 · Informe','Step 7 of 7 · Debrief')+'</h3><p>'+L('Así se calcula tu puntuación. Cada línea dice de dónde sale. Ya sabes jugar: prueba Fácil (la computadora calcula el TMA) o Veterano (lo haces tú, como en el paso 4).','This is how your score is worked out. Each line says where it comes from. You know how to play now: try Easy (the computer solves the TMA) or Veteran (you do it, as in step 4).')+'</p></div>':'')+'<div class="sbbig '+tt[1]+'">'+tt[0]+'</div><p class="sbnote" style="font-size:15px">'+tt[2]+'</p>';
+ h+='<div class="sbpan on"><h3>'+L('Informe','Debrief')+' · '+esc(L(g.pt.n[0],g.pt.n[1]))+' · '+esc(g.sub.n)+' · '+(g.mode==='facil'?L('Fácil','Easy'):g.mode==='aprende'?L('Aprende','Learn'):L('Veterano','Veteran'))+'</h3><table class="sbtbl">'+
  '<tr><td>'+L('Tiempo de patrulla','Patrol time')+'</td><td>'+hhmmss(g.tEnd)+'</td></tr>'+
  '<tr><td>'+L('Torpedos lanzados / impactos','Torpedoes fired / hits')+'</td><td>'+g.fired+' / '+g.hits+(g.neutral?' (+'+g.neutral+' '+L('no designado','non-designated')+')':'')+'</td></tr>'+
  g.shots.map(tp=>'<tr><td>'+L('Error de la solución, torpedo','Solution error, torpedo')+' '+tp.id+' ('+(tp.res==='hit'?L('impacto','hit'):tp.res==='neutral'?L('no designado','non-designated'):L('fallo','miss'))+')</td><td>'+L('dist.','range')+' '+(tp.err.dr>=0?'+':'')+nf(tp.err.dr,1)+' % · '+L('rumbo','course')+' '+(tp.err.dc>=0?'+':'')+nf(tp.err.dc,1)+'° · '+L('vel.','speed')+' '+(tp.err.dv>=0?'+':'')+nf(tp.err.dv,1)+' kn'+(tp.seekAt!=null?' · '+L('buscador a','seeker at')+' '+ni(tp.seekAt)+' m':'')+'</td></tr>').join('')+
  '<tr><td>'+L('Ruido medio / pico','Average / peak noise')+'</td><td>'+Math.round(sc.avg)+' / '+Math.round(sc.peak)+' dB</td></tr>'+
  '<tr><td>'+L('Veces detectado','Times detected')+'</td><td>'+g.detN+'</td></tr></table>'+
- '<h3 style="margin-top:14px">'+L('Puntuación','Score')+'</h3><table class="sbtbl">'+sc.items.map(it=>'<tr><td>'+esc(L(it[0],it[1]))+'</td><td>'+(it[2]>0?'+':'')+ni(it[2])+'</td></tr>').join('')+
+ '<h3 style="margin-top:14px">'+L('Puntuación','Score')+'</h3><table class="sbtbl">'+sc.items.map(it=>'<tr><td>'+esc(L(it[0],it[1]))+(g.mode==='aprende'?'<small class="sbexp">'+esc(lnExplain(it[0]))+'</small>':'')+'</td><td>'+(it[2]>0?'+':'')+ni(it[2])+'</td></tr>').join('')+
  '<tr><td><b>'+L('Total','Total')+'</b></td><td><b>'+ni(sc.total)+'</b></td></tr><tr><td>'+L('Rango','Rank')+'</td><td>'+esc(L(sc.rank[0],sc.rank[1]))+'</td></tr><tr><td>'+L('Tu récord en esta patrulla','Your best on this patrol')+'</td><td>'+ni(g.best)+(g.newBest?' · '+L('¡nuevo!','new!'):'')+'</td></tr></table></div>';
  h+='<div class="sbpan on" style="margin-top:10px"><h3>'+L('Reconstrucción: derrotas reales (color) y tu solución al disparar (discontinua)','Reconstruction: true tracks (colour) and your solution at firing (dashed)')+'</h3><canvas class="sbcv" id="sbrec" height="360"></canvas></div>';
- h+='<div class="sbrow" style="margin-top:12px"><button type="button" class="sbbtn pri" data-again>'+L('Repetir patrulla','Replay patrol')+'</button><button type="button" class="sbbtn" data-menu>'+L('Cambiar patrulla','Change patrol')+'</button></div></div>';
+   h+='<div class="sbrow" style="margin-top:12px">'+(g.mode==='aprende'?'<button type="button" class="sbbtn pri" data-jump="facil">'+L('Saltar a Fácil','Go to Easy')+'</button><button type="button" class="sbbtn pri" data-jump="veterano">'+L('Saltar a Veterano','Go to Veteran')+'</button><button type="button" class="sbbtn" data-again>'+L('Repetir Aprende','Replay Learn')+'</button>':'<button type="button" class="sbbtn pri" data-again>'+L('Repetir patrulla','Replay patrol')+'</button><button type="button" class="sbbtn" data-menu>'+L('Cambiar patrulla','Change patrol')+'</button>')+'</div></div>';
  X.set(h,L('Submarino','Submarine'));
- const root=APP.querySelector('.sbw'); root.addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; if(b.hasAttribute('data-again')) start(); else if(b.hasAttribute('data-menu')) intro(); });
+ const root=APP.querySelector('.sbw'); root.addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; if(b.dataset.jump){ CFG.mode=b.dataset.jump; saveCfg(); intro(); } else if(b.hasAttribute('data-again')) start(); else if(b.hasAttribute('data-menu')) intro(); });
  drawPlot(document.getElementById('sbrec'),360,true); try{ window.scrollTo(0,0); }catch(e){} }
 
 export function route(app,x){ APP=app; X=x; css(); CFG=loadCfg(); stopLoop();
- const q=(location.hash.split('?')[1]||''); q.split('&').forEach(kv=>{ const [k,v]=kv.split('='); if(k==='m'&&(v==='facil'||v==='veterano')) CFG.mode=v; if(k==='s'&&SUBS.some(s=>s.id===v)) CFG.sub=v; if(k==='p'&&PATROLS.some(p=>p.id===v)) CFG.patrol=v; });
+ const q=(location.hash.split('?')[1]||''); q.split('&').forEach(kv=>{ const [k,v]=kv.split('='); if(k==='m'&&(v==='facil'||v==='veterano'||v==='aprende')) CFG.mode=v; if(k==='s'&&SUBS.some(s=>s.id===v)) CFG.sub=v; if(k==='p'&&PATROLS.some(p=>p.id===v)) CFG.patrol=v; });
  intro(); }
 if(typeof window!=='undefined'){ window.addEventListener('hashchange',()=>{ if(!/^#\/submarino/.test(location.hash)) stopLoop(); });
 /* para QA automática */
@@ -617,5 +841,6 @@ window.MAT_SUB={G:()=>G,cfg:o=>{ Object.assign(CFG,o||{}); return CFG; },start:(
  truth:cid=>{ const s=G.cont.find(x=>x.cid===cid); const O=G.own; return {r:dist(s,O),b:brgOf(s.x-O.x,s.y-O.y),c:s.c,v:s.v,x:s.x,y:s.y}; },
  esc:()=>G.ships.filter(s=>s.esc).map(e=>({st:e.st,r:dist(e,G.own),v:e.v})),risk:()=>{ const O=G.own; return riskRanges(G.sub,O.v,O.d,O.sil,G.layer); },
  debrief:()=>debrief(),tab:t=>{ TAB=t; APP.querySelectorAll('.sbtabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===TAB)); APP.querySelectorAll('.sbpan').forEach(p=>p.classList.toggle('on',p.dataset.pan===TAB)); draw(); },
- pause:p=>{ PAUSED=!!p; }};
+  pause:p=>{ PAUSED=!!p; },
+ ln:()=>LN,lnAct:a=>lnAction(a),lnFinish:()=>lnFinish(),lnSol:()=>lnSolErr(),lnTorp:()=>lnTorpCourse(),lnTgt:()=>lnTgt()};
 }
