@@ -36,6 +36,7 @@ const FUENTES=[
   ["J. Thompson, «“Crisis” or “Hostage” Negotiation? The Distinction Between Two Important Terms», FBI Law Enforcement Bulletin.","J. Thompson, “‘Crisis’ or ‘Hostage’ Negotiation? The Distinction Between Two Important Terms”, FBI Law Enforcement Bulletin.","https://leb.fbi.gov/articles/featured-articles/crisis-or-hostage-negotiation-the-distinction-between-two-important-terms"],
   ["G. M. Vecchi, V. B. Van Hasselt y S. J. Romano (2005), «Crisis (hostage) negotiation: current strategies and issues in high-risk conflict resolution», Aggression and Violent Behavior 10(5), 533–551: las cinco fases de la escalera (escucha activa, empatía, rapport, influencia, cambio de conducta), incentivos mínimos, mensajes en primera persona.","G. M. Vecchi, V. B. Van Hasselt & S. J. Romano (2005), “Crisis (hostage) negotiation: current strategies and issues in high-risk conflict resolution”, Aggression and Violent Behavior 10(5), 533–551: the five steps of the stairway (active listening, empathy, rapport, influence, behavioural change), minimal encouragers, I-messages.","https://www.sciencedirect.com/science/article/pii/S1359178904000758"],
   ["M. McMains, W. Mullins y A. Young, «Crisis Negotiations: Managing Critical Incidents and Hostage Situations in Law Enforcement and Corrections», Routledge: no decir «cálmate» ni «relájate», no mentir, cumplir las promesas, no decir «no» en seco, evitar palabras cargadas, no juzgar, hablar siempre directamente con el captor, plan de salida, preguntar directamente por el suicidio.","M. McMains, W. Mullins & A. Young, “Crisis Negotiations: Managing Critical Incidents and Hostage Situations in Law Enforcement and Corrections”, Routledge: don’t say “calm down” or “relax”, don’t lie, keep promises, don’t say a flat “no”, avoid loaded words, don’t judge, always talk to the hostage-taker directly, surrender plan, ask directly about suicide.","https://www.routledge.com/Crisis-Negotiations-Managing-Critical-Incidents-and-Hostage-Situations-in-Law-Enforcement-and-Corrections/McMains-Mullins-Young/p/book/9781138585522"],
+  ["K. Mohandie, J. R. Meloy y P. I. Collins (2009), «Suicide by Cop Among Officer-Involved Shooting Cases», Journal of Forensic Sciences 54(2), 456–462: en una muestra de 707 tiroteos con agentes en Norteamérica, una parte de los sujetos buscaba provocar a la policía para que les disparase («suicidio por policía»), a menudo con alcohol o drogas de por medio.","K. Mohandie, J. R. Meloy & P. I. Collins (2009), “Suicide by Cop Among Officer-Involved Shooting Cases”, Journal of Forensic Sciences 54(2), 456–462: in a sample of 707 North American officer-involved shootings, some subjects were trying to provoke the police into shooting them (“suicide by cop”), often with alcohol or drugs involved.","https://pubmed.ncbi.nlm.nih.gov/19220654/"],
   ["C. Voss y T. Raz (2016), «Never Split the Difference» (en español, «Rompe la barrera del no»), HarperBusiness: empatía táctica, espejo, etiquetas, auditoría de acusaciones, preguntas calibradas («¿cómo…?», «¿qué…?») y el «eso es».","C. Voss & T. Raz (2016), “Never Split the Difference”, HarperBusiness: tactical empathy, mirroring, labels, the accusation audit, calibrated questions (“how…?”, “what…?”) and “that’s right”.",""]]],
  ["Reino Unido, Alemania, Países Bajos y Australia","UK, Germany, the Netherlands and Australia",[
   ["A. Grubb (2010), «Modern day hostage (crisis) negotiation: The evolution of an art form within the policing arena», Aggression and Violent Behavior 15(5), 341–348 (Reino Unido).","A. Grubb (2010), “Modern day hostage (crisis) negotiation: The evolution of an art form within the policing arena”, Aggression and Violent Behavior 15(5), 341–348 (UK).","https://www.sciencedirect.com/science/article/abs/pii/S135917891000039X"],
@@ -46,6 +47,7 @@ const FUENTES=[
  ["España y Europa","Spain and Europe",[
   ["El País, «Las pruebas de fuego del negociador policial: fuera vértigo, creatividad hiperactiva y nervios de acero», 19-9-2025: la red de negociadores de la Policía Nacional (53 agentes; curso de especialización desde 2016 en el cuartel de los GEO, Guadalajara). Citas: «La negociación es crear confianza» (inspector César Martín); «No por mucho hablar lo estás haciendo mejor» (inspectora jefa Isabel Espejo).","El País, “Las pruebas de fuego del negociador policial…”, 19 Sep 2025: the Spanish National Police negotiator network (53 officers; specialist course since 2016 at the GEO base in Guadalajara). Quotes: “Negotiation is building trust” (Inspector César Martín); “Talking more doesn’t mean you’re doing better” (Chief Inspector Isabel Espejo).","https://elpais.com/espana/2025-09-19/las-pruebas-de-fuego-del-negociador-policial-fuera-vertigo-creatividad-hiperactiva-y-nervios-de-acero.html"],
   ["Grupo Especial de Operaciones (GEO) de la Policía Nacional: liberación de rehenes e intervenciones de alto riesgo (Wikipedia).","Grupo Especial de Operaciones (GEO), Spanish National Police: hostage rescue and high-risk operations (Wikipedia).","https://es.wikipedia.org/wiki/Grupo_Especial_de_Operaciones"],
+  ["Ley Orgánica 2/1986, de Fuerzas y Cuerpos de Seguridad, art. 5.2.c (BOE): los agentes actúan «con la decisión necesaria» y se rigen «por los principios de congruencia, oportunidad y proporcionalidad en la utilización de los medios a su alcance».","Organic Law 2/1986 on the Security Forces, art. 5.2.c (BOE, Spain): officers act “with the necessary resolve” and are governed “by the principles of congruence, opportunity and proportionality in the use of the means at their disposal”.","https://www.boe.es/buscar/act.php?id=BOE-A-1986-6859"],
   ["Unidades especiales de intervención de la UE y Red ATLAS: GEO y UEI (Guardia Civil) en España, GIGN y RAID en Francia, GSG 9 en Alemania (Wikipedia).","EU special intervention units and the ATLAS network: GEO and UEI (Guardia Civil) in Spain, GIGN and RAID in France, GSG 9 in Germany (Wikipedia).","https://es.wikipedia.org/wiki/Unidades_especiales_de_intervenci%C3%B3n_de_la_Uni%C3%B3n_Europea"]]],
  ["Casos reales del informe final (Wikipedia)","Real cases in the debrief (Wikipedia)",[
   ["Atraco de Norrmalmstorg (Estocolmo, 1973).","Norrmalmstorg robbery (Stockholm, 1973).","https://en.wikipedia.org/wiki/Norrmalmstorg_robbery"],
@@ -885,7 +887,10 @@ function endText(){
   tiempo:S2(`Tras unas ${hrs} horas sin avances suficientes, el mando decidió intervenir. El caso no se resolvió hablando.`,`After about ${hrs} hours without enough progress, command decided to intervene. The case wasn’t resolved by talking.`),
   fracaso:S2("La situación se descontroló. El mando ordenó la entrada del grupo de intervención y el caso no se resolvió hablando.","The situation spiralled. Command sent in the intervention team and the case wasn’t resolved by talking."),
   tactico:G.endK==='tir'?S2(`Con la tensión disparada y sin margen para hablar, un tirador ${P.rural?'de la UEI':'del GEO'} tuvo línea limpia por la ventana, sin ningún rehén en ella. Sujeto neutralizado. El equipo entró y las personas retenidas salieron escoltadas, a salvo.`,`With tension through the roof and no room left to talk, ${P.rural?'a UEI':'a GEO'} sniper had a clean line through the window with no hostage in it. Subject neutralised. The team went in and the people held were escorted out safely.`)
-   :S2(`Con la tensión disparada y la negociación agotada, ${FZa()[0]} entró por la puerta principal. ${n} fue reducid{o} y detenid{o}, y las personas retenidas salieron escoltadas, a salvo.`,`With tension through the roof and negotiation exhausted, ${FZa()[1]} went in through the front door. ${n} was overpowered and detained, and the people held were escorted out safely.`),
+   :(()=>{ const a=G.asr||{o:'breve'}, A=`Con la tensión disparada y la negociación agotada, ${FZa()[0]} entró por la puerta principal. `, B=`With tension through the roof and negotiation exhausted, ${FZa()[1]} went in through the front door. `;
+    if(a.o==='sin') return S2(A+`${n} no se resistió: dejó el arma en el suelo y levantó las manos. Detenid{o} sin un solo golpe; las personas retenidas salieron escoltadas, a salvo.`,B+`${n} didn’t resist: weapon on the floor, hands up. Detained without a single blow; the people held were escorted out safely.`);
+    if(a.o==='breve') return S2(A+`${n} forcejeó unos segundos, pero fue reducid{o} sin disparos y detenid{o}. Las personas retenidas salieron escoltadas, a salvo.`,B+`${n} struggled for a few seconds but was overpowered without shots and detained. The people held were escorted out safely.`);
+    return S2(A+`${n} se resistió y el equipo tuvo que usar la fuerza: resultó herid{o} y fue detenid{o}. `+(a.hurt?'Una persona retenida sufrió una contusión leve; las demás salieron sin daños.':'Las personas retenidas salieron escoltadas, a salvo.'),B+`${n} resisted and the team had to use force: he was injured and detained. `+(a.hurt?'One person held got a minor bruise; the others came out unharmed.':'The people held were escorted out safely.')); })(),
   prematuro:S2(`Ordenaste ${G.endK==='tir'?'el disparo':'el asalto'} con la negociación todavía viable. Las personas retenidas salieron, pero se asumió un riesgo para ellas y para los agentes que hablar todavía podía evitar.`,`You ordered ${G.endK==='tir'?'the shot':'the assault'} while negotiation was still viable. The people held came out, but a risk was taken with them and with the officers that talking could still have avoided.`)}[G.end];
 }
 function debrief(){
@@ -902,7 +907,7 @@ function debrief(){
    '<p><span class="ngtag '+r.q+'">'+esc(T(QN[r.q]))+'</span><b>'+esc(T(tc[0]))+'</b> · <span style="color:var(--mu);font-size:12px">'+esc(T(SRC[tc[2]]))+'</span></p><p>'+TXT(tc[1])+'</p>'+
    r.why.map(w=>'<p>· '+TXT(w)+'</p>').join('')+(r.best?'<p class="bt">'+L('Mejor opción: ','Better option: ')+'«'+TXT(r.best.t)+'» ('+esc(T(TECH[r.best.k][0]))+')</p>':'')+'</div>'; }).join('');
  const h='<div class="ngw" data-noi18n>'+crumbs()+'<h1>'+L('Informe','Debrief')+'</h1>'+
-  '<div class="ngres '+E[1]+'"><b class="big">'+esc(T(E[0]))+'</b><p>'+esc(T(endText()))+'</p></div>'+
+  '<div class="ngres '+E[1]+'"><b class="big">'+esc(T(E[0]))+'</b><p>'+TXT(endText())+'</p></div>'+
   '<div class="ngkp"><div><b>'+sc+'</b><span>/100 · '+esc(T(rank))+'</span></div><div><b>'+Math.floor(G.mins/60)+':'+String(G.mins%60).padStart(2,'0')+'</b><span>'+L('horas de negociación','hours negotiating')+'</span></div><div><b>'+ng+' / '+nb+'</b><span>'+L('respuestas buenas / malas','good / bad replies')+'</span></div><div><b>'+(ph+1)+'/5</b><span>'+esc(T(PH[ph]))+'</span></div></div>'+
   '<div class="ngsec">'+L('Tu enfoque','Your approach')+'</div><p><b>'+esc(T(APS[G.ap][0]))+'</b>: '+TXT(G.apNote)+'</p>'+
   tacSec()+'<div class="ngsec">'+L('Lo que importaba del expediente','What mattered in the dossier')+'</div><ul class="ngkey">'+(keys.join('')||'<li>'+L('Un perfil sin anclas ni detonantes claros: la escucha era la única llave.','A profile with no clear anchors or triggers: listening was the only key.')+'</li>')+'</ul>'+
@@ -953,12 +958,34 @@ function tacUpd(rec){
  if(was&&!G.crit&&!G.end) rec.events.push(S2('La tensión vuelve a bajar: hablar funciona otra vez y el mando retira la autorización táctica.','Tension is coming down again: talking works again and command withdraws the tactical authorisation.'));
  G.trPrev=G.trust; G.tPrev=G.tension; if(!G.end) G.spos=subPos(); rec.crit=G.crit; rec.spos=G.spos;
 }
+/* ---- asalto táctico: cómo responde el sujeto cuando entra el equipo ----
+   Sale SOLO del estado de la partida en el momento de la orden (sin dados: el mismo estado da siempre el mismo resultado).
+   Cada factor suma o resta puntos; los puntos y los umbrales están simplificados para el juego, los factores salen de la doctrina citada en las fuentes. */
+const AS_SIN=1, AS_BREVE=4;
+function asaltoRes(){
+ const t=G.tension, c=G.trust, ins=inside().length, near=ins>0&&(G.spos==='rehenes'||G.spos==='ventanaR');
+ const brk=G.log.filter(r=>r.type==='reclamo'&&r.q!=='good').length, h=Math.floor(G.mins/60), m=G.mins%60, hm=h+':'+String(m).padStart(2,'0');
+ const F=[]; const add=(p,es,en)=>{ if(p) F.push([p,S2(es,en)]); };
+ add(t>=92?3:t>=85?2:t>=70?1:t<40?-1:0, 'Tensión '+t+(t>=92?': al límite':t>=85?': muy alta':t>=70?': alta':': baja'), 'Tension '+t+(t>=92?': at breaking point':t>=85?': very high':t>=70?': high':': low'));
+ add(c>=40?-3:c>=20?-2:c>=10?-1:0, 'Confianza '+c+(c>=40?': había rapport':c>=20?': algo de confianza contigo':': poca confianza'), 'Trust '+c+(c>=40?': there was rapport':c>=20?': some trust in you':': little trust'));
+ add(near?2:0, 'Estaba junto a las personas retenidas cuando entró el equipo', 'He was next to the people held when the team went in');
+ add(brk?Math.min(2,brk):0, 'Promesa incumplida o mentira descubierta ('+brk+')', 'Broken promise or lie found out ('+brk+')');
+ add((G.gf||G.qpq)?-1:0, 'Ya había cedido algo (liberó a alguien): hay un trato entre los dos', 'He had already given something (released someone): there was a deal between you');
+ add(G.mins>=180?-1:0, hm+' h de negociación: el cansancio baja la carga emocional', hm+' h of negotiation: fatigue lowers the emotional charge');
+ add(P.despair>=2?2:0, 'Desesperanza: le daba igual lo que le pasara', 'Hopelessness: he didn’t care what happened to him');
+ add(P.impulsive>=2?1:0, 'Joven e impulsivo', 'Young and impulsive');
+ add(P.substance?1:0, 'Había bebido o consumido', 'He had been drinking or using');
+ add(P.inst?-1:0, 'Caso instrumental: quiere salir de esta, no un final', 'Instrumental case: he wants a way out, not an ending');
+ add(P.savvy?-1:0, 'Conoce los procedimientos: sabe que resistirse a un equipo así no sirve', 'He knows the procedures: he knows resisting a team like that is pointless');
+ const sc=F.reduce((a,f)=>a+f[0],0), o=sc<=AS_SIN?'sin':sc<=AS_BREVE?'breve':'fuerza';
+ return {o:o,sc:sc,F:F,near:near,hurt:o==='fuerza'&&near?1:0};
+}
 /* la orden táctica: el resultado sale solo del estado de la partida */
 function tacOrder(k){
  if(!G||!G.dep||G.end) return null;
  const r={k:k,turn:G.turn,crit:G.crit,spos:G.spos,tension:G.tension,trust:G.trust,prevT:G.critPrevT,inside:inside().length};
  if(k==='tir'&&G.spos!=='ventana'){ r.res='nolinea'; G.tacT=G.turn; G.tac.push(r); return r; }
- r.res=G.crit?'ok':'prematuro'; G.tac.push(r);
+ r.res=G.crit?'ok':'prematuro'; if(k==='asalto'){ r.as=asaltoRes(); G.asr=r.as; } G.tac.push(r);
  G.end=G.crit?'tactico':'prematuro'; G.endK=k; G.crit=false;
  P.host.forEach(h=>{ if(!h.out){ h.out=true; h.esc=1; G.rel.push(h.n); } });
  return r;
@@ -969,7 +996,10 @@ function tacMsg(r){ const F=FZa();
   :S2('Tirador 1: «Sin línea: el sujeto no está en la ventana y no lo tengo a la vista desde ninguna posición.» No dispara.','Sniper 1: “No line: the subject isn’t at the window and I can’t see them from any position.” No shot.');
  const pre=r.res==='prematuro'?S2(' (La negociación todavía era viable.)',' (Negotiation was still viable.)'):S2('','');
  if(r.k==='tir') return S2('Luz verde. Línea limpia por la ventana: sujeto neutralizado. '+cap(F[0])+' entra y saca a las personas retenidas.'+pre[0],'Green light. Clean line through the window: subject neutralised. '+cap(F[1])+' goes in and brings the people held out.'+pre[1]);
- return S2(cap(F[0])+' entra por la puerta principal: el sujeto es reducido y detenido y las personas retenidas salen escoltadas.'+pre[0],cap(F[1])+' goes in through the front door: the subject is overpowered and detained and the people held are escorted out.'+pre[1]);
+ const a=r.as||{o:'breve'};
+ if(a.o==='sin') return S2(cap(F[0])+' entra por la puerta principal. {n} no se resiste: levanta las manos y deja el arma en el suelo. Es esposad{o} y detenid{o} sin un solo golpe y las personas retenidas salen escoltadas, a salvo.'+pre[0],cap(F[1])+' goes in through the front door. {n} doesn’t resist: hands up, weapon on the floor. He is handcuffed and detained without a single blow and the people held are escorted out safely.'+pre[1]);
+ if(a.o==='breve') return S2(cap(F[0])+' entra por la puerta principal. {n} forcejea unos segundos, pero el equipo le reduce sin disparar y queda detenid{o}. Las personas retenidas salen escoltadas, a salvo.'+pre[0],cap(F[1])+' goes in through the front door. {n} struggles for a few seconds, but the team overpowers him without firing and he is detained. The people held are escorted out safely.'+pre[1]);
+ return S2(cap(F[0])+' entra por la puerta principal. {n} se resiste con el arma'+(a.near?' junto a las personas retenidas':'')+'. El equipo tiene que usar la fuerza: queda herid{o}, reducid{o} y detenid{o}, y los sanitarios le atienden. '+(a.hurt?'Una de las personas retenidas sufre una contusión leve en el forcejeo y la atienden los sanitarios.':'Las personas retenidas salen escoltadas, a salvo.')+pre[0],cap(F[1])+' goes in through the front door. {n} resists with the weapon'+(a.near?' next to the people held':'')+'. The team has to use force: he is injured, overpowered and detained, and paramedics treat him. '+(a.hurt?'One of the people held gets a minor bruise in the struggle and paramedics treat them.':'The people held are escorted out safely.')+pre[1]);
 }
 function tacHTML(){ if(!G||!G.dep||G.end) return ''; const c=G.crit, nl=G.tacT===G.turn;
  return '<div class="ngtac'+(c?' crit':'')+'" id="ngTac"><div class="q">'+L('Opciones tácticas','Tactical options')+' · '+esc(T(FZ()))+'</div>'+
@@ -1007,9 +1037,14 @@ function tacSec(){ if(!G.tac) return ''; const out=[];
    S2('La negociación seguía siendo viable: tensión '+r.tension+' y confianza '+r.trust+'. '+RULE[0]+' Mientras se pueda hablar, una intervención pone en riesgo a las personas retenidas y a los agentes sin necesidad.','Negotiation was still viable: tension '+r.tension+' and trust '+r.trust+'. '+RULE[1]+' While talking is still possible, an intervention puts the people held and the officers at risk for no need.')]);
  });
  if(!G.tac.some(r=>r.res!=='nolinea')&&G.critTurns>0&&(G.end==='fracaso'||G.end==='tiempo')) out.push(['mid',S2('Hubo una ventana táctica','There was a tactical window'),S2('Durante '+G.critTurns+' turno(s) hubo crisis crítica y una resolución táctica controlada estaba justificada. Si la tensión llega al máximo sin control, la entrada se hace sin poder elegir el momento.','For '+G.critTurns+' turn(s) the crisis was critical and a controlled tactical resolution was justified. If tension peaks out of control, the entry happens without choosing the moment.')]);
+ G.tac.forEach(r=>{ if(!r.as) return; const a=r.as, OK={sin:S2('No se resistió: arma al suelo y detenido sin golpes','No resistance: weapon down, detained without a blow'),breve:S2('Resistencia breve: reducido sin disparos','Brief resistance: overpowered without shots'),fuerza:S2('Se resistió: uso de la fuerza, sujeto herido','He resisted: force used, subject injured')}[a.o];
+  const li=a.F.map(f=>'<li>'+TXT(f[1])+' <b>'+(f[0]>0?'+':'')+f[0]+'</b></li>').join('');
+  out.push([a.o==='sin'?'good':a.o==='breve'?'mid':'bad',S2('Cómo respondió al asalto · '+OK[0],'How he responded to the assault · '+OK[1]),
+   S2('No es suerte: sale del estado de la partida cuando diste la orden (el mismo estado da siempre el mismo resultado). Suma de factores: '+a.sc+' (hasta '+AS_SIN+' se rinde sin resistencia, hasta '+AS_BREVE+' resistencia breve, más de '+AS_BREVE+' se resiste).','It isn’t luck: it comes from the state of the game when you gave the order (the same state always gives the same result). Sum of factors: '+a.sc+' (up to '+AS_SIN+' surrenders without resistance, up to '+AS_BREVE+' brief resistance, above '+AS_BREVE+' resists).'),li,
+   S2('Por qué pesa cada cosa: la confianza y el tiempo bajan la carga emocional y hacen más probable que se entregue (Vecchi, Van Hasselt y Romano, 2005; FBI); una promesa incumplida rompe la confianza (McMains y Mullins); quien ya no espera nada puede intentar provocar a los agentes («suicidio por policía»), a menudo con alcohol o drogas de por medio (Mohandie, Meloy y Collins, 2009); un caso instrumental busca salir de esta, no un final. Un rehén al lado es el peor momento para entrar. En España el uso de la fuerza debe ser proporcional (Ley Orgánica 2/1986, art. 5.2.c). Los puntos y los umbrales están simplificados para el juego: en la realidad ninguna entrada es segura y nadie puede predecir cómo reaccionará el sujeto.','Why each factor counts: trust and time lower the emotional charge and make surrender more likely (Vecchi, Van Hasselt & Romano, 2005; FBI); a broken promise breaks trust (McMains & Mullins); someone who expects nothing more may try to provoke the officers (“suicide by cop”), often with alcohol or drugs involved (Mohandie, Meloy & Collins, 2009); an instrumental case wants a way out, not an ending. A hostage right next to him is the worst moment to go in. In Spain the use of force must be proportional (Organic Law 2/1986, art. 5.2.c). The points and thresholds are simplified for the game: in reality no entry is safe and nobody can predict how the subject will react.')]); });
  if(!out.length) return '';
  const QN={good:S2('Bien','Good'),mid:S2('Regular','So-so'),bad:S2('Mal','Bad')};
- return '<div class="ngsec">'+L('Decisión táctica','Tactical decision')+'</div>'+out.map(o=>'<div class="ngturn '+o[0]+'"><p><span class="ngtag '+o[0]+'">'+esc(T(QN[o[0]]))+'</span><b>'+esc(T(o[1]))+'</b></p><p>'+TXT(o[2])+'</p></div>').join('')+
+ return '<div class="ngsec">'+L('Decisión táctica','Tactical decision')+'</div>'+out.map(o=>'<div class="ngturn '+o[0]+'"><p><span class="ngtag '+o[0]+'">'+esc(T(QN[o[0]]))+'</span><b>'+esc(T(o[1]))+'</b></p><p>'+TXT(o[2])+'</p>'+(o[3]?'<ul class="ngasf" style="margin:4px 0 6px 18px;padding:0;font-size:14px">'+o[3]+'</ul>':'')+(o[4]?'<p style="font-size:13px;color:var(--mu)">'+TXT(o[4])+'</p>':'')+'</div>').join('')+
   '<p style="font-size:14px">'+esc(L('Doctrina: en una crisis con rehenes se negocia primero y la intervención táctica es el último recurso, cuando hablar ya no reduce el riesgo para la vida de las personas retenidas (FBI; McMains y Mullins). Mientras la negociación avanza, el tiempo juega a favor: baja la tensión y aparecen salidas. En España, el asalto lo hace ','Doctrine: in a hostage crisis you negotiate first and tactical intervention is the last resort, used when talking no longer reduces the risk to the lives of the people held (FBI; McMains and Mullins). While negotiation is moving, time is on your side: tension falls and exits appear. In Spain, the assault is carried out by ')+T(FZl())+L(P.rural?'; las patrullas mantienen el perímetro.':'; la UIP mantiene el perímetro y no asalta.',P.rural?'; patrols hold the perimeter.':'; the UIP holds the perimeter and does not assault.'))+'</p>'; }
 
 /* ---------------- mapa táctico por puntos (vista desde arriba; solo dibujo: no cambia la partida ni sus números) ----------------
@@ -1054,7 +1089,7 @@ function scnInit(){
  const cv=wrap.querySelector('canvas');
  const plan=scnPlan();
  Object.assign(SC,{on:1,wrap:wrap,cv:cv,ctx:cv.getContext('2d'),vr:vr,t:0,last:0,ev:[],end:null,a:G.tension/100,r:G.trust/100,plan:plan,walls:scnWalls(plan),
-  stillMax:0,stillT:0,subStillMax:0,frames:0,talkT:-9,talkW:null,tight:0,bgKey:'',zone:null,nextPace:0,react:0,crit:!!G.crit,flash:-9,mark:null,shotAt:0,losMis:0,losChk:0,dep:!!G.dep,
+  stillMax:0,stillT:0,subStillMax:0,frames:0,talkT:-9,talkW:null,tight:0,bgKey:'',zone:null,nextPace:0,react:0,crit:!!G.crit,flash:-9,mark:null,shotAt:0,losMis:0,losChk:0,dep:!!G.dep,aso:null,drop:null,dropP:null,strug:null,burst:null,
   pace:P.impulsive>=2?0.65:P.mood==='frio'?1.35:P.mood==='apatia'||P.mood==='triste'?1.2:1});
  const z0=ZN[G.spos||'centro'][0];
  SC.sub=scnDot({x:z0[0],y:z0[1],vmax:1.8,col:'#e5483b',kind:'sub'});
@@ -1128,18 +1163,36 @@ function scnEnd(k){ if(SC.end) return; SC.end=k; SC.endT=SC.t; const s=SC.sub;
  if(k==='rendicion'){ SC.ev.push({at:SC.t+2.4,fn:()=>{ SC.mark={k:'out',t:SC.t}; scnGo(s,[[19.5,13.9],[19.5,16.3],[SC.cars[0].x+2.2,17.6]],1.0); s.path[s.path.length-1].fn=()=>{ SC.ofc.slice(0,2).forEach((o,i)=>scnGo(o,[[SC.cars[0].x+1.6+i*1.4,17.2]],1.2)); }; }}); }
  else if(k==='fracaso'||k==='tiempo'){ SC.ev.push({at:SC.t+1.0,fn:()=>scnAssault(false)}); }
 }
-function scnAssault(sec){ /* el equipo entra por la puerta principal; sec: se lleva al sujeto y a las personas retenidas */
+function scnAssault(sec,ao){ /* el equipo entra por la puerta principal; sec: se lleva al sujeto y a las personas retenidas; ao: cómo responde el sujeto (asaltoRes) */
  const s=SC.sub; SC.team.forEach((d,i)=>{ d.tvis=1; const tgt=i<3?[s.x+[-0.9,0.9,0][i],s.y+[0.6,0.6,-0.9][i]]:SEATS[(i-3)%SEATS.length];
-  SC.ev.push({at:SC.t+i*0.25,fn:()=>{ scnGo(d,[[d.x<33?d.x:33.5,16.4],[20.4,16.2],[19.5,15.6],[19.5,14.2],[tgt[0],tgt[1]]],3.4); }}); });
- if(!sec) return;
+  SC.ev.push({at:SC.t+i*0.25,fn:()=>{ scnGo(d,[[d.x<33?d.x:33.5,16.4],[20.4,16.2],[19.5,15.6],[19.5,14.2],[tgt[0],tgt[1]]],3.4); if(i===0&&ao) d.path[d.path.length-1].fn=()=>scnAsOut(ao); }}); });
+ if(!sec||ao) return;
  SC.ev.push({at:SC.t+3.0,fn:()=>{ if(SC.mark&&SC.mark.k==='neu') return; SC.mark={k:'det',t:SC.t}; }});
  SC.hos.forEach((p,i)=>{ if(p.inside&&!p.safe&&!p.leaving){ SC.ev.push({at:SC.t+3.0+i*0.4,fn:()=>scnRelease(p,0,3+(i%2))}); } });
 }
+/* lo que se ve en el mapa cuando el primer agente llega al sujeto: arma al suelo, forcejeo o uso de la fuerza */
+function scnAsOut(ao){ if(SC.aso) return; const s=SC.sub, t0=SC.t; SC.aso={o:ao.o,t:t0}; s.path=[];
+ const rel=d=>SC.hos.forEach((p,i)=>{ if(p.inside&&!p.safe&&!p.leaving){ SC.ev.push({at:t0+d+i*0.4,fn:()=>scnRelease(p,0,3+(i%2))}); } });
+ const out=(d,amb)=>SC.ev.push({at:t0+d,fn:()=>{ const dest=amb?[41.4,17.4]:[SC.cars[0].x+2.2,17.6]; scnGo(s,[[19.5,13.9],[19.5,16.3],dest],1.0);
+   [0,1].forEach(j=>{ const t=SC.team[j], o=j?0.7:-0.7; scnGo(t,[[19.5+o,13.9],[19.5+o,16.3],[dest[0]+o,dest[1]-0.5]],1.0); }); }});
+ if(ao.o==='sin'){ SC.drop={t:t0+0.4,x:s.x,y:s.y}; SC.ev.push({at:t0+1.1,fn:()=>{ SC.mark={k:'sin',t:SC.t}; }}); rel(1.6); out(3.4); }
+ else if(ao.o==='breve'){ SC.strug={t0:t0,t1:t0+1.8,amp:0.26}; SC.ev.push({at:t0+1.9,fn:()=>{ SC.mark={k:'det',t:SC.t}; }}); rel(2.3); out(4.0); }
+ else { SC.burst=t0; SC.strug={t0:t0+0.15,t1:t0+1.5,amp:0.38};
+  if(ao.hurt){ const h=SC.hos.filter(p=>p.inside&&!p.safe&&!p.leaving).sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y))[0]; if(h) h.hurt=1; }
+  SC.ev.push({at:t0+1.6,fn:()=>{ SC.mark={k:'her',t:SC.t}; }}); rel(1.9);
+  SC.ev.push({at:t0+2.2,fn:()=>{ SC.med.forEach((m,j)=>scnGo(m,[[33,17],[20.2+j*0.8,16.4],[19.2+j*0.8,14.6]],2.6)); }});
+  out(5.2,1); SC.ev.push({at:t0+5.6,fn:()=>{ SC.med.forEach((m,j)=>scnGo(m,[[19.2+j*0.8,16.3],[33,17],[42.4+j*1.0,16.6]],1.0)); }}); }
+}
+/* forcejeo: el sujeto y los tres primeros agentes se empujan unos segundos (oscilación fija, sin azar) */
+function scnJit(now){ const g=SC.strug; if(!g||now<g.t0||now>g.t1) return null; const k=Math.sin(Math.PI*(now-g.t0)/(g.t1-g.t0)), A=g.amp*k;
+ const L_=[SC.sub].concat(SC.team.slice(0,3)), o=L_.map((p,i)=>[A*Math.sin(now*17+i*2.1),A*0.7*Math.cos(now*13+i*1.7)]);
+ L_.forEach((p,i)=>{ p.x+=o[i][0]; p.y+=o[i][1]; }); return [L_,o]; }
+function scnUnJit(J){ if(!J) return; J[0].forEach((p,i)=>{ p.x-=J[1][i][0]; p.y-=J[1][i][1]; }); }
 function scnTac(r){ if(!SC.on) return; const s=SC.sub;
  if(r.res==='nolinea'){ SC.noLine={t:SC.t,why:r.spos}; return; }
  SC.end=G.end; SC.endT=SC.t;
  if(r.k==='tir'){ SC.pendShot={t:SC.t}; }
- else scnAssault(true);
+ else scnAssault(true,r.as);
 }
 /* ---- bucle ---- */
 function scnFrame(ts){
@@ -1266,6 +1319,7 @@ function scnDraw(){
  /* línea de teléfono entre tú y el sujeto mientras se habla */
  if(now-SC.talkT<2.2&&SC.talkW&&!SC.end){ x.strokeStyle='rgba(120,170,255,0.55)'; x.lineWidth=1.1*px; x.setLineDash([2.5*px,3*px]); x.lineDashOffset=-now*14*px*(SC.talkW==='neg'?1:-1); x.beginPath(); x.moveTo(SC.neg.x,SC.neg.y); x.lineTo(s.x,s.y); x.stroke(); x.setLineDash([]); x.lineDashOffset=0; }
  /* puntos */
+ const J=scnJit(now);
  const R0=Math.max(0.5,(SC.nar?4.4:4.8)*px), dot=(p,col,r,edge)=>{ if(p.vis<0.03) return; x.globalAlpha=p.vis*(p.alpha==null?1:p.alpha); x.fillStyle='rgba(0,0,0,0.4)'; x.beginPath(); x.arc(p.x+0.12,p.y+0.14,r,0,7); x.fill(); x.fillStyle=col; x.beginPath(); x.arc(p.x,p.y,r,0,7); x.fill(); x.strokeStyle=edge||'rgba(0,0,0,0.6)'; x.lineWidth=1*px; x.stroke(); x.globalAlpha=1; };
  const ring=(p,col)=>{ const k=(now-p.ringT)/0.9; if(k<0||k>1) return; x.strokeStyle=col; x.globalAlpha=1-k; x.lineWidth=1.2*px; x.beginPath(); x.arc(p.x,p.y,R0*(1.2+1.6*k),0,7); x.stroke(); x.globalAlpha=1; };
  SC.ofc.forEach(o=>dot(o,o.col,R0*0.85,'#cfd8e8')); SC.uip.forEach(o=>dot(o,o.col,R0*0.85,'#cfd8e8'));
@@ -1274,15 +1328,22 @@ function scnDraw(){
  SC.team.forEach(o=>dot(o,o.col,R0*0.9,'#1b1f22'));
  dot(SC.neg,SC.neg.col,R0,'#d8e6ff'); ring(SC.neg,'rgba(140,190,255,0.9)');
  SC.hos.forEach(h=>dot(h,h.col,R0*0.9,h.safe?'#7fd08a':'rgba(40,30,0,0.7)'));
+ SC.hos.forEach(h=>{ if(!h.hurt) return; const a=R0*0.55; x.strokeStyle='#c8473a'; x.lineWidth=1.6*px; x.beginPath(); x.moveTo(h.x-a,h.y); x.lineTo(h.x+a,h.y); x.moveTo(h.x,h.y-a); x.lineTo(h.x,h.y+a); x.stroke(); });
+ /* arma en el suelo (se rinde) y destello de la entrada (uso de la fuerza) */
+ if(SC.drop&&now>=SC.drop.t){ const k=clamp((now-SC.drop.t)/0.6,0,1), e=k*k*(3-2*k), gx=SC.drop.x+0.9*e, gy=SC.drop.y+0.8*e; x.save(); x.translate(gx,gy); x.rotate(0.5+1.6*e); x.fillStyle='#2a2d31'; x.strokeStyle='#d8d8d8'; x.lineWidth=0.8*px; x.fillRect(-R0*0.9,-R0*0.28,R0*1.8,R0*0.56); x.strokeRect(-R0*0.9,-R0*0.28,R0*1.8,R0*0.56); x.restore(); SC.dropP=[gx,gy]; }
+ if(SC.burst!=null&&now-SC.burst<0.7&&now>=SC.burst){ const k=(now-SC.burst)/0.7; x.fillStyle='rgba(255,252,235,'+(0.75*(1-k)).toFixed(2)+')'; x.beginPath(); x.arc(s.x,s.y,R0*(1.5+5*k),0,7); x.fill(); }
  const mk=SC.mark;
  if(mk&&mk.k==='neu'){ const k=clamp((now-mk.t)/1.2,0,1); x.globalAlpha=1-0.45*k; dot(s,'#8a8f94',R0,'#e8e8e8'); x.globalAlpha=1; x.strokeStyle='rgba(235,235,235,'+(0.85*k).toFixed(2)+')'; x.lineWidth=1.2*px; x.beginPath(); x.arc(s.x,s.y,R0*2.1,0,7); x.stroke(); }
- else if(mk&&mk.k==='det'){ dot(s,'#b0473e',R0,'#ffffff'); x.strokeStyle='rgba(255,255,255,0.85)'; x.lineWidth=1.1*px; x.setLineDash([2*px,2*px]); x.beginPath(); x.arc(s.x,s.y,R0*1.9,0,7); x.stroke(); x.setLineDash([]); }
+ else if(mk&&mk.k==='her'){ dot(s,'#8f5550',R0,'#ffffff'); const a=R0*0.55; x.strokeStyle='#ffffff'; x.lineWidth=1.4*px; x.beginPath(); x.moveTo(s.x-a,s.y); x.lineTo(s.x+a,s.y); x.moveTo(s.x,s.y-a); x.lineTo(s.x,s.y+a); x.stroke(); }
+ else if(mk&&(mk.k==='det'||mk.k==='sin')){ dot(s,'#b0473e',R0,'#ffffff'); x.strokeStyle='rgba(255,255,255,0.85)'; x.lineWidth=1.1*px; x.setLineDash([2*px,2*px]); x.beginPath(); x.arc(s.x,s.y,R0*1.9,0,7); x.stroke(); x.setLineDash([]); }
  else { const tr=SC.a; if(tr>0.55&&!SC.end){ x.fillStyle='rgba(229,72,59,'+(0.12+0.25*(tr-0.55)/0.45).toFixed(2)+')'; x.beginPath(); x.arc(s.x,s.y,R0*(1.7+tr),0,7); x.fill(); } dot(s,s.col,R0,'#fff'); ring(s,'rgba(255,120,110,0.9)'); }
  /* rótulos */
  x.setTransform(d,0,0,d,0,0); const fs=SC.nar?9:11; const W=(a,b)=>[SC.ox+a*sc,SC.oy+b*sc];
  const tag=(t,a,b,col,dx,dy,bold)=>{ const p=W(a,b); x.font=(bold?'700 ':'')+fs+'px system-ui,sans-serif'; x.textAlign='center'; x.textBaseline='middle'; const w=x.measureText(t).width+6; const X0=clamp(p[0]+(dx||0),w/2+1,SC.cw-w/2-1), Y0=clamp(p[1]+(dy||0),fs/2+2,SC.ch-fs/2-2); x.fillStyle='rgba(10,12,14,0.72)'; x.fillRect(X0-w/2,Y0-fs/2-2,w,fs+4); x.fillStyle=col; x.fillText(t,X0,Y0); };
- const sl=mk&&mk.k==='neu'?L('Sujeto neutralizado','Subject neutralised'):mk&&mk.k==='det'?L('Sujeto detenido','Subject detained'):mk&&mk.k==='out'?L('Se entrega','Surrenders'):L('Sujeto','Subject');
+ const sl=mk&&mk.k==='neu'?L('Sujeto neutralizado','Subject neutralised'):mk&&mk.k==='sin'?L('Se rinde · detenido','Gives up · detained'):mk&&mk.k==='her'?L('Herido · detenido','Injured · detained'):mk&&mk.k==='det'?(SC.aso&&SC.aso.o==='breve'?L('Reducido · detenido','Overpowered · detained'):L('Sujeto detenido','Subject detained')):SC.strug&&now>=SC.strug.t0&&now<=SC.strug.t1?L('Forcejeo','Struggle'):mk&&mk.k==='out'?L('Se entrega','Surrenders'):L('Sujeto','Subject');
  tag(sl,s.x,s.y,mk&&mk.k==='neu'?'#e6e6e6':'#ff9b90',0,-fs-3,1);
+ if(SC.dropP&&now-SC.drop.t<4.5) tag(L('Arma en el suelo','Weapon down'),SC.dropP[0],SC.dropP[1],'#e8e8e2',0,fs+3);
+ SC.hos.forEach(h=>{ if(h.hurt) tag(L('Contusión leve','Minor bruise'),h.x,h.y,'#ffb0a6',0,fs+3); });
  const ins=SC.hos.filter(h=>h.inside&&!h.leaving&&!h.safe), safe=SC.hos.filter(h=>h.safe);
  if(ins.length){ const cx=ins.reduce((a,h)=>a+h.x,0)/ins.length, cy=Math.min.apply(null,ins.map(h=>h.y)); tag(L('Rehenes ','Hostages ')+ins.length,cx,cy,'#f2cf6b',0,-fs-1); }
  tag(L('Tú','You'),SC.neg.x,SC.neg.y,'#9cc4ff',0,fs+3,1);
@@ -1297,16 +1358,17 @@ function scnDraw(){
  const PL={banco:S2('Sucursal bancaria','Bank branch'),tienda:S2('Tienda','Shop'),oficina:S2('Oficinas','Offices'),piso:S2('Piso','Flat'),rural:S2('Casa aislada','Isolated house')}[SC.plan];
  const head=T(PL)+' · '+P.city+' · '+hs; const hw=x.measureText(head).width+10; x.fillStyle='rgba(10,12,14,0.72)'; x.fillRect(4,4,hw,fs+6); x.fillStyle='#e8e8e2'; x.fillText(head,9,7);
  let st=null, col='#e8e8e2', bg='rgba(10,12,14,0.72)';
- if(SC.end==='tactico'||SC.end==='prematuro'){ st=G.endK==='tir'?L('Tirador de precisión','Sniper'):L('Asalto táctico','Tactical assault'); bg='rgba(60,20,18,0.85)'; }
+ if(SC.end==='tactico'||SC.end==='prematuro'){ st=G.endK==='tir'?L('Tirador de precisión','Sniper'):L('Asalto táctico','Tactical assault')+(SC.aso?' · '+{sin:L('sin resistencia','no resistance'),breve:L('resistencia breve','brief resistance'),fuerza:L('uso de la fuerza','force used')}[SC.aso.o]:''); bg='rgba(60,20,18,0.85)'; }
  else if(SC.end==='rendicion'){ st=L('Rendición','Surrender'); bg='rgba(25,60,30,0.85)'; }
  else if(SC.end){ st=T(ENDS[SC.end][0]); }
  else if(SC.crit){ st=L('CRISIS CRÍTICA','CRITICAL CRISIS'); bg='rgba(150,30,25,0.9)'; col='#fff'; }
  else if(SC.a>0.7){ st=L('Tensión muy alta','Very high tension'); col='#ffb0a6'; }
  if(st){ const w=x.measureText(st).width+10; x.fillStyle=bg; x.fillRect(SC.cw-w-4,4,w,fs+6); x.fillStyle=col; x.fillText(st,SC.cw-w+1,7); }
  if(SC.noLine&&now-SC.noLine.t<3.2){ const m=L('T1: sin línea limpia · no dispara','S1: no clean line · no shot'); x.font='700 '+fs+'px system-ui,sans-serif'; const w=x.measureText(m).width+12; x.fillStyle='rgba(120,30,25,0.9)'; x.fillRect((SC.cw-w)/2,SC.ch-fs-12,w,fs+8); x.fillStyle='#fff'; x.textAlign='center'; x.fillText(m,SC.cw/2,SC.ch-fs-8); x.textAlign='left'; }
+ scnUnJit(J);
 }
 
 /* para QA automática */
-window.__SC=SC; window.MAT_NG={scene:()=>SC.on?{a:SC.a,r:SC.r,stillMax:SC.stillMax,subStillMax:SC.subStillMax||0,frames:SC.frames,t:SC.t,end:SC.end,out:SC.hos.filter(p=>p.safe).length,spos:G.spos,crit:!!G.crit,zone:SC.zone,losChk:SC.losChk,losMis:SC.losMis,los:SC.snp.map(s=>s.los||null),sub:{x:SC.sub.x,y:SC.sub.y,moving:SC.sub.path.length>0},mark:SC.mark&&SC.mark.k,plan:SC.plan}:null,
+window.__SC=SC; window.MAT_NG={scene:()=>SC.on?{a:SC.a,r:SC.r,stillMax:SC.stillMax,subStillMax:SC.subStillMax||0,frames:SC.frames,t:SC.t,end:SC.end,out:SC.hos.filter(p=>p.safe).length,spos:G.spos,crit:!!G.crit,zone:SC.zone,losChk:SC.losChk,losMis:SC.losMis,los:SC.snp.map(s=>s.los||null),sub:{x:SC.sub.x,y:SC.sub.y,moving:SC.sub.path.length>0},mark:SC.mark&&SC.mark.k,plan:SC.plan,aso:SC.aso&&SC.aso.o,hurt:SC.hos.filter(h=>h.hurt).length}:null,
  resetStill:()=>{SC.stillMax=0;SC.subStillMax=0;},sceneStep:(sec)=>{ if(!SC.on) return 0; const n=Math.round(sec*60); for(let i=0;i<n;i++){ SC.t+=1/60; scnStep(1/60); } return SC.subStillMax; },
- state:()=>({P:P,G:G}),choose:i=>pickOpt(i),start:s=>startCase(s),ev:i=>evalOpt(Object.assign({},G.cur.opts[i])),tac:k=>tacGo(k),order:k=>tacOrder(k)};
+ state:()=>({P:P,G:G}),choose:i=>pickOpt(i),start:s=>startCase(s),ev:i=>evalOpt(Object.assign({},G.cur.opts[i])),tac:k=>tacGo(k),order:k=>tacOrder(k),asalto:()=>asaltoRes()};
