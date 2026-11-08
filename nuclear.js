@@ -117,7 +117,7 @@ function org(){ var el=document.getElementById('nu-org'); if(!el) return; var a=
     else if(o.wh==='conv') wh=T2('Según las fuentes es un misil <b>convencional</b> (no lleva cabeza nuclear): la simulación es hipotética, con la potencia de referencia elegida abajo.','According to the sources this is a <b>conventional</b> missile (no nuclear warhead): the simulation is hypothetical, using the reference yield chosen below.');
     else if(o.wh==='dual') wh=T2('<b>Capacidad dual</b> (convencional o nuclear); las fuentes usadas no publican la potencia de su cabeza: la simulación usa la potencia de referencia elegida abajo.','<b>Dual-capable</b> (conventional or nuclear); the sources used do not publish its warhead yield: the simulation uses the reference yield chosen below.');
     else wh=T2('Misil con cabeza <b>nuclear</b>; las fuentes usadas no dan una potencia única: la simulación usa la potencia de referencia elegida abajo.','Missile with a <b>nuclear</b> warhead; the sources used give no single yield: the simulation uses the reference yield chosen below.');
-    el.innerHTML='<button type="button" class="gno-x" data-ox="1" aria-label="'+T2('Quitar','Remove')+'">×</button><div class="gno-t">🚀 '+o.fl+'<b>'+e(o.n)+'</b> '+T2('desde','from')+' '+e(o.from)+' → <b>'+e(g.n)+'</b></div>'+
+    el.innerHTML='<button type="button" class="gno-x" data-ox="1" aria-label="'+T2('Quitar','Remove')+'">×</button><div class="gno-t">'+o.fl+'<b>'+e(o.n)+'</b> '+T2('desde','from')+' '+e(o.from)+' → <b>'+e(g.n)+'</b></div>'+
      '<div class="gno-d">'+e(o.km)+' · '+T2('tiempo de vuelo','flight time')+' '+e(o.t)+' · '+st+'</div><div class="gno-w">'+wh+'</div>'+
      '<a class="gno-b" href="'+wmHref()+'">‹ '+T2('Cambiar misil o punto de lanzamiento','Change missile or launch point')+'</a>';
     el.hidden=false; }).catch(function(){ el.hidden=true; }); }
@@ -156,6 +156,8 @@ function css(){ if(document.getElementById('nu-css')) return; var s=document.cre
  '.nu .leaflet-control-attribution{background:rgba(11,12,13,.8)!important;color:#c3c7cb!important;font-size:10.5px}.nu .leaflet-control-attribution a{color:#b3bd8c!important}'+
  '.nu .leaflet-bar a{background:#15181a!important;color:#e9e9e6!important;border-bottom-color:#2a2e32!important}.nu .leaflet-bar{border:1px solid #2a2e32!important}'+
  '.nu .mtools{position:absolute;right:10px;bottom:24px;z-index:800;display:flex;flex-direction:column;gap:6px}.nu .mtools button{width:40px;height:40px;border-radius:8px;border:1px solid #2a2e32;background:rgba(21,24,26,.92);color:#e9e9e6;font-size:16px;cursor:pointer}'+
+ ' .nu .cn{font-variant-numeric:tabular-nums}.gn-tabs a .i{align-items:center;color:#d6b25e}@media (min-width:561px){.gn-tabs a .i{display:flex}}@media (max-width:560px){.gn-tabs a.gn-df .i{display:flex}.gn-tabs a.gn-df .i svg{width:17px;height:17px}}.gn-tabs a .i svg{display:block}.nu .mtools button svg{display:block;margin:auto}.nu .nu-lg{margin:6px 0 0;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:7px 9px;font-size:12px;line-height:1.25}.nu .nu-lg ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:3px 12px}.nu .nu-lg li{display:flex;align-items:center;gap:6px;min-width:0}.nu .nu-lg i{flex:0 0 11px;height:11px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.25);display:inline-block}.nu .nu-lg i.dsh{border-radius:0;height:0;flex-basis:16px;border-top:2px dashed #9fd3ee;box-shadow:none;margin-right:6px;vertical-align:middle}.nu .nu-lg li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cfd1cd}.nu .nu-lg li b{font-variant-numeric:tabular-nums;white-space:nowrap;color:#fff;font-weight:650}.nu .nu-lg .lgb{margin-top:4px;color:#9fd3ee;font-size:11.5px}@media (max-width:420px){.nu .nu-lg{font-size:12px}.nu .nu-lg ul{grid-template-columns:minmax(0,1fr);gap:2px}}.nu #nu-mw:not(.dk) .leaflet-tile-pane{filter:saturate(.72) brightness(.94) contrast(1.02)}.nu .cloud svg.rise ellipse,.nu .cloud svg.rise path{transform-box:fill-box;transform-origin:50% 100%;animation:nurise 1.6s cubic-bezier(.2,.7,.2,1) both}.nu .cloud svg.rise ellipse{animation-delay:.25s}@keyframes nurise{0%{transform:scale(.25,.05);opacity:0}100%{transform:none;opacity:1}}.nu .cloud svg.fade{animation:nufade .45s ease-out both}@keyframes nufade{0%{opacity:.35}100%{opacity:1}}.nu .leaflet-interactive{transition:none}@media (prefers-reduced-motion: reduce){.nu .cloud svg.rise ellipse,.nu .cloud svg.rise path,.nu .cloud svg.fade{animation:none}}'+
+ '#gn-body>*{animation:gnin .38s cubic-bezier(.2,.7,.2,1) both}@keyframes gnin{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}@media (prefers-reduced-motion: reduce){#gn-body>*{animation:none}}'+
  '.nu .flash{position:absolute;inset:0;z-index:900;pointer-events:none;background:radial-gradient(circle at 50% 50%,#fff 0,#fff7d6 30%,rgba(255,200,120,.6) 60%,rgba(255,160,80,0) 100%);opacity:0}'+
  '.nu .flash.on{animation:nuflash 1.1s ease-out forwards}@keyframes nuflash{0%{opacity:1}15%{opacity:1}100%{opacity:0}}'+
  '.nu .gzlab{background:rgba(17,19,21,.88);color:#fff;border:1px solid #b3261e;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:650;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4)}'+
@@ -199,22 +201,23 @@ function render(app,X){
   '<div class="chips" id="nu-yc">'+D.fx.y.map(function(y){ return '<button type="button" class="chip" data-y="'+y[3]+'" data-yid="'+y[0]+'">'+e(EN()?y[2]:y[1])+' · '+ykt(y[3])+'</button>'; }).join('')+'</div>'+
   '<div class="lbl">'+T2('3 · Tipo de explosión','3 · Type of burst')+'</div>'+
   '<div class="row2"><button type="button" class="chip" data-b="air">'+T2('Aérea','Air burst')+'</button><button type="button" class="chip" data-b="surf">'+T2('En superficie','Surface burst')+'</button>'+
-  '<button type="button" class="btn det" id="nu-det">💥 '+T2('Detonar','Detonate')+'</button></div>'+
+  '<button type="button" class="btn det" id="nu-det">'+T2('Detonar','Detonate')+'</button></div>'+
   '<div id="nu-fo"></div>'+
   '<div class="mapw" id="nu-mw"><div id="nu-map" role="application" aria-label="'+T2('Mapa de efectos','Effects map')+'"></div><div class="flash" id="nu-fl"></div>'+
-  '<div class="mtools"><button type="button" id="nu-fit" aria-label="'+T2('Encuadrar','Fit')+'" title="'+T2('Encuadrar','Fit')+'">⤢</button><button type="button" id="nu-dk" aria-label="'+T2('Mapa claro u oscuro','Light or dark map')+'" title="'+T2('Mapa claro / oscuro','Light / dark map')+'">🌓</button></div></div>'+
+  '<div class="mtools"><button type="button" id="nu-fit" aria-label="'+T2('Encuadrar','Fit')+'" title="'+T2('Encuadrar','Fit')+'">⤢</button><button type="button" id="nu-dk" aria-label="'+T2('Mapa claro u oscuro','Light or dark map')+'" title="'+T2('Mapa claro / oscuro','Light / dark map')+'"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button></div></div>'+
   '<p class="ds" style="margin:6px 0 0">'+T2('Pellizca o usa la rueda para acercarte a tu barrio; arrastra para moverte. Toca el mapa y pulsa «Detonar aquí» para cambiar el punto cero.','Pinch or scroll to zoom into your neighbourhood; drag to pan. Tap the map and press “Detonate here” to move ground zero.')+'</p>'+
   '</div><div class="side">'+
   '<div id="nu-res"></div>'+
   '<div class="box"><label class="tog"><input type="checkbox" id="nu-cmp"> '+T2('Comparar con otra potencia','Compare with another yield')+'</label><div id="nu-cmpb"></div></div>'+
-  '<div class="acts"><button type="button" class="btn" id="nu-sh">🔗 '+T2('Compartir','Share')+'</button><a class="btn" id="nu-wm" href="#/guerra-nuclear?tab=alcance">🚀 '+T2('¿Qué misiles llegan aquí?','Which missiles reach here?')+'</a></div>'+
+  '<div class="acts"><button type="button" class="btn" id="nu-sh">'+T2('Compartir','Share')+'</button><a class="btn" id="nu-wm" href="#/guerra-nuclear?tab=alcance">'+T2('¿Qué misiles llegan aquí?','Which missiles reach here?')+'</a></div>'+
   '<div id="nu-tab"></div><div class="box cloud" id="nu-cl"></div>'+
   '</div></div>'+
   '<div class="note">'+T2('<b>Simulación divulgativa y muy aproximada.</b> Los efectos reales dependerían de la hora (la población de día y de noche es distinta), el tiempo, el relieve, los edificios, los refugios y la altura exacta de la explosión. Las cifras de víctimas no incluyen la lluvia radiactiva, las tormentas de fuego, el colapso de los servicios sanitarios ni los efectos a largo plazo.','<b>Educational, very rough simulation.</b> Real effects would depend on the time of day (daytime and night-time population differ), weather, terrain, buildings, shelters and the exact height of burst. Casualty figures exclude fallout, firestorms, the collapse of health services and long-term effects.')+'</div>'+
   '<div id="nu-how"></div></div>';
   X.set(h,T2('Guerra nuclear: impacto','Nuclear war: impact'));
+  if(window.MAT_GN_FLY){ window.MAT_GN_FLY=0; try{ var mw0=document.getElementById('nu-mw'); if(mw0){ var yy=mw0.getBoundingClientRect().top+(window.scrollY||0)-Math.max(56,((window.innerHeight||700)-mw0.offsetHeight)/2); window.scrollTo(0,Math.max(0,yy)); } }catch(x){} }
   var R0=app.querySelector('.nu');
-  R0.querySelector('#nu-org').addEventListener('click',function(ev){ var b=ev.target.closest('[data-yid]'); if(b){ S.y=+b.getAttribute('data-y'); S.yid=b.getAttribute('data-yid'); var ys0=R0.querySelector('#nu-ys'); if(ys0) ys0.value=y2s(S.y); upd(true); return; } if(ev.target.closest('[data-ox]')){ S.fm=null; S.fp=''; upd(false); } });
+  R0.querySelector('#nu-org').addEventListener('click',function(ev){ var b=ev.target.closest('[data-yid]'); if(b){ S.y=+b.getAttribute('data-y'); S.yid=b.getAttribute('data-yid'); var ys0=R0.querySelector('#nu-ys'); if(ys0) ys0.value=y2s(S.y); upd('m'); return; } if(ev.target.closest('[data-ox]')){ S.fm=null; S.fp=''; upd(false); } });
   // ciudad
   var cb=R0.querySelector('#nu-cb'), pk=R0.querySelector('#nu-pick'), qi=R0.querySelector('#nu-q');
   cb.addEventListener('click',function(){ var o=pk.hidden; pk.hidden=!o; cb.setAttribute('aria-expanded',String(o)); if(o){ qi.value=''; plist(''); setTimeout(function(){ try{ qi.focus({preventScroll:true}); }catch(x){} },30); } });
@@ -225,23 +228,23 @@ function render(app,X){
   // potencia
   var ys=R0.querySelector('#nu-ys'); ys.value=y2s(S.y);
   ys.addEventListener('input',function(){ S.y=s2y(+ys.value); S.yid=null; upd(false); });
-  ys.addEventListener('change',function(){ upd(true); });
-  R0.querySelector('#nu-yc').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y]'); if(!b) return; S.y=+b.getAttribute('data-y'); S.yid=b.getAttribute('data-yid'); ys.value=y2s(S.y); upd(true); });
-  [].forEach.call(R0.querySelectorAll('[data-b]'),function(b){ b.addEventListener('click',function(){ S.b=b.getAttribute('data-b'); upd(true); }); });
+  ys.addEventListener('change',function(){ upd('m'); });
+  R0.querySelector('#nu-yc').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y]'); if(!b) return; S.y=+b.getAttribute('data-y'); S.yid=b.getAttribute('data-yid'); ys.value=y2s(S.y); upd('m'); });
+  [].forEach.call(R0.querySelectorAll('[data-b]'),function(b){ b.addEventListener('click',function(){ S.b=b.getAttribute('data-b'); upd('m'); }); });
   R0.querySelector('#nu-det').addEventListener('click',function(){ upd(true); try{ R0.querySelector('#nu-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} });
-  var ck=R0.querySelector('#nu-cmp'); ck.checked=!!S.y2; ck.addEventListener('change',function(){ S.y2=ck.checked?(S.y>=1000?S.y/10:Math.min(50000,S.y*10)):0; S.y2=snapY(S.y2); upd(true); });
-  R0.querySelector('#nu-cmpb').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y2]'); if(!b) return; S.y2=+b.getAttribute('data-y2'); upd(true); });
-  R0.querySelector('#nu-fo').addEventListener('click',function(ev){ var b=ev.target.closest('[data-wd]'); if(b){ S.wd=+b.getAttribute('data-wd'); upd(true); } });
-  R0.querySelector('#nu-fo').addEventListener('change',function(ev){ if(ev.target.id==='nu-fot'){ S.fo=ev.target.checked?1:0; upd(true); } });
+  var ck=R0.querySelector('#nu-cmp'); ck.checked=!!S.y2; ck.addEventListener('change',function(){ S.y2=ck.checked?(S.y>=1000?S.y/10:Math.min(50000,S.y*10)):0; S.y2=snapY(S.y2); upd('m'); });
+  R0.querySelector('#nu-cmpb').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y2]'); if(!b) return; S.y2=+b.getAttribute('data-y2'); upd('m'); });
+  R0.querySelector('#nu-fo').addEventListener('click',function(ev){ var b=ev.target.closest('[data-wd]'); if(b){ S.wd=+b.getAttribute('data-wd'); upd('m'); } });
+  R0.querySelector('#nu-fo').addEventListener('change',function(ev){ if(ev.target.id==='nu-fot'){ S.fo=ev.target.checked?1:0; upd('m'); } });
   R0.querySelector('#nu-fo').addEventListener('input',function(ev){ if(ev.target.id==='nu-ws'){ S.ws=+ev.target.value; upd(false); } });
   R0.querySelector('#nu-sh').addEventListener('click',share);
-  R0.querySelector('#nu-fit').addEventListener('click',function(){ fit(); });
+  R0.querySelector('#nu-fit').addEventListener('click',function(){ fit(true); });
   R0.querySelector('#nu-dk').addEventListener('click',function(){ S.dk=S.dk?0:1; R0.querySelector('#nu-mw').classList.toggle('dk',!!S.dk); });
   R0.querySelector('#nu-mw').classList.toggle('dk',!!S.dk);
   R0.querySelector('[data-how]').addEventListener('click',function(ev){ ev.preventDefault(); var d=document.getElementById('gn-hi'); if(d){ d.open=true; gnHow('i'); d.scrollIntoView({behavior:'smooth',block:'start'}); } });
   var hi0=document.getElementById('gn-hi'); if(hi0&&hi0.open) gnHow('i');
-  upd(false);
-  leaflet().then(function(){ if(!document.getElementById('nu-map')) return; mapInit(); draw(true); }).catch(function(){ var m=document.getElementById('nu-map'); if(m) m.innerHTML='<p class="sub" style="padding:20px">'+T2('No se pudo cargar el mapa.','Could not load the map.')+'</p>'; });
+  upd(true);
+  leaflet().then(function(){ if(!document.getElementById('nu-map')) return; mapInit(); draw(true); cntRun('det'); cloudRise(); }).catch(function(){ cntRun('q'); var m=document.getElementById('nu-map'); if(m) m.innerHTML='<p class="sub" style="padding:20px">'+T2('No se pudo cargar el mapa.','Could not load the map.')+'</p>'; });
 }
 function snapY(y){ var best=y,bd=1e9; D.fx.y.forEach(function(p){ var d=Math.abs(Math.log(p[3]/y)); if(d<bd){ bd=d; best=p[3]; } }); return best; }
 function y2s(y){ return Math.round((Math.log10(y)+1)/(Math.log10(50000)+1)*1000); }
@@ -252,15 +255,15 @@ function plist(q){ var el=document.getElementById('nu-pl'); if(!el) return; var 
     var K=ckeys(), R=[];
     D.c.forEach(function(c,i){ var sc=0; [norm(c[0]),norm(c[1]||'')].forEach(function(nm){ if(!nm) return; var v=nm===n?100:nm.indexOf(n)===0?80:nm.indexOf(n)>=0?50:0; if(v>sc) sc=v; }); if(!sc&&K[i].indexOf(n)>=0) sc=20; if(sc) R.push([i,sc]); });
     R.sort(function(a,b){ var A=D.c[a[0]],B=D.c[b[0]]; return b[1]-a[1]||((B[2]==='es')-(A[2]==='es'))||((B[5]?1:0)-(A[5]?1:0))||cn(A).localeCompare(cn(B)); });
-    el.innerHTML=R.length?'<div class="pgh">🔎 '+(R.length===1?T2('1 resultado','1 result'):T2(R.length+' resultados',R.length+' results'))+'</div>'+R.map(function(x){ return row(x[0]); }).join(''):
+    el.innerHTML=R.length?'<div class="pgh">'+(R.length===1?T2('1 resultado','1 result'):T2(R.length+' resultados',R.length+' results'))+'</div>'+R.map(function(x){ return row(x[0]); }).join(''):
       '<p class="ds" style="padding:8px;line-height:1.45"><b>'+T2('No está en la lista de ciudades de M.A.T','Not in M.A.T’s city list')+'</b><br>'+T2('Cierra este buscador y toca el mapa en cualquier punto para elegirlo como objetivo.','Close this search and tap the map at any point to pick it as the target.')+'</p>';
     return; }
   D.c.forEach(function(c,i){ L.push(i); });
   function srt(a,b){ var A=D.c[a],B=D.c[b]; return cn(A).localeCompare(cn(B)); }
   var es=L.filter(function(i){ return D.c[i][2]==='es'; }).sort(srt), cap=L.filter(function(i){ return D.c[i][2]!=='es'&&D.c[i][5]; }).sort(srt), ot=L.filter(function(i){ return D.c[i][2]!=='es'&&!D.c[i][5]; }).sort(srt);
   var h=''; if(es.length) h+='<div class="pgh">🇪🇸 '+T2('España','Spain')+' ('+es.length+')</div>'+es.map(row).join('');
-  if(cap.length) h+='<div class="pgh">🏛 '+T2('Capitales del mundo','World capitals')+' ('+cap.length+')</div>'+cap.map(row).join('');
-  if(ot.length) h+='<div class="pgh">🌍 '+T2('Otras ciudades','Other cities')+' ('+ot.length+')</div>'+ot.map(row).join('');
+  if(cap.length) h+='<div class="pgh">'+T2('Capitales del mundo','World capitals')+' ('+cap.length+')</div>'+cap.map(row).join('');
+  if(ot.length) h+='<div class="pgh">'+T2('Otras ciudades','Other cities')+' ('+ot.length+')</div>'+ot.map(row).join('');
   el.innerHTML=h||'<p class="ds" style="padding:8px">'+T2('Sin resultados.','No results.')+'</p>'; }
 var CK=null, AKA={us:'usa eeuu estadosunidos unitedstates america',gb:'uk inglaterra england granbretana britain',ae:'emiratos uae',nl:'holanda holland'};
 function ckeys(){ if(CK) return CK; var DNs={}; function cnm(iso,l){ try{ if(!DNs[l]) DNs[l]=new Intl.DisplayNames([l],{type:'region'}); return DNs[l].of(String(iso).toUpperCase())||''; }catch(x){ return ''; } }
@@ -269,34 +272,35 @@ function pickCity(i){ S.c=i; S.ll=null; upd(true); }
 // ---------- cálculo + interfaz ----------
 var CUR=null;
 function upd(anim){ var R0=document.querySelector('.nu'); if(!R0) return; var g=gz();
-  var c=g.c; R0.querySelector('#nu-cb').innerHTML='📍 '+(c?fl(c[2]):'')+'<span>'+e(g.n)+'</span><small>'+(c?e(cname(c[2])):'')+' ▾</small>';
+  var c=g.c; R0.querySelector('#nu-cb').innerHTML=(c?fl(c[2]):'')+'<span>'+e(g.n)+'</span><small>'+(c?e(cname(c[2])):'')+' ▾</small>';
   [].forEach.call(R0.querySelectorAll('#nu-qc [data-ci]'),function(b){ b.setAttribute('aria-pressed',String(+b.getAttribute('data-ci')===S.c)); });
   R0.querySelector('#nu-yv').textContent=ykt(S.y); var yp=null; D.fx.y.forEach(function(y){ if(y[0]===S.yid) yp=y; });
   R0.querySelector('#nu-yn').textContent=yp?(EN()?yp[2]:yp[1]):(S.y<15?T2('menor que Hiroshima','smaller than Hiroshima'):'≈ '+dec(S.y/15,S.y/15<10?1:0)+' × Hiroshima');
   [].forEach.call(R0.querySelectorAll('#nu-yc [data-yid]'),function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-yid')===S.yid)); });
   [].forEach.call(R0.querySelectorAll('[data-b]'),function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-b')===S.b)); });
   var A=eff(S.y,S.b), B=S.y2?eff(S.y2,S.b):null; CUR={A:A,B:B,g:g};
-  foPanel(); cmpPanel(); results(); table(); cloud(); writeQ(); draw(anim); }
+  UM=(anim===true&&!MAP)?'w':(anim===true?'det':(anim==='m'?'m':'q'));
+  foPanel(); cmpPanel(); results(); table(); cloud(); writeQ(); draw(anim); cntRun(); }
 var WD=[[0,'N','N'],[45,'NE','NE'],[90,'E','E'],[135,'SE','SE'],[180,'S','S'],[225,'SO','SW'],[270,'O','W'],[315,'NO','NW']];
 function foPanel(){ var el=document.getElementById('nu-fo'); if(!el) return; var h='';
-  if(S.b==='surf'){ h='<div class="box"><h3>☢️ '+T2('Lluvia radiactiva (modelo simplificado)','Radioactive fallout (simplified model)')+'</h3>'+
+  if(S.b==='surf'){ h='<div class="box"><h3>'+T2('Lluvia radiactiva (modelo simplificado)','Radioactive fallout (simplified model)')+'</h3>'+
    '<label class="tog"><input type="checkbox" id="nu-fot"'+(S.fo?' checked':'')+'> '+T2('Mostrar la nube de lluvia radiactiva','Show the fallout plume')+'</label>';
    if(S.fo){ h+='<div class="ds">'+T2('El viento sopla hacia:','The wind blows towards:')+'</div><div class="compass">'+WD.map(function(w){ return '<button type="button" class="chip" data-wd="'+w[0]+'" aria-pressed="'+(S.wd===w[0])+'">'+(EN()?w[2]:w[1])+'</button>'; }).join('')+'</div>'+
     '<div class="ds">'+T2('Velocidad del viento efectivo: ','Effective wind speed: ')+'<b id="nu-wsv">'+S.ws+' km/h</b></div><input type="range" id="nu-ws" min="13" max="72" step="1" value="'+S.ws+'" aria-label="'+T2('Velocidad del viento','Wind speed')+'">'+
     '<div class="ds">'+T2('Contornos idealizados de Glasstone y Dolan (1977, tabla 9.93) para la tasa de dosis a la hora 1, terreno liso y personas al aire libre. El viento real cambia con la altura y el tiempo: es solo una aproximación.','Idealised contours from Glasstone & Dolan (1977, table 9.93) for the dose rate at hour 1, smooth terrain and people outdoors. Real winds change with height and time: this is only an approximation.')+'</div>'; }
    h+='</div>'; }
-  else h='<p class="ds" style="margin:8px 0 0">☢️ '+T2('En una explosión aérea la bola de fuego no toca el suelo y apenas hay lluvia radiactiva local (Glasstone y Dolan, § 9.48). Elige «En superficie» para ver la nube radiactiva.','In an air burst the fireball does not touch the ground and there is little local fallout (Glasstone & Dolan, § 9.48). Choose “Surface burst” to see the fallout plume.')+'</p>';
+  else h='<p class="ds" style="margin:8px 0 0">'+T2('En una explosión aérea la bola de fuego no toca el suelo y apenas hay lluvia radiactiva local (Glasstone y Dolan, § 9.48). Elige «En superficie» para ver la nube radiactiva.','In an air burst the fireball does not touch the ground and there is little local fallout (Glasstone & Dolan, § 9.48). Choose “Surface burst” to see the fallout plume.')+'</p>';
   el.innerHTML=h; }
 function cmpPanel(){ var el=document.getElementById('nu-cmpb'); if(!el) return; if(!S.y2){ el.innerHTML=''; return; }
   el.innerHTML='<div class="ds" style="margin:4px 0">'+T2('Segunda potencia (anillos discontinuos):','Second yield (dashed rings):')+'</div><div class="chips">'+D.fx.y.map(function(y){ return '<button type="button" class="chip" data-y2="'+y[3]+'" aria-pressed="'+(S.y2===y[3])+'">'+e(EN()?y[2]:y[1])+' · '+ykt(y[3])+'</button>'; }).join('')+'</div>'; }
 function results(){ var el=document.getElementById('nu-res'); if(!el) return; var g=CUR.g, c=g.c;
-  function col(o,lab,cls){ var cs=cas(c,o), h='<div class="rc">'+(lab?'<div class="hd'+(cls||'')+'">'+lab+'</div>':'');
-    if(cs){ h+='<div class="k">'+T2('Muertos estimados','Estimated deaths')+'</div><div class="v d">'+people(cs.dead*0.7)+' – '+people(cs.dead*1.3)+'</div>'+
-      '<div class="k">'+T2('Heridos estimados','Estimated injured')+'</div><div class="v i">'+people(cs.inj*0.7)+' – '+people(cs.inj*1.3)+'</div>'+
-      '<div class="k">'+T2('Personas dentro del anillo de 1 psi','People inside the 1 psi ring')+'</div><div class="v" style="font-size:16px">'+people(cs.p1)+'</div>';
-      if(o.b==='surf'&&S.fo){ var fp=foPop(c,foDims(o.y,100,S.ws)); h+='<div class="k">'+T2('Personas bajo la lluvia radiactiva ≥100 rad/h','People under fallout ≥100 rad/h')+'</div><div class="v" style="font-size:16px;color:#d6a6ec">≈ '+people(fp)+'</div>'; } }
+  function col(o,lab,cls){ var K=(cls?'B':'A'), cs=cas(c,o), h='<div class="rc">'+(lab?'<div class="hd'+(cls||'')+'">'+lab+'</div>':'');
+    if(cs){ h+='<div class="k">'+T2('Muertos estimados','Estimated deaths')+'</div><div class="v d">'+CN(K+'d0',cs.dead*0.7,'p')+' – '+CN(K+'d1',cs.dead*1.3,'p')+'</div>'+
+      '<div class="k">'+T2('Heridos estimados','Estimated injured')+'</div><div class="v i">'+CN(K+'i0',cs.inj*0.7,'p')+' – '+CN(K+'i1',cs.inj*1.3,'p')+'</div>'+
+      '<div class="k">'+T2('Personas dentro del anillo de 1 psi','People inside the 1 psi ring')+'</div><div class="v" style="font-size:16px">'+CN(K+'p1',cs.p1,'p')+'</div>';
+      if(o.b==='surf'&&S.fo){ var fp=foPop(c,foDims(o.y,100,S.ws)); h+='<div class="k">'+T2('Personas bajo la lluvia radiactiva ≥100 rad/h','People under fallout ≥100 rad/h')+'</div><div class="v" style="font-size:16px;color:#d6a6ec">≈ '+CN(K+'fo',fp,'p')+'</div>'; } }
     return h+'</div>'; }
-  var h='<div class="res"><h3>💥 '+e(ykt(S.y))+(S.y2?' / '+e(ykt(S.y2)):'')+' · '+e(g.n)+' · '+(S.b==='surf'?T2('en superficie','surface'):T2('aérea','air burst'))+'</h3>';
+  var h='<div class="res"><h3>'+e(ykt(S.y))+(S.y2?' / '+e(ykt(S.y2)):'')+' · '+e(g.n)+' · '+(S.b==='surf'?T2('en superficie','surface'):T2('aérea','air burst'))+'</h3>';
   if(c){ h+='<div class="rcols'+(CUR.B?' two':'')+'">'+col(CUR.A,CUR.B?ykt(S.y):'')+(CUR.B?col(CUR.B,ykt(S.y2)+' - - -',' b'):'')+'</div>'+
     '<div class="sm">'+T2('Intervalo = resultado del modelo de la OTA (1979) ±30 %. Población residente estimada para 2025 en cada anillo (GHSL, Comisión Europea), centrada en '+e(cn(c))+'. No incluye la lluvia radiactiva ni los incendios.','Range = OTA (1979) model result ±30%. Estimated 2025 resident population in each ring (GHSL, European Commission), centred on '+e(cn(c))+'. Excludes fallout and fires.')+'</div>'; }
   else h+='<p class="ds">'+T2('Para un punto elegido en el mapa no hay estimación de víctimas: elige una de las 442 ciudades con datos de población.','There is no casualty estimate for a point chosen on the map: pick one of the 442 cities with population data.')+'</p>';
@@ -305,10 +309,18 @@ function table(){ var el=document.getElementById('nu-tab'); if(!el) return; var 
   var h='<table><thead><tr><th>'+T2('Efecto','Effect')+'</th><th style="text-align:right">'+(B?ykt(S.y):T2('Radio','Radius'))+'</th>'+(B?'<th style="text-align:right">'+ykt(S.y2)+'</th>':'')+'</tr></thead><tbody>';
   FX.forEach(function(f){ var k=f[0], ra=A[k]||0, rb=B?(B[k]||0):0; if(!ra&&!rb&&k==='p20') return;
     h+='<tr><td><span class="dot" style="background:'+f[1]+'"></span><b>'+e(EN()?f[2][1]:f[2][0])+'</b><span class="stag">'+e(f[4])+'</span><br><span class="ds">'+e(EN()?f[3][1]:f[3][0])+(k==='r500'&&A.b!=='surf'&&!ra?' '+T2('(con esta potencia, a esa dosis no llega al suelo)','(at this yield the dose does not reach the ground)'):'')+'</span></td>'+
-     '<td class="n">'+kmf(ra)+(ra?'<small>'+areaS(ra)+'</small>':'')+'</td>'+(B?'<td class="n">'+kmf(rb)+(rb?'<small>'+areaS(rb)+'</small>':'')+'</td>':'')+'</tr>'; });
+     '<td class="n">'+CN('tA'+k,ra,'k')+(ra?'<small>'+areaS(ra)+'</small>':'')+'</td>'+(B?'<td class="n">'+CN('tB'+k,rb,'k')+(rb?'<small>'+areaS(rb)+'</small>':'')+'</td>':'')+'</tr>'; });
   if(S.b==='surf'&&S.fo){ FOL.forEach(function(f){ var da=foDims(S.y,f[0],S.ws), db=B?foDims(S.y2,f[0],S.ws):null;
     h+='<tr><td><span class="dot" style="background:'+f[1]+'"></span><b>'+T2('Lluvia radiactiva ','Fallout ')+nf(f[0])+' rad/h</b><span class="stag">G&amp;D 9.93</span><br><span class="ds">'+foTxt(f[0])+'</span></td><td class="n">'+kmf(da.dd)+'<small>'+T2('a favor del viento','downwind')+'</small></td>'+(B?'<td class="n">'+kmf(db.dd)+'</td>':'')+'</tr>'; }); }
   el.innerHTML=h+'</tbody></table><p class="ds" style="margin-top:6px">'+T2('Radios desde el punto cero. Fuentes de cada fila en «Cómo se calcula».','Radii from ground zero. Sources for each row in “How it is calculated”.')+'</p>'; }
+// contadores: la cifra final es la de siempre; solo se anima el paso del valor anterior al nuevo
+var CNT={}, CNR=0;
+function CN(k,n,f){ return '<span class="cn" data-k="'+k+'" data-n="'+(+n||0)+'" data-f="'+f+'">'+(UM==='w'?(f==='k'?'—':'0'):(f==='k'?kmf(n):people(n)))+'</span>'; }
+function cntRun(m){ m=m||UM; if(m==='w') return; var els=document.querySelectorAll('.nu .cn'), red=rmo(), dur=red?0:(m==='det'?1700:(m==='m'?650:0)), it=[];
+  [].forEach.call(els,function(el){ var k=el.getAttribute('data-k'), n=+el.getAttribute('data-n'), f=el.getAttribute('data-f'), a=(m==='det')?0:(CNT[k]!=null?CNT[k]:n); CNT[k]=n;
+    function fm(x){ return f==='k'?kmf(x):people(x); } if(!dur||a===n){ el.textContent=fm(n); return; } it.push([el,a,n,fm]); });
+  if(CNR){ cancelAnimationFrame(CNR); CNR=0; } if(!it.length) return; var t0=performance.now();
+  (function st(t){ var k=Math.max(0,Math.min(1,(t-t0)/dur)), ez=1-Math.pow(1-k,3); it.forEach(function(p){ if(!document.body.contains(p[0])) return; var v=p[1]+(p[2]-p[1])*ez; if(p[1]>0&&p[2]>0) v=Math.exp(Math.log(p[1])+(Math.log(p[2])-Math.log(p[1]))*ez); p[0].textContent=p[3](v); }); if(k<1) CNR=requestAnimationFrame(st); else CNR=0; })(t0); }
 function areaS(r){ var a=PI*r*r; return dec(a,a<10?1:0)+' km²'; }
 function foTxt(r){ var day=r*2.35;
   if(r>=1000) return T2('Al aire libre, unos '+nf(day)+' rad en las primeras 24 h: muy por encima de los 450 rem que la OTA estima mortales para la mitad de los expuestos.','Outdoors, about '+nf(day)+' rad in the first 24 h: far above the 450 rem the OTA estimates would kill half of those exposed.');
@@ -326,7 +338,8 @@ function cloud(){ var el=document.getElementById('nu-cl'); if(!el) return; var A
   s+=cl(A,B?W*0.33:W*0.6,'#e8a46a',false); if(B) s+=cl(B,W*0.72,'#7fc3e6',true);
   s+='<text x="'+(W-4)+'" y="'+(H-10)+'" fill="#8d979f" font-size="10" text-anchor="end">'+T2('esquema; alturas a escala','sketch; heights to scale')+'</text></svg>';
   function tx(o){ return T2('techo ≈ ','top ≈ ')+dec(o.ct,o.ct<10?1:0)+' km · '+T2('base ≈ ','base ≈ ')+dec(o.cb,o.cb<10?1:0)+' km · '+T2('anchura ≈ ','width ≈ ')+dec(o.cw,o.cw<10?1:0)+' km'; }
-  el.innerHTML='<h3>🍄 '+T2('Nube en hongo (estabilizada, ~10 min)','Mushroom cloud (stabilised, ~10 min)')+'</h3>'+s+'<div class="ds">'+(B?'<b>'+ykt(S.y)+'</b>: ':'')+tx(A)+(B?'<br><b>'+ykt(S.y2)+'</b>: '+tx(B):'')+'</div><div class="ds" style="font-size:11.5px;margin-top:4px">'+T2('Altura: ajuste a la fig. 9.96 de Glasstone y Dolan; anchura: Miller (1963). Valores medios en latitudes medias.','Height: fit to Glasstone & Dolan fig. 9.96; width: Miller (1963). Mid-latitude averages.')+'</div>'; }
+  el.innerHTML='<h3>'+T2('Nube en hongo (estabilizada, ~10 min)','Mushroom cloud (stabilised, ~10 min)')+'</h3>'+s+'<div class="ds">'+(B?'<b>'+ykt(S.y)+'</b>: ':'')+tx(A)+(B?'<br><b>'+ykt(S.y2)+'</b>: '+tx(B):'')+'</div><div class="ds" style="font-size:11.5px;margin-top:4px">'+T2('Altura: ajuste a la fig. 9.96 de Glasstone y Dolan; anchura: Miller (1963). Valores medios en latitudes medias.','Height: fit to Glasstone & Dolan fig. 9.96; width: Miller (1963). Mid-latitude averages.')+'</div>';  if(UM==='det'||UM==='m') cloudRise(UM); }
+function cloudRise(m){ var sv=document.querySelector('#nu-cl svg'); if(!sv||rmo()) return; sv.classList.remove('rise','fade'); void sv.getBoundingClientRect(); sv.classList.add(m==='m'?'fade':'rise'); }
 // ---------- mapa ----------
 function mapInit(){ var Lf=window.L, el=document.getElementById('nu-map'); if(MAP){ try{ MAP.remove(); }catch(x){} MAP=null; } LY=[];
   var g=CUR.g; MAP=Lf.map(el,{zoomControl:true,minZoom:3,maxZoom:18,zoomSnap:0.25,zoomDelta:0.5,worldCopyJump:true}).setView([g.lat,g.lon],11);
@@ -334,26 +347,77 @@ function mapInit(){ var Lf=window.L, el=document.getElementById('nu-map'); if(MA
   Lf.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> '+T2('colaboradores','contributors')}).addTo(MAP);
   MAP.createPane('nufo'); MAP.getPane('nufo').style.zIndex=405;
   MAP.createPane('nuri'); MAP.getPane('nuri').style.zIndex=410;
-  MAP.on('click',function(ev){ var ll=ev.latlng, d=document.createElement('div'); d.innerHTML='<button type="button" class="btn" style="min-height:36px;font-size:13px">💥 '+T2('Detonar aquí','Detonate here')+'</button>';
+  MAP.on('click',function(ev){ var ll=ev.latlng, d=document.createElement('div'); d.innerHTML='<button type="button" class="btn" style="min-height:36px;font-size:13px">'+T2('Detonar aquí','Detonate here')+'</button>';
     d.firstChild.addEventListener('click',function(){ MAP.closePopup(); var best=-1,bd=1e9; D.c.forEach(function(c,i){ var dd=dist(ll.lat,ll.lng,c[3],c[4]); if(dd<bd){ bd=dd; best=i; } }); if(bd<1.5){ S.c=best; S.ll=null; } else { S.c=null; S.ll=[ll.lat,((ll.lng+540)%360)-180]; } upd(true); });
     Lf.popup({closeButton:true}).setLatLng(ll).setContent(d).openOn(MAP); });
   setTimeout(function(){ try{ MAP.invalidateSize(); }catch(x){} },60); }
-function clear(){ if(!MAP) return; LY.forEach(function(l){ try{ MAP.removeLayer(l); }catch(x){} }); LY=[]; if(ANI){ cancelAnimationFrame(ANI); ANI=null; } }
-function draw(anim){ if(!MAP||!window.L) return; var Lf=window.L; clear(); var g=CUR.g, A=CUR.A, B=CUR.B, C=[g.lat,g.lon];
-  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches; if(reduce) anim=false;
-  if(S.b==='surf'&&S.fo){ FOL.slice().reverse().forEach(function(f){ [[A,false],[B,true]].forEach(function(p){ if(!p[0]) return; var dm=foDims(p[0].y,f[0],S.ws); var pg=Lf.polygon(foPoly(g.lat,g.lon,dm,S.wd),{pane:'nufo',color:f[1],weight:p[1]?1.5:1,opacity:.9,fillColor:f[1],fillOpacity:p[1]?0:.28,dashArray:p[1]?'6 5':null,interactive:false}); pg.addTo(MAP); LY.push(pg); }); }); }
-  var rings=[];
-  function add(o,dash){ FX.slice().reverse().forEach(function(f){ var r=o[f[0]]; if(!r) return; var c=Lf.circle(C,{pane:'nuri',radius:anim?1:r*1000,color:f[1],weight:dash?1.6:2,opacity:.95,fillColor:f[1],fillOpacity:dash?0:(f[0]==='fb'?.45:.12),dashArray:dash?'6 5':(/^th/.test(f[0])?'2 4':null),interactive:true});
-    c.bindTooltip((EN()?f[2][1]:f[2][0])+(dash?' ('+ykt(o.y)+')':'')+': '+kmf(r),{sticky:true}); c.addTo(MAP); LY.push(c); rings.push([c,r*1000]); }); }
-  add(A,false); if(B) add(B,true);
-  var mk=Lf.circleMarker(C,{pane:'nuri',radius:5,color:'#fff',weight:2,fillColor:'#b3261e',fillOpacity:1}).addTo(MAP); mk.bindTooltip(e(g.n),{permanent:true,direction:'top',offset:[0,-8],className:'gzlab'}); LY.push(mk);
-  if(anim){ fit(); var fl=document.getElementById('nu-fl'); if(fl){ fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on'); }
-    var t0=performance.now(), dur=1700; rings.sort(function(a,b){ return a[1]-b[1]; });
-    (function step(t){ var k=Math.min(1,(t-t0)/dur); rings.forEach(function(p,i){ var st=i/rings.length*0.45, kk=Math.max(0,Math.min(1,(k-st)/(1-st))); var ee=1-Math.pow(1-kk,3); p[0].setRadius(Math.max(1,p[1]*ee)); }); if(k<1) ANI=requestAnimationFrame(step); else ANI=null; })(t0); }
+function rmo(){ return !!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+function eOut(t){ return 1-Math.pow(1-t,3); }
+function eIO(t){ return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2; }
+// Capas persistentes: cada anillo y cada contorno de lluvia radiactiva se conserva entre cambios y su tamaño se interpola
+// (nada salta). Las cifras son las mismas de eff()/foDims(); solo cambia cómo se dibuja la transición.
+var RL={}, FOP={}, GZM=null, SHK=null, TW=[], TWR=0, CEN='', LG=null, UM='q';
+function clear(){ if(!MAP) return; LY.forEach(function(l){ try{ MAP.removeLayer(l); }catch(x){} }); LY=[];
+  Object.keys(RL).forEach(function(k){ try{ MAP.removeLayer(RL[k].l); }catch(x){} }); Object.keys(FOP).forEach(function(k){ try{ MAP.removeLayer(FOP[k].l); }catch(x){} });
+  RL={}; FOP={}; if(GZM){ try{ MAP.removeLayer(GZM); }catch(x){} GZM=null; } if(SHK){ try{ MAP.removeLayer(SHK); }catch(x){} SHK=null; }
+  TW=[]; if(TWR){ cancelAnimationFrame(TWR); TWR=0; } if(ANI){ cancelAnimationFrame(ANI); ANI=null; } CEN=''; }
+function twGo(){ if(TWR) return; TWR=requestAnimationFrame(twTick); }
+function twTick(now){ TWR=0; if(!MAP){ TW=[]; return; } var keep=[];
+  TW.forEach(function(t){ if(t.t0==null) t.t0=now; var k=Math.max(0,(now-t.t0)/t.d) - (t.dl||0); k=Math.max(0,Math.min(1,k/(1-(t.dl||0)))); try{ t.f(t.ez?t.ez(k):k); }catch(x){} if(k<1) keep.push(t); else if(t.end) try{ t.end(); }catch(x){} });
+  TW=keep; if(TW.length) TWR=requestAnimationFrame(twTick); }
+function tw(id,d,f,ez,dl,end){ TW=TW.filter(function(t){ return t.id!==id; }); if(d<=0){ f(1); if(end) end(); return; } TW.push({id:id,d:d,f:f,ez:ez||eIO,dl:dl||0,end:end}); twGo(); }
+function lgDraw(){ var mw=document.getElementById('nu-mw'); if(!mw||!CUR) return; if(!LG||!document.body.contains(LG)){ LG=document.createElement('div'); LG.className='nu-lg'; LG.setAttribute('aria-label',T2('Leyenda del mapa','Map legend')); mw.parentNode.insertBefore(LG,mw.nextSibling); }
+  var A=CUR.A, B=CUR.B, h='<ul>';
+  FX.forEach(function(f){ var r=A[f[0]]||0, rb=B?(B[f[0]]||0):0; if(!r&&!rb) return; h+='<li><i style="background:'+f[1]+'"></i><span>'+e(EN()?f[2][1]:f[2][0])+'</span><b>'+kmf(r)+(B?' / '+kmf(rb):'')+'</b></li>'; });
+  if(S.b==='surf'&&S.fo) h+='<li><i style="background:linear-gradient(90deg,#5b1a7a,#dcb8e8)"></i><span>'+T2('Lluvia radiactiva 1–1.000 rad/h','Fallout 1–1,000 rad/h')+'</span><b></b></li>';
+  h+='</ul>'+(B?'<div class="lgb"><i class="dsh"></i>'+T2('Línea discontinua: ','Dashed line: ')+e(ykt(S.y2))+'</div>':'');
+  LG.innerHTML=h; }
+function draw(anim){ if(!MAP||!window.L) return; var Lf=window.L, g=CUR.g, A=CUR.A, B=CUR.B, C=[g.lat,g.lon];
+  var red=rmo(), cen=g.lat.toFixed(5)+','+g.lon.toFixed(5);
+  var det=(anim===true)||cen!==CEN; if(det) clear(); CEN=cen;
+  var dur=red?0:(det?1700:(anim==='m'?650:200));
+  // anillos
+  var want={}, ord=[];
+  [[A,'A',false],[B,'B',true]].forEach(function(p){ var o=p[0]; if(!o) return; var dash=p[2];
+    FX.slice().reverse().forEach(function(f){ var r=o[f[0]]; if(!r) return; var key=p[1]+f[0]; want[key]=1; ord.push(key);
+      var st={pane:'nuri',color:f[1],weight:dash?1.6:2,opacity:.95,fillColor:f[1],fillOpacity:dash?0:(f[0]==='fb'?.45:.12),dashArray:dash?'6 5':(/^th/.test(f[0])?'2 4':null),interactive:true};
+      var tt=(EN()?f[2][1]:f[2][0])+(dash?' ('+ykt(o.y)+')':'')+': '+kmf(r), R=RL[key];
+      if(!R){ var c=Lf.circle(C,Object.assign({},st,{radius:det||dur?1:r*1000})); c.bindTooltip(tt,{sticky:true}); c.addTo(MAP); R=RL[key]={l:c,r:det||dur?1:r*1000,fb:f[0]==='fb'&&!dash}; }
+      else { R.l.setStyle(st); R.l.setTooltipContent(tt); }
+      R.to=r*1000; }); });
+  Object.keys(RL).forEach(function(k){ if(!want[k]){ var R=RL[k]; delete RL[k]; var r0=R.r; tw('r'+k,red?0:Math.min(dur,450),function(e2){ R.l.setRadius(Math.max(1,r0*(1-e2))); R.l.setStyle({opacity:.95*(1-e2),fillOpacity:.12*(1-e2)}); },eIO,0,function(){ try{ MAP.removeLayer(R.l); }catch(x){} }); } });
+  var srt=ord.slice().sort(function(a,b){ return RL[a].to-RL[b].to; });
+  ord.forEach(function(k){ try{ RL[k].l.bringToFront(); }catch(x){} });
+  srt.forEach(function(k,i){ var R=RL[k], r0=R.r, r1=R.to, dl=det?i/Math.max(1,srt.length)*0.45:0;
+    tw('r'+k,dur,function(e2){ R.r=r0+(r1-r0)*e2; R.l.setRadius(Math.max(1,R.r)); if(det&&R.fb) R.l.setStyle({fillOpacity:.45+.45*(1-e2)}); },det?eOut:eIO,dl); });
+  // lluvia radiactiva (contornos de Glasstone y Dolan, tabla 9.93): tamaño, viento y dirección interpolados
+  var fw={};
+  if(S.b==='surf'&&S.fo){ [[A,'A',false],[B,'B',true]].forEach(function(p){ var o=p[0]; if(!o) return; FOL.forEach(function(f){ var key=p[1]+f[0]; fw[key]=1; var F=FOP[key];
+      var st={pane:'nufo',color:f[1],weight:p[2]?1.5:1,opacity:.9,fillColor:f[1],fillOpacity:p[2]?0:.28,dashArray:p[2]?'6 5':null,interactive:false};
+      var tg={y:o.y,ws:S.ws,wd:S.wd,s:1};
+      if(!F){ var dm0=foDims(o.y,f[0],S.ws); var pg=Lf.polygon(foPoly(g.lat,g.lon,dm0,S.wd),st); pg.addTo(MAP); F=FOP[key]={l:pg,rate:f[0],cur:{y:o.y,ws:S.ws,wd:S.wd,s:(dur?0:1)}}; }
+      else F.l.setStyle(st);
+      var c0=Object.assign({},F.cur), dwd=((tg.wd-c0.wd+540)%360)-180;
+      function setF(e2){ var y=Math.exp(Math.log(c0.y)+(Math.log(tg.y)-Math.log(c0.y))*e2), ws=c0.ws+(tg.ws-c0.ws)*e2, wd=c0.wd+dwd*e2, sc=c0.s+(tg.s-c0.s)*e2;
+        F.cur={y:y,ws:ws,wd:(wd+360)%360,s:sc}; var dm=foDims(y,F.rate,ws); dm={dd:dm.dd*sc,mw:dm.mw*sc,gz:dm.gz*sc}; F.l.setLatLngs(foPoly(g.lat,g.lon,dm,F.cur.wd)); }
+      if(!dur) setF(1); else tw('f'+key,det?dur*1.25:dur,setF,det?eOut:eIO,det?0.3:0); }); }); }
+  Object.keys(FOP).forEach(function(k){ if(!fw[k]){ var F=FOP[k]; delete FOP[k]; var s0=F.cur.s;
+    tw('f'+k,red?0:350,function(e2){ var sc=s0*(1-e2); var dm=foDims(F.cur.y,F.rate,F.cur.ws); F.l.setLatLngs(foPoly(g.lat,g.lon,{dd:Math.max(1e-4,dm.dd*sc),mw:Math.max(1e-4,dm.mw*sc),gz:Math.max(1e-4,dm.gz*sc)},F.cur.wd)); },eIO,0,function(){ try{ MAP.removeLayer(F.l); }catch(x){} }); } });
+  // punto cero
+  if(!GZM){ GZM=Lf.circleMarker(C,{pane:'nuri',radius:5,color:'#fff',weight:2,fillColor:'#b3261e',fillOpacity:1}).addTo(MAP); GZM.bindTooltip(e(g.n),{permanent:true,direction:'top',offset:[0,-8],className:'gzlab'}); }
+  else GZM.bringToFront(); GZM.setTooltipContent(e(g.n));
+  lgDraw();
+  if(det){ fit(!red); if(!red){ var fl=document.getElementById('nu-fl'); if(fl){ fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on'); }
+      // frente de la onda expansiva: un aro que se abre hasta el anillo de 1 psi y se desvanece (solo visual)
+      var rmax=Math.max(A.p1||0,B?(B.p1||0):0)*1000; if(rmax>0){ SHK=Lf.circle(C,{pane:'nuri',radius:1,color:'#fff8e6',weight:3,opacity:.95,fill:false,interactive:false}).addTo(MAP); var sk=SHK;
+        tw('shk',2100,function(e2){ sk.setRadius(Math.max(1,rmax*1.04*e2)); sk.setStyle({opacity:.95*(1-e2*e2),weight:3-1.5*e2}); },eOut,0,function(){ try{ MAP.removeLayer(sk); }catch(x){} if(SHK===sk) SHK=null; }); } } }
+  else if(anim==='m') fit(!red);
 }
-function fit(){ if(!MAP||!CUR) return; var A=CUR.A, B=CUR.B, g=CUR.g, r=Math.max(A.p1,A.th1,B?Math.max(B.p1,B.th1):0);
+function fit(an){ if(!MAP||!CUR) return; var A=CUR.A, B=CUR.B, g=CUR.g, r=Math.max(A.p1,A.th1,B?Math.max(B.p1,B.th1):0);
   var Lf=window.L, b=Lf.latLng(g.lat,g.lon).toBounds(r*2000*1.08);
   if(S.b==='surf'&&S.fo){ var dm=foDims(Math.max(S.y,S.y2||0),100,S.ws); foPoly(g.lat,g.lon,dm,S.wd).forEach(function(p){ b.extend(p); }); }
+  if(an&&!rmo()){ try{ MAP.stop(); var tz=MAP.getBoundsZoom(b,false,Lf.point(8,8)), cz=MAP.getZoom(); if(Math.abs(tz-cz)<0.05&&MAP.getCenter().distanceTo(b.getCenter())<r*200){ return; }
+      MAP.flyToBounds(b,{padding:[8,8],duration:Math.min(1.4,0.55+Math.abs(tz-cz)*0.18),easeLinearity:0.2}); return; }catch(x){} }
   MAP.fitBounds(b,{animate:false,padding:[8,8]}); }
 function share(){ var url=location.href.split('#')[0]+qstr(), g=CUR.g, t=T2('Guerra nuclear (M.A.T): ','Nuclear war (M.A.T): ')+ykt(S.y)+' · '+g.n;
   if(navigator.share){ navigator.share({title:t,text:t,url:url}).catch(function(){}); return; }
@@ -391,18 +455,18 @@ function gnHow(which){ if(which==='d'){ var ed=document.getElementById('df-how')
   else { var el2=document.getElementById('nu-how'); if(!el2||el2.getAttribute('data-ok')) return; load().then(function(){ how(); el2.setAttribute('data-ok','1'); }).catch(function(){}); } }
 function gnShell(app,X){
   var h='<div class="gn" id="gn-shell" data-noi18n>'+X.crumbs([[T2('Inicio','Home'),'#/'],[T2('Guerra nuclear','Nuclear war')]])+
-  '<h1>☢️ '+T2('Guerra nuclear','Nuclear war')+'</h1><p class="subt">'+T2('Alcance de misiles, efectos de una detonación nuclear y defensa aérea — divulgativo','Missile ranges, the effects of a nuclear detonation and air defence — educational')+'</p>'+
+  '<h1>'+T2('Guerra nuclear','Nuclear war')+'</h1><p class="subt">'+T2('Alcance de misiles, efectos de una detonación nuclear y defensa aérea — divulgativo','Missile ranges, the effects of a nuclear detonation and air defence — educational')+'</p>'+
   '<nav class="gn-tabs" id="gn-tabs" aria-label="'+T2('Pasos','Steps')+'">'+
-   '<a data-gt="alcance" href="'+gnHref('alcance')+'"><span class="n">1</span><span class="i" aria-hidden="true">🚀</span><span class="t">'+T2('Alcance','Range')+'<small>'+T2('Misil y lanzamiento','Missile and launch')+'</small></span></a>'+
+   '<a data-gt="alcance" href="'+gnHref('alcance')+'"><span class="n">1</span><span class="i" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c3-9 8-14 16-16-1 8-6 13-15 16"/><path d="M9 15l-3-1 2-4M15 9l1 3-4 2"/></svg></span><span class="t">'+T2('Alcance','Range')+'<small>'+T2('Misil y lanzamiento','Missile and launch')+'</small></span></a>'+
    '<span class="ar" aria-hidden="true">›</span>'+
-   '<a data-gt="impacto" href="'+gnHref('impacto')+'"><span class="n">2</span><span class="i" aria-hidden="true">💥</span><span class="t">'+T2('Impacto','Impact')+'<small>'+T2('Efectos en la ciudad','Effects on the city')+'</small></span></a>'+
+   '<a data-gt="impacto" href="'+gnHref('impacto')+'"><span class="n">2</span><span class="i" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="2 2.6"/><circle cx="12" cy="12" r="10.5" opacity=".55"/></svg></span><span class="t">'+T2('Impacto','Impact')+'<small>'+T2('Efectos en la ciudad','Effects on the city')+'</small></span></a>'+
    '<span class="sp" aria-hidden="true"></span>'+
-   '<a data-gt="defensa" class="gn-df" href="'+gnHref('defensa')+'"><span class="i" aria-hidden="true">🛡️</span><span class="t">'+T2('Defensa aérea','Air defence')+'<small>'+T2('Simulador y escenarios reales','Simulator and real scenarios')+'</small></span></a></nav>'+
+   '<a data-gt="defensa" class="gn-df" href="'+gnHref('defensa')+'"><span class="i" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.4 2.4 4.6-4.8"/></svg></span><span class="t">'+T2('Defensa aérea','Air defence')+'<small>'+T2('Simulador y escenarios reales','Simulator and real scenarios')+'</small></span></a></nav>'+
   '<div id="gn-body"></div>'+
   '<section class="gn-how" id="gn-how"><h2>'+T2('Cómo se calcula y fuentes','How it is calculated and sources')+'</h2>'+
-   '<details class="mt gn-d" id="gn-ha"><summary>🚀 '+T2('Alcance de misiles: método y fuentes','Missile ranges: method and sources')+'</summary><div id="alc-meta"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
-   '<details class="mt gn-d" id="gn-hi"><summary>💥 '+T2('Efectos de la detonación: método y fuentes','Detonation effects: method and sources')+'</summary><div id="nu-how"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
-   '<details class="mt gn-d" id="gn-hd"><summary>🛡️ '+T2('Defensa aérea: modelo y fuentes','Air defence: model and sources')+'</summary><div id="df-how"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
+   '<details class="mt gn-d" id="gn-ha"><summary>'+T2('Alcance de misiles: método y fuentes','Missile ranges: method and sources')+'</summary><div id="alc-meta"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
+   '<details class="mt gn-d" id="gn-hi"><summary>'+T2('Efectos de la detonación: método y fuentes','Detonation effects: method and sources')+'</summary><div id="nu-how"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
+   '<details class="mt gn-d" id="gn-hd"><summary>'+T2('Defensa aérea: modelo y fuentes','Air defence: model and sources')+'</summary><div id="df-how"><p class="sub">'+T2('Cargando…','Loading…')+'</p></div></details>'+
    '<p class="ds" style="margin-top:10px">'+T2('Contenido divulgativo basado en fuentes abiertas. No es una predicción ni una herramienta de designación de blancos.','Educational content based on open sources. It is neither a prediction nor a targeting tool.')+'</p></section></div>';
   X.set(h,T2('Guerra nuclear','Nuclear war'));
   var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi'), hd=document.getElementById('gn-hd');
