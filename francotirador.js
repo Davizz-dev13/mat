@@ -721,7 +721,7 @@ let MSGT=0; function msg(t,cls){ const m=document.getElementById('frmsg'); if(!m
 
 /* ===== Pantalla de juego ===== */
 const EMAX=()=>G&&G.mode==='record'?90:40; /* recorrido de la torreta; en récord, base inclinada (simplificado para el juego) */
-/* recorrido vertical de la mira: siempre se puede apuntar a cada placa y por encima o por debajo de ella lo que haga falta para corregir a ojo (holdover) en vez de con la torreta: hasta todo el recorrido de la torreta + 40 mil por encima de la placa más alta y 80 mil por debajo de la más baja. Antes el tope fijo era +80 mil y las placas de Alta montaña están a unos +85 mil (5° de subida) */ const ELIM=()=>{ let lo=-120,hi=80; if(G&&G.targets) G.targets.forEach(t=>{ if(isFinite(t.e)){ lo=Math.min(lo,t.e-80); hi=Math.max(hi,t.e+EMAX()+40); } }); return [lo,hi]; }; const U=()=>CFG.unit==='moa'; const CLICK=()=>U()?0.25/MOA_PER_MIL:0.1; /* un clic en mil */
+/* mira libre: se puede mover por todo el paisaje, de unos 22° hacia abajo (el suelo delante del puesto) a 34° hacia arriba y 45° a cada lado; donde esté la retícula al disparar es donde se apunta (sujeción). Antes el tope fijo era +80 mil y las placas de Alta montaña están a unos +85 mil (5° de subida) */ const ELIM=()=>{ let lo=-400,hi=600; if(G&&G.targets) G.targets.forEach(t=>{ if(isFinite(t.e)){ lo=Math.min(lo,t.e-400); hi=Math.max(hi,t.e+600); } }); return [lo,hi]; }; const ULIM=800; const U=()=>CFG.unit==='moa'; const CLICK=()=>U()?0.25/MOA_PER_MIL:0.1; /* un clic en mil */
 function fmtAng(mil,signs){ const v=U()?mil*MOA_PER_MIL:mil; return nf(Math.abs(v),U()?2:1)+' '+(U()?'MOA':'mil'); }
 function fmtE(mil){ return (mil>=0?L('Arriba ','Up '):L('Abajo ','Down '))+fmtAng(mil); }
 function fmtW(mil){ return Math.abs(mil)<0.005?fmtAng(0):((mil>=0?L('D ','R '):L('I ','L '))+fmtAng(mil)); }
@@ -773,7 +773,7 @@ function side(){ const sd=document.getElementById('frside'); if(!sd) return; con
     const stop=()=>{ clearTimeout(del); clearInterval(rep); }; b.addEventListener('pointerup',stop); b.addEventListener('pointerleave',stop); b.addEventListener('pointercancel',stop); });
   sd.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{ zoomStep(+b.getAttribute('data-z')); side(); });
   q('frctr').onclick=()=>{ const t=G.targets[G.cur]; G.aim={u:t.u,e:t.e}; G.trackOff=0; };
-  const tk=q('frtk'); if(tk) tk.onclick=()=>{ G.track=!G.track; if(G.track){ const t=G.targets[G.cur]; G.trackOff=clamp(G.aim.u-t.u,-20,20); } side(); };
+  const tk=q('frtk'); if(tk) tk.onclick=()=>{ G.track=!G.track; if(G.track){ const t=G.targets[G.cur]; G.trackOff=clamp(G.aim.u-t.u,-150,150); } side(); };
   q('fr0').onclick=()=>{ G.dialE=0; G.dialW=0; side(); };
   q('frbr').onclick=()=>{ G.breath=G.breath?0:performance.now(); side(); };
   q('frfire').onclick=()=>fire();
@@ -783,7 +783,7 @@ function selTarget(i,center){ if(G.over) return; G.cur=i; if(center){ const t=G.
 function bindView(){ const v=CV; let down=null, moved=0;
  v.addEventListener('pointerdown',e=>{ if(G&&G.bcam){ G.bcam.skip=true; return; } down={x:e.clientX,y:e.clientY}; moved=0; v.setPointerCapture(e.pointerId); });
  v.addEventListener('pointermove',e=>{ if(!down) return; const dx=e.clientX-down.x, dy=e.clientY-down.y; moved+=Math.abs(dx)+Math.abs(dy); down={x:e.clientX,y:e.clientY};
-   const P=viewParams(v.clientWidth,v.clientHeight); if(G.view==='scope'){ if(G.mode==='movil'&&G.track&&G.targets[G.cur].mv){ G.trackOff=clamp((G.trackOff||0)-dx/P.s,-20,20); } else G.aim.u=clamp(G.aim.u-dx/P.s,-320,320); const el=ELIM(); G.aim.e=clamp(G.aim.e+dy/P.s,el[0],el[1]); } else { G.pano.u=clamp(G.pano.u-dx/P.s,-260,260); } });
+   const P=viewParams(v.clientWidth,v.clientHeight); if(G.view==='scope'){ if(G.mode==='movil'&&G.track&&G.targets[G.cur].mv){ G.trackOff=clamp((G.trackOff||0)-dx/P.s,-150,150); } else G.aim.u=clamp(G.aim.u-dx/P.s,-ULIM,ULIM); const el=ELIM(); G.aim.e=clamp(G.aim.e+dy/P.s,el[0],el[1]); } else { G.pano.u=clamp(G.pano.u-dx/P.s,-260,260); } });
  v.addEventListener('pointerup',e=>{ if(down&&moved<8&&G.view==='pano'){ const r=v.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top; const P=viewParams(v.clientWidth,v.clientHeight);
      let best=-1,bd=34; G.targets.forEach((t,i)=>{ const dd=Math.hypot(PX(P,t.u)-x,Math.min(PZ(P,t.d,t.gy)-5,PZ(P,t.d,t.zc))-y-8); if(dd<bd){ bd=dd; best=i; } });
      if(best>=0) selTarget(best,false); else { let bf=-1,fd=40; G.flags.forEach((f,i)=>{ const dd=Math.hypot(PX(P,f.u)-x,PZ(P,f.d,f.gy)-y-10); if(dd<fd){ fd=dd; bf=i; } }); if(bf>=0) tool('flags',bf); } }
