@@ -23,7 +23,7 @@ var FEAT_J='#/soldado/combate', FEAT_S='#/radar';
 var FZ_IMG='img/sec_fuerzas.webp';
 function gamesHTML(){
   var G=window.MAT_GAMES?window.MAT_GAMES():null, h='', f=null;
-  var list=G?G.list:[['#/armero','armero','Armero 3D','3D Gunsmith'],['#/soldado','soldado','Crea tu soldado','Build your soldier'],['#/soldado/combate','combate','Combate','Fight'],['#/duelo','duelo','Duelo','Duel'],['#/antidisturbios','antidisturbios','Antidisturbios','Riot control'],['#/negociador','negociador','Negociador','Negotiator'],['#/francotirador','francotirador','Francotirador','Sniper'],['#/guerra-nuclear','nuclear','Guerra nuclear','Nuclear war'],['#/ejercito','ejercito','Crea tu ejército','Build your army']].map(function(g){ return [g[0],g[1],EN()?g[3]:g[2],'']; });
+  var list=G?G.list:[['#/armero','armero','Armero 3D','3D Gunsmith'],['#/soldado','soldado','Crea tu soldado','Build your soldier'],['#/soldado/combate','combate','Combate','Fight'],['#/duelo','duelo','Duelo','Duel'],['#/antidisturbios','antidisturbios','Antidisturbios','Riot control'],['#/negociador','negociador','Negociador','Negotiator'],['#/francotirador','francotirador','Francotirador','Sniper'],['#/guerra-nuclear','nuclear','Guerra nuclear','Nuclear war']].map(function(g){ return [g[0],g[1],EN()?g[3]:g[2],'']; });
   list.forEach(function(g){
     if(g[0]===FEAT_J&&!f){ f=g; return; }
     var th='<span class="ri" style="background-image:url(img/juegos/'+g[1]+'.webp)"></span>';
