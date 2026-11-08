@@ -721,7 +721,7 @@ let MSGT=0; function msg(t,cls){ const m=document.getElementById('frmsg'); if(!m
 
 /* ===== Pantalla de juego ===== */
 const EMAX=()=>G&&G.mode==='record'?90:40; /* recorrido de la torreta; en récord, base inclinada (simplificado para el juego) */
-const U=()=>CFG.unit==='moa'; const CLICK=()=>U()?0.25/MOA_PER_MIL:0.1; /* un clic en mil */
+/* recorrido vertical de la mira: siempre se puede apuntar a cada placa y por encima o por debajo de ella lo que haga falta para corregir a ojo (holdover) en vez de con la torreta: hasta todo el recorrido de la torreta + 40 mil por encima de la placa más alta y 80 mil por debajo de la más baja. Antes el tope fijo era +80 mil y las placas de Alta montaña están a unos +85 mil (5° de subida) */ const ELIM=()=>{ let lo=-120,hi=80; if(G&&G.targets) G.targets.forEach(t=>{ if(isFinite(t.e)){ lo=Math.min(lo,t.e-80); hi=Math.max(hi,t.e+EMAX()+40); } }); return [lo,hi]; }; const U=()=>CFG.unit==='moa'; const CLICK=()=>U()?0.25/MOA_PER_MIL:0.1; /* un clic en mil */
 function fmtAng(mil,signs){ const v=U()?mil*MOA_PER_MIL:mil; return nf(Math.abs(v),U()?2:1)+' '+(U()?'MOA':'mil'); }
 function fmtE(mil){ return (mil>=0?L('Arriba ','Up '):L('Abajo ','Down '))+fmtAng(mil); }
 function fmtW(mil){ return Math.abs(mil)<0.005?fmtAng(0):((mil>=0?L('D ','R '):L('I ','L '))+fmtAng(mil)); }
@@ -783,7 +783,7 @@ function selTarget(i,center){ if(G.over) return; G.cur=i; if(center){ const t=G.
 function bindView(){ const v=CV; let down=null, moved=0;
  v.addEventListener('pointerdown',e=>{ if(G&&G.bcam){ G.bcam.skip=true; return; } down={x:e.clientX,y:e.clientY}; moved=0; v.setPointerCapture(e.pointerId); });
  v.addEventListener('pointermove',e=>{ if(!down) return; const dx=e.clientX-down.x, dy=e.clientY-down.y; moved+=Math.abs(dx)+Math.abs(dy); down={x:e.clientX,y:e.clientY};
-   const P=viewParams(v.clientWidth,v.clientHeight); if(G.view==='scope'){ if(G.mode==='movil'&&G.track&&G.targets[G.cur].mv){ G.trackOff=clamp((G.trackOff||0)-dx/P.s,-20,20); } else G.aim.u=clamp(G.aim.u-dx/P.s,-320,320); G.aim.e=clamp(G.aim.e+dy/P.s,-120,80); } else { G.pano.u=clamp(G.pano.u-dx/P.s,-260,260); } });
+   const P=viewParams(v.clientWidth,v.clientHeight); if(G.view==='scope'){ if(G.mode==='movil'&&G.track&&G.targets[G.cur].mv){ G.trackOff=clamp((G.trackOff||0)-dx/P.s,-20,20); } else G.aim.u=clamp(G.aim.u-dx/P.s,-320,320); const el=ELIM(); G.aim.e=clamp(G.aim.e+dy/P.s,el[0],el[1]); } else { G.pano.u=clamp(G.pano.u-dx/P.s,-260,260); } });
  v.addEventListener('pointerup',e=>{ if(down&&moved<8&&G.view==='pano'){ const r=v.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top; const P=viewParams(v.clientWidth,v.clientHeight);
      let best=-1,bd=34; G.targets.forEach((t,i)=>{ const dd=Math.hypot(PX(P,t.u)-x,Math.min(PZ(P,t.d,t.gy)-5,PZ(P,t.d,t.zc))-y-8); if(dd<bd){ bd=dd; best=i; } });
      if(best>=0) selTarget(best,false); else { let bf=-1,fd=40; G.flags.forEach((f,i)=>{ const dd=Math.hypot(PX(P,f.u)-x,PZ(P,f.d,f.gy)-y-10); if(dd<fd){ fd=dd; bf=i; } }); if(bf>=0) tool('flags',bf); } }
@@ -877,6 +877,12 @@ function pcSheet(){ const t=G.targets[G.cur]; const K=G.readK, R_=G.readL&&G.rea
  h+='<div class="frrow"><button type="button" class="frbtn" id="frap">'+L('Ajustar torretas','Dial it in')+'</button></div><p style="font-size:12.5px;color:#a8ad98">'+L('También puedes sujetar con la retícula en vez de girar las torretas.','You can also hold with the reticle instead of dialing.')+'</p>';
  sheet(L('Computadora balística','Ballistic computer'),h,s=>{ s.querySelector('#frap').onclick=()=>{ G.dialE=Math.round(bd.elev/CLICK())*CLICK(); G.dialW=Math.round(wTot/CLICK())*CLICK(); G.dialE=clamp(G.dialE,-5,EMAX()); G.dialW=clamp(G.dialW,-12,12); closeSheet(); if(G.view!=='scope'){ G.view='scope'; G.aim={u:t.u,e:t.e}; G.trackOff=0; G.aimSet=true; CACHE=null; G.iris=performance.now(); } side(); const vw=document.getElementById('frview'); if(vw&&vw.getBoundingClientRect().top<0) vw.scrollIntoView({block:'start',behavior:'smooth'}); msg(L('Torretas: ','Turrets: ')+fmtE(G.dialE)+' · '+fmtW(G.dialW)); }; },'pc'); }
 
+/* sujeción con la retícula (holdover): si la retícula está por encima, por debajo o al lado de la placa en vez de encima, la bala se calcula en el marco de esa placa con la sujeción sumada a las torretas (el mismo ángulo del cañón, así que sujetar X mil es exactamente lo mismo que girar X mil) */
+function shootHold(t,aimU,aimE,dialE,dialW,tm){ const u0=t.mv?mvU(t,tm):t.u, e0=t.e, R=t.R;
+ const fl=shotFlight({R:R,u:u0,e:e0,t:tm,alpha:dialE+(aimE-e0),beta:dialW+(aimU-u0),track:true});
+ const iu=u0+fl.z/R*1000, ie=e0+fl.y/R*1000; const uA=t.mv?mvU(t,tm+fl.t):t.u;
+ const dxm=(iu-uA)*R/1000, dym=(ie-t.e)*R/1000; const hit=mvOK(t,tm,fl.t)&&(t.shape==='gong'?Math.hypot(dxm,dym)<=t.w/2:(Math.abs(dxm)<=t.w/2&&Math.abs(dym)<=t.h/2));
+ return {R:R,fl:fl,iu:iu,ie:ie,dxm:dxm,dym:dym,hit:hit,mvAdj:0,ea:0,wa:0,tsg:0,uA:uA,u0:u0,e0:e0,hold:true}; }
 function shoot(t,tg,aimU,aimE,dialE,dialW,held,tm){ let R=t.R; if(!tg){ const d=raycast(aimU,aimE); R=d?Math.hypot(d,terrain(G.st,d,aimU)-EYE):2500; }
  /* sin azar: el impacto es la solución exacta del integrador para lo que has girado en las torretas y donde está la retícula */
  const mvAdj=0, ea=0, wa=0, tsg=0;
@@ -890,16 +896,22 @@ function fire(){ if(G.busy||G.over) return; let t=G.targets[G.cur]; const tm=now
  if(G.mode==='movil'&&G.track&&G.trackLag>0.05){ msg(L('Espera: la retícula aún está volviendo a la placa','Wait: the reticle is still swinging back onto the plate')); return; }
  const aimU=G.aim.u+G.shake.x, aimE=G.aim.e+G.shake.y; const tg=aimedTarget(aimU,aimE); if(tg){ t=tg; G.cur=tg.i; }
  if(t.res==='hit'||t.shots>=G.rounds){ msg(L('Esa placa ya está resuelta: elige otra','That plate is done: pick another')); return; }
- const sh=shoot(t,tg,aimU,aimE,G.dialE,G.dialW,!!G.breath,tm); const {R,fl,iu,ie,dxm,dym,hit,mvAdj,ea,wa,tsg}=sh; const held=!!G.breath;
+ let sh=shoot(t,tg,aimU,aimE,G.dialE,G.dialW,!!G.breath,tm); let hold=null;
+ /* retícula fuera de la placa: se mira dónde va de verdad la bala (sujeción); se prueba primero la placa elegida y luego las demás por cercanía */
+ if(!tg){ const cs=G.targets.filter(x=>!x.res&&x.shots<G.rounds).sort((a,b)=>(a.i===G.cur?-1:0)-(b.i===G.cur?-1:0)||Math.abs(a.u-aimU)-Math.abs(b.u-aimU));
+   for(const c of cs){ const s2=shootHold(c,aimU,aimE,G.dialE,G.dialW,tm); if(s2.hit){ hold=s2; t=c; G.cur=c.i; break; } }
+   /* sujeción cerca de la placa elegida (por encima de ella, o a menos de 10 mil): el fallo se cuenta en esa placa para que el observador pueda corregir */
+   if(!hold&&!t.res&&t.shots<G.rounds){ const s2=shootHold(t,aimU,aimE,G.dialE,G.dialW,tm); const u0=s2.u0; if(Math.abs(aimU-u0)<10+(t.mv?t.mv.open*1000/t.R:0)&&aimE>t.e-10&&Math.abs(s2.ie-t.e)<10&&Math.abs(s2.iu-s2.uA)<10&&mvOK(t,tm,s2.fl.t)) hold=s2; } }
+ if(hold) sh=hold; const hTg=hold?t:tg; const {R,fl,iu,ie,dxm,dym,hit,mvAdj,ea,wa,tsg}=sh; const held=!!G.breath;
  if(tg&&t.mv&&!mvOK(t,tm,fl.t)){ msg(mvVis(t,tm)?L('Espera: cuando llegue la bala la placa estaría tapada por la protección','Wait: by the time the bullet arrives the plate would be behind cover'):L('Espera a que la placa salga de la protección','Wait for the plate to come out from behind cover')); return; }
  t.shots++; G.breath=0;
  const bd=breakdown(t.R,t.mv?t.u0:t.u,t.e,tm);
  const rec={shk:Math.hypot(G.shake.x,G.shake.y),i:t.i,R:t.R,hit:hit,dxm:dxm,dym:dym,dialE:G.dialE,dialW:G.dialW,holdE:aimE-t.e,holdW:aimU-t.u,bd:bd,mvAdj:mvAdj,disp:Math.hypot(ea,wa),tsg:tsg,tof:fl.t,v:fl.v,mach:fl.mach,minMach:fl.minMach,held:held,
-   az:G.az+aimU*0.0572958,iu:iu,ie:ie,shot:t.shots,pts:0,ground:!tg,lead:t.mv?leadMil(t,bd.t):0,uA:sh.uA,tm:tm};
+   az:G.az+aimU*0.0572958,iu:iu,ie:ie,shot:t.shots,pts:0,ground:!hTg,lead:t.mv?leadMil(t,bd.t):0,uA:sh.uA,tm:tm};
  if(hit){ const tab=EZ()?[3,2,1,1,1]:[5,3,1]; rec.pts=Math.round((tab[t.shots-1]||1)*(1+t.d/1000)); G.score+=rec.pts; t.pts=rec.pts; t.res='hit'; t.hits.push([dxm,dym]); }
  else if(t.shots>=G.rounds) t.res='miss';
  G.shots.push(rec); G.last=rec;
- G.anim={fired:performance.now(),track:fl.track,u:aimU,e:aimE,tof:fl.t,iu:iu,ie:ie,hit:hit,t:t}; G.busy=true; side(); status();
+ G.anim={fired:performance.now(),track:fl.track,u:hold?hold.u0:aimU,e:hold?hold.e0:aimE,tof:fl.t,iu:iu,ie:ie,hit:hit,t:t}; G.busy=true; side(); status();
  const fx=document.getElementById('frview'); if(fx){ fx.style.transform='translateY(2px)'; setTimeout(()=>{ fx.style.transform=''; },90); }
  const g0=G; const alive=()=>G===g0&&!G.over&&!!document.getElementById('frside'); rec.anim=G.anim;
  const finalHit=hit&&G.targets.every(x=>x.res); const camOn=hit&&!RM()&&!G.tut&&(finalHit||!!t.rec);
