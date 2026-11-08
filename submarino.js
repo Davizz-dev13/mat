@@ -38,7 +38,13 @@ const AC={amb:60,di:18,dt:0,alpha:0.06,layerP:15,
  eDiTow:25,eDiHull:15,eDt:3,eInt:20,
  pingSL:220,ts:15,alphaA:0.2,ambA:55,eDiA:20,eDtA:15,layerA:30,maxA:12000,
  torpSL:150,cav:15,silent:6};
-const TORP={v:50,range:40000,seek:1500,cone:30,turn:5,gate:600};
+const TORP={v:50,range:40000,seek:1500,cone:45,turn:5,gate:600,gateA:300,gateR:0.12,gateV:1.6};
+/* ventana de aceptación de la computadora de tiro (con cable): el eco debe estar donde dice tu solución — ±600 m de lado y ±8 % de la distancia
+   (mínimo 600 m) a lo largo de la demora, que es lo que peor se conoce — y moverse como dice (diferencia de velocidad ≤ 1,6 m/s ≈ 3 nudos). Estimación.
+   Devuelve ≤ 1 si el eco entra en la ventana. */
+function gateScore(s,pp,O){ const ux=pp.x-O.x, uy=pp.y-O.y, rr=Math.max(1,Math.hypot(ux,uy)); const dx=s.x-pp.x, dy=s.y-pp.y;
+ const al=(dx*ux+dy*uy)/rr, cr=Math.abs(dx*uy-dy*ux)/rr; const dv=Math.hypot(Math.sin(s.c*D2R)*s.v*KN-pp.vx,Math.cos(s.c*D2R)*s.v*KN-pp.vy);
+ return Math.max(Math.abs(al)/Math.max(TORP.gateA,TORP.gateR*rr),cr/TORP.gate,dv/TORP.gateV); }
 const TL=r=>20*lg(Math.max(r,1))+AC.alpha*r/1000;
 const TLa=r=>20*lg(Math.max(r,1))+AC.alphaA*r/1000;
 const vcav=(sub,d)=>sub.vc0*Math.sqrt(1+Math.max(d,0)/10);
@@ -241,7 +247,7 @@ function intercept(px,py,vx,vy,sx,sy,V){ const dx=px-sx, dy=py-sy; const a=vx*vx
 function fire(s,opt){ const g=G; opt=opt||{}; if(g.over) return {err:'over'}; if(!s) return {err:'nosel'}; if(!s.tgt) return {err:'rules'}; if(g.tubes<=0) return {err:'empty'};
  const sol=curSolution(s); if(!sol||!sol.ok) return {err:'nosol'}; const O=g.own;
  const tp={id:g.fired+1,x:O.x+Math.sin(O.c*D2R)*40,y:O.y+Math.cos(O.c*D2R)*40,c:O.c,v:TORP.v,run:0,wire:true,seek:false,lock:null,done:false,off:0,
-   act:opt.act!=null?opt.act:(g.mode==='facil'?1200:(g.actSet!=null?g.actSet:1200)),st:sol.st,lx:O.x,ly:O.y,cid:s.cid,tgtId:s.id,trk:[],res:null,t0:g.t};
+   act:opt.act!=null?opt.act:(g.mode==='facil'?1200:(g.actSet!=null?g.actSet:1200)),st:sol.st,st0:sol.st,lx:O.x,ly:O.y,cid:s.cid,tgtId:s.id,trk:[],res:null,t0:g.t};
  /* error de la solución en el momento del disparo, frente a la verdad (solo se enseña en el informe) */
  const tr={r:dist(s,O),c:s.c,v:s.v}; tp.err={dr:(sol.r-tr.r)/tr.r*100,dc:dAng(sol.c,tr.c),dv:sol.v-tr.v,r:tr.r};
  g.tubes--; g.fired++; g.torps.push(tp); g.shots.push(tp);
@@ -250,20 +256,26 @@ function fire(s,opt){ const g=G; opt=opt||{}; if(g.over) return {err:'over'}; if
  g.ships.forEach(e=>{ if(e.esc&&!e.dead){ const se=AC.torpSL-TL(dist(e,O))-nlE(e); if(se>0) { e.st=e.st==='hunt'?'hunt':'alert'; setDatum(e,O.x,O.y); e.pingT=10; } } });
  if(g.ships.some(e=>e.esc&&!e.dead&&e.st==='alert')) say('La escolta ha oído el lanzamiento y va hacia el punto de disparo.','The escort heard the launch and is heading for the firing point.','bad');
  return {ok:true,id:tp.id,err:tp.err}; }
+/* con cable, la computadora corrige la posición prevista con la última demora de tu sonar (si sigues oyendo al blanco): la distancia y el movimiento siguen siendo los de tu solución */
+function wirePred(tp,O){ const so=solOf(tp.st,O); const s=G.cont.find(c=>c.cid===tp.cid); const q=s&&!s.dead&&s.brgs&&s.brgs.length?s.brgs[s.brgs.length-1]:null;
+ if(!q||G.t-q.t>30) return so; const st=tp.st, dq=q.t-st.t; const px=st.x+st.vx*dq, py=st.y+st.vy*dq; const r=Math.hypot(px-q.ox,py-q.oy);
+ const x=q.ox+Math.sin(q.b*D2R)*r, y=q.oy+Math.cos(q.b*D2R)*r, dt=G.t-q.t; so.x=x+st.vx*dt; so.y=y+st.vy*dt; so.r=Math.hypot(so.x-O.x,so.y-O.y); so.b=brgOf(so.x-O.x,so.y-O.y); so.upd=true; return so; }
 function nlE(e){ return psum(AC.amb,45+30*lg(Math.max(e.v,1)))-AC.eDiHull+AC.eDt; }
 function torpStep(dt){ const g=G, O=g.own;
  g.torps.forEach(tp=>{ if(tp.done) return;
+  /* Fácil: con el cable conectado la computadora sigue haciendo el TMA y le pasa al torpedo la solución refinada (cada 10 s) */
+  if(g.mode==='facil'&&tp.wire&&!tp.lock&&g.t%10===0){ const c=g.cont.find(x=>x.cid===tp.cid); const a=c&&!c.dead?autoSolution(c):null; if(a&&a.ok) tp.st=a.st; }
   /* el cable se rompe solo por maniobra del jugador: velocidad propia > 12 nudos con el cable conectado */
   if(tp.wire&&O.v>12){ tp.wire=false; say('Cable del torpedo '+tp.id+' roto: has superado 12 nudos.','Torpedo '+tp.id+' wire broken: you went above 12 knots.','bad'); }
   let cmd=tp.c;
   if(tp.lock){ const s=tp.lock; const ip=intercept(s.x,s.y,Math.sin(s.c*D2R)*s.v*KN,Math.cos(s.c*D2R)*s.v*KN,tp.x,tp.y,tp.v*KN); const tx=ip?ip.x:s.x, ty=ip?ip.y:s.y; cmd=brgOf(tx-tp.x,ty-tp.y); }
-  else if(tp.wire&&!tp.passed){ const so=solOf(tp.st,O); const ip=intercept(so.x,so.y,so.vx,so.vy,tp.x,tp.y,tp.v*KN); if(ip){ cmd=n360(brgOf(ip.x-tp.x,ip.y-tp.y)+tp.off); tp.togo=Math.hypot(ip.x-tp.x,ip.y-tp.y); tp.aim=ip; if(tp.togo<60){ tp.passed=true; } } }
+  else if(tp.wire&&!tp.passed){ const so=wirePred(tp,O); const ip=intercept(so.x,so.y,so.vx,so.vy,tp.x,tp.y,tp.v*KN); if(ip){ cmd=n360(brgOf(ip.x-tp.x,ip.y-tp.y)+tp.off); tp.togo=Math.hypot(ip.x-tp.x,ip.y-tp.y); tp.aim=ip; if(tp.togo<60){ tp.passed=true; } } }
   else if(tp.wire&&tp.passed){ cmd=n360(tp.c+0); tp.togo=0; }
   else if(tp.aim){ tp.togo=Math.max(0,(tp.togo||0)-tp.v*KN*dt); }
   turnTo(tp,cmd,TORP.turn*dt); moveObj(tp,dt); tp.run+=tp.v*KN*dt; if(g.t%5===0) tp.trk.push([tp.x,tp.y]);
   if(!tp.seek&&!tp.lock&&tp.togo!=null&&tp.togo<=tp.act){ activateSeeker(tp,'auto'); }
   if(tp.seek&&!tp.lock){ /* con cable, la computadora le pasa al buscador la posición prevista del blanco y elige el eco más cercano a ella; sin cable, el más cercano al torpedo */
-   const pp=tp.wire?solOf(tp.st,O):null; let best=null,bd=1e9; g.ships.forEach(s=>{ if(s.dead) return; const r=dist(s,tp); const a=Math.abs(dAng(brgOf(s.x-tp.x,s.y-tp.y),tp.c)); const sc=pp?Math.hypot(s.x-pp.x,s.y-pp.y):r; if(r<=TORP.seek&&a<=TORP.cone&&(!pp||sc<=TORP.gate)&&sc<bd){ bd=sc; best=s; } });
+   const pp=tp.wire?wirePred(tp,O):null; let best=null,bd=1e9; g.ships.forEach(s=>{ if(s.dead) return; const r=dist(s,tp); const a=Math.abs(dAng(brgOf(s.x-tp.x,s.y-tp.y),tp.c)); const sc=pp?gateScore(s,pp,O):r; if(r<=TORP.seek&&a<=TORP.cone&&(!pp||sc<=1)&&sc<bd){ bd=sc; best=s; } });
    if(best){ tp.lock=best; say('Torpedo '+tp.id+': blanco adquirido.','Torpedo '+tp.id+': target acquired.'); } }
   if(tp.lock&&dist(tp.lock,tp)<25){ hit(tp,tp.lock); return; }
   if(tp.run>=TORP.range){ tp.done=true; tp.res='fuel'; tp.wire=false; say('Torpedo '+tp.id+' sin combustible: fallo.','Torpedo '+tp.id+' out of fuel: miss.','bad'); }
@@ -374,7 +386,7 @@ function lnCheck(){ const s=LN.step, O=G.own, g=G; let ok=false, m='';
   else if(!isFinite(num)) m=L('Escribe el rumbo del torpedo en grados.','Type the torpedo course in degrees.');
   else if(Math.abs(dAng(num,tc.fc))>2) m=L('Ese rumbo no apunta al punto de interceptación. Pista: demora ','That course does not point at the intercept. Hint: bearing ')+p3(tc.so.b)+'° '+(tc.lead>=0?'+':'−')+' '+nf(Math.abs(tc.lead),1)+'° = ?';
   else if(act>LN_TOL.act1) m=L('Rumbo bien. Pero ','Course right. But ')+ni(act)+L(' m es demasiado pronto: más allá de 1.500 m el buscador no ve al blanco y sus pings le avisan. Baja con «−250 m».',' m is too early: beyond 1,500 m the seeker cannot see the target and its pings warn it. Lower it with «−250 m».');
-  else if(act<LN_TOL.act0) m=L('Rumbo bien. Pero ','Course right. But ')+ni(act)+L(' m es demasiado tarde: el blanco puede quedar fuera del cono de ±30°. Sube con «+250 m».',' m is too late: the target may fall outside the ±30° cone. Raise it with «+250 m».');
+  else if(act<LN_TOL.act0) m=L('Rumbo bien. Pero ','Course right. But ')+ni(act)+L(' m es demasiado tarde: el blanco puede quedar fuera del cono de ±45°. Sube con «+250 m».',' m is too late: the target may fall outside the ±45° cone. Raise it with «+250 m».');
   else { ok=true; m=L('Correcto: torpedo al ','Correct: torpedo to ')+p3(tc.fc)+'°, '+L('buscador a ','seeker at ')+ni(act)+' m '+L('del punto previsto. Ya puedes pulsar LANZAR TORPEDO.','from the predicted point. You can now press FIRE TORPEDO.'); } }
  else if(s===6&&LN.ph==='a'){ const bad=[]; if(O.od<LN_TOL.dep6) bad.push(L('profundidad (','depth (')+Math.round(O.od)+' m; '+L('baja a 150 m o más','go down to 150 m or more')+')'); if(O.ov>4) bad.push(L('velocidad (','speed (')+nf(O.ov,1)+' kn; '+L('pon 4 kn o menos','set 4 kn or less')+')'); if(!O.sil) bad.push(L('Silencio desactivado','Silent is off'));
   if(bad.length) m=L('Te falta: ','Still to fix: ')+bad.join(' · ')+'.'; else { ok=true; m=L('Correcto: profundo, lento y en silencio. Pulsa «Esperar en silencio».','Correct: deep, slow and silent. Tap «Wait in silence».'); } }
@@ -429,7 +441,7 @@ function lnPanel(){ const s=LN.step, ph=LN.ph, g=G, O=g.own; const t=lnTgt(); co
    task=L('En TMA pon: distancia = la de la fila con menos desajuste; rumbo = el de esa fila; velocidad = la de las palas. Luego Comprobar.','In TMA set: range = the row with the smallest misfit; course = that row’s course; speed = the blade speed. Then Check.'); btn=chk(); } }
  else if(s===5){ const tc=lnTorpCourse(); const act=g.actSet!=null?g.actSet:1200;
   ex='<p>'+L('El torpedo (50 nudos) no se apunta al blanco, sino al <b>punto de interceptación</b>: donde estará el blanco cuando llegue el torpedo. Se adelanta un ángulo que depende de cuánto se mueve el blanco de lado.','The torpedo (50 knots) is not aimed at the target but at the <b>intercept point</b>: where the target will be when the torpedo gets there. You lead it by an angle that depends on how fast the target moves sideways.')+'</p>'+
-   '<p>'+L('El <b>buscador</b> solo ve 1.500 m (±30°). Si lo enciendes <b>demasiado pronto</b> (más de 1.500 m antes del punto previsto) no ve al blanco, sus pings avisan a la escolta y el mercante vira 60°. Si lo enciendes <b>demasiado tarde</b> (menos de ~500 m), el blanco puede quedar fuera del cono y el torpedo pasa de largo. Ventana buena: 500–1.500 m.','The <b>seeker</b> sees only 1,500 m (±30°). Switch it on <b>too early</b> (more than 1,500 m before the predicted point) and it cannot see the target, its pings warn the escort and the merchant turns 60°. Switch it on <b>too late</b> (under ~500 m) and the target may fall outside the cone and the torpedo runs past. Good window: 500–1,500 m.')+'</p>';
+   '<p>'+L('El <b>buscador</b> solo ve 1.500 m (±45°). Si lo enciendes <b>demasiado pronto</b> (más de 1.500 m antes del punto previsto) no ve al blanco, sus pings avisan a la escolta y el mercante vira 60°. Si lo enciendes <b>demasiado tarde</b> (menos de ~500 m), el blanco puede quedar fuera del cono y el torpedo pasa de largo. Ventana buena: 500–1.500 m.','The <b>seeker</b> sees only 1,500 m (±45°). Switch it on <b>too early</b> (more than 1,500 m before the predicted point) and it cannot see the target, its pings warn the escort and the merchant turns 60°. Switch it on <b>too late</b> (under ~500 m) and the target may fall outside the cone and the torpedo runs past. Good window: 500–1,500 m.')+'</p>';
   if(ph==='a'&&tc){ wk=lnW([L('Tu solución: demora ','Your solution: bearing ')+p3(tc.so.b)+'°, '+L('distancia ','range ')+ni(tc.so.r)+' m, '+L('rumbo ','course ')+p3(tc.so.c)+'°, '+nf(tc.so.v,1)+' kn',
     L('Velocidad lateral = V · sen(rumbo − demora) = ','Sideways speed = V · sin(course − bearing) = ')+nf(tc.so.v,1)+' · sen('+p3(tc.so.c)+'° − '+p3(tc.so.b)+'°) = '+nf(tc.across,1)+' kn',
     L('Ángulo de adelanto = arcsen(lateral ÷ 50) = arcsen(','Lead angle = arcsin(sideways ÷ 50) = arcsin(')+nf(tc.across,1)+' ÷ 50) = '+nf(tc.lead,1)+'°',
@@ -569,16 +581,53 @@ function css(){ if(document.getElementById('sb-css')) return; const s=document.c
   '.sbin{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14.5px;color:#dcdfd2;margin:8px 0}',
   '.sbin input{width:110px;min-height:44px;font:inherit;font-size:17px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:#0b0d09;color:#eef0e4}',
   '.sblad{font-size:13.5px;margin:6px 0}.sblad td{padding:4px}.sblad tr:first-child td{color:#a3a796;font-weight:600}.sblad tr.on td{color:#c8f03c;font-weight:700}',
-  '.sbexp{display:block;font-size:12.5px;color:#a3a796;font-weight:400;margin-top:2px}'
+  '.sbexp{display:block;font-size:12.5px;color:#a3a796;font-weight:400;margin-top:2px}',
+  '@keyframes sbIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}',
+  '@keyframes sbPop{0%{opacity:0;transform:scale(.92);letter-spacing:.12em}100%{opacity:1;transform:none}}',
+  '@keyframes sbGlow{0%{box-shadow:0 0 0 0 rgba(224,83,61,.7)}100%{box-shadow:0 0 0 14px rgba(224,83,61,0)}}',
+  '@keyframes sbZoom{from{transform:scale(1.07)}to{transform:none}}',
+  '.sbhero.an img{animation:sbZoom 1.6s cubic-bezier(.2,.7,.2,1) both}',
+  '.sbhero .ht b{text-shadow:0 2px 18px rgba(0,0,0,.6)}','.sbhero.an .ht b{animation:sbIn .6s .15s cubic-bezier(.2,.7,.2,1) both}',
+  '.sbhero.an .ht span{animation:sbIn .6s .3s cubic-bezier(.2,.7,.2,1) both}',
+  '.sbopt{transition:border-color .18s,background-color .18s,box-shadow .18s,transform .12s}',
+  '.sbopt:active,.sbbtn:active:not(:disabled),.sbtabs button:active,.sbc:active{transform:scale(.97)}',
+  '.sbbtn,.sbtabs button,.sbc,.sbseg button{transition:background-color .18s,border-color .18s,color .18s,transform .12s,box-shadow .18s}',
+  '.sbbtn.fire{background:linear-gradient(180deg,#c94a33,#9e3523);box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 6px 18px rgba(176,60,40,.28);text-transform:uppercase}',
+  '.sbbtn.fire:not(:disabled):active{animation:sbGlow .6s ease-out}',
+  '.sbbtn.pri{box-shadow:0 1px 0 rgba(255,255,255,.25) inset}',
+  '.sbtop{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);background:linear-gradient(180deg,rgba(11,14,10,.97),rgba(11,12,10,.9))}',
+  '.sbclk{color:#c8f03c;text-shadow:0 0 10px rgba(200,240,60,.35)}',
+  '.sbmini b{font-variant-numeric:tabular-nums}',
+  '@media(max-width:520px){.sbmini{font-size:12.5px;gap:3px 8px;margin-top:4px;align-items:center}.sbmini .sbrisk{font-size:11px;padding:1px 6px}.sbtabs{margin-top:5px}.sbtabs button{min-height:40px}}',
+  '.sbpan.on{animation:sbIn .26s cubic-bezier(.2,.7,.2,1)}',
+  '.sbpan{background:linear-gradient(180deg,#141711,#10120d)}',
+  '.sbcv{box-shadow:0 0 0 1px #1f2619 inset,0 8px 24px rgba(0,0,0,.35)}',
+  '.sbgauge i{transition:left .55s cubic-bezier(.2,.7,.2,1);box-shadow:0 0 8px rgba(255,255,255,.6)}',
+  '.sbrisk{transition:background-color .3s,color .3s}',
+  '.sblog div.nw{animation:sbIn .35s cubic-bezier(.2,.7,.2,1)}',
+  '.sbfxh{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.2,.7,.2,1);margin:0}',
+  '.sbfxh.on{grid-template-rows:1fr;margin:0 0 10px}',
+  '.sbfxh>div{overflow:hidden;min-height:0}',
+  '.sbfx{max-width:760px;margin:0 auto;border:1px solid #3a4224;border-radius:var(--r);background:#07090a;animation:sbIn .4s cubic-bezier(.2,.7,.2,1);box-shadow:0 10px 30px rgba(0,0,0,.45)}',
+  '.sbfxc{display:block;width:100%;border-radius:var(--r) var(--r) 0 0;background:#000}',
+  '.sbfxt{padding:10px 12px 8px}.sbfxt b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:clamp(22px,5.4vw,32px);letter-spacing:.03em;line-height:1.05;animation:sbPop .5s .2s cubic-bezier(.2,.7,.2,1) both}',
+  '.sbfxt b.good{color:#c8f03c}.sbfxt b.bad{color:#ff8a70}.sbfxt span{display:block;font-size:13px;color:#a8ad98;margin-top:4px;line-height:1.4}',
+  '.sbbig{animation:sbPop .55s cubic-bezier(.2,.7,.2,1) both}',
+  '.sbdeb .sbtbl tr{animation:sbIn .4s cubic-bezier(.2,.7,.2,1) both}',
+  '.sbdeb .sbtbl tr:nth-child(2){animation-delay:.05s}.sbdeb .sbtbl tr:nth-child(3){animation-delay:.1s}.sbdeb .sbtbl tr:nth-child(4){animation-delay:.15s}.sbdeb .sbtbl tr:nth-child(5){animation-delay:.2s}.sbdeb .sbtbl tr:nth-child(6){animation-delay:.25s}.sbdeb .sbtbl tr:nth-child(n+7){animation-delay:.3s}',
+  '.sbtut{animation:sbIn .3s cubic-bezier(.2,.7,.2,1)}',
+  '@media (prefers-reduced-motion:reduce){.sbw *,.sbw *::before{animation:none!important;transition:none!important}}',
+  ''
  ].join('\n'); document.head.appendChild(s); }
 function stopLoop(){ if(RAF) cancelAnimationFrame(RAF); RAF=0; }
 function hhmmss(t){ t=Math.round(t); const h=Math.floor(t/3600), m=Math.floor(t/60)%60, s=t%60; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
 const opt=(on,attr,b,s)=>'<button type="button" class="sbopt'+(on?' on':'')+'" '+attr+'><b>'+b+'</b><span>'+s+'</span></button>';
 function crumbs(){ return X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Submarino','Submarine')]]); }
 
-function intro(){ stopLoop(); G=null; LN=null; const B=bests(); const sub=SUBS.find(s=>s.id===CFG.sub)||SUBS[0];
+let HEROAN=false;
+function intro(){ stopLoop(); if(FX){ if(FX.raf) cancelAnimationFrame(FX.raf); FX=null; } G=null; LN=null; const B=bests(); const sub=SUBS.find(s=>s.id===CFG.sub)||SUBS[0];
  let h='<div class="sbw" data-noi18n>'+crumbs()+
- '<div class="sbhero"><img src="img/juegos/submarino.webp" width="640" height="400" alt="'+esc(L(CARD_ALT[0],CARD_ALT[1]))+'"><div class="ht"><b>'+L('SUBMARINO','SUBMARINE')+'</b><span>'+L('No ves nada: solo oyes. Escucha con el sonar, calcula a qué distancia y rumbo va el blanco, lanza un torpedo filoguiado y escapa de la escolta.','You see nothing: you only listen. Track with sonar, work out the target’s range and course, fire a wire-guided torpedo and slip away from the escort.')+'</span></div></div>';
+ '<div class="sbhero'+(HEROAN?'':' an')+'"><img src="img/juegos/submarino.webp" width="640" height="400" alt="'+esc(L(CARD_ALT[0],CARD_ALT[1]))+'"><div class="ht"><b>'+L('SUBMARINO','SUBMARINE')+'</b><span>'+L('No ves nada: solo oyes. Escucha con el sonar, calcula a qué distancia y rumbo va el blanco, lanza un torpedo filoguiado y escapa de la escolta.','You see nothing: you only listen. Track with sonar, work out the target’s range and course, fire a wire-guided torpedo and slip away from the escort.')+'</span></div></div>';
    h+='<div class="sbsec">'+L('Modo','Mode')+'</div><div class="sbgr c3">'+
   opt(CFG.mode==='aprende','data-m="aprende"',L('Aprende','Learn'),L('Tutorial guiado para quien empieza: el tutor te explica cada paso (sonar, ruido, capa, TMA, torpedo y evasión) con las cuentas hechas y comprueba lo que haces.','Guided tutorial for beginners: the tutor explains each step (sonar, noise, layer, TMA, torpedo and evasion) with the worked numbers and checks what you do.'))+
   opt(CFG.mode==='facil','data-m="facil"',L('Fácil','Easy'),L('La computadora de tiro calcula la solución cuando tienes datos suficientes y guía el torpedo sola.','The fire-control computer works out the solution once you have enough data and guides the torpedo itself.'))+
@@ -590,7 +639,7 @@ function intro(){ stopLoop(); G=null; LN=null; const B=bests(); const sub=SUBS.f
  h+='<div class="sbrow" style="margin-top:14px"><button type="button" class="sbbtn pri" data-go style="flex:1 1 100%;min-height:52px;font-size:17px">'+(CFG.mode==='aprende'?L('Empezar el tutorial','Start the tutorial'):L('Empezar patrulla','Start patrol'))+'</button></div>';
  h+=howItWorks();
  h+='</div>';
- X.set(h,L('Submarino','Submarine'));
+ X.set(h,L('Submarino','Submarine')); HEROAN=true;
  const root=APP.querySelector('.sbw');
  root.addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return;
   if(b.dataset.m){ CFG.mode=b.dataset.m; saveCfg(); intro(); }
@@ -608,7 +657,7 @@ function howItWorks(){ const E=EST();
  '<p><b>'+L('La capa térmica.','The thermal layer.')+'</b> '+L('Bajo la capa el sonido se dobla y deja una zona de sombra: entre un lado y otro de la capa se pierden 15 dB en pasivo y 30 dB por trayecto en activo. Debajo te oyen peor… y tú también oyes peor a los buques.','Below the layer sound bends away and leaves a shadow zone: across it you lose 15 dB on passive and 30 dB each way on active. Below it they hear you worse… and you hear the ships worse too.')+E+'</p>'+
  '<p><b>'+L('TMA (análisis del movimiento del blanco).','TMA (target motion analysis).')+'</b> '+L('El pasivo solo da la demora. Con un rumbo fijo, muchas soluciones encajan con las mismas demoras; si haces un segundo tramo con otro rumbo (≥ 30°), solo una encaja. Por eso hay que maniobrar. En Fácil, la computadora resuelve las demoras por mínimos cuadrados (estimador pseudolineal). En Veterano pones tú un punto de distancia sobre una demora, el rumbo y la velocidad, y compruebas que tu derrota cruza todas las demoras. La velocidad sale también de las palas: rpm ÷ rpm por nudo.','Passive gives only the bearing. On one steady course, many solutions fit the same bearings; run a second leg on another course (≥ 30°) and only one fits. That is why you must manoeuvre. In Easy, the computer solves the bearings by least squares (pseudo-linear estimator). In Veteran you place a range dot on a bearing, plus course and speed, and check that your track crosses every bearing. Speed also comes from the blades: rpm ÷ rpm per knot.')+'</p>'+
  '<p>'+L('Palas por clase','Blades by class')+': '+L('mercante 5 palas, 8 rpm/nudo; fragata 5 palas, 10 rpm/nudo; pesquero 4 palas, 35 rpm/nudo.','merchant 5 blades, 8 rpm/kn; frigate 5 blades, 10 rpm/kn; fishing boat 4 blades, 35 rpm/kn.')+E+'</p>'+
- '<p><b>'+L('Torpedo pesado filoguiado.','Wire-guided heavyweight torpedo.')+'</b> '+L('50 nudos y 40 km de recorrido, guiado por cable hacia el punto de interceptación de tu solución. El buscador se activa a la distancia que elijas del punto previsto (1.200 m por defecto) y adquiere lo que haya a menos de 1.500 m dentro de ±30°. Sin buscador activo no detona. El cable se rompe si superas 12 nudos.','50 knots and 40 km run, wire-guided to your solution’s intercept point. The seeker switches on at the distance you choose from the predicted point (1,200 m by default) and acquires whatever is within 1,500 m inside ±30°. Without an active seeker it does not detonate. The wire breaks if you go above 12 knots.')+E+' '+L('Si activas el buscador lejos, la escolta lo oye y el convoy vira 60°.','Switch the seeker on far out and the escort hears it and the convoy turns 60°.')+'</p>'+
+ '<p><b>'+L('Torpedo pesado filoguiado.','Wire-guided heavyweight torpedo.')+'</b> '+L('50 nudos y 40 km de recorrido, guiado por cable hacia el punto de interceptación de tu solución. El buscador se activa a la distancia que elijas del punto previsto (1.200 m por defecto) y busca a menos de 1.500 m dentro de ±45°. Mientras siga el cable, tu sonar le corrige la demora del blanco y la computadora solo acepta un eco que esté donde dice tu solución (±12 % de la distancia a lo largo de la demora, ±600 m de lado) y que se mueva como dice (menos de ≈3 nudos de diferencia); en Fácil la computadora sigue afinando la solución durante la carrera. Así, una solución buena impacta siempre y una claramente mala (≈20 % de distancia, ≈20° de rumbo o 4 nudos de velocidad) falla. Sin cable, el buscador se lanza sobre el eco más cercano. Sin buscador activo no detona. El cable se rompe si superas 12 nudos.','50 knots and 40 km run, wire-guided to your solution’s intercept point. The seeker switches on at the distance you choose from the predicted point (1,200 m by default) and searches within 1,500 m inside ±45°. While the wire holds, your sonar keeps correcting the target bearing and the computer accepts only an echo that is where your solution says (±12 % of range along the bearing, ±600 m sideways) and moves as it says (under ≈3 kn difference); in Easy the computer keeps refining the solution during the run. So a good solution always hits and a clearly bad one (≈20 % range, ≈20° course or 4 kn speed) misses. Without the wire, the seeker goes for the nearest echo. Without an active seeker it does not detonate. The wire breaks if you go above 12 knots.')+E+' '+L('Si activas el buscador lejos, la escolta lo oye y el convoy vira 60°.','Switch the seeker on far out and the escort hears it and the convoy turns 60°.')+'</p>'+
  '<p><b>'+L('La escolta.','The escort.')+'</b> '+L('Solo sabe lo que oye: tu ruido frente a su sensor (sonar remolcado a ≤ 10 nudos, de casco más rápido), la distancia y la capa; 20 s seguidos por encima de su umbral y te detecta. Al oír un lanzamiento va al punto de disparo y busca en activo (220 dB, alcance directo 12 km). Bajo la capa sus ecos casi no llegan. Si te mantiene en contacto tres pings seguidos a menos de 2 km, te ha fijado.','It knows only what it hears: your noise against its sensor (towed array at ≤ 10 kn, hull sonar when faster), range and the layer; 20 s in a row above its threshold and it detects you. When it hears a launch it heads to the firing point and searches on active (220 dB, 12 km direct path). Below the layer its echoes barely return. Three pings in a row in contact within 2 km and it has pinned you.')+E+'</p>'+
  '<p><b>'+L('Sin azar.','No luck.')+'</b> '+L('No hay tiradas de dados: ni pérdidas de blanco al azar ni roturas de cable aleatorias. Si la solución es correcta y guías bien el torpedo, impacta siempre. Solo fallas por un error tuyo: mala solución, buscador demasiado pronto o tarde, o fuera de alcance. La escolta también es determinista: te encuentra o no según tu ruido, tu profundidad y la distancia.','No dice rolls: no random lock losses, no random wire breaks. If the solution is right and you guide the torpedo well, it always hits. You only miss through your own error: a bad solution, the seeker too early or too late, or out of range. The escort is deterministic too: it finds you or not by your noise, your depth and the range.')+'</p>'+
  '<p><b>'+L('Fuentes','Sources')+'</b></p><ul>'+
@@ -620,13 +669,13 @@ function howItWorks(){ const E=EST();
  '<p class="sbnote">'+L('Todo lo marcado «Estimación» son valores redondos de M.A.T para el juego, no datos oficiales de ningún buque.','Everything marked «Estimate» is a round M.A.T value for the game, not official data for any ship.')+'</p></details>';
 }
 function start(){ if(CFG.mode==='aprende'){ lnStart(); return; } LN=null; G=newGame(CFG); TAB='sonar'; PAUSED=false; SPEED=10; game(); }
-function game(){ const g=G; SIG=''; const LRN=g.mode==='aprende'&&!!LN;
+function game(){ const g=G; SIG=''; LOGSIG=''; if(FX){ if(FX.raf) cancelAnimationFrame(FX.raf); FX=null; } PCAM=null; const LRN=g.mode==='aprende'&&!!LN;
  const tabs=[['sonar','SONAR'],['tma','TMA'],['armas',L('ARMAS','WEAPONS')],['mando',L('MANDO','CONN')]];
  let h='<div class="sbw" data-noi18n>'+crumbs()+
  '<div class="sbtop"><div class="r1"><span class="sbclk" id="sbclk">00:00:00</span>'+(LRN?'<span class="sbtag t">'+L('APRENDE','LEARN')+'</span><button type="button" class="sbbtn sm" data-ln="quit" style="margin-left:auto;padding:6px 8px;min-width:0">'+L('Salir del tutorial','Leave tutorial')+'</button></div>':'<div class="sbseg" id="sbspd">'+[1,5,10,30].map(v=>'<button type="button" data-spd="'+v+'"'+(v===SPEED?' class="on"':'')+'>×'+v+'</button>').join('')+'</div>'+
  '<button type="button" class="sbbtn sm" data-pause style="padding:6px 8px;min-width:0">'+L('Pausa','Pause')+'</button><button type="button" class="sbbtn sm" data-end style="margin-left:auto;padding:6px 8px;min-width:0">'+L('Terminar','End')+'</button></div>')+
  '<div class="sbmini" id="sbmini"></div>'+
- '<div class="sbtabs">'+tabs.map(t=>'<button type="button" data-tab="'+t[0]+'"'+(t[0]===TAB?' class="on"':'')+'>'+t[1]+'</button>').join('')+'</div></div>'+(LRN?'<div class="sbtut" id="sbtut"></div>':'')+
+ '<div class="sbtabs">'+tabs.map(t=>'<button type="button" data-tab="'+t[0]+'"'+(t[0]===TAB?' class="on"':'')+'>'+t[1]+'</button>').join('')+'</div></div>'+(LRN?'<div class="sbtut" id="sbtut"></div>':'')+'<div id="sbfx" class="sbfxh"></div>'+
  '<div class="sbgrid">'+
  '<section class="sbpan'+(TAB==='sonar'?' on':'')+'" data-pan="sonar"><h3>'+L('Sonar pasivo · cascada','Passive sonar · waterfall')+'</h3><canvas class="sbcv" id="sbwf" height="300"></canvas><div id="sbcon"></div></section>'+
  '<section class="sbpan'+(TAB==='tma'?' on':'')+'" data-pan="tma"><h3>'+L('TMA · plot','TMA · plot')+' <span id="sbtmasel"></span></h3><canvas class="sbcv" id="sbplot" height="330"></canvas><div id="sbtma"></div><div id="sbtmactl"></div></section>'+
@@ -638,7 +687,10 @@ function game(){ const g=G; SIG=''; const LRN=g.mode==='aprende'&&!!LN;
  const root=APP.querySelector('.sbw'); root.addEventListener('click',onClick);
  const pc=document.getElementById('sbplot'); pc.addEventListener('click',onPlotTap);
  if(!g.over&&!RAF){ LAST=0; ACC=0; RAF=requestAnimationFrame(loop); }
- ui(true); draw(); if(LRN) lnRender(); }
+ stickTop(); ui(true); draw(); if(LRN) lnRender(); }
+/* la barra de control del juego queda justo debajo de la cabecera fija de la web (antes se metía debajo y tapaba reloj, velocidad, Pausa y Terminar) */
+let STKON=false;
+function stickTop(){ try{ const tb=APP&&APP.querySelector('.sbtop'); if(!tb) return; const hd=document.querySelector('header.top'); let t=0; if(hd){ const cs=getComputedStyle(hd); if(cs.position==='sticky'||cs.position==='fixed') t=Math.round(hd.offsetHeight); } tb.style.top=Math.max(0,t)+'px'; if(!STKON){ STKON=true; window.addEventListener('resize',stickTop); } }catch(e){} }
 function ctlHTML(){ const g=G; const sub=g.sub;
  const b=(attr,txt,cls)=>'<button type="button" class="sbbtn sm'+(cls?' '+cls:'')+'" '+attr+'>'+txt+'</button>';
  return '<div class="sbctl">'+
@@ -651,7 +703,7 @@ function loop(ts){ RAF=requestAnimationFrame(loop); if(!G||G.over){ stopLoop(); 
  if(!LAST) LAST=ts; const dt=Math.min(0.25,(ts-LAST)/1000); LAST=ts;
  if(G.mode==='aprende'){ if(LN&&LN.run) lnTick(dt); } else if(!PAUSED){ ACC+=dt*SPEED; let n=0; while(ACC>=1&&n<400){ step(); ACC-=1; n++; if(G.over) break; } }
  if(G.over) return;
- if(ts-LASTDRAW>120){ LASTDRAW=ts; draw(); } if(ts-LASTUI>300){ LASTUI=ts; ui(); if(G.mode==='aprende') lnLive(); } }
+ if(ts-LASTDRAW>(RMQ()?120:33)){ LASTDRAW=ts; draw(); } if(ts-LASTUI>300){ LASTUI=ts; ui(); if(G.mode==='aprende') lnLive(); } }
 function selS(){ return G.cont.find(s=>s.cid===G.sel)||null; }
 function cls(s){ return s.cid&&G.t-s.t0>=60; }
 function shipName(s){ return cls(s)?L(SHIPS[s.k].n[0],SHIPS[s.k].n[1]):L('Sin clasificar','Unclassified'); }
@@ -666,13 +718,13 @@ function ui(force){ const g=G; if(!g||!document.getElementById('sbclk')) return;
  APP.querySelectorAll('[data-pause]').forEach(b=>{ b.textContent=PAUSED?L('Seguir','Resume'):L('Pausa','Pause'); b.classList.toggle('on',PAUSED); });
  /* riesgo */
  const pos=clamp(lg(Math.max(rk.pas,50)/50)/lg(20000/50)*100,0,100);
- document.getElementById('sbrisk').innerHTML='<div class="lab" style="font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#a8ad98;margin-top:12px">'+L('Riesgo de detección','Detection risk')+'</div><div class="sbgauge"><i style="left:'+pos.toFixed(1)+'%"></i></div>'+
+ { const rb=document.getElementById('sbrisk'); const prevPos=rb.dataset.pos; rb.innerHTML='<div class="lab" style="font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#a8ad98;margin-top:12px">'+L('Riesgo de detección','Detection risk')+'</div><div class="sbgauge"><i style="left:'+(prevPos||pos.toFixed(1))+'%"></i></div>'+
   '<dl class="sbkv"><dt>'+L('Ruido radiado','Radiated noise')+'</dt><dd>'+Math.round(rk.sl)+' dB'+(rk.cav?' · <span style="color:#ff8a70">'+L('CAVITANDO','CAVITATING')+'</span>':'')+'</dd>'+
   '<dt>'+L('Cavitas a partir de','You cavitate above')+'</dt><dd>'+nf(vcav(g.sub,O.d),1)+' kn '+L('a','at')+' '+Math.round(O.d)+' m</dd>'+
   '<dt>'+L('Te oiría en pasivo','Passive hears you at')+'</dt><dd>≈ '+(rk.pas<1000?Math.round(rk.pas/10)*10+' m':nf(rk.pas/1000,1)+' km')+'</dd>'+
   '<dt>'+L('Su sonar activo','Its active sonar')+'</dt><dd>≈ '+(rk.act<1000?Math.round(rk.act/10)*10+' m':nf(rk.act/1000,1)+' km')+'</dd>'+
   '<dt>'+L('Capa térmica','Thermal layer')+'</dt><dd>'+g.layer+' m · '+(O.d>=g.layer?L('estás DEBAJO','you are BELOW'):L('estás ENCIMA','you are ABOVE'))+'</dd></dl>'+
-  '<p class="sbnote">'+L('Referencia: una fragata escuchando a 8 nudos con sonar remolcado, por encima de la capa.','Reference: a frigate listening at 8 kn with a towed array, above the layer.')+EST()+'</p>';
+  '<p class="sbnote">'+L('Referencia: una fragata escuchando a 8 nudos con sonar remolcado, por encima de la capa.','Reference: a frigate listening at 8 kn with a towed array, above the layer.')+EST()+'</p>'; rb.dataset.pos=pos.toFixed(1); if(prevPos!==rb.dataset.pos){ const gi=rb.querySelector('.sbgauge i'); if(gi){ void gi.offsetWidth; gi.style.left=rb.dataset.pos+'%'; } } }
  /* contactos */
  const sig=g.cont.map(s=>s.cid+(s.det||s.ping?1:0)+(cls(s)?1:0)+(s.dead?1:0)).join(',')+'|'+g.sel;
  const con=document.getElementById('sbcon');
@@ -684,7 +736,7 @@ function ui(force){ const g=G; if(!g||!document.getElementById('sbclk')) return;
   if(s.baf) t+=' · '+L('en la zona ciega de popa','in the stern baffles');
   el.innerHTML=t; });
  tmaUI(force); fcUI(force);
- document.getElementById('sblog').innerHTML=g.log.slice(-5).reverse().map(m=>'<div class="'+m.k+'"><span>'+hhmmss(m.t)+'</span>'+esc(EN()?m.en:m.es)+'</div>').join('')||'<div>'+L('Patrulla en curso. Velocidad del tiempo ×10 por defecto.','Patrol under way. Time runs ×10 by default.')+'</div>';
+ { const lg5=g.log.slice(-5).reverse(); const lsig=g.log.length+'|'+(lg5[0]?lg5[0].t+lg5[0].es:'')+'|'+EN(); const lb=document.getElementById('sblog'); if(lsig!==LOGSIG||force){ const fresh=LOGSIG!==''&&lsig.split('|')[1]!==LOGSIG.split('|')[1]; LOGSIG=lsig; lb.innerHTML=lg5.map((m,i)=>'<div class="'+m.k+(i===0&&fresh?' nw':'')+'"><span>'+hhmmss(m.t)+'</span>'+esc(EN()?m.en:m.es)+'</div>').join('')||'<div>'+L('Patrulla en curso. Velocidad del tiempo ×10 por defecto.','Patrol under way. Time runs ×10 by default.')+'</div>'; } }
 }
 
 function manOf(s){ if(!G.man[s.cid]){ const n=s.brgs.length; G.man[s.cid]={k:Math.max(0,n-1),R:8000,C:n360(Math.round((s.brgs.length?s.brgs[n-1].b:0)+90)),V:10}; } return G.man[s.cid]; }
@@ -757,74 +809,176 @@ function onClick(ev){ const b=ev.target.closest('button'); if(!b||!G) return; co
  else if(d.seek){ const t=g.torps.find(x=>x.id===+d.seek); if(t) activateSeeker(t,'man'); }
  else if(d.wire){ const t=g.torps.find(x=>x.id===+d.wire); if(t&&t.wire) t.off=clamp(t.off+(+d.w),-60,60); }
  ui(true); draw(); if(LRN) lnRender(); }
-let PLOTV=null;
+let PLOTV=null, LOGSIG='';
 function onPlotTap(ev){ const g=G; if(!g||g.mode==='facil'||!PLOTV) return; if(g.mode==='aprende'){ if(!LN||LN.run||!(LN.step===4&&LN.ph==='c')) return; LN.ok=false; LN.msg=''; } const s=selS(); if(!s||!s.brgs.length) return; const r=ev.currentTarget.getBoundingClientRect();
  const px=ev.clientX-r.left, py=ev.clientY-r.top; const wx=PLOTV.x0+(px-PLOTV.ox)/PLOTV.k, wy=PLOTV.y0-(py-PLOTV.oy)/PLOTV.k;
  const m=manOf(s); const q=s.brgs[m.k]; const R=(wx-q.ox)*Math.sin(q.b*D2R)+(wy-q.oy)*Math.cos(q.b*D2R); m.R=clamp(Math.round(R/10)*10,100,60000); ui(true); draw(); if(g.mode==='aprende') lnRender(); }
 function sizeCv(cv,h){ const w=Math.max(200,cv.clientWidth||cv.parentNode.clientWidth||300); const dpr=Math.min(2,window.devicePixelRatio||1); if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); cv.style.height=h+'px'; } const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); return {c:c,w:w,h:h}; }
-let WFC=null;
+let WFC=null, PCAM=null, FX=null;
+const RMQ=()=>{ try{ return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+const easeIO=t=>t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2, easeO=t=>1-Math.pow(1-clamp(t,0,1),3);
+/* fracción del segundo de simulación en curso: solo para dibujar posiciones intermedias (no cambia la simulación) */
+function simFrac(){ const g=G; if(!g||g.over) return 0; const run=g.mode==='aprende'?!!(LN&&LN.run):!PAUSED; return run?clamp(ACC,0,1):0; }
+function ipos(o,f){ if(!f||!o.v) return [o.x,o.y]; return [o.x+Math.sin(o.c*D2R)*o.v*KN*f,o.y+Math.cos(o.c*D2R)*o.v*KN*f]; }
 function draw(){ const g=G; if(!g) return; const wide=window.innerWidth>=1000;
  const wf=document.getElementById('sbwf'); if(wf&&(wide||TAB==='sonar')) drawWF(wf,wide?380:300);
- const pl=document.getElementById('sbplot'); if(pl&&(wide||TAB==='tma')) drawPlot(pl,wide?420:340,false); }
-function drawWF(cv,H){ const g=G,O=g.own; const {c,w,h}=sizeCv(cv,H); const top=22, NR=150;
- c.fillStyle='#060705'; c.fillRect(0,0,w,h);
+ const pl=document.getElementById('sbplot'); if(pl&&(wide||TAB==='tma')) drawPlot(pl,wide?420:340,false);
+ g.torps.forEach(tp=>{ if((tp.res==='hit'||tp.res==='neutral')&&!tp.fx){ tp.fx=1; if(!g.over) fxStart(tp); } }); }
+function drawWF(cv,H){ const g=G,O=g.own; const {c,w,h}=sizeCv(cv,H); const top=24, NR=150, rh=(h-top)/NR;
+ c.fillStyle='#040705'; c.fillRect(0,0,w,h);
  if(!WFC){ WFC=document.createElement('canvas'); WFC.width=180; WFC.height=NR; }
  const wc=WFC.getContext('2d'); const img=wc.createImageData(180,NR); const D=img.data;
- for(let r=0;r<NR;r++){ const row=g.wf[g.wf.length-1-r]; for(let i=0;i<180;i++){ const v=row?row[i]:0.08+0.16*hsh(i,-r*10-7); const k=(r*180+i)*4; const q=Math.pow(clamp(v,0,1),1.25), o=clamp(v-1,0,1);
-  D[k]=Math.min(255,q*110+o*210); D[k+1]=Math.min(255,q*232+10); D[k+2]=Math.min(255,q*58+8+o*120); D[k+3]=255; } }
- wc.putImageData(img,0,0); c.imageSmoothingEnabled=true; c.drawImage(WFC,0,0,180,NR,0,top,w,h-top);
+ for(let r=0;r<NR;r++){ const row=g.wf[g.wf.length-1-r]; const age=r/NR; for(let i=0;i<180;i++){ const v=row?row[i]:0.08+0.16*hsh(i,-r*10-7); const k=(r*180+i)*4; const q=Math.pow(clamp(v,0,1),1.35)*(1-0.35*age), o=clamp(v-1,0,1);
+  D[k]=Math.min(255,q*120+o*230+4); D[k+1]=Math.min(255,q*245+14+o*40); D[k+2]=Math.min(255,q*92+12+o*140); D[k+3]=255; } }
+ wc.putImageData(img,0,0); c.imageSmoothingEnabled=true;
+ /* la cascada baja suave entre fila y fila (cada fila son 10 s) */
+ const fr=RMQ()?0:clamp(((g.t%10)+simFrac())/10,0,1); const off=fr*rh;
+ c.save(); c.beginPath(); c.rect(0,top,w,h-top); c.clip();
+ c.drawImage(WFC,0,0,180,NR,0,top+off,w,h-top);
+ if(off>0.2){ c.globalAlpha=0.55; c.drawImage(WFC,0,0,180,1,0,top,w,off+0.5); c.globalAlpha=1; }
  const bx=b=>n360(b)/360*w;
+ /* rejilla de demoras */
+ c.strokeStyle='rgba(200,240,60,.07)'; c.lineWidth=1; c.beginPath(); for(let b=0;b<360;b+=45){ const x=Math.round(bx(b))+0.5; c.moveTo(x,top); c.lineTo(x,h); } c.stroke();
+ c.strokeStyle='rgba(200,240,60,.05)'; c.beginPath(); for(let m=5;m<25;m+=5){ const y=Math.round(top+m*60/10*rh)+0.5; c.moveTo(0,y); c.lineTo(w,y); } c.stroke();
  /* zona ciega de popa */
- const st=n360(O.c+180); c.fillStyle='rgba(120,60,40,.18)'; const a1=n360(st-30), a2=n360(st+30); if(a1<a2) c.fillRect(bx(a1),top,bx(a2)-bx(a1),h-top); else { c.fillRect(bx(a1),top,w-bx(a1),h-top); c.fillRect(0,top,bx(a2),h-top); }
- c.fillStyle='#0b0c0a'; c.fillRect(0,0,w,top); c.font='600 11px system-ui,sans-serif'; c.textAlign='center'; c.fillStyle='#8f9a6a';
- for(let b=0;b<360;b+=45){ const x=bx(b); c.fillRect(x,top-5,1,5); c.fillText(p3(b),clamp(x,14,w-14),12); }
- c.fillStyle='#c8f03c'; const hx=bx(O.c); c.beginPath(); c.moveTo(hx,top); c.lineTo(hx-5,top-7); c.lineTo(hx+5,top-7); c.fill();
- c.font='700 12px system-ui,sans-serif'; g.cont.forEach(s=>{ if(!(s.det||s.ping)) return; const x=bx(s.brg); c.fillStyle=s.ping?'#ff8a70':(s.cid===g.sel?'#e8b040':'#eef0e4'); c.fillText(s.cid,clamp(x,12,w-12),top+14); });
- c.textAlign='left'; c.fillStyle='rgba(11,12,10,.75)'; c.fillRect(4,h-20,170,16); c.fillStyle='#a3a796'; c.font='500 11px system-ui,sans-serif'; c.fillText(L('demora →  ·  tiempo ↓ (25 min)','bearing →  ·  time ↓ (25 min)'),8,h-8); }
-function drawPlot(cv,H,recon){ const g=G,O=g.own; const {c,w,h}=sizeCv(cv,H); const s=recon?null:selS();
- c.fillStyle='#060705'; c.fillRect(0,0,w,h);
- const pts=[[O.x,O.y]].concat(g.otrk); let so=null; if(s){ so=curSolution(s); if(so&&so.ok){ pts.push([so.x,so.y]); } }
+ const st=n360(O.c+180); const a1=n360(st-30), a2=n360(st+30); const baf=(x0,x1)=>{ c.fillStyle='rgba(150,60,40,.16)'; c.fillRect(x0,top,x1-x0,h-top); c.strokeStyle='rgba(255,138,112,.10)'; c.beginPath(); for(let y=top-40;y<h;y+=9){ c.moveTo(x0,y); c.lineTo(x1,y+(x1-x0)*0.5); } c.save(); c.beginPath(); c.rect(x0,top,x1-x0,h-top); c.clip(); c.stroke(); c.restore(); };
+ if(a1<a2) baf(bx(a1),bx(a2)); else { baf(bx(a1),w); baf(0,bx(a2)); }
+ /* viñeta tipo pantalla */
+ const vg=c.createLinearGradient(0,top,0,h); vg.addColorStop(0,'rgba(200,240,60,.06)'); vg.addColorStop(0.08,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.35)'); c.fillStyle=vg; c.fillRect(0,top,w,h-top);
+ c.restore();
+ /* cabecera de demoras */
+ const hg=c.createLinearGradient(0,0,0,top); hg.addColorStop(0,'#111a10'); hg.addColorStop(1,'#0a0f09'); c.fillStyle=hg; c.fillRect(0,0,w,top); c.fillStyle='rgba(200,240,60,.35)'; c.fillRect(0,top-1,w,1);
+ c.font='600 11px ui-monospace,Menlo,monospace'; c.textAlign='center'; c.fillStyle='#8f9a6a';
+ for(let b=0;b<360;b+=15){ const x=bx(b); c.fillStyle=b%45?'rgba(143,154,106,.45)':'#8f9a6a'; c.fillRect(Math.round(x),top-(b%45?3:6),1,b%45?3:6); }
+ c.fillStyle='#a3ad7e'; for(let b=0;b<360;b+=45){ const x=bx(b); c.fillText(p3(b),clamp(x,14,w-14),12); }
+ c.fillStyle='#c8f03c'; const hx=bx(O.c); c.shadowColor='rgba(200,240,60,.8)'; c.shadowBlur=6; c.beginPath(); c.moveTo(hx,top-1); c.lineTo(hx-5,top-8); c.lineTo(hx+5,top-8); c.fill(); c.shadowBlur=0;
+ c.font='700 12px system-ui,sans-serif'; g.cont.forEach(s=>{ if(!(s.det||s.ping)) return; const x=bx(s.brg); const col=s.ping?'#ff8a70':(s.cid===g.sel?'#e8b040':'#eef0e4'); c.fillStyle=col; c.shadowColor=col; c.shadowBlur=s.cid===g.sel?8:0; c.fillText(s.cid,clamp(x,12,w-12),top+15); c.shadowBlur=0; if(s.cid===g.sel){ c.strokeStyle='rgba(232,176,64,.55)'; c.lineWidth=1; c.setLineDash([3,4]); c.beginPath(); c.moveTo(x+0.5,top+19); c.lineTo(x+0.5,top+60); c.stroke(); c.setLineDash([]); } });
+ c.textAlign='left'; c.fillStyle='rgba(4,7,5,.78)'; c.fillRect(4,h-20,178,16); c.fillStyle='#a3a796'; c.font='500 11px system-ui,sans-serif'; c.fillText(L('demora →  ·  tiempo ↓ (25 min)','bearing →  ·  time ↓ (25 min)'),8,h-8); }
+function drawPlot(cv,H,recon,prog){ const g=G,O=g.own; const {c,w,h}=sizeCv(cv,H); const s=recon?null:selS(); const f=recon?0:simFrac(); const now=performance.now(); prog=prog==null?1:prog;
+ const own=recon?[O.x,O.y]:ipos(O,f);
+ const pts=[own].concat(g.otrk); let so=null; if(s){ so=curSolution(s); if(so&&so.ok){ pts.push([so.x,so.y]); } }
  g.torps.forEach(t=>t.trk.forEach(p=>pts.push(p)));
  if(recon) g.ships.forEach(sh=>(g.trk[sh.id]||[]).forEach(p=>pts.push(p)));
  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; pts.forEach(p=>{ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); });
- const cx=(x0+x1)/2, cy=(y0+y1)/2; let span=Math.max(x1-x0,(y1-y0)*w/h,12000)*1.15; const k=w/span; const ox=w/2, oy=h/2;
+ let cx=(x0+x1)/2, cy=(y0+y1)/2; let span=Math.max(x1-x0,(y1-y0)*w/h,12000)*1.15;
+ /* la vista del plot se desliza y hace zoom suave en vez de saltar */
+ if(!recon){ if(!PCAM||RMQ()||Math.abs(PCAM.span-span)>span*3) PCAM={cx:cx,cy:cy,span:span,t:now}; else { const a=1-Math.exp(-Math.min(0.25,(now-PCAM.t)/1000)*3.5); PCAM.cx+=(cx-PCAM.cx)*a; PCAM.cy+=(cy-PCAM.cy)*a; PCAM.span+=(span-PCAM.span)*a; PCAM.t=now; } cx=PCAM.cx; cy=PCAM.cy; span=PCAM.span; }
+ const k=w/span; const ox=w/2, oy=h/2;
  PLOTV={x0:cx,y0:cy,k:k,ox:ox,oy:oy}; const P=(x,y)=>[ox+(x-cx)*k,oy-(y-cy)*k];
- /* rejilla 2 km */
- const gs=span>40000?10000:span>20000?5000:2000; c.strokeStyle='#1a1d16'; c.lineWidth=1; c.beginPath();
- for(let gx=Math.floor((cx-span)/gs)*gs;gx<cx+span;gx+=gs){ const p=P(gx,0); c.moveTo(p[0],0); c.lineTo(p[0],h); }
- for(let gy=Math.floor((cy-span)/gs)*gs;gy<cy+span;gy+=gs){ const p=P(0,gy); c.moveTo(0,p[1]); c.lineTo(w,p[1]); } c.stroke();
+ const bg=c.createRadialGradient(w/2,h/2,10,w/2,h/2,Math.max(w,h)*0.75); bg.addColorStop(0,'#0c1410'); bg.addColorStop(1,'#040605'); c.fillStyle=bg; c.fillRect(0,0,w,h);
+ /* rejilla */
+ const gs=span>40000?10000:span>20000?5000:2000; c.strokeStyle='rgba(143,154,106,.11)'; c.lineWidth=1; c.beginPath();
+ for(let gx=Math.floor((cx-span)/gs)*gs;gx<cx+span;gx+=gs){ const p=P(gx,0); c.moveTo(Math.round(p[0])+0.5,0); c.lineTo(Math.round(p[0])+0.5,h); }
+ for(let gy=Math.floor((cy-span)/gs)*gs;gy<cy+span;gy+=gs){ const p=P(0,gy); c.moveTo(0,Math.round(p[1])+0.5); c.lineTo(w,Math.round(p[1])+0.5); } c.stroke();
+ /* anillos de distancia alrededor de tu submarino */
+ if(!recon){ const me=P(own[0],own[1]); const rs=span>30000?10000:5000; c.setLineDash([2,5]); c.strokeStyle='rgba(200,240,60,.16)'; c.fillStyle='rgba(200,240,60,.38)'; c.font='500 10px system-ui,sans-serif';
+  for(let r=rs;r<=span*0.8;r+=rs){ c.beginPath(); c.arc(me[0],me[1],r*k,0,7); c.stroke(); c.fillText(r/1000+' km',me[0]+r*k*0.71+3,me[1]-r*k*0.71-3); } c.setLineDash([]); }
  c.fillStyle='#80846f'; c.font='500 11px system-ui,sans-serif'; c.fillText(L('cuadrícula','grid')+' '+gs/1000+' km · N ↑',8,h-8);
  if(s&&s.brgs.length){ const L2=span*1.5; const n=s.brgs.length; const from=Math.max(0,n-60); c.lineWidth=1;
-  for(let i=from;i<n;i++){ const q=s.brgs[i]; const a=P(q.ox,q.oy), b=P(q.ox+Math.sin(q.b*D2R)*L2,q.oy+Math.cos(q.b*D2R)*L2); c.strokeStyle=(g.mode!=='facil'&&g.man[s.cid]&&g.man[s.cid].k===i)?'rgba(232,176,64,.9)':'rgba(143,154,106,'+(0.25+0.5*(i-from)/(n-from))+')'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); }
-  if(so&&so.ok){ const st=so.st; c.strokeStyle='#e8b040'; c.lineWidth=2; const t0=s.brgs[from].t, t1=g.t+600; const a=P(st.x+st.vx*(t0-st.t),st.y+st.vy*(t0-st.t)), b=P(st.x+st.vx*(t1-st.t),st.y+st.vy*(t1-st.t)); c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke();
+  for(let i=from;i<n;i++){ const q=s.brgs[i]; const a=P(q.ox,q.oy), b=P(q.ox+Math.sin(q.b*D2R)*L2,q.oy+Math.cos(q.b*D2R)*L2); c.strokeStyle=(g.mode!=='facil'&&g.man[s.cid]&&g.man[s.cid].k===i)?'rgba(232,176,64,.95)':'rgba(170,184,120,'+(0.18+0.5*(i-from)/(n-from))+')'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); }
+  if(so&&so.ok&&!s.dead){ const st=so.st; const t0=s.brgs[from].t, t1=g.t+600; const a=P(st.x+st.vx*(t0-st.t),st.y+st.vy*(t0-st.t)), b=P(st.x+st.vx*(t1-st.t),st.y+st.vy*(t1-st.t));
+   c.strokeStyle='rgba(232,176,64,.25)'; c.lineWidth=6; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); c.strokeStyle='#e8b040'; c.lineWidth=2; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke();
    c.fillStyle='#e8b040'; for(let i=from;i<n;i+=Math.max(1,Math.floor((n-from)/12))){ const q=s.brgs[i]; const p=P(st.x+st.vx*(q.t-st.t),st.y+st.vy*(q.t-st.t)); c.fillRect(p[0]-2,p[1]-2,4,4); }
-   const pn=P(so.x,so.y); c.beginPath(); c.arc(pn[0],pn[1],5,0,7); c.fill(); c.font='700 12px system-ui,sans-serif'; { const lb=s.cid+(g.mode==='facil'?'':' ('+L('tu solución','your solution')+')'); const tw=c.measureText(lb).width; c.fillText(lb,clamp(pn[0]+8,4,w-tw-4),clamp(pn[1]-6,14,h-20)); }
+   const pn=P(so.x+so.vx*f,so.y+so.vy*f); c.shadowColor='#e8b040'; c.shadowBlur=10; c.beginPath(); c.arc(pn[0],pn[1],5,0,7); c.fill(); c.shadowBlur=0; c.font='700 12px system-ui,sans-serif'; { const lb=s.cid+(g.mode==='facil'?'':' ('+L('tu solución','your solution')+')'); const tw=c.measureText(lb).width; c.fillText(lb,clamp(pn[0]+8,4,w-tw-4),clamp(pn[1]-6,14,h-20)); }
    if(g.mode==='veterano'){ const m=g.man[s.cid]; const q=s.brgs[m.k]; const pd=P(q.ox+Math.sin(q.b*D2R)*m.R,q.oy+Math.cos(q.b*D2R)*m.R); c.strokeStyle='#fff'; c.lineWidth=2; c.beginPath(); c.arc(pd[0],pd[1],7,0,7); c.stroke(); } } }
- if(recon){ g.ships.forEach(sh=>{ const tr=g.trk[sh.id]||[]; if(tr.length<2) return; c.strokeStyle=sh.tgt?'#e8b040':sh.esc?'#ff8a70':'#7fd3c4'; c.lineWidth=1.6; c.beginPath(); tr.forEach((p,i)=>{ const q=P(p[0],p[1]); i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]); }); c.stroke(); const e=P(tr[tr.length-1][0],tr[tr.length-1][1]); c.fillStyle=c.strokeStyle; c.font='700 12px system-ui,sans-serif'; c.fillText((sh.cid||'')+' '+L(SHIPS[sh.k].n[0],SHIPS[sh.k].n[1]),e[0]+6,e[1]-4); });
-  g.shots.forEach(tp=>{ const st=tp.st; const a=P(st.x,st.y), b=P(st.x+st.vx*600,st.y+st.vy*600); c.setLineDash([5,4]); c.strokeStyle='rgba(232,176,64,.8)'; c.lineWidth=1.5; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); c.setLineDash([]); }); }
- c.strokeStyle='#7fd3c4'; c.lineWidth=1.6; g.torps.forEach(t=>{ if(!t.trk.length) return; c.beginPath(); t.trk.forEach((p,i)=>{ const q=P(p[0],p[1]); i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]); }); const e=P(t.x,t.y); c.lineTo(e[0],e[1]); c.stroke();
-  if(t.res==='hit'||t.res==='neutral'){ c.fillStyle=t.res==='hit'?'#c8f03c':'#ff8a70'; c.font='700 13px system-ui,sans-serif'; c.beginPath(); c.arc(e[0],e[1],7,0,7); c.fill(); { const lb=t.res==='hit'?L('IMPACTO','HIT'):L('NO DESIGNADO','NON-DESIGNATED'); const tw=c.measureText(lb).width; c.fillText(lb,clamp(e[0]+10,4,w-tw-4),clamp(e[1]+4,14,h-20)); } }
-  else if(!t.done){ c.fillStyle='#7fd3c4'; c.fillRect(e[0]-3,e[1]-3,6,6); if(t.seek){ c.strokeStyle='rgba(127,211,196,.5)'; c.beginPath(); c.moveTo(e[0],e[1]); c.arc(e[0],e[1],TORP.seek*k,(t.c-90-TORP.cone)*D2R,(t.c-90+TORP.cone)*D2R); c.closePath(); c.stroke(); c.strokeStyle='#7fd3c4'; } } });
- c.strokeStyle='#c8f03c'; c.lineWidth=2; c.beginPath(); g.otrk.concat([[O.x,O.y]]).forEach((p,i)=>{ const q=P(p[0],p[1]); i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]); }); c.stroke();
- const me=P(O.x,O.y); c.save(); c.translate(me[0],me[1]); c.rotate(O.c*D2R); c.fillStyle='#c8f03c'; c.beginPath(); c.moveTo(0,-9); c.lineTo(6,7); c.lineTo(-6,7); c.closePath(); c.fill(); c.restore(); }
+ const cut=(arr)=>arr.slice(0,Math.max(2,Math.ceil(arr.length*prog)));
+ if(recon){ g.ships.forEach(sh=>{ const tr0=g.trk[sh.id]||[]; if(tr0.length<2) return; const tr=cut(tr0); const col=sh.tgt?'#e8b040':sh.esc?'#ff8a70':'#7fd3c4'; c.strokeStyle=col; c.lineWidth=1.8; c.beginPath(); tr.forEach((p,i)=>{ const q=P(p[0],p[1]); i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]); }); c.stroke(); const e=P(tr[tr.length-1][0],tr[tr.length-1][1]); c.fillStyle=col; c.beginPath(); c.arc(e[0],e[1],3,0,7); c.fill(); c.globalAlpha=easeO(prog*1.4-0.4); c.font='700 12px system-ui,sans-serif'; c.fillText((sh.cid||'')+' '+L(SHIPS[sh.k].n[0],SHIPS[sh.k].n[1]),e[0]+6,e[1]-4); c.globalAlpha=1; });
+  g.shots.forEach(tp=>{ const st=tp.st0||tp.st; const a=P(st.x,st.y), b=P(st.x+st.vx*600,st.y+st.vy*600); c.setLineDash([5,4]); c.strokeStyle='rgba(232,176,64,.8)'; c.lineWidth=1.5; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); c.setLineDash([]); }); }
+ /* torpedos: estela que se desvanece, cabeza luminosa, cono del buscador */
+ g.torps.forEach(t=>{ if(!t.trk.length&&t.done) return; const head=t.done?[t.x,t.y]:ipos(t,f); let tr=t.trk.concat([head]); if(recon) tr=cut(tr); const n=tr.length;
+  for(let i=1;i<n;i++){ const a=P(tr[i-1][0],tr[i-1][1]), b=P(tr[i][0],tr[i][1]); const al=t.done?0.75:0.12+0.75*Math.pow(i/n,1.6);
+   c.strokeStyle='rgba(127,211,196,'+(al*0.28).toFixed(3)+')'; c.lineWidth=5; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke();
+   c.strokeStyle='rgba(160,230,215,'+al.toFixed(3)+')'; c.lineWidth=1.6; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); }
+  const e=P(tr[n-1][0],tr[n-1][1]);
+  if(t.res==='hit'||t.res==='neutral'){ const col=t.res==='hit'?'#c8f03c':'#ff8a70'; if(!t.hitR) t.hitR=now; const el=RMQ()?9:(now-t.hitR)/1000;
+   for(let j=0;j<3;j++){ const tt=el-j*0.25; if(tt>0&&tt<1.6){ c.strokeStyle=col; c.globalAlpha=1-tt/1.6; c.lineWidth=2; c.beginPath(); c.arc(e[0],e[1],6+easeO(tt/1.6)*34,0,7); c.stroke(); } } c.globalAlpha=1;
+   c.fillStyle=col; c.shadowColor=col; c.shadowBlur=12; c.beginPath(); c.arc(e[0],e[1],6.5,0,7); c.fill(); c.shadowBlur=0; c.font='700 13px system-ui,sans-serif'; { const lb=t.res==='hit'?L('IMPACTO','HIT'):L('NO DESIGNADO','NON-DESIGNATED'); const tw=c.measureText(lb).width; c.globalAlpha=easeO(el*2); c.fillText(lb,clamp(e[0]+10,4,w-tw-4),clamp(e[1]+4,14,h-20)); c.globalAlpha=1; } }
+  else if(!t.done){ if(t.seek){ const gr=c.createRadialGradient(e[0],e[1],2,e[0],e[1],Math.max(4,TORP.seek*k)); gr.addColorStop(0,'rgba(127,211,196,.28)'); gr.addColorStop(1,'rgba(127,211,196,0)'); c.fillStyle=gr; c.beginPath(); c.moveTo(e[0],e[1]); c.arc(e[0],e[1],TORP.seek*k,(t.c-90-TORP.cone)*D2R,(t.c-90+TORP.cone)*D2R); c.closePath(); c.fill(); c.strokeStyle='rgba(127,211,196,.5)'; c.lineWidth=1; c.stroke(); }
+   c.fillStyle='#dffaf3'; c.shadowColor='#7fd3c4'; c.shadowBlur=10; c.beginPath(); c.arc(e[0],e[1],3.2,0,7); c.fill(); c.shadowBlur=0; }
+  else { c.fillStyle='rgba(127,211,196,.6)'; c.fillRect(e[0]-2.5,e[1]-2.5,5,5); } });
+ /* tu derrota y tu submarino */
+ const otr=recon?cut(g.otrk.concat([[O.x,O.y]])):g.otrk.concat([own]); const on=otr.length;
+ for(let i=1;i<on;i++){ const a=P(otr[i-1][0],otr[i-1][1]), b=P(otr[i][0],otr[i][1]); c.strokeStyle='rgba(200,240,60,'+(recon?0.9:(0.25+0.7*i/on)).toFixed(3)+')'; c.lineWidth=2; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); }
+ const me=P(otr[on-1][0],otr[on-1][1]); c.save(); c.translate(me[0],me[1]); c.rotate(O.c*D2R); c.shadowColor='rgba(200,240,60,.9)'; c.shadowBlur=9; c.fillStyle='#c8f03c';
+ c.beginPath(); c.ellipse(0,0,3.6,10,0,0,7); c.fill(); c.shadowBlur=0; c.fillStyle='#2a3a10'; c.fillRect(-1.4,-4,2.8,4.5); c.fillStyle='#c8f03c'; c.beginPath(); c.moveTo(-5,8); c.lineTo(5,8); c.lineTo(0,5); c.closePath(); c.fill(); c.restore(); }
+/* ===== Recreación del impacto (vista de periscopio simulada; solo visual, no cambia nada del juego) ===== */
+function fxStart(tp){ const g=G; const host=document.getElementById('sbfx'); if(!host) return; const s=g.ships[tp.hitId]; if(!s) return; const tgt=tp.res==='hit';
+ if(FX&&FX.raf) cancelAnimationFrame(FX.raf);
+ const rm=RMQ(); FX={tp:tp,k:s.k,cid:s.cid||'',tgt:tgt,t0:performance.now(),raf:0,rm:rm,brg:Math.round(g.boom?g.boom.b:0),dp:false,prev:PAUSED,seed:(tp.id*97+s.id*13)|0};
+ if(g.mode!=='aprende'&&!PAUSED){ PAUSED=true; FX.dp=true; }
+ host.innerHTML='<div class="sbfx"><canvas id="sbfxc" class="sbfxc"></canvas><div class="sbfxt"><b class="'+(tgt?'good':'bad')+'">'+(tgt?L('IMPACTO EN','HIT ON')+' '+esc(FX.cid)+' · '+esc(L(SHIPS[s.k].n[0],SHIPS[s.k].n[1])).toUpperCase():L('IMPACTO EN UN BUQUE NO DESIGNADO','HIT ON A NON-DESIGNATED SHIP'))+'</b><span>'+L('Recreación del impacto, no lo que ve el submarino: a esta profundidad solo lo oyes.','Re-creation of the hit, not what the submarine sees: at this depth you only hear it.')+(FX.dp?' '+L('Tiempo en pausa.','Time paused.'):'')+'</span></div><div class="sbrow" style="margin:0;padding:0 10px 10px"><button type="button" class="sbbtn sm" data-fxr>'+L('Repetir','Replay')+'</button><button type="button" class="sbbtn sm pri" data-fxc style="margin-left:auto">'+L('Seguir la patrulla','Continue patrol')+'</button></div></div>';
+ host.classList.add('on');
+ host.querySelector('[data-fxc]').addEventListener('click',fxClose); host.querySelector('[data-fxr]').addEventListener('click',()=>{ if(FX){ FX.t0=performance.now(); if(!FX.raf) FX.raf=requestAnimationFrame(fxFrame); } });
+ try{ const tb=APP.querySelector('.sbtop'); const y=host.getBoundingClientRect().top, hb=tb?tb.getBoundingClientRect().bottom:0; if(y<hb||y>window.innerHeight*0.6) window.scrollBy({top:y-hb-8,behavior:rm?'auto':'smooth'}); }catch(e){}
+ FX.raf=requestAnimationFrame(fxFrame); ui(); }
+function fxClose(){ const host=document.getElementById('sbfx'); if(FX){ if(FX.raf) cancelAnimationFrame(FX.raf); if(FX.dp&&PAUSED&&G&&!G.over) PAUSED=FX.prev; } FX=null; if(host){ host.classList.remove('on'); host.innerHTML=''; } if(G&&!G.over) ui(); }
+function fxFrame(now){ if(!FX) return; const cv=document.getElementById('sbfxc'); if(!cv){ FX=null; return; } const T=FX.rm?7.5:(now-FX.t0)/1000;
+ const wd=cv.clientWidth||340; const H=Math.round(clamp(wd*0.56,190,380)); const {c,w,h}=sizeCv(cv,H); fxScene(c,w,h,T,FX);
+ if(T<9&&!FX.rm) FX.raf=requestAnimationFrame(fxFrame); else FX.raf=0; }
+function fxShip(c,k,L0){ /* silueta del buque con proa a la derecha; L0 = eslora en px; origen en la flotación, centro */
+ const x=-L0/2, e=L0; c.beginPath();
+ if(k==='frig'){ c.moveTo(x,0); c.lineTo(x+e*0.02,-e*0.07); c.lineTo(x+e*0.80,-e*0.07); c.lineTo(x+e,-e*0.09); c.lineTo(x+e*0.93,0); c.closePath(); c.fill();
+  c.fillRect(x+e*0.22,-e*0.15,e*0.36,e*0.08); c.fillRect(x+e*0.33,-e*0.20,e*0.16,e*0.06); c.fillRect(x+e*0.40,-e*0.31,e*0.025,e*0.12); c.fillRect(x+e*0.36,-e*0.27,e*0.10,e*0.012); c.fillRect(x+e*0.60,-e*0.12,e*0.07,e*0.05); c.fillRect(x+e*0.74,-e*0.105,e*0.05,e*0.035); c.fillRect(x+e*0.785,-e*0.1,e*0.06,e*0.008); }
+ else if(k==='fish'){ c.moveTo(x,0); c.lineTo(x-e*0.02,-e*0.12); c.lineTo(x+e*0.85,-e*0.12); c.lineTo(x+e,-e*0.20); c.lineTo(x+e*0.9,0); c.closePath(); c.fill();
+  c.fillRect(x+e*0.50,-e*0.30,e*0.22,e*0.18); c.fillRect(x+e*0.26,-e*0.62,e*0.025,e*0.50); c.beginPath(); c.moveTo(x+e*0.27,-e*0.6); c.lineTo(x-e*0.05,-e*0.15); c.lineTo(x-e*0.04,-e*0.13); c.lineTo(x+e*0.27,-e*0.55); c.fill(); }
+ else { c.moveTo(x,0); c.lineTo(x-e*0.01,-e*0.085); c.lineTo(x+e*0.90,-e*0.085); c.lineTo(x+e,-e*0.11); c.lineTo(x+e*0.95,0); c.closePath(); c.fill();
+  c.fillRect(x+e*0.03,-e*0.19,e*0.14,e*0.11); c.fillRect(x+e*0.05,-e*0.215,e*0.10,e*0.03); c.fillRect(x+e*0.09,-e*0.26,e*0.035,e*0.05);
+  for(let i=0;i<6;i++) c.fillRect(x+e*(0.22+i*0.105),-e*(0.13+(i%3===1?0.02:0)),e*0.095,e*(0.05+(i%3===1?0.02:0)));
+  c.fillRect(x+e*0.86,-e*0.15,e*0.015,e*0.07); } }
+function fxScene(c,w,h,T,F){ const hz=h*0.47, R=hsh; const ex=2.3; const ship={merc:0.62,frig:0.5,fish:0.3}[F.k]||0.5;
+ /* movimiento del periscopio: barrido suave desde la estela del torpedo hasta el blanco */
+ const pan=(1-easeIO(clamp(T/1.8,0,1)))*w*0.42; const L0=Math.min(w,h*1.7)*ship; const sx=w*0.5+pan, sy=hz+2;
+ /* cielo y mar */
+ const sk=c.createLinearGradient(0,0,0,hz); sk.addColorStop(0,'#0e1820'); sk.addColorStop(0.6,'#2c3d46'); sk.addColorStop(1,'#a08a68'); c.fillStyle=sk; c.fillRect(0,0,w,hz+1);
+ const sunx=w*0.78+pan*0.6; const sg=c.createRadialGradient(sunx,hz-h*0.06,2,sunx,hz-h*0.06,h*0.5); sg.addColorStop(0,'rgba(255,214,150,.55)'); sg.addColorStop(0.25,'rgba(255,190,120,.18)'); sg.addColorStop(1,'rgba(255,190,120,0)'); c.fillStyle=sg; c.fillRect(0,0,w,hz+1);
+ const se=c.createLinearGradient(0,hz,0,h); se.addColorStop(0,'#40525a'); se.addColorStop(0.15,'#1d3038'); se.addColorStop(1,'#061015'); c.fillStyle=se; c.fillRect(0,hz,w,h-hz);
+ const glint=c.createLinearGradient(sunx-w*0.18,0,sunx+w*0.18,0); glint.addColorStop(0,'rgba(255,210,150,0)'); glint.addColorStop(0.5,'rgba(255,210,150,.16)'); glint.addColorStop(1,'rgba(255,210,150,0)'); c.fillStyle=glint; c.fillRect(sunx-w*0.18,hz,w*0.36,h*0.22);
+ /* oleaje con perspectiva */
+ c.lineWidth=1; for(let j=0;j<16;j++){ const p=(j+1)/16, y=hz+Math.pow(p,1.8)*(h-hz); const amp=0.6+p*5, wl=18+p*90; c.strokeStyle='rgba(180,205,210,'+(0.05+p*0.10).toFixed(3)+')'; c.beginPath(); for(let x=0;x<=w;x+=6){ const yy=y+Math.sin((x+pan*(0.3+p)+j*37)/wl+T*(0.6+p*0.8))*amp; x?c.lineTo(x,yy):c.moveTo(x,yy); } c.stroke(); }
+ /* el buque: escora y se hunde después del impacto */
+ const tE=T-ex, sink=easeIO(clamp(tE/6,0,1)), list=tE>0?easeO(clamp(tE/4,0,1))*(F.k==='fish'?22:13):0;
+ c.save(); c.beginPath(); c.rect(0,0,w,sy+0.5); c.clip(); c.translate(sx,sy+sink*L0*0.12); c.rotate(-list*D2R*0.25); c.transform(1,0,0,Math.cos(list*D2R),0,0);
+ c.save(); c.translate(0.8,-1.1); c.fillStyle='rgba(255,196,130,.55)'; fxShip(c,F.k,L0); c.restore(); c.fillStyle='#151b1e'; fxShip(c,F.k,L0);
+ if(tE>0.2){ const fire=c.createRadialGradient(L0*0.05,-L0*0.04,1,L0*0.05,-L0*0.04,L0*0.12); const fl=0.7+0.3*Math.sin(T*9); fire.addColorStop(0,'rgba(255,190,90,'+(0.8*fl*(1-sink*0.7)).toFixed(3)+')'); fire.addColorStop(1,'rgba(255,90,30,0)'); c.fillStyle=fire; c.fillRect(-L0*0.1,-L0*0.18,L0*0.3,L0*0.2); }
+ c.restore();
+ /* humo */
+ if(tE>0.4){ for(let i=0;i<22;i++){ const a=tE-0.4-i*0.12; if(a<0) continue; const life=clamp(a/5,0,1); const px=sx+L0*0.05+(R(i,F.seed)-0.3)*L0*0.12+life*L0*0.45, py=sy-L0*0.05-life*h*0.42; const rr=L0*(0.04+life*0.16); const sg2=c.createRadialGradient(px,py,0,px,py,rr); const al=(0.42*(1-life)*clamp(a*3,0,1)).toFixed(3); sg2.addColorStop(0,'rgba(34,36,38,'+al+')'); sg2.addColorStop(0.6,'rgba(34,36,38,'+(al*0.6).toFixed(3)+')'); sg2.addColorStop(1,'rgba(34,36,38,0)'); c.fillStyle=sg2; c.fillRect(px-rr,py-rr,2*rr,2*rr); } }
+ /* estela del torpedo */
+ const tw=clamp((T-0.3)/(ex-0.3),0,1); if(T<ex+1.2){ const fade=T<ex?1:1-(T-ex)/1.2; const bx0=w*0.5+pan*0.15, by0=h*1.02, bx1=sx+L0*0.05, by1=sy+3; for(let i=0;i<60;i++){ const u=i/60; if(u>tw) break; const x=bx0+(bx1-bx0)*u+(R(i,3)-0.5)*(1-u)*14, y=by0+(by1-by0)*Math.pow(u,0.75); const r=(1-u)*4+0.8; c.fillStyle='rgba(225,240,240,'+((0.35+0.4*R(i,9))*fade*(0.4+0.6*u)).toFixed(3)+')'; c.beginPath(); c.arc(x,y,r,0,7); c.fill(); } }
+ /* columna de agua y destello */
+ if(tE>0){ if(tE<0.35){ c.fillStyle='rgba(255,245,225,'+(0.65*(1-tE/0.35)).toFixed(3)+')'; c.fillRect(0,0,w,h); }
+  { const ph=clamp(tE/1.1,0,1), fall=clamp((tE-1.1)/2.2,0,1); const Hc=L0*0.85*easeO(ph)*(1-0.45*fall), bw=L0*0.07, tw2=L0*(0.09+0.12*ph+0.05*fall), fa=Math.pow(1-fall,1.6); const bxp=sx+L0*0.05; if(Hc>2&&fa>0.01){ const pg=c.createLinearGradient(0,sy-Hc,0,sy); pg.addColorStop(0,'rgba(235,240,238,0)'); pg.addColorStop(0.25,'rgba(235,240,238,'+(0.55*fa).toFixed(3)+')'); pg.addColorStop(1,'rgba(220,230,228,'+(0.8*fa).toFixed(3)+')'); c.fillStyle=pg; c.beginPath(); c.moveTo(bxp-bw,sy); c.quadraticCurveTo(bxp-bw*0.6,sy-Hc*0.6,bxp-tw2,sy-Hc); c.quadraticCurveTo(bxp,sy-Hc*1.12,bxp+tw2,sy-Hc); c.quadraticCurveTo(bxp+bw*0.6,sy-Hc*0.6,bxp+bw,sy); c.closePath(); c.fill(); } }
+  for(let i=0;i<110;i++){ const v=0.55+R(i,F.seed+1)*0.75, ang=(R(i,F.seed+2)-0.5)*0.9, tt=tE*1.15; const up=v*L0*0.95*tt-0.5*L0*1.6*tt*tt; if(up<-2) continue; const px=sx+L0*0.05+Math.sin(ang)*v*L0*0.35*tt, py=sy-up; const rr=0.8+R(i,F.seed+3)*2.2+tt*1.2; c.fillStyle='rgba(235,242,240,'+clamp(0.7-tt*0.22,0,0.7).toFixed(3)+')'; c.beginPath(); c.arc(px,py,rr,0,7); c.fill(); }
+  const mist=clamp(1-tE/3.5,0,1); if(mist>0){ const mg=c.createRadialGradient(sx+L0*0.05,sy-L0*0.15,2,sx+L0*0.05,sy-L0*0.15,L0*0.5); mg.addColorStop(0,'rgba(230,235,235,'+(0.5*mist).toFixed(3)+')'); mg.addColorStop(1,'rgba(230,235,235,0)'); c.fillStyle=mg; c.fillRect(0,0,w,h); }
+  c.strokeStyle='rgba(230,240,240,'+(0.5*clamp(1-tE/5,0,1)).toFixed(3)+')'; c.lineWidth=2; c.beginPath(); c.ellipse(sx+L0*0.05,sy+2,L0*(0.08+easeO(tE/3)*0.35),3+easeO(tE/3)*5,0,0,7); c.stroke(); }
+ /* lente del periscopio: viñeta, retícula y escala */
+ const cr=Math.min(w,h)*0.62, ccx=w/2, ccy=h/2; const vg=c.createRadialGradient(ccx,ccy,cr*0.55,ccx,ccy,cr*1.25); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(0.7,'rgba(0,0,0,.55)'); vg.addColorStop(1,'rgba(0,0,0,.95)'); c.fillStyle=vg; c.fillRect(0,0,w,h);
+ c.strokeStyle='rgba(200,240,60,.75)'; c.lineWidth=1; c.beginPath(); c.moveTo(ccx-cr,hz+0.5); c.lineTo(ccx-14,hz+0.5); c.moveTo(ccx+14,hz+0.5); c.lineTo(ccx+cr,hz+0.5); c.moveTo(ccx+0.5,ccy-cr*0.8); c.lineTo(ccx+0.5,hz-12); c.moveTo(ccx+0.5,hz+12); c.lineTo(ccx+0.5,ccy+cr*0.8); c.stroke();
+ for(let i=-10;i<=10;i++){ if(!i) continue; const x=ccx+i*cr*0.09; c.beginPath(); c.moveTo(x+0.5,hz-(i%5?3:7)); c.lineTo(x+0.5,hz+(i%5?3:7)); c.stroke(); }
+ c.font='700 12px ui-monospace,Menlo,monospace'; c.fillStyle='rgba(200,240,60,.9)'; c.textAlign='center'; const shown=n360(F.brg+pan/w*30); c.fillText(p3(shown)+'°',ccx,16); c.textAlign='left';
+ c.fillText(L('REC','REC')+' '+String(Math.floor(clamp(T,0,99))).padStart(2,'0')+'s',10,h-10); c.textAlign='right'; c.fillText(F.cid,w-10,h-10); c.textAlign='left'; }
 function debrief(){ const g=G; if(!APP||!g) return; const sc=g.sc;
  const tt={escaped:[L('MISIÓN CUMPLIDA','MISSION COMPLETE'),'good',L('Blanco alcanzado y la escolta te ha perdido.','Target hit and the escort has lost you.')],fixed:[L('TE HAN FIJADO','PINNED'),'bad',L('La escolta te mantuvo en contacto a menos de 2 km: en combate real lanzaría sus armas.','The escort held you within 2 km: in real combat it would launch its weapons.')],time:[L('TIEMPO AGOTADO','TIME UP'),'bad',L('Se acabó el tiempo de la patrulla.','The patrol time ran out.')],quit:[L('PATRULLA TERMINADA','PATROL ENDED'),g.hits?'good':'bad',L('Has terminado la patrulla.','You ended the patrol.')]}[g.over];
    let h='<div class="sbw" data-noi18n>'+crumbs()+(g.mode==='aprende'?'<div class="sbtut"><div class="sbtsteps">'+LN_STEPS.map((x,i)=>'<span class="'+(i<6?'d':'c')+'">'+(i+1)+'</span>').join('')+'</div><h3>'+L('Paso 7 de 7 · Informe','Step 7 of 7 · Debrief')+'</h3><p>'+L('Así se calcula tu puntuación. Cada línea dice de dónde sale. Ya sabes jugar: prueba Fácil (la computadora calcula el TMA) o Veterano (lo haces tú, como en el paso 4).','This is how your score is worked out. Each line says where it comes from. You know how to play now: try Easy (the computer solves the TMA) or Veteran (you do it, as in step 4).')+'</p></div>':'')+'<div class="sbbig '+tt[1]+'">'+tt[0]+'</div><p class="sbnote" style="font-size:15px">'+tt[2]+'</p>';
- h+='<div class="sbpan on"><h3>'+L('Informe','Debrief')+' · '+esc(L(g.pt.n[0],g.pt.n[1]))+' · '+esc(g.sub.n)+' · '+(g.mode==='facil'?L('Fácil','Easy'):g.mode==='aprende'?L('Aprende','Learn'):L('Veterano','Veteran'))+'</h3><table class="sbtbl">'+
+ h+='<div class="sbpan on sbdeb"><h3>'+L('Informe','Debrief')+' · '+esc(L(g.pt.n[0],g.pt.n[1]))+' · '+esc(g.sub.n)+' · '+(g.mode==='facil'?L('Fácil','Easy'):g.mode==='aprende'?L('Aprende','Learn'):L('Veterano','Veteran'))+'</h3><table class="sbtbl">'+
  '<tr><td>'+L('Tiempo de patrulla','Patrol time')+'</td><td>'+hhmmss(g.tEnd)+'</td></tr>'+
  '<tr><td>'+L('Torpedos lanzados / impactos','Torpedoes fired / hits')+'</td><td>'+g.fired+' / '+g.hits+(g.neutral?' (+'+g.neutral+' '+L('no designado','non-designated')+')':'')+'</td></tr>'+
  g.shots.map(tp=>'<tr><td>'+L('Error de la solución, torpedo','Solution error, torpedo')+' '+tp.id+' ('+(tp.res==='hit'?L('impacto','hit'):tp.res==='neutral'?L('no designado','non-designated'):L('fallo','miss'))+')</td><td>'+L('dist.','range')+' '+(tp.err.dr>=0?'+':'')+nf(tp.err.dr,1)+' % · '+L('rumbo','course')+' '+(tp.err.dc>=0?'+':'')+nf(tp.err.dc,1)+'° · '+L('vel.','speed')+' '+(tp.err.dv>=0?'+':'')+nf(tp.err.dv,1)+' kn'+(tp.seekAt!=null?' · '+L('buscador a','seeker at')+' '+ni(tp.seekAt)+' m':'')+'</td></tr>').join('')+
  '<tr><td>'+L('Ruido medio / pico','Average / peak noise')+'</td><td>'+Math.round(sc.avg)+' / '+Math.round(sc.peak)+' dB</td></tr>'+
  '<tr><td>'+L('Veces detectado','Times detected')+'</td><td>'+g.detN+'</td></tr></table>'+
  '<h3 style="margin-top:14px">'+L('Puntuación','Score')+'</h3><table class="sbtbl">'+sc.items.map(it=>'<tr><td>'+esc(L(it[0],it[1]))+(g.mode==='aprende'?'<small class="sbexp">'+esc(lnExplain(it[0]))+'</small>':'')+'</td><td>'+(it[2]>0?'+':'')+ni(it[2])+'</td></tr>').join('')+
- '<tr><td><b>'+L('Total','Total')+'</b></td><td><b>'+ni(sc.total)+'</b></td></tr><tr><td>'+L('Rango','Rank')+'</td><td>'+esc(L(sc.rank[0],sc.rank[1]))+'</td></tr><tr><td>'+L('Tu récord en esta patrulla','Your best on this patrol')+'</td><td>'+ni(g.best)+(g.newBest?' · '+L('¡nuevo!','new!'):'')+'</td></tr></table></div>';
+ '<tr><td><b>'+L('Total','Total')+'</b></td><td><b data-count="'+sc.total+'">'+ni(sc.total)+'</b></td></tr><tr><td>'+L('Rango','Rank')+'</td><td>'+esc(L(sc.rank[0],sc.rank[1]))+'</td></tr><tr><td>'+L('Tu récord en esta patrulla','Your best on this patrol')+'</td><td>'+ni(g.best)+(g.newBest?' · '+L('¡nuevo!','new!'):'')+'</td></tr></table></div>';
  h+='<div class="sbpan on" style="margin-top:10px"><h3>'+L('Reconstrucción: derrotas reales (color) y tu solución al disparar (discontinua)','Reconstruction: true tracks (colour) and your solution at firing (dashed)')+'</h3><canvas class="sbcv" id="sbrec" height="360"></canvas></div>';
    h+='<div class="sbrow" style="margin-top:12px">'+(g.mode==='aprende'?'<button type="button" class="sbbtn pri" data-jump="facil">'+L('Saltar a Fácil','Go to Easy')+'</button><button type="button" class="sbbtn pri" data-jump="veterano">'+L('Saltar a Veterano','Go to Veteran')+'</button><button type="button" class="sbbtn" data-again>'+L('Repetir Aprende','Replay Learn')+'</button>':'<button type="button" class="sbbtn pri" data-again>'+L('Repetir patrulla','Replay patrol')+'</button><button type="button" class="sbbtn" data-menu>'+L('Cambiar patrulla','Change patrol')+'</button>')+'</div></div>';
  X.set(h,L('Submarino','Submarine'));
  const root=APP.querySelector('.sbw'); root.addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; if(b.dataset.jump){ CFG.mode=b.dataset.jump; saveCfg(); intro(); } else if(b.hasAttribute('data-again')) start(); else if(b.hasAttribute('data-menu')) intro(); });
- drawPlot(document.getElementById('sbrec'),360,true); try{ window.scrollTo(0,0); }catch(e){} }
+ try{ window.scrollTo(0,0); }catch(e){} debriefAnim(); }
+/* informe: la reconstrucción se dibuja de principio a fin y el total sube contando */
+function debriefAnim(){ const cv=document.getElementById('sbrec'); if(!cv) return; const rm=RMQ(); const t0=performance.now(); const tot=APP.querySelector('[data-count]');
+ const fin=tot?+tot.dataset.count:0; const f=now=>{ if(!document.body.contains(cv)) return; const p=rm?1:clamp((now-t0-250)/1900,0,1); drawPlot(cv,360,true,easeIO(p)); if(tot){ const q=rm?1:easeO(clamp((now-t0-350)/1200,0,1)); tot.textContent=ni(fin*q); } if(p<1||(!rm&&now-t0<1600)) requestAnimationFrame(f); };
+ if(rm) f(t0+99999); else requestAnimationFrame(f); }
 
-export function route(app,x){ APP=app; X=x; css(); CFG=loadCfg(); stopLoop();
+export function route(app,x){ APP=app; X=x; css(); CFG=loadCfg(); stopLoop(); HEROAN=false;
  const q=(location.hash.split('?')[1]||''); q.split('&').forEach(kv=>{ const [k,v]=kv.split('='); if(k==='m'&&(v==='facil'||v==='veterano'||v==='aprende')) CFG.mode=v; if(k==='s'&&SUBS.some(s=>s.id===v)) CFG.sub=v; if(k==='p'&&PATROLS.some(p=>p.id===v)) CFG.patrol=v; });
  intro(); }
 if(typeof window!=='undefined'){ window.addEventListener('hashchange',()=>{ if(!/^#\/submarino/.test(location.hash)) stopLoop(); });
