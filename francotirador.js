@@ -104,7 +104,7 @@ const STAGES=[
  {id:'artico',n:['Campo de tiro ártico','Arctic range'],d:['−18 °C y aire denso a 69° de latitud norte','−18 °C dense air at 69° north'],alt:80,T:[-24,-12],rh:[60,85],lat:69.3,az:[0,270,90],ter:'artico',
   sky:['#6f8fb3','#dfe8f1'],far:'#a9b6c4',near:'#e9eef2',mid:'#d5dde5',hz:'#eef3f7'}
 ];
-const MODES={facil:{n:['Fácil','Easy']},veterano:{n:['Veterano','Veteran']},desafio:{n:['Desafío','Challenge']}};
+const MODES={aprende:{n:['Aprende a disparar','Learn to shoot']},facil:{n:['Fácil','Easy']},veterano:{n:['Veterano','Veteran']},desafio:{n:['Desafío','Challenge']}};
 const MOA_PER_MIL=3.43775;
 
 /* ===== Estado ===== */
@@ -287,6 +287,16 @@ function css(){ if(document.getElementById('fr-css')) return; const s=document.c
  '.frin{width:100%;box-sizing:border-box;background:#0c0e0a;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:10px;font:16px ui-monospace,Menlo,monospace;min-height:44px}',
  '.frbig{font-size:15px;line-height:1.5}',
  '.frok{color:#d6f09a}.frko{color:#f2b19e}',
+  '.frcoach{margin-top:10px;border:1px solid var(--ac);border-radius:var(--r);background:#13160f;padding:12px 12px 4px;min-width:0}',
+  '.frcoach h3{margin:8px 0 4px;font-size:18px;line-height:1.25}',
+  '.frco-hd{display:grid;gap:5px;font-size:12.5px;color:#a8ad98}',
+  '.frco-bar{height:4px;background:#2a2e24;border-radius:2px;overflow:hidden}.frco-bar i{display:block;height:100%;background:var(--ac)}',
+  '.frco-bd p,.frco-res p{margin:6px 0;font-size:15px;line-height:1.5}',
+  '.frco-in{display:grid;gap:10px;margin:10px 0 4px}.frco-in label{display:grid;gap:4px;font-size:14px;color:#d8dbcc}',
+  '.frco-ch{display:flex;flex-wrap:wrap;gap:6px}.frco-ch .frbtn.on{border-color:var(--ac);background:#2c3320;color:var(--tx)}',
+  '.frco-ul{margin:4px 0 8px;padding-left:18px;font-size:14.5px;line-height:1.5}.frco-ul li{margin:4px 0}',
+  '.frco-kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:14px;margin:8px 0}.frco-kv span{color:#cfd2c4}.frco-kv b{text-align:right;font-variant-numeric:tabular-nums}.frco-kv em{grid-column:1/-1;font-style:normal;font-size:13px;color:#a8ad98;margin-bottom:6px}',
+  '.frco-nav{justify-content:space-between}',
  '.frsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}',
  '.frsum div{border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:10px;text-align:center}',
  '.frsum b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px}',
@@ -328,28 +338,37 @@ function validHTML(){ const r=(a,b,c,d)=>'<tr><td>'+a+'</td><td>'+b+'</td><td>'+
  '</table><p>'+L('El viento de la tabla de Lapua (4 m/s) sale un 9–12 % menor que el del simulador; Lapua no publica su método y su cifra tampoco cuadra con el método de Didion aplicado a sus propias velocidades, así que M.A.T mantiene el cálculo físico.','Lapua’s table wind drift (4 m/s) is 9–12% lower than the simulator’s; Lapua does not publish its method and its figure does not match Didion’s method applied to its own velocities either, so M.A.T keeps the physical calculation.')+'</p></div></details>'; }
 
 /* ===== Menú ===== */
-function intro(){ stopLoop(); const rf=rifleOf(CFG.rifle), st=stageOf(CFG.stage); const B=bests();
+function intro(){ stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } const rf=rifleOf(CFG.rifle), st=stageOf(CFG.stage); const B=bests();
  const opt=(on,attr,b,s)=>'<button type="button" class="fropt'+(on?' on':'')+'" '+attr+'><b>'+b+'</b><span>'+s+'</span></button>';
  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],['Francotirador']])+
  '<div class="frhero"><img src="img/juegos/francotirador.webp" width="640" height="400" alt="'+esc(L('Tirador con un Barrett M107 en un campo de tiro de Yibuti','Marksman with a Barrett M107 on a range in Djibouti'))+'"><div class="ht"><b>'+L('FRANCOTIRADOR','SNIPER')+'</b><span>'+L('Placas de acero de 300 a 2.000 m. Mide la distancia, lee el viento y gira las torretas: la bala sigue la física de verdad, incluida la rotación de la Tierra.','Steel plates from 300 to 2,000 m. Range it, read the wind and dial the turrets: the bullet follows real physics, including the Earth’s rotation.')+'</span></div></div>';
+  h+='<div class="frsec">'+L('¿Nunca has disparado?','Never fired a shot?')+'</div><div class="frgrid">'+opt(CFG.mode==='aprende','data-m="aprende"',L('Aprende a disparar','Learn to shoot'),L('Clase guiada paso a paso: te explico cada medida y cada cuenta, tú las haces y yo las compruebo. Dos lecciones: 480 m y 1.540 m.','A step-by-step guided class: I explain each reading and each sum, you do them and I check them. Two lessons: 480 m and 1,540 m.'))+'</div>';
  h+='<div class="frsec">'+L('Modo','Mode')+'</div><div class="frgrid c3">'+
   opt(CFG.mode==='facil','data-m="facil"',L('Fácil','Easy'),L('Mides tú y la computadora balística te da la solución desglosada. 300–800 m.','You measure and the ballistic computer gives you the broken-down solution. 300–800 m.'))+
   opt(CFG.mode==='veterano','data-m="veterano"',L('Veterano','Veteran'),L('Sin computadora: instrumentos, tarjeta, fórmulas y tu cabeza. Coriolis, giro y densidad los calculas tú. 600–2.000 m.','No computer: instruments, data card, formulas and your head. You work out Coriolis, spin and density. 600–2,000 m.'))+
   opt(CFG.mode==='desafio','data-m="desafio"',L('Desafío','Challenge'),L('Reglas de Veterano con condiciones fijas para batir tu récord.','Veteran rules with fixed conditions to beat your record.'))+'</div>';
- h+='<div class="frsec">'+L('Fusil y cartucho','Rifle and cartridge')+'</div><div class="frgrid c2">'+RIFLES.map(r=>opt(CFG.rifle===r.id,'data-r="'+r.id+'"',esc(r.n)+' · '+esc(L(r.cal[0],r.cal[1])),esc(L(r.bul[0],r.bul[1]))+' · BC '+r.model+' '+nf(r.bc,3)+' · V0 '+r.mv+' m/s · '+L('hasta','to')+' '+ni(r.maxV)+' m')).join('')+'</div>';
+  if(CFG.mode==='aprende'){ const ls=CFG.lesson?1:0;
+  h+='<div class="frsec">'+L('Lección','Lesson')+'</div><div class="frgrid c2">'+opt(ls===0,'data-l="0"',L('Lección 1 · 480 m','Lesson 1 · 480 m'),L('M24 (.308) en terreno llano, a 700 m de altitud. Aprendes el método completo: distancia, aire, caída, viento, giro y Tierra.','M24 (.308) on flat ground at 700 m altitude. You learn the whole method: distance, air, drop, wind, spin and the Earth.'))+
+   opt(ls===1,'data-l="1"',L('Lección 2 · 1.540 m','Lesson 2 · 1,540 m'),L('Sako TRG-42 (.338 Lapua) con frío ártico (−12 °C) y tiro al este a 69° de latitud: aquí el Coriolis y el Eötvös ya cuentan.','Sako TRG-42 (.338 Lapua) in Arctic cold (−12 °C), firing east at 69° north: here Coriolis and Eötvös matter.'))+'</div>';
+  h+='<div class="frrow"><button type="button" class="frbtn" id="frgo">'+L('Empezar la lección ','Start lesson ')+(ls+1)+'</button></div>';
+  h+='<p style="font-size:13.5px;color:#bfc2b8">'+L('Solo placas y gongs de acero en un campo de tiro. Sin personas.','Steel plates and gongs on a range only. No people.')+'</p>';
+ } else {
+  h+='<div class="frsec">'+L('Fusil y cartucho','Rifle and cartridge')+'</div><div class="frgrid c2">'+RIFLES.map(r=>opt(CFG.rifle===r.id,'data-r="'+r.id+'"',esc(r.n)+' · '+esc(L(r.cal[0],r.cal[1])),esc(L(r.bul[0],r.bul[1]))+' · BC '+r.model+' '+nf(r.bc,3)+' · V0 '+r.mv+' m/s · '+L('hasta','to')+' '+ni(r.maxV)+' m')).join('')+'</div>';
  h+='<p style="font-size:13.5px;color:#bfc2b8;margin:6px 2px">'+L('Ficha del fusil','Rifle entry')+': <a href="#/a/'+rf.ficha+'">'+esc(rf.n)+'</a></p>';
  h+='<div class="frsec">'+L('Escenario','Location')+'</div><div class="frgrid c2">'+STAGES.map(s=>{ const k=CFG.mode+'|'+s.id+'|'+CFG.rifle; const b=B[k]; return opt(CFG.stage===s.id,'data-s="'+s.id+'"',esc(L(s.n[0],s.n[1])),esc(L(s.d[0],s.d[1]))+' · '+L('latitud','latitude')+' '+nf(s.lat,1)+'°'+(b?' · '+L('récord','best')+' '+b:'')); }).join('')+'</div>';
  h+='<div class="frrow"><span style="color:#bfc2b8">'+L('Unidades del visor','Scope units')+'</span><span class="frseg"><button type="button" data-u="mil" class="'+(CFG.unit==='mil'?'on':'')+'">MIL</button><button type="button" data-u="moa" class="'+(CFG.unit==='moa'?'on':'')+'">MOA</button></span></div>';
  h+='<div class="frrow"><button type="button" class="frbtn" id="frgo">'+L('Ir al puesto de tiro','Go to the firing position')+'</button></div>';
  h+='<p style="font-size:13.5px;color:#bfc2b8">'+L('Solo placas y gongs de acero en un campo de tiro. Sin personas.','Steel plates and gongs on a range only. No people.')+'</p>';
+ }
  h+=howHTML()+formulasHTML(false)+validHTML()+'</div>';
  X.set(h,'Francotirador');
  const root=APP;
  root.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ CFG.mode=b.getAttribute('data-m'); saveCfg(); intro(); });
  root.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ CFG.rifle=b.getAttribute('data-r'); saveCfg(); intro(); });
  root.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ CFG.stage=b.getAttribute('data-s'); saveCfg(); intro(); });
+ root.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ CFG.lesson=+b.getAttribute('data-l'); saveCfg(); intro(); });
  root.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{ CFG.unit=b.getAttribute('data-u'); saveCfg(); intro(); });
- const go=document.getElementById('frgo'); if(go) go.onclick=()=>{ newGame(); game(); window.scrollTo(0,0); };
+ const go=document.getElementById('frgo'); if(go) go.onclick=()=>{ if(CFG.mode==='aprende') newLesson(CFG.lesson||0); else newGame(); game(); window.scrollTo(0,0); };
 }
 
 /* ===== Dibujo del mundo ===== */
@@ -489,15 +508,15 @@ function fmtW(mil){ return Math.abs(mil)<0.005?'0':((mil>=0?L('D ','R '):L('I ',
 function game(){ stopLoop(); const rf=G.rf, st=G.st;
  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],['Francotirador','#/francotirador'],[L(MODES[G.mode].n[0],MODES[G.mode].n[1])]])+
   '<div class="frtop"><span><b>'+esc(rf.n)+'</b> · '+esc(L(rf.cal[0],rf.cal[1]))+' · '+esc(L(st.n[0],st.n[1]))+'</span><span id="frstat"></span><button type="button" class="frbtn sec sm" id="frquit">'+L('Salir','Quit')+'</button></div>'+
-  '<div class="frg"><div><div class="frview" id="frview"><canvas id="frc" aria-label="'+L('Vista del campo de tiro','Range view')+'"></canvas><div class="frmsg" id="frmsg" hidden></div><div class="frhint" id="frhint"></div></div></div>'+
+  '<div class="frg"><div><div class="frview" id="frview"><canvas id="frc" aria-label="'+L('Vista del campo de tiro','Range view')+'"></canvas><div class="frmsg" id="frmsg" hidden></div><div class="frhint" id="frhint"></div></div>'+(G.tut?'<div class="frcoach" id="frcoach" aria-live="polite"></div>':'')+'</div>'+
   '<div class="frside" id="frside"></div></div></div>';
  X.set(h,'Francotirador');
  CV=document.getElementById('frc'); CTX=CV.getContext('2d'); CACHE=null;
  document.getElementById('frquit').onclick=()=>{ closeSheet(); stopLoop(); intro(); window.scrollTo(0,0); };
- bindView(); side(); status();
+ bindView(); side(); status(); coach();
  G.timer=setInterval(()=>{ if(!document.getElementById('frstat')){ clearInterval(G.timer); return; } status(); if(G.timeLimit&&timeLeft()<=0&&!G.over){ endGame(L('Se acabó el tiempo','Time is up')); } },500);
  RAF=requestAnimationFrame(loop);
- msg(G.mode==='facil'?L('Mide con el telémetro y el anemómetro, y pide la solución','Use the rangefinder and the wind meter, then get the solution'):L('Mide, calcula y dispara. Toca una placa para elegirla','Measure, compute and fire. Tap a plate to pick it'));
+ msg(G.tut?L('Sigue la lección paso a paso, debajo de la vista','Follow the lesson step by step, below the view'):G.mode==='facil'?L('Mide con el telémetro y el anemómetro, y pide la solución','Use the rangefinder and the wind meter, then get the solution'):L('Mide, calcula y dispara. Toca una placa para elegirla','Measure, compute and fire. Tap a plate to pick it'));
 }
 function status(){ const s=document.getElementById('frstat'); if(!s) return; const t=G.targets[G.cur]; const tl=timeLeft();
  s.innerHTML='P'+(G.cur+1)+'/'+G.targets.length+' · '+L('disparos','rounds')+' '+(G.rounds-t.shots)+' · '+L('puntos','score')+' <b>'+G.score+'</b>'+(isFinite(tl)?' · '+Math.floor(tl/60)+':'+String(Math.floor(tl%60)).padStart(2,'0'):''); }
@@ -655,7 +674,7 @@ function fire(){ if(G.busy||G.over) return; let t=G.targets[G.cur]; const tm=now
  setTimeout(()=>{ if(!G) return; G.busy=false; side(); debrief(rec); },fl.t*1000+(hit?1500:1100));
  if(window.MAT_FR) window.MAT_FR.lastShot=rec; return rec; }
 function missTxt(r){ const v=r.dym*100, h=r.dxm*100; return (Math.abs(v)>=1?nf(Math.abs(v),0)+' cm '+(v>0?L('alto','high'):L('bajo','low')):'')+(Math.abs(v)>=1&&Math.abs(h)>=1?' · ':'')+(Math.abs(h)>=1?nf(Math.abs(h),0)+' cm '+(h>0?L('a la derecha','right'):L('a la izquierda','left')):''); }
-function debrief(r){ if(!G||G.over&&!r) return; const t=G.targets[r.i], bd=r.bd; const row=(a,b)=>'<span>'+a+'</span><b>'+b+'</b>';
+function debrief(r){ if(!G||G.over&&!r) return; if(G.tut&&!r._tut){ r._tut=1; tutShot(r); } const t=G.targets[r.i], bd=r.bd; const row=(a,b)=>'<span>'+a+'</span><b>'+b+'</b>';
  const effE=r.dialE+r.holdE, effW=r.dialW+r.holdW; const dE=effE-bd.elev, dW=effW-bd.wdg;
  let h='<p class="frbig">'+(r.hit?'<b class="frok">'+L('IMPACTO','HIT')+'</b>':'<b class="frko">'+L('FALLO','MISS')+'</b>')+' · P'+(t.i+1)+' · '+ni(r.R)+' m · '+(r.hit?'+'+r.pts+' '+L('puntos','points'):L('impacto ','impact ')+missTxt(r)+' '+L('del centro','from centre'))+'</p>';
  h+='<div class="frkv">'+row(L('Tiempo de vuelo','Time of flight'),nf(r.tof,2)+' s')+row(L('Velocidad al llegar','Impact velocity'),Math.round(r.v)+' m/s · Mach '+nf(r.mach,2))+row(L('Transónica','Transonic'),r.minMach<1.2?'<span class="frko">'+L('sí, Mach mínimo ','yes, minimum Mach ')+nf(r.minMach,2)+'</span>':L('no','no'))+'</div>';
@@ -667,8 +686,8 @@ function debrief(r){ if(!G||G.over&&!r) return; const t=G.targets[r.i], bd=r.bd;
   row(L('Dispersión aleatoria','Random dispersion'),'0 · '+L('el impacto sale exacto de lo que pusiste','the impact follows exactly from what you set'))+(r.shk>0.005?row(L('Temblor del visor (aire contenido demasiado)','Scope shake (breath held too long)'),'<span class="frko">'+fmtAng(r.shk)+'</span>'):'')+'</div></div>';
  if(G.mode==='facil'&&!r.hit){ const ce=-r.dym/r.R*1000, cw=-r.dxm/r.R*1000; h+='<p class="frbig"><b>'+L('Observador','Spotter')+':</b> '+L('«Impacto ','“Impact ')+missTxt(r)+'. '+(Math.abs(ce)>=0.05?(ce>0?L('Sube ','Come up '):L('Baja ','Come down '))+fmtAng(ce):'')+(Math.abs(ce)>=0.05&&Math.abs(cw)>=0.05?L(' y ',' and '):'')+(Math.abs(cw)>=0.05?L('corrige ','hold ')+fmtAng(cw)+' '+(cw>0?L('a la derecha','right'):L('a la izquierda','left')):'')+L('.»','.”')+'</p>'; }
  const more=t.res!=='hit'&&t.shots<G.rounds; const next=G.targets.findIndex(x=>!x.res);
- h+='<div class="frrow">'+(more?'<button type="button" class="frbtn" id="frag">'+L('Otro disparo','Fire again')+' ('+(G.rounds-t.shots)+')</button>':'')+(next>=0?'<button type="button" class="frbtn'+(more?' sec':'')+'" id="frnx">'+L('Siguiente placa','Next plate')+' (P'+(next+1)+')</button>':'<button type="button" class="frbtn" id="frend">'+L('Ver resultado','See result')+'</button>')+'</div>';
- sheet(L('Informe del disparo','Shot debrief'),h,s=>{ const a=s.querySelector('#frag'); if(a) a.onclick=()=>{ closeSheet(); if(G.mode==='facil'&&!r.hit){ /* el observador ya te dijo la corrección */ } };
+  if(G.tut) h+='<div class="frrow"><button type="button" class="frbtn" id="frcon">'+L('Seguir con la lección','Back to the lesson')+'</button></div>'; else h+='<div class="frrow">'+(more?'<button type="button" class="frbtn" id="frag">'+L('Otro disparo','Fire again')+' ('+(G.rounds-t.shots)+')</button>':'')+(next>=0?'<button type="button" class="frbtn'+(more?' sec':'')+'" id="frnx">'+L('Siguiente placa','Next plate')+' (P'+(next+1)+')</button>':'<button type="button" class="frbtn" id="frend">'+L('Ver resultado','See result')+'</button>')+'</div>';
+ sheet(L('Informe del disparo','Shot debrief'),h,s=>{ const cn=s.querySelector('#frcon'); if(cn) cn.onclick=()=>{ closeSheet(); const c=document.getElementById('frcoach'); if(c) c.scrollIntoView({block:'start',behavior:'smooth'}); }; const a=s.querySelector('#frag'); if(a) a.onclick=()=>{ closeSheet(); if(G.mode==='facil'&&!r.hit){ /* el observador ya te dijo la corrección */ } };
    const n=s.querySelector('#frnx'); if(n) n.onclick=()=>{ closeSheet(); G.cur=next; G.dialE=0; G.dialW=0; G.view='pano'; G.aimSet=false; G.pano.u=clamp(G.targets[next].u,-200,200); CACHE=null; side(); status(); msg(L('P','P')+(next+1)+': '+L('mide y calcula','measure and compute')); };
    const e=s.querySelector('#frend'); if(e) e.onclick=()=>{ closeSheet(); endGame(); }; },'debrief');
  if(next<0&&!more) setTimeout(()=>{},0);
@@ -702,6 +721,197 @@ function manualSolve(i){ const t=G.targets[i]; G.cur=i; const K=kestrel(); let L
  const corH=1000*OMEGA*tof*Math.sin(lat), corV=1000*OMEGA*tof*Math.cos(lat)*Math.sin(Ar);
  return {elev:drop-corV, wdg:-(weff*wcol+spin+corH), parts:{wcol:wcol,drop:drop,corV:corV,wind:weff*wcol,spin:spin,corH:corH,weff:weff,D:D,Dh:Dh,da:da}}; }
 
+
+/* ===== Modo «Aprende a disparar»: lecciones guiadas, paso a paso, con los mismos métodos de «Fórmulas» ===== */
+/* el viento de cada tramo da en la bandera un ángulo entero (ángulo = 4 × mph), así las cuentas del alumno salen exactas */
+const LESSONS=[
+ {rf:'m24',st:'campo',T:14,rh:50,dp:0,az:0,d:480,w:0.6,mil:1.25,mph:[8,6,4],sd:[1,1,1]},
+ {rf:'trg42',st:'artico',T:-12,rh:70,dp:4,az:90,d:1540,w:0.77,mil:0.5,mph:[10,6,3],sd:[1,1,-1]}];
+function newLesson(n){ n=n?1:0; const Ls=LESSONS[n]; const keep={mode:CFG.mode,rifle:CFG.rifle,stage:CFG.stage};
+ if(CFG.unit!=='mil'){ CFG._u=CFG.unit; CFG.unit='mil'; }
+ CFG.mode='veterano'; CFG.rifle=Ls.rf; CFG.stage=Ls.st; newGame(); Object.assign(CFG,keep);
+ const st=G.st; G.mode='aprende'; G.T=Ls.T; G.rh=Ls.rh; G.dp=Ls.dp; G.az=Ls.az; G.env=stageEnv(st,G.T,G.rh,G.dp); G.zone=Ls.d+220;
+ const t={i:0,d:Ls.d,u:0,w:Ls.w,h:Ls.w,shape:'placa',post:0.9,gy:terrain(st,Ls.d,0),hits:[],res:null,shots:0,pts:0,lased:null};
+ t.zc=t.gy+t.post+t.h/2; t.e=Math.atan2(t.zc-EYE,t.d)*1000; t.R=Math.hypot(t.d,t.zc-EYE); G.targets=[t];
+ const e1=Math.round(t.R/3), e2=Math.round(2*t.R/3);
+ G.wind={b:Ls.mph.map((m,k)=>({s:m*0.44704,dir:(G.az+(Ls.sd[k]>0?270:90))%360})),e1:e1,e2:e2};
+ G.flags=[{d:Math.round(e1*0.5),u:-170,band:0},{d:Math.round((e1+e2)/2),u:-150,band:1},{d:Math.round((e2+t.R)/2),u:-135,band:2}]; G.flags.forEach(f=>{ f.gy=terrain(st,f.d,f.u); });
+ G.timeLimit=0; G.rounds=9; G.cur=0; G.view='pano'; G.aim={u:0,e:t.e}; G.aimSet=false; G.pano={u:0}; G.dialE=0; G.dialW=0; G.readK=null; G.readL=null; G.score=0; G.shots=[];
+ G.tut={n:n,s:0,ok:{},val:{},ch:{},res:'',show:false}; CACHE=null; G.tut.sol=tutCalc(); return G; }
+/* las cuentas de la lección, con la misma precisión que muestran los instrumentos y la tarjeta */
+function tutCalc(){ const t=G.targets[0], rf=G.rf; const r1=v=>Math.round(v*10)/10, r2=v=>Math.round(v*100)/100, r3=v=>Math.round(v*1000)/1000;
+ const R=Math.round(t.R), ang=r1(t.e*0.0572958), cth=r3(Math.cos(ang*Math.PI/180)), P=r1(G.env.P), da=Math.round(G.env.da);
+ let j=0; while(j<DAS.length-2&&da>DAS[j+1]) j++; const c0=DAS[j], c1=DAS[j+1], f=r2((da-c0)/(c1-c0));
+ const A_=dopeTable(rf,c0), B_=dopeTable(rf,c1); let k=1; while(k<A_.length-1&&A_[k].d<R) k++; const d0=A_[k-1].d, d1=A_[k].d, fr=r2((R-d0)/(d1-d0));
+ const grid=(key,rd)=>{ const a0=rd(A_[k-1][key]),a1=rd(A_[k][key]),b0=rd(B_[k-1][key]),b1=rd(B_[k][key]); const x=rd(a0+(a1-a0)*fr), y=rd(b0+(b1-b0)*fr); return {a0:a0,a1:a1,b0:b0,b1:b1,x:x,y:y,v:rd(x+(y-x)*f)}; };
+ const EL=grid('el',r2), WC=grid('w',r3), TF=grid('t',r3); const drop=r2(EL.v*cth);
+ const fl=G.flags.map(x=>{ const g=flagGeom(x,0); return {th:r1(g.th),side:g.side}; }); const mph=fl.map(x=>r2(x.th/4)), ms=mph.map(m=>r2(m*0.44704));
+ const zi=[bandOf(R/6),bandOf(R/2),bandOf(5*R/6)], W_=[0.45,0.38,0.17];
+ const weff=r2(W_[0]*fl[zi[0]].side*ms[zi[0]]+W_[1]*fl[zi[1]].side*ms[zi[1]]+W_[2]*fl[zi[2]].side*ms[zi[2]]); const wmil=r2(weff*WC.v);
+ const sg0=r2(millerSg(rf,atmos(1013.25,15,0))), tF=r1(G.T*9/5+32), fT=r3((tF+460)/519), Pin=r2(P*0.02953), fP=r3(29.92/Pin), sg=r2(sg0*fT*fP);
+ const tt=TF.v, t183=r3(Math.pow(tt,1.83)), sdIn=r2(1.25*(sg+1.2)*t183), sdCm=r1(sdIn*2.54), spin=r2(sdCm/(R/10));
+ const lat=G.st.lat, Az=G.az, sinp=r3(Math.sin(lat*Math.PI/180)), cosp=r3(Math.cos(lat*Math.PI/180)), sinA=r3(Math.sin(Az*Math.PI/180));
+ const corH=r2(1000*OMEGA*tt*sinp), corV=r2(1000*OMEGA*tt*cosp*sinA), corHcm=r1(OMEGA*R*tt*sinp*100), corVcm=r1(OMEGA*R*tt*cosp*sinA*100);
+ const elev=r2(drop-corV), push=r2(wmil+spin+corH);
+ return {R:R,ang:ang,cth:cth,P:P,da:da,c0:c0,c1:c1,f:f,d0:d0,d1:d1,fr:fr,EL:EL,WC:WC,TF:TF,drop:drop,fl:fl,mph:mph,ms:ms,zi:zi,weff:weff,wmil:wmil,
+  sg0:sg0,tF:tF,fT:fT,Pin:Pin,fP:fP,sg:sg,tt:tt,t183:t183,sdIn:sdIn,sdCm:sdCm,spin:spin,lat:lat,Az:Az,sinp:sinp,cosp:cosp,sinA:sinA,corH:corH,corV:corV,corHcm:corHcm,corVcm:corVcm,
+  elev:elev,push:push,dialE:r1(elev),dialW:r1(-push)}; }
+
+function tutSteps(){ const tu=G.tut, S=tu.sol, Ls=LESSONS[tu.n], rf=G.rf, n=tu.n; const N=(v,d)=>nf(v,d==null?2:d), cm=mil=>ni(Math.abs(mil)*S.R/10)+' cm';
+ const side=s=>s>0?L('derecha','right'):L('izquierda','left'); const F=s=>'<code class="frf">'+s+'</code>'; const p=s=>'<p>'+s+'</p>';
+ const steps=[];
+ steps.push({id:'start',h:n===0?L('Lección 1: tu primer disparo a '+ni(S.R)+' m','Lesson 1: your first shot at '+ni(S.R)+' m'):L('Lección 2: '+ni(S.R)+' m y la rotación de la Tierra','Lesson 2: '+ni(S.R)+' m and the Earth’s rotation'),
+  body:(n===0?p(L('Vas a disparar un '+esc(rf.n)+' (.308) a una placa de acero de '+Math.round(Ls.w*100)+' cm, en terreno llano. Un tirador no apunta «a ojo»: mide, calcula y gira las torretas del visor.','You will fire an '+esc(rf.n)+' (.308) at a '+Math.round(Ls.w*100)+' cm steel plate on flat ground. A marksman does not aim “by eye”: they measure, work it out and dial the scope turrets.')):
+   p(L('Ahora un '+esc(rf.n)+' (.338 Lapua Magnum) a '+ni(S.R)+' m, en un campo ártico a '+nf(G.T,0)+' °C y '+nf(S.lat,1)+'° de latitud norte. La bala vuela unos '+nf(S.tt,1)+' segundos (al final ya va más lenta que el sonido) y en ese tiempo la Tierra gira debajo de ella: aquí el Coriolis ya cuenta.','Now an '+esc(rf.n)+' (.338 Lapua Magnum) at '+ni(S.R)+' m, on an Arctic range at '+nf(G.T,0)+' °C and '+nf(S.lat,1)+'° north. The bullet flies for about '+nf(S.tt,1)+' seconds (by the end it is slower than sound) and in that time the Earth turns under it: here Coriolis matters.')))+
+   p(L('Son 7 pasos: distancia, aire, caída, viento, giro de la bala, rotación de la Tierra y, al final, sumarlo todo y disparar. En cada paso te explico qué hacer; tú lees el instrumento o haces la cuenta, y yo lo compruebo.','There are 7 steps: distance, air, drop, wind, bullet spin, the Earth’s rotation and, at the end, adding it all up and firing. In each step I explain what to do; you read the instrument or do the sum, and I check it.'))+
+   p(L('Todo se mide en mil (milirradianes): 1 mil son 10 cm a 100 m, así que a '+ni(S.R)+' m 1 mil son '+cm(1)+'. Ten a mano la calculadora del móvil o la de «Notas y calculadora».','Everything is measured in mils (milliradians): 1 mil is 10 cm at 100 m, so at '+ni(S.R)+' m 1 mil is '+cm(1)+'. Keep your phone’s calculator handy, or the one in “Notes & calculator”.'))});
+ steps.push({id:'dist',h:L('1. La distancia','1. The distance'),
+  body:p(L('Todo depende de la distancia: cuanto más lejos, más cae la bala y más la empuja el viento. Abre el telémetro láser: lanza un rayo a la placa y te da la distancia en metros.','Everything depends on the distance: the further away, the more the bullet drops and the more the wind pushes it. Open the laser rangefinder: it fires a beam at the plate and gives you the distance in metres.'))+
+   p(L('Sin telémetro se mide con la retícula del visor: la placa mide '+N(Ls.w)+' m y en la retícula ocupa '+N(Ls.mil)+' mil.','Without a rangefinder you range with the scope reticle: the plate is '+N(Ls.w)+' m wide and covers '+N(Ls.mil)+' mil in the reticle.'))+F(L('Distancia (m) = tamaño (m) × 1000 ÷ mil','Distance (m) = size (m) × 1000 ÷ mils')),
+  tools:[['lrf',L('Abrir el telémetro','Open the rangefinder')]],
+  inputs:[{label:L('Distancia a la placa (m)','Distance to the plate (m)'),v:S.R,tol:1,hint:L('Abre el telémetro y copia el número grande, en metros.','Open the rangefinder and copy the big number, in metres.')}],
+  work:F(L('Telémetro: '+ni(S.R)+' m\nCon la retícula: '+N(Ls.w)+' × 1000 ÷ '+N(Ls.mil)+' = '+ni(S.R)+' m   (coinciden)','Rangefinder: '+ni(S.R)+' m\nWith the reticle: '+N(Ls.w)+' × 1000 ÷ '+N(Ls.mil)+' = '+ni(S.R)+' m   (they match)'))+p(L('Ángulo '+nf(S.ang,1)+'°: el terreno es llano, así que no hay que corregir por pendiente (cos θ = '+N(S.cth,3)+').','Angle '+nf(S.ang,1)+'°: the ground is flat, so there is no slope correction (cos θ = '+N(S.cth,3)+').'))});
+ const cols=[[S.c0-500,S.c0],[S.c0,S.c1],[S.c1,S.c1+500]]; const c0t=S.c0<0?'('+ni(S.c0)+')':ni(S.c0);
+ steps.push({id:'atm',h:L('2. El aire: temperatura, presión y altitud de densidad','2. The air: temperature, pressure and density altitude'),
+  body:p(L('El aire frena la bala. Si el aire es <b>caliente o fino</b> (calor, montaña, presión baja), frena menos: la bala cae menos y necesitas <b>menos mil</b>. Si es <b>frío o denso</b> (frío, nivel del mar, presión alta), frena más: necesitas <b>más mil</b>.','Air slows the bullet down. If the air is <b>hot or thin</b> (heat, mountains, low pressure) it slows it less: the bullet drops less and you need <b>fewer mils</b>. If it is <b>cold or dense</b> (cold, sea level, high pressure) it slows it more: you need <b>more mils</b>.'))+
+   p(L('El anemómetro (tipo Kestrel) junta temperatura, presión y humedad en un solo número: la <b>altitud de densidad</b> (DA). Ábrelo, pulsa MEDIR y apunta la DA. La tarjeta de datos tiene una columna cada 500 m de DA: elige las dos entre las que cae la tuya.','The wind meter (Kestrel type) combines temperature, pressure and humidity into one number: the <b>density altitude</b> (DA). Open it, press MEASURE and note the DA. The data card has a column every 500 m of DA: pick the two yours falls between.')),
+  tools:[['kestrel',L('Abrir el anemómetro','Open the wind meter')]],
+  inputs:[{label:L('Altitud de densidad (m)','Density altitude (m)'),v:S.da,tol:2,hint:L('Pulsa MEDIR en el anemómetro y copia la línea «Altitud de densidad».','Press MEASURE on the wind meter and copy the “Density altitude” line.')},
+   {label:L('Columnas de la tarjeta','Card columns'),choice:cols.map(c=>ni(c[0])+' / '+ni(c[1])+' m'),v:1,hint:L('Tu DA tiene que quedar entre las dos columnas.','Your DA must lie between the two columns.')}],
+  work:F(L('Anemómetro: '+nf(G.T,1)+' °C · '+nf(S.P,1)+' hPa · '+G.rh+' % → DA '+ni(S.da)+' m\n'+ni(S.da)+' está entre las columnas '+ni(S.c0)+' y '+ni(S.c1)+'\nFracción entre columnas = ('+ni(S.da)+' − '+c0t+') ÷ 500 = '+N(S.f),'Wind meter: '+nf(G.T,1)+' °C · '+nf(S.P,1)+' hPa · '+G.rh+' % → DA '+ni(S.da)+' m\n'+ni(S.da)+' lies between the '+ni(S.c0)+' and '+ni(S.c1)+' columns\nFraction between columns = ('+ni(S.da)+' − '+c0t+') ÷ 500 = '+N(S.f)))+
+   p(L('Compruébalo en la tarjeta a '+ni(S.R)+' m: con DA '+ni(S.c0)+' la caída es '+N(S.EL.x)+' mil y con DA '+ni(S.c1)+' es '+N(S.EL.y)+' mil. Más DA (aire más fino) = menos caída.','Check it on the card at '+ni(S.R)+' m: at DA '+ni(S.c0)+' the drop is '+N(S.EL.x)+' mil and at DA '+ni(S.c1)+' it is '+N(S.EL.y)+' mil. Higher DA (thinner air) = less drop.')+
+    (S.da<0?L(' Hoy, a '+nf(G.T,0)+' °C, el aire es tan denso que la DA sale negativa: es como tirar por debajo del nivel del mar, y la bala caerá más.',' Today, at '+nf(G.T,0)+' °C, the air is so dense that the DA is negative: it is like shooting below sea level, and the bullet will drop more.'):''))});
+ steps.push({id:'drop',h:L('3. La caída de la bala','3. Bullet drop'),
+  body:p(L('La gravedad tira de la bala desde que sale del cañón. La columna «Alza» de la tarjeta dice cuántos mil hay que subir la torreta de elevación a cada distancia. Abre la tarjeta.','Gravity pulls the bullet down from the moment it leaves the barrel. The card’s “Elev.” column tells you how many mils to dial up on the elevation turret at each distance. Open the card.'))+
+   p(L('Tus '+ni(S.R)+' m no están en la tabla: quedan entre las filas '+ni(S.d0)+' y '+ni(S.d1)+' m, a una fracción ('+ni(S.R)+' − '+ni(S.d0)+') ÷ 50 = '+N(S.fr)+'. Interpola primero entre filas en cada columna y luego entre las dos columnas con la fracción '+N(S.f)+' del paso 2.','Your '+ni(S.R)+' m are not in the table: they lie between the '+ni(S.d0)+' and '+ni(S.d1)+' m rows, at a fraction ('+ni(S.R)+' − '+ni(S.d0)+') ÷ 50 = '+N(S.fr)+'. Interpolate between rows in each column first, then between the two columns with the fraction '+N(S.f)+' from step 2.'))+
+   F(L('valor = fila '+ni(S.d0)+' + (fila '+ni(S.d1)+' − fila '+ni(S.d0)+') × '+N(S.fr)+'\ncaída = col. '+ni(S.c0)+' + (col. '+ni(S.c1)+' − col. '+ni(S.c0)+') × '+N(S.f),'value = row '+ni(S.d0)+' + (row '+ni(S.d1)+' − row '+ni(S.d0)+') × '+N(S.fr)+'\ndrop = col. '+ni(S.c0)+' + (col. '+ni(S.c1)+' − col. '+ni(S.c0)+') × '+N(S.f))),
+  tools:[['card',L('Abrir la tarjeta','Open the data card')]],
+  inputs:[{label:L('Caída (mil)','Drop (mil)'),v:S.drop,tol:0.03,hint:L('Usa la columna «Alza» en las DA '+ni(S.c0)+' y '+ni(S.c1)+', filas '+ni(S.d0)+' y '+ni(S.d1)+' m.','Use the “Elev.” column at DA '+ni(S.c0)+' and '+ni(S.c1)+', rows '+ni(S.d0)+' and '+ni(S.d1)+' m.')}],
+  work:F(L('DA '+ni(S.c0)+': '+N(S.EL.a0)+' + ('+N(S.EL.a1)+' − '+N(S.EL.a0)+') × '+N(S.fr)+' = '+N(S.EL.x)+'\nDA '+ni(S.c1)+': '+N(S.EL.b0)+' + ('+N(S.EL.b1)+' − '+N(S.EL.b0)+') × '+N(S.fr)+' = '+N(S.EL.y)+'\nEntre columnas: '+N(S.EL.x)+' + ('+N(S.EL.y)+' − '+N(S.EL.x)+') × '+N(S.f)+' = '+N(S.EL.v)+' mil\nPendiente: × cos θ = × '+N(S.cth,3)+' → caída '+N(S.drop)+' mil',
+   'DA '+ni(S.c0)+': '+N(S.EL.a0)+' + ('+N(S.EL.a1)+' − '+N(S.EL.a0)+') × '+N(S.fr)+' = '+N(S.EL.x)+'\nDA '+ni(S.c1)+': '+N(S.EL.b0)+' + ('+N(S.EL.b1)+' − '+N(S.EL.b0)+') × '+N(S.fr)+' = '+N(S.EL.y)+'\nBetween columns: '+N(S.EL.x)+' + ('+N(S.EL.y)+' − '+N(S.EL.x)+') × '+N(S.f)+' = '+N(S.EL.v)+' mil\nSlope: × cos θ = × '+N(S.cth,3)+' → drop '+N(S.drop)+' mil'))+
+   p(L('Es lo que subirás en la torreta de elevación. La giras en el paso 7, junto con el último ajuste.','That is what you will dial up on the elevation turret. You dial it in step 7, together with the last adjustment.'))});
+
+ const fN=[0,1,2].map(i=>L('Bandera ','Flag ')+(i+1)); const K5=EN()?'0.44704':'0,44704';
+ steps.push({id:'flags',h:L('4. El viento (1 de 3): leer las banderas','4. Wind (1 of 3): reading the flags'),
+  body:p(L('El viento empuja la bala de lado. Entre tú y la placa hay 3 banderas, una en cada tercio del recorrido: tramo 1 cerca, tramo 2 en medio y tramo 3 lejos. El anemómetro solo mide el viento donde estás tú; lo de lejos se lee en las banderas.','The wind pushes the bullet sideways. Between you and the plate there are 3 flags, one in each third of the path: zone 1 near, zone 2 in the middle and zone 3 far. The wind meter only measures the wind where you are; further out you read it from the flags.'))+
+   p(L('Abre los prismáticos y mira cada bandera: el transportador da el ángulo de la tela con el mástil y hacia qué lado cuelga. Regla de campo del manual del Ejército de EE. UU. (FM 23-10):','Open the binoculars and look at each flag: the protractor gives the angle of the cloth from the pole and which way it hangs. Field rule from the US Army manual (FM 23-10):'))+F(L('viento cruzado (mph) = ángulo (°) ÷ 4      1 mph = 0,44704 m/s','crosswind (mph) = angle (°) ÷ 4      1 mph = 0.44704 m/s')),
+  tools:[['flags',L('Abrir los prismáticos','Open the binoculars')]],
+  inputs:[0,1,2].map(i=>({label:fN[i]+': '+L('ángulo (°)','angle (°)'),v:S.fl[i].th,tol:0.5,hint:L('En los prismáticos pulsa «Bandera '+(i+1)+'» y copia el «Ángulo con el mástil».','In the binoculars press “Flag '+(i+1)+'” and copy the “Angle from the pole”.')})),
+  work:F([0,1,2].map(i=>fN[i]+': '+nf(S.fl[i].th,1)+'° ÷ 4 = '+N(S.mph[i])+' mph × '+K5+' = '+N(S.ms[i])+' m/s → '+side(S.fl[i].side)).join('\n'))+
+   (S.fl.some(x=>x.side<0)?p(L('Ojo: la bandera 3 cuelga hacia el otro lado. Allí el viento empuja al contrario y en el paso siguiente se resta.','Careful: flag 3 hangs the other way. Out there the wind pushes the opposite way, and in the next step it is subtracted.')):'')});
+ const wsum=[0,1,2].map(i=>(i===0?(S.fl[S.zi[0]].side>0?'':'− '):(S.fl[S.zi[i]].side>0?' + ':' − '))+N([0.45,0.38,0.17][i])+' × '+N(S.ms[S.zi[i]])).join('');
+ steps.push({id:'weff',h:L('4. El viento (2 de 3): el viento efectivo','4. Wind (2 of 3): the effective wind'),
+  body:p(L('El viento cerca de ti pesa más que el lejano: si la bala se tuerce al principio, ese error crece durante todo el vuelo. Por eso cada tramo tiene un peso: <b>tramo 1 × 0,45</b>, <b>tramo 2 × 0,38</b> y <b>tramo 3 × 0,17</b>. Suma los tres (si uno empuja al lado contrario, réstalo).','Wind near you counts more than wind far away: if the bullet is pushed off at the start, that error grows over the whole flight. So each zone has a weight: <b>zone 1 × 0.45</b>, <b>zone 2 × 0.38</b> and <b>zone 3 × 0.17</b>. Add the three (if one pushes the other way, subtract it).'))+
+   F(L('Viento efectivo = ','Effective wind = ')+wsum+' = ?'),
+  inputs:[{label:L('Viento efectivo hacia la ','Effective wind to the ')+side(S.weff)+' (m/s)',v:Math.abs(S.weff),tol:0.03,hint:L('Multiplica cada viento en m/s por su peso y súmalos','Multiply each wind in m/s by its weight and add them')+(S.fl.some(x=>x.side<0)?L(' (el de la bandera 3 se resta)',' (flag 3’s is subtracted)'):'')+'.'}],
+  work:F(L('Viento efectivo = ','Effective wind = ')+wsum+' = '+N(Math.abs(S.weff))+' m/s → '+side(S.weff))});
+ steps.push({id:'wmil',h:L('4. El viento (3 de 3): pasarlo a mil','4. Wind (3 of 3): turning it into mils'),
+  body:p(L('La tarjeta tiene la columna «Viento 1 m/s»: cuántos mil desvía 1 m/s de viento cruzado a cada distancia. Interpólala igual que la caída (filas '+ni(S.d0)+' y '+ni(S.d1)+', columnas '+ni(S.c0)+' y '+ni(S.c1)+') y multiplícala por tu viento efectivo.','The card has the “Wind 1 m/s” column: how many mils 1 m/s of crosswind moves the bullet at each distance. Interpolate it like the drop (rows '+ni(S.d0)+' and '+ni(S.d1)+', columns '+ni(S.c0)+' and '+ni(S.c1)+') and multiply it by your effective wind.'))+
+   F(L('desvío (mil) = viento efectivo (m/s) × columna «Viento 1 m/s»','deflection (mil) = effective wind (m/s) × “Wind 1 m/s” column')),
+  tools:[['card',L('Abrir la tarjeta','Open the data card')]],
+  inputs:[{label:L('Desvío por viento hacia la ','Wind deflection to the ')+side(S.wmil)+' (mil)',v:Math.abs(S.wmil),tol:0.03,hint:L('Columna «Viento 1 m/s» a '+ni(S.R)+' m (interpolada sale '+N(S.WC.v,3)+') × '+N(Math.abs(S.weff))+'.','“Wind 1 m/s” column at '+ni(S.R)+' m (interpolated it is '+N(S.WC.v,3)+') × '+N(Math.abs(S.weff))+'.')}],
+  work:F(L('DA '+ni(S.c0)+': '+N(S.WC.a0,3)+' + ('+N(S.WC.a1,3)+' − '+N(S.WC.a0,3)+') × '+N(S.fr)+' = '+N(S.WC.x,3)+'\nDA '+ni(S.c1)+': '+N(S.WC.b0,3)+' + ('+N(S.WC.b1,3)+' − '+N(S.WC.b0,3)+') × '+N(S.fr)+' = '+N(S.WC.y,3)+'\nEntre columnas: '+N(S.WC.x,3)+' + ('+N(S.WC.y,3)+' − '+N(S.WC.x,3)+') × '+N(S.f)+' = '+N(S.WC.v,3)+' mil por cada m/s\nDesvío: '+N(Math.abs(S.weff))+' × '+N(S.WC.v,3)+' = '+N(Math.abs(S.wmil))+' mil hacia la '+side(S.wmil)+' ('+cm(S.wmil)+')',
+   'DA '+ni(S.c0)+': '+N(S.WC.a0,3)+' + ('+N(S.WC.a1,3)+' − '+N(S.WC.a0,3)+') × '+N(S.fr)+' = '+N(S.WC.x,3)+'\nDA '+ni(S.c1)+': '+N(S.WC.b0,3)+' + ('+N(S.WC.b1,3)+' − '+N(S.WC.b0,3)+') × '+N(S.fr)+' = '+N(S.WC.y,3)+'\nBetween columns: '+N(S.WC.x,3)+' + ('+N(S.WC.y,3)+' − '+N(S.WC.x,3)+') × '+N(S.f)+' = '+N(S.WC.v,3)+' mil per m/s\nDeflection: '+N(Math.abs(S.weff))+' × '+N(S.WC.v,3)+' = '+N(Math.abs(S.wmil))+' mil to the '+side(S.wmil)+' ('+cm(S.wmil)+')'))+
+   p(L('La bala se iría a la '+side(S.wmil)+'; en el paso 7 corregirás hacia el lado contrario.','The bullet would go '+side(S.wmil)+'; in step 7 you will correct the other way.'))});
+ const tw=nf(rf.twistIn,rf.twistIn%1?2:0);
+ steps.push({id:'spin',h:L('5. La deriva por giro','5. Spin drift'),
+  body:p(L('El cañón tiene estrías que hacen girar la bala (paso 1:'+tw+' in, dextrógiro). Una bala que gira hacia la derecha se va desviando poco a poco hacia la <b>derecha</b>: con este cañón, siempre a la derecha.','The barrel has rifling that spins the bullet (1:'+tw+' in twist, right-hand). A bullet spinning to the right slowly drifts to the <b>right</b>: with this barrel, always to the right.'))+
+   p(L('La tarjeta trae Sg, la estabilidad de la bala en aire estándar: '+N(S.sg0)+'. Se ajusta al aire de hoy y entra en la fórmula de Litz con el tiempo de vuelo t, que también sale de la tarjeta. Te dejo hechas las cuentas largas:','The card gives Sg, the bullet’s stability in standard air: '+N(S.sg0)+'. It is adjusted to today’s air and goes into Litz’s formula with the time of flight t, also from the card. Here are the long sums done for you:'))+
+   F(L('t (columna «T. vuelo», interpolada) = '+N(S.tt,3)+' s\nSg hoy = '+N(S.sg0)+' × (('+nf(S.tF,1)+' °F + 460) ÷ 519) × (29,92 ÷ '+N(S.Pin)+' inHg)\n       = '+N(S.sg0)+' × '+N(S.fT,3)+' × '+N(S.fP,3)+' = '+N(S.sg)+'\nDeriva = 1,25 × (Sg + 1,2) × t^1,83 = 1,25 × '+N(S.sg+1.2)+' × '+N(S.t183,3)+' = '+N(S.sdIn)+' pulgadas\n       = '+N(S.sdIn)+' × 2,54 = '+nf(S.sdCm,1)+' cm',
+    't (“ToF” column, interpolated) = '+N(S.tt,3)+' s\nSg today = '+N(S.sg0)+' × (('+nf(S.tF,1)+' °F + 460) ÷ 519) × (29.92 ÷ '+N(S.Pin)+' inHg)\n         = '+N(S.sg0)+' × '+N(S.fT,3)+' × '+N(S.fP,3)+' = '+N(S.sg)+'\nDrift = 1.25 × (Sg + 1.2) × t^1.83 = 1.25 × '+N(S.sg+1.2)+' × '+N(S.t183,3)+' = '+N(S.sdIn)+' inches\n      = '+N(S.sdIn)+' × 2.54 = '+nf(S.sdCm,1)+' cm'))+
+   p(L('Tu parte: pásalo a mil. A '+ni(S.R)+' m, 1 mil son '+cm(1)+'.','Your part: turn it into mils. At '+ni(S.R)+' m, 1 mil is '+cm(1)+'.'))+F(L('mil = cm ÷ (distancia ÷ 10)','mil = cm ÷ (distance ÷ 10)')),
+  inputs:[{label:L('Deriva por giro hacia la derecha (mil)','Spin drift to the right (mil)'),v:S.spin,tol:0.02,hint:L('Divide '+nf(S.sdCm,1)+' cm entre '+nf(S.R/10,0)+'.','Divide '+nf(S.sdCm,1)+' cm by '+nf(S.R/10,0)+'.')}],
+  work:F(nf(S.sdCm,1)+' cm ÷ ('+ni(S.R)+' ÷ 10) = '+nf(S.sdCm,1)+' ÷ '+nf(S.R/10,0)+' = '+N(S.spin)+L(' mil a la derecha',' mil to the right'))});
+ const OM=EN()?'0.00007292':'0,00007292', hd=S.Az===0?L(' (norte)',' (north)'):(S.Az===90?L(' (este)',' (east)'):(S.Az===270?L(' (oeste)',' (west)'):(S.Az===180?L(' (sur)',' (south)'):'')));
+ steps.push({id:'earth',h:L('6. La rotación de la Tierra: Coriolis y Eötvös','6. The Earth’s rotation: Coriolis and Eötvös'),
+  body:p(L('Mientras la bala vuela, la Tierra gira debajo de ella (ω = '+OM+' rad/s). Abre la brújula: estás a '+nf(S.lat,1)+'° de latitud norte y tiras con rumbo '+S.Az+'°'+hd+'.','While the bullet flies, the Earth turns under it (ω = '+OM+' rad/s). Open the compass: you are at '+nf(S.lat,1)+'° north and firing on heading '+S.Az+'°'+hd+'.'))+
+   p(L('<b>Coriolis horizontal</b>: en el hemisferio norte la bala se desvía siempre a la derecha. <b>Eötvös</b> (vertical): tirando al este la bala llega más alta, al oeste más baja, y al norte o al sur no cambia.','<b>Horizontal Coriolis</b>: in the northern hemisphere the bullet always drifts right. <b>Eötvös</b> (vertical): shooting east the bullet arrives higher, west lower, and north or south it does not change.'))+
+   F(L('Coriolis (mil) = 1000 × ω × t × sen(latitud)\n              = 1000 × '+OM+' × '+N(S.tt,3)+' × '+N(S.sinp,3)+'\nEötvös  (mil) = 1000 × ω × t × cos(latitud) × sen(rumbo)\n              = 1000 × '+OM+' × '+N(S.tt,3)+' × '+N(S.cosp,3)+' × '+N(S.sinA,3),
+    'Coriolis (mil) = 1000 × ω × t × sin(latitude)\n              = 1000 × '+OM+' × '+N(S.tt,3)+' × '+N(S.sinp,3)+'\nEötvös  (mil) = 1000 × ω × t × cos(latitude) × sin(heading)\n              = 1000 × '+OM+' × '+N(S.tt,3)+' × '+N(S.cosp,3)+' × '+N(S.sinA,3))),
+  tools:[['comp',L('Abrir la brújula','Open the compass')]],
+  inputs:[{label:L('Coriolis hacia la derecha (mil)','Coriolis to the right (mil)'),v:S.corH,tol:0.01,hint:L('Multiplica 1000 × '+OM+' × '+N(S.tt,3)+' × '+N(S.sinp,3)+'.','Multiply 1000 × '+OM+' × '+N(S.tt,3)+' × '+N(S.sinp,3)+'.')},
+   {label:L('Eötvös: cuánto sube la bala (mil)','Eötvös: how much the bullet rises (mil)'),v:S.corV,tol:0.01,hint:S.sinA===0?L('Tiras al norte: sen(0°) = 0, así que el Eötvös es 0.','You are shooting north: sin(0°) = 0, so Eötvös is 0.'):L('Multiplica 1000 × '+OM+' × '+N(S.tt,3)+' × '+N(S.cosp,3)+' × '+N(S.sinA,3)+'.','Multiply 1000 × '+OM+' × '+N(S.tt,3)+' × '+N(S.cosp,3)+' × '+N(S.sinA,3)+'.')}],
+  work:F(L('Coriolis = '+N(S.corH)+' mil a la derecha ('+nf(S.corHcm,1)+' cm a '+ni(S.R)+' m)\nEötvös = '+N(S.corV)+' mil'+(S.corV?' ('+nf(S.corVcm,1)+' cm más alta)':' (tiras al norte)'),'Coriolis = '+N(S.corH)+' mil to the right ('+nf(S.corHcm,1)+' cm at '+ni(S.R)+' m)\nEötvös = '+N(S.corV)+' mil'+(S.corV?' ('+nf(S.corVcm,1)+' cm higher)':' (shooting north)')))+
+   p(n===0?L('A '+ni(S.R)+' m es diminuto: '+nf(S.corHcm,1)+' cm, mucho menos que la placa. Aun así se suma. En la lección 2, a 1.540 m, verás que ya importa.','At '+ni(S.R)+' m it is tiny: '+nf(S.corHcm,1)+' cm, far smaller than the plate. You still add it. In lesson 2, at 1,540 m, you will see it matters.'):
+    L('A '+ni(S.R)+' m ya no es poca cosa: '+nf(S.corHcm,1)+' cm a la derecha y '+nf(S.corVcm,1)+' cm más alta por tirar al este. Muy al norte el Coriolis horizontal es mayor (sen '+nf(S.lat,1)+'° = '+N(S.sinp,3)+') y el Eötvös menor (cos '+nf(S.lat,1)+'° = '+N(S.cosp,3)+').','At '+ni(S.R)+' m it is no longer small: '+nf(S.corHcm,1)+' cm to the right and '+nf(S.corVcm,1)+' cm higher from shooting east. Far north the horizontal Coriolis is bigger (sin '+nf(S.lat,1)+'° = '+N(S.sinp,3)+') and Eötvös smaller (cos '+nf(S.lat,1)+'° = '+N(S.cosp,3)+').'))});
+
+ const dirIdx=S.push>0?0:1, wL=S.dialW<0?L('I ','L '):L('D ','R '), wL1=S.dialW<0?L('I','L'):L('D','R');
+ steps.push({id:'total',h:L('7. Sumarlo todo','7. Adding it all up'),
+  body:p(L('Ya tienes todas las piezas. La torreta se gira hacia el lado <b>contrario</b> de donde se iría la bala.','You now have every piece. You turn the turret the <b>opposite</b> way to where the bullet would go.'))+
+   F(L('Elevación = caída − Eötvös\n          = '+N(S.drop)+' − '+N(S.corV)+'\nDesvío    = viento + giro + Coriolis   (+ = a la derecha)\n          = '+N(S.wmil)+' + '+N(S.spin)+' + '+N(S.corH)+'\nDeriva en la torreta = el desvío, hacia el otro lado',
+    'Elevation  = drop − Eötvös\n           = '+N(S.drop)+' − '+N(S.corV)+'\nDeflection = wind + spin + Coriolis   (+ = to the right)\n           = '+N(S.wmil)+' + '+N(S.spin)+' + '+N(S.corH)+'\nTurret windage = the deflection, the other way')),
+  inputs:[{label:L('Elevación total, hacia arriba (mil)','Total elevation, up (mil)'),v:S.elev,tol:0.03,hint:L('Caída '+N(S.drop)+' menos Eötvös '+N(S.corV)+'.','Drop '+N(S.drop)+' minus Eötvös '+N(S.corV)+'.')},
+   {label:L('Deriva total (mil)','Total windage (mil)'),v:Math.abs(S.push),tol:0.03,hint:L('Suma viento, giro y Coriolis.','Add wind, spin and Coriolis.')},
+   {label:L('¿Hacia dónde giras la deriva?','Which way do you dial the windage?'),choice:[L('Izquierda','Left'),L('Derecha','Right')],v:dirIdx,hint:L('La bala se iría a la '+side(S.push)+': se corrige al otro lado.','The bullet would go '+side(S.push)+': you correct the other way.')}],
+  work:F(L('Elevación = '+N(S.drop)+' − '+N(S.corV)+' = '+N(S.elev)+' mil arriba\nDesvío = '+N(S.wmil)+' + '+N(S.spin)+' + '+N(S.corH)+' = '+N(S.push)+' mil → deriva '+N(Math.abs(S.push))+' mil a la '+side(-S.push)+'\nEn clics de 0,1 mil: Arriba '+N(S.dialE,1)+' · '+wL+N(Math.abs(S.dialW),1),
+   'Elevation = '+N(S.drop)+' − '+N(S.corV)+' = '+N(S.elev)+' mil up\nDeflection = '+N(S.wmil)+' + '+N(S.spin)+' + '+N(S.corH)+' = '+N(S.push)+' mil → windage '+N(Math.abs(S.push))+' mil '+side(-S.push)+'\nIn 0.1 mil clicks: Up '+N(S.dialE,1)+' · '+wL+N(Math.abs(S.dialW),1)))});
+ steps.push({id:'fire',h:L('7. Girar las torretas y disparar','7. Dial the turrets and fire'),
+  body:p(L('Pulsa «Mirar por la mira». Con los botones de las torretas pon <b>Elevación: Arriba '+N(S.dialE,1)+'</b> y <b>Deriva: '+wL+N(Math.abs(S.dialW),1)+'</b>. Cada clic es 0,1 mil; «+1» y «'+wL1+'1» son 10 clics de golpe. Deja la retícula en el centro de la placa y pulsa «Comprobar torretas».','Press “Look through the scope”. With the turret buttons set <b>Elevation: Up '+N(S.dialE,1)+'</b> and <b>Windage: '+wL+N(Math.abs(S.dialW),1)+'</b>. Each click is 0.1 mil; “+1” and “'+wL1+'1” are 10 clicks at once. Keep the reticle on the centre of the plate and press “Check turrets”.'))+
+   p(L('Después pulsa «Contener aire» para que el visor quede quieto y DISPARAR antes de 6 segundos: si aguantas más, el pulso tiembla.','Then press “Hold breath” so the scope stays still, and FIRE within 6 seconds: hold it longer and your aim shakes.')),
+  tools:[['scope',L('Mirar por la mira','Look through the scope')]],turret:true});
+ steps.push({id:'end',h:L('Impacto. Repaso de la lección','Hit. Lesson review'),end:true,body:(()=>{ const row=(a,mil,why)=>'<span>'+a+'</span><b>'+N(Math.abs(mil))+' mil · '+cm(mil)+'</b><em>'+why+'</em>';
+   return p(L('Has dado en la placa de '+Math.round(Ls.w*100)+' cm a '+ni(S.R)+' m. Así se reparte el disparo:','You hit the '+Math.round(Ls.w*100)+' cm plate at '+ni(S.R)+' m. This is how the shot breaks down:'))+
+   '<div class="frco-kv">'+row(L('Caída (arriba)','Drop (up)'),S.drop,L('La gravedad: la pieza más grande. Sale de la tarjeta, ajustada al aire con la DA.','Gravity: the biggest piece. From the card, adjusted to the air with the DA.'))+
+   row(L('Viento','Wind'),S.wmil,L('Tres banderas, pesos 0,45 / 0,38 / 0,17 y la columna de viento de la tarjeta.','Three flags, weights 0.45 / 0.38 / 0.17 and the card’s wind column.'))+
+   row(L('Giro (derecha)','Spin (right)'),S.spin,L('La bala gira con las estrías y se va a la derecha.','The bullet spins with the rifling and drifts right.'))+
+   row(L('Coriolis (derecha)','Coriolis (right)'),S.corH,L('La Tierra gira debajo de la bala.','The Earth turns under the bullet.'))+
+   row(L('Eötvös (vertical)','Eötvös (vertical)'),S.corV,S.corV?L('Al este la bala llega más alta: se resta de la elevación.','Shooting east the bullet arrives higher: it comes off the elevation.'):L('Al norte no cambia nada.','Shooting north it changes nothing.'))+'</div>'+
+   p(L('La placa mide '+Math.round(Ls.w*100)+' cm: tenías '+nf(Ls.w*50,0)+' cm de margen a cada lado del centro. Sin la corrección de viento habrías fallado por '+cm(S.wmil)+'.','The plate is '+Math.round(Ls.w*100)+' cm wide: you had '+nf(Ls.w*50,0)+' cm to spare each side of the centre. Without the wind correction you would have missed by '+cm(S.wmil)+'.')+
+    (n===1?L(' Y sin giro ni Coriolis la bala se habría ido '+cm(S.spin+S.corH)+' a la derecha: fuera de la placa.',' And without spin and Coriolis the bullet would have gone '+cm(S.spin+S.corH)+' right: off the plate.'):''))+
+   p(n===0?L('Ya sabes el método completo. En la lección 2 lo repites a 1.540 m, con frío ártico y una rotación de la Tierra que ya se nota.','You now know the whole method. In lesson 2 you repeat it at 1,540 m, with Arctic cold and an Earth’s rotation you can actually feel.'):L('Este es exactamente el método de Veterano. En Fácil la computadora balística hace las cuentas por ti; en Veterano las haces tú.','This is exactly the Veteran method. In Easy the ballistic computer does the sums for you; in Veteran you do them.')); })()});
+ return steps; }
+
+function coach(){ const el=document.getElementById('frcoach'); if(!el||!G||!G.tut) return; const tu=G.tut, S=tutSteps(); tu.s=clamp(tu.s,0,S.length-1); const st=S[tu.s];
+ const okStep=(!st.inputs&&!st.turret)||tu.ok[st.id];
+ let h='<div class="frco-hd"><span>'+L('Aprende a disparar','Learn to shoot')+' · '+L('lección ','lesson ')+(tu.n+1)+' · '+L('paso ','step ')+(tu.s+1)+' '+L('de','of')+' '+S.length+'</span><div class="frco-bar"><i style="width:'+Math.round(100*(tu.s+1)/S.length)+'%"></i></div></div>';
+ h+='<h3>'+st.h+'</h3><div class="frco-bd">'+st.body+'</div>';
+ if(st.tools) h+='<div class="frrow">'+st.tools.map(x=>'<button type="button" class="frbtn sec sm" data-ct="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
+ if(st.inputs){ h+='<div class="frco-in">'+st.inputs.map((q,i)=>'<label><span>'+q.label+'</span>'+(q.choice?'<span class="frco-ch">'+q.choice.map((c,ci)=>'<button type="button" class="frbtn sec sm'+(tu.ch[st.id+i]===ci?' on':'')+'" data-cc="'+i+'" data-ci="'+ci+'">'+esc(c)+'</button>').join('')+'</span>':'<input class="frin" type="text" inputmode="decimal" autocomplete="off" data-cq="'+i+'" value="'+esc(tu.val[st.id+i]==null?'':tu.val[st.id+i])+'">')+'</label>').join('')+'</div>';
+  h+='<div class="frrow"><button type="button" class="frbtn" id="frcchk">'+L('Comprobar','Check')+'</button></div>'; }
+ if(st.turret) h+='<div class="frrow"><button type="button" class="frbtn" id="frcchk">'+L('Comprobar torretas','Check turrets')+'</button></div>';
+ h+='<div class="frco-res" id="frcres">'+(tu.res||'')+(tu.show&&st.work&&!tu.ok[st.id]?st.work:'')+'</div>';
+ if(st.end) h+='<div class="frrow">'+(tu.n===0?'<button type="button" class="frbtn" id="frcl2">'+L('Lección 2','Lesson 2')+'</button>':'')+'<button type="button" class="frbtn'+(tu.n===0?' sec':'')+'" id="frcfac">'+L('Saltar a Fácil','Go to Easy')+'</button><button type="button" class="frbtn sec" id="frcvet">'+L('Saltar a Veterano','Go to Veteran')+'</button><button type="button" class="frbtn sec" id="frcagain">'+L('Repetir la lección','Repeat the lesson')+'</button><button type="button" class="frbtn sec" id="frcdeb">'+L('Ver el informe del disparo','See the shot debrief')+'</button></div>';
+ else h+='<div class="frrow frco-nav">'+(tu.s>0?'<button type="button" class="frbtn sec sm" id="frcprev">'+L('Paso anterior','Previous step')+'</button>':'')+(st.inputs||st.turret?'<button type="button" class="frbtn sec sm" id="frcrep">'+L('Repetir paso','Repeat step')+'</button>':'')+(st.turret?'':'<button type="button" class="frbtn sm" id="frcnext"'+(okStep?'':' disabled')+'>'+(tu.s===0?L('Empezar','Start'):L('Siguiente paso','Next step'))+'</button>')+'</div>';
+ el.innerHTML=h;
+ const q=s=>el.querySelector(s);
+ el.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{ const k=b.getAttribute('data-ct'); if(k==='scope'){ closeSheet(); const t=G.targets[0]; G.cur=0; G.view='scope'; G.aim={u:t.u,e:t.e}; G.aimSet=true; CACHE=null; side(); const vw=document.getElementById('frview'); if(vw) vw.scrollIntoView({block:'start',behavior:'smooth'}); } else tool(k,k==='flags'?0:undefined); });
+ el.querySelectorAll('[data-cq]').forEach(inp=>{ inp.oninput=()=>{ tu.val[st.id+inp.getAttribute('data-cq')]=inp.value; }; inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); tutCheck(); } }; });
+ el.querySelectorAll('[data-cc]').forEach(b=>b.onclick=()=>{ tu.ch[st.id+b.getAttribute('data-cc')]=+b.getAttribute('data-ci'); coach(); });
+ const c=q('#frcchk'); if(c) c.onclick=()=>tutCheck();
+ const sh=q('#frcshow'); if(sh) sh.onclick=()=>{ tu.show=true; coach(); };
+ const pv=q('#frcprev'); if(pv) pv.onclick=()=>tutGo(tu.s-1);
+ const nx=q('#frcnext'); if(nx) nx.onclick=()=>tutGo(tu.s+1);
+ const rp=q('#frcrep'); if(rp) rp.onclick=()=>{ delete tu.ok[st.id]; (st.inputs||[]).forEach((x,i)=>{ delete tu.val[st.id+i]; delete tu.ch[st.id+i]; }); if(st.turret){ G.dialE=0; G.dialW=0; side(); } tu.res=''; tu.show=false; coach(); };
+ const back=()=>{ closeSheet(); stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } };
+ const l2=q('#frcl2'); if(l2) l2.onclick=()=>{ closeSheet(); stopLoop(); CFG.lesson=1; saveCfg(); newLesson(1); game(); window.scrollTo(0,0); };
+ const ag=q('#frcagain'); if(ag) ag.onclick=()=>{ closeSheet(); stopLoop(); newLesson(tu.n); game(); window.scrollTo(0,0); };
+ const fa=q('#frcfac'); if(fa) fa.onclick=()=>{ back(); CFG.mode='facil'; saveCfg(); intro(); window.scrollTo(0,0); };
+ const ve=q('#frcvet'); if(ve) ve.onclick=()=>{ back(); CFG.mode='veterano'; saveCfg(); intro(); window.scrollTo(0,0); };
+ const db=q('#frcdeb'); if(db) db.onclick=()=>{ if(G.last) debrief(G.last); };
+}
+function tutGo(s){ const tu=G.tut; tu.s=s; tu.res=''; tu.show=false; closeSheet(); coach(); const el=document.getElementById('frcoach'); if(el&&el.getBoundingClientRect().top<0) el.scrollIntoView({block:'start',behavior:'smooth'}); }
+function tutNum(s,big){ s=String(s==null?'':s).trim().replace(/\s/g,'').replace('−','-'); if(big){ if(!EN()&&/^[-+]?[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,''); if(EN()&&/^[-+]?[1-9]\d{0,2}(,\d{3})+$/.test(s)) s=s.replace(/,/g,''); }
+ s=s.replace(',','.'); return s===''||!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)?NaN:+s; }
+function tutCheck(){ const tu=G.tut, S=tutSteps(), st=S[tu.s], sol=tu.sol; const okP='<p class="frok frbig"><b>'+L('Correcto.','Correct.')+'</b></p>';
+ if(st.turret){ const dE=Math.round((G.dialE-sol.dialE)/0.1), dW=Math.round((G.dialW-sol.dialW)/0.1); const okE=Math.abs(dE)<=1, okW=Math.abs(dW)<=1;
+  if(okE&&okW){ tu.ok[st.id]=true; tu.res=okP+'<p>'+L('Torretas: ','Turrets: ')+fmtE(G.dialE)+' · '+fmtW(G.dialW)+'. '+L('Ahora pulsa «Contener aire» y DISPARAR.','Now press “Hold breath” and FIRE.')+'</p>'; }
+  else { delete tu.ok[st.id]; const li=[]; if(!okE) li.push(L('Elevación: tienes ','Elevation: you have ')+fmtE(G.dialE)+L('; tiene que marcar ','; it must read ')+fmtE(sol.dialE)+' ('+(dE>0?L('baja ','down '):L('sube ','up '))+Math.abs(dE)+L(' clics)',' clicks)'));
+   if(!okW) li.push(L('Deriva: tienes ','Windage: you have ')+fmtW(G.dialW)+L('; tiene que marcar ','; it must read ')+fmtW(sol.dialW)+' ('+Math.abs(dW)+L(' clics hacia la ',' clicks to the ')+(dW>0?L('izquierda','left'):L('derecha','right'))+')');
+   tu.res='<p class="frko frbig"><b>'+L('Todavía no.','Not yet.')+'</b></p><ul class="frco-ul">'+li.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+(G.view!=='scope'?'<p>'+L('Las torretas están en la vista por la mira: pulsa «Mirar por la mira».','The turrets are in the scope view: press “Look through the scope”.')+'</p>':''); }
+  coach(); return; }
+ const bad=[]; (st.inputs||[]).forEach((q,i)=>{ if(q.choice){ const c=tu.ch[st.id+i]; if(c!==q.v) bad.push('<b>'+q.label+'</b>: '+(c==null?L('elige una opción. ','pick an option. '):L('esa no es. ','that is not it. '))+q.hint); return; }
+  const x=tutNum(tu.val[st.id+i],q.v>=100); if(isNaN(x)) { bad.push('<b>'+q.label+'</b>: '+L('escribe un número (puedes usar coma o punto). ','type a number (comma or point both work). ')+q.hint); return; }
+  if(Math.abs(x-q.v)>q.tol+1e-9){ let why=''; if(q.v&&Math.abs(x+q.v)<=q.tol+1e-9) why=L('El número está bien pero con el signo cambiado. ','The number is right but with the wrong sign. '); else if(q.v&&Math.abs(x-q.v)<=Math.max(q.tol*4,Math.abs(q.v)*0.05)) why=L('Te acercas, pero no del todo: revisa los decimales. ','Close, but not quite: check the decimals. ');
+   bad.push('<b>'+q.label+'</b>: '+L('has puesto ','you typed ')+esc(tu.val[st.id+i])+'. '+why+q.hint); } });
+ if(!bad.length){ tu.ok[st.id]=true; tu.res=okP+(st.work||''); tu.show=false; }
+ else { delete tu.ok[st.id]; tu.res='<p class="frko frbig"><b>'+L('No es correcto.','Not correct.')+'</b></p><ul class="frco-ul">'+bad.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+(st.work&&!tu.show?'<div class="frrow"><button type="button" class="frbtn sec sm" id="frcshow">'+L('Ver la cuenta resuelta','Show the worked sum')+'</button></div>':''); }
+ coach(); const r=document.getElementById('frcres'); if(r&&r.getBoundingClientRect().bottom>innerHeight) r.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+function tutShot(r){ const tu=G.tut; if(!tu) return; const S=tutSteps();
+ if(r.hit){ tu.s=S.findIndex(x=>x.id==='end'); tu.res=''; tu.show=false; }
+ else { const sol=tu.sol, offE=Math.abs(r.dialE-sol.dialE)>0.1001, offW=Math.abs(r.dialW-sol.dialW)>0.1001;
+  tu.res='<p class="frko frbig"><b>'+L('Fallo','Miss')+'</b>: '+L('impacto ','impact ')+missTxt(r)+'.</p><p>'+(offE||offW?L('Las torretas no marcaban la solución: ','The turrets were not on the solution: ')+fmtE(r.dialE)+' · '+fmtW(r.dialW)+L('. Deben marcar ','. They must read ')+fmtE(sol.dialE)+' · '+fmtW(sol.dialW)+'.':(r.shk>0.005?L('El visor temblaba: contuviste el aire demasiado. Suéltalo, vuelve a contenerlo y dispara enseguida.','The scope was shaking: you held your breath too long. Breathe out, hold it again and fire straight away.'):L('La retícula no estaba en el centro de la placa: pulsa «Centrar en P1» y vuelve a disparar.','The reticle was not on the centre of the plate: press “Center on P1” and fire again.')))+'</p>'; }
+ coach(); }
+
 /* ===== Ruta ===== */
 export function route(app,x){ APP=app; X=x; css(); CFG=loadCfg();
  const q=(location.hash.split('?')[1]||''); const P_={}; q.split('&').forEach(kv=>{ const [k,v]=kv.split('='); if(k) P_[k]=decodeURIComponent(v||''); });
@@ -713,4 +923,4 @@ window.MAT_FR={G:()=>G,cfg:o=>{ Object.assign(CFG,o||{}); saveCfg(); return CFG;
  view:v=>{ G.view=v; CACHE=null; side(); },setAz:a=>{ G.az=a; },setStage:o=>{ Object.assign(G,o); },debrief:()=>debrief(G.last),dope:da=>dopeTable(G.rf,da),closeSheet:closeSheet,
  solver:{fly:fly,atmos:atmos,zeroAngle:zeroAngle,millerSg:millerSg},
  sim:(i,e,w,held)=>{ const t=G.targets[i]; const s=shoot(t,t,t.u,t.e,e,w,held!==false,now()); return {hit:s.hit,dx:s.dxm,dy:s.dym,minMach:s.fl.minMach,t:s.fl.t}; },
- newGame:()=>newGame()};
+ newGame:()=>newGame(),tut:{start:n=>{ newLesson(n); game(); return G; },sol:()=>G.tut.sol,steps:()=>tutSteps().map(s=>s.id),go:s=>tutGo(s),state:()=>G.tut,check:()=>tutCheck()}};
