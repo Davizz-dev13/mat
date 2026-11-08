@@ -172,6 +172,10 @@ function nf(n){return Math.round(n).toLocaleString('es-ES');}
 
 // ---------- DUELO 2D: vista cenital con puntos azul y rojo (reglas de juego, no predicción) ----------
 function LGE(){return window.MAT_LANG==='en';}
+/* Nombre del cañón sin repetir el tipo: «Cañón (25 mm)», no «Cañón Cañón (25 mm)». */
+/* Fila fija sin repetir el tipo: «Ametralladora coaxial…», no «Ametralladora: Ametralladora coaxial…». */
+function fxLb(lab,re,l,mx){ l=String(l||''); var m=l.match(/^\s*([^:]{1,24}):\s*/); if(m&&re.test(m[1])) l=l.slice(m[0].length); l=short(l,mx); if(re.test(l)) return l.charAt(0).toUpperCase()+l.slice(1); return lab+': '+l; }
+function gunLb(n){ n=String(n||''); if(/^(?:Ca\u00f1\u00f3n|Cannon|Gun)\b/i.test(n)||/^Ca\u00f1\u00f3n/i.test(n)) return LGE()?n.replace(/^Ca\u00f1\u00f3n autom\u00e1tico/i,'Autocannon').replace(/^Ca\u00f1\u00f3n de cubierta/i,'Deck gun').replace(/^Ca\u00f1\u00f3n principal/i,'Main gun').replace(/^Ca\u00f1\u00f3n/i,'Cannon').replace(/seg\u00fan ficha/,'per data sheet'):n; return LL2('Ca\u00f1\u00f3n ','Gun ')+n; }
 function wN(n){ n=String(n||''); if(!LGE()) return n; var m=n.match(/^Misil (.+)$/); if(m) return m[1].replace(/contracarro/,'anti-tank')+' missile';
   return n.replace(/^Perforante/,'Armour-piercing').replace(/^Explosivo/,'High-explosive').replace(/\(munición genérica\)/,'(generic round)').replace(/\(perforante cinético\)/,'(kinetic penetrator)').replace(/\(carga hueca\)/,'(shaped charge)').replace(/\(cabeza aplastante\)/,'(squash head)').replace(/^Ametralladora/,'Machine gun').replace(/^Cañón automático/,'Autocannon').replace(/^Cañón principal/,'Main gun').replace(/^Cohetes/,'Rockets').replace(/^Fuego de artillería/,'Artillery fire').replace(/^Cañones\/misiles antiaéreos en tiro directo/,'AA guns/missiles in direct fire'); }
  function LL2(es,en){return LGE()?en:es;}
@@ -917,7 +921,7 @@ function loOpts(a,mode,W){ var key='_lo_'+mode+(LGE()?'en':'es'); if(a[key]) ret
     B.forEach(function(t){ if(!t.max) t.max=O.cap.n; t.max=Math.min(t.max,O.cap.n); }); Ir.forEach(function(t){ if(!t.max) t.max=O.cap.n; t.max=Math.min(t.max,O.cap.n); });
     if(B.length) O.G.push({k:'bvr',lab:['Misiles de largo alcance (BVR, guiados por radar)','Long-range missiles (BVR, radar-guided)'],T:B,step:1,cost:1});
     if(Ir.length) O.G.push({k:'ir',lab:['Misiles de corto alcance (infrarrojos)','Short-range missiles (infrared)'],T:Ir,step:1,cost:1});
-    if(K0.gun) O.fixed.push([LL2('Cañón','Gun')+' '+K0.gun.n+': '+K0.gun.rounds+LL2(' proyectiles',' rounds')+(K0.gun.src==='wiki'?' (Wikipedia)':' · Estimación'),'gun']);
+    if(K0.gun) O.fixed.push([gunLb(K0.gun.n)+': '+K0.gun.rounds+LL2(' proyectiles',' rounds')+(K0.gun.src==='wiki'?' (Wikipedia)':LL2(' · Estimación',' · Estimate')),'gun']);
     var oth=L.filter(function(l){ return /bomba|bomb|AGM-|Kh-\d|Maverick|antibuque|anti-?ship|aire-superficie|air-to-surface|cohete|rocket|Exocet|Harpoon|Paveway|JDAM|Taurus|Storm Shadow|SCALP/i.test(l)&&!/^\s*(?:Misiles aire-aire|Air-to-air)/i.test(l); });
     oth.slice(0,3).forEach(function(l){ O.info.push(short(l.replace(/^\s*\w[^:]{0,24}:\s*/,''),90)); });
     var cap=O.cap.n, mB=B.length?B[0].max:0, mI=Ir.length?Ir[0].max:0;
@@ -943,7 +947,7 @@ function loOpts(a,mode,W){ var key='_lo_'+mode+(LGE()?'en':'es'); if(a[key]) ret
     if(K.atgm){ var gl=GLM.test((K.atgm.line||'')+' '+(K.atgm.tok||''))||(tank&&GLM.test(armTxt(a))); var mx=loCnt(L,[K.atgm.tok]); var am=mx||(gl?Math.min(6,AMN||6):4);
       O.G.push({k:'atgm',lab:gl?['Misil guiado por el cañón','Gun-launched guided missile']:['Misil contracarro','Anti-tank guided missile'],T:[{tok:'atgm',n:wN(K.atgm.n),w:K.atgm,pm:K.pa,pmsrc:K.pasrc,rng:5000,max:am,maxsrc:mx?'ficha':'est',gl:gl}],step:1,cost:gl?1:0}); }
     if(gunK.length) O.cap={n:AMN,src:AMS,u:['disparos del cañón','main-gun rounds']};
-    L.filter(function(l){return /ametralladora|machine gun|\bMG\s?\d|PKT|NSVT|Kord|M2HB|M240|MAG\b/i.test(l);}).slice(0,2).forEach(function(l){ O.fixed.push([LL2('Ametralladora','Machine gun')+': '+short(l,70)+LL2(' (no perfora blindaje: no cuenta contra blindados en el duelo)',' (does not penetrate armour: not used against armour in the duel)'),'mg']); });
+    L.filter(function(l){return /ametralladora|machine gun|\bMG\s?\d|PKT|NSVT|Kord|M2HB|M240|MAG\b/i.test(l);}).slice(0,2).forEach(function(l){ O.fixed.push([fxLb(LL2('Ametralladora','Machine gun'),/^(?:ametralladora|machine ?gun)/i,l,70)+LL2(' (no perfora blindaje: no cuenta contra blindados en el duelo)',' (does not penetrate armour: not used against armour in the duel)'),'mg']); });
     var G=O.G.filter(function(g){return g.round;}), cap2=AMN;
     function mix(w){ var c={},t={},tot=0; G.forEach(function(g){ t[g.k]=g.k; }); var s=0; G.forEach(function(g){ s+=(w[g.k]||0); }); G.forEach(function(g){ c[g.k]=s?Math.floor(cap2*(w[g.k]||0)/s/g.step)*g.step:0; tot+=c[g.k]; }); if(G.length&&s){ var big=G.slice().sort(function(x,y){return (w[y.k]||0)-(w[x.k]||0);})[0]; c[big.k]+=Math.max(0,cap2-tot-(capAt?atU:0)); } return {t:t,c:c}; }
     var capAt=false, atU=0, at=O.G.filter(function(g){return g.k==='atgm';})[0];
@@ -967,9 +971,9 @@ function loOpts(a,mode,W){ var key='_lo_'+mode+(LGE()?'en':'es'); if(a[key]) ret
     if(As.length) O.G.push({k:'ash',lab:['Misiles antibuque','Anti-ship missiles'],T:As,step:As[0].max>=12?2:1,cost:1});
     if(Ss.length) O.G.push({k:'sam',lab:['Misiles antiaéreos (SAM): derriban los misiles que llegan','Surface-to-air missiles (SAM): shoot down incoming missiles'],T:Ss,step:Ss[0].max>=24?4:Ss[0].max>=12?2:1,cost:1});
     if(cells&&(Ss.some(function(t){return t.vls;})||As.some(function(t){return t.vls;}))) O.cap={n:cells,src:'ficha',u:['celdas de lanzamiento vertical (VLS)','vertical launch cells (VLS)'],pool:1};
-    if(K1.gun) O.fixed.push([LL2('Cañón','Gun')+' '+K1.gun.cal+' mm'+(K1.gun.brl>1?' ×'+K1.gun.brl:'')+': '+nf(K1.gun.rd)+LL2(' proyectiles',' rounds')+(K1.gun.rdsrc==='ficha'?LL2(' (ficha)',' (data sheet)'):' · Estimación'),'gun']);
+    if(K1.gun) O.fixed.push([LL2('Cañón','Gun')+' '+K1.gun.cal+' mm'+(K1.gun.brl>1?' ×'+K1.gun.brl:'')+': '+nf(K1.gun.rd)+LL2(' proyectiles',' rounds')+(K1.gun.rdsrc==='ficha'?LL2(' (ficha)',' (data sheet)'):LL2(' · Estimación',' · Estimate')),'gun']);
     if(K1.ciws) O.fixed.push(['CIWS '+(K1.ciws.n||'')+LL2(' (ficha): defensa de punto contra misiles',' (data sheet): point defence against missiles'),'ciws']);
-    var tl=L.filter(function(l){return TORP.test(l);})[0]; if(tl) O.fixed.push([LL2('Torpedos','Torpedoes')+': '+short(tl,70)+LL2(' (antisubmarinos: no se usan contra buques en este duelo)',' (anti-submarine: not used against ships in this duel)'),'torp']);
+    var tl=L.filter(function(l){return TORP.test(l);})[0]; if(tl) O.fixed.push([fxLb(LL2('Torpedos','Torpedoes'),/^torped/i,tl,70)+LL2(' (antisubmarinos: no se usan contra buques en este duelo)',' (anti-submarine: not used against ships in this duel)'),'torp']);
     if(K1.chaff) O.fixed.push([LL2('Chaff: ','Chaff: ')+K1.chaff+LL2(' cargas · Estimación',' loads · Estimate'),'chaff']);
     var a1=As[0], s1=Ss[0], aL=As.slice().sort(function(x,y){return y.km-x.km;})[0], sL=Ss.slice().sort(function(x,y){return y.km-x.km;})[0];
     function pr(at_,st_,fa,fs){ var t={},c={}; if(a1){ t.ash=at_.tok; c.ash=Math.round(at_.max*fa); } if(s1){ t.sam=st_.tok; c.sam=Math.round(st_.max*fs); } return {t:t,c:c}; }
@@ -1074,7 +1078,7 @@ window.MAT_DUELO=function(app,X){
     li.push('<li><b>'+LL2('Giro sostenido','Sustained turn')+':</b> '+Math.round(airTurn(a)*57.3)+' °/s '+E+'</li>');
     if(K.bvr) li.push('<li>'+X.esc(K.bvr.n)+' ×'+K.bvr.left+' '+E+': '+K.bvr.km.toLocaleString('es-ES')+' km '+(K.bvr.src==='ficha'&&K.bvr.arm?'(<a href="#/a/'+K.bvr.arm.id+'">'+LL2('ficha','data sheet')+'</a>)':E)+', Mach '+String(K.bvr.mach).replace('.',',')+(K.bvr.msrc==='wiki'?' (Wikipedia)':' '+E)+' · '+LL2('radar','radar')+'</li>');
     if(K.ir) li.push('<li>'+X.esc(K.ir.n)+' ×'+K.ir.left+' '+E+': '+K.ir.km.toLocaleString('es-ES')+' km '+(K.ir.src==='ficha'&&K.ir.arm?'(<a href="#/a/'+K.ir.arm.id+'">'+LL2('ficha','data sheet')+'</a>)':E)+', Mach '+String(K.ir.mach).replace('.',',')+(K.ir.msrc==='wiki'?' (Wikipedia)':' '+E)+' · '+LL2('infrarrojos','infrared')+(K.ir.all?LL2(', todos los aspectos',', all-aspect'):LL2(', solo por la cola',', rear-aspect only'))+'</li>');
-    if(K.gun) li.push('<li>'+LL2('Cañón ','Gun ')+X.esc(K.gun.n)+': '+K.gun.rounds+LL2(' proyectiles',' rounds')+(K.gun.src==='wiki'?' (Wikipedia)':' '+E)+'</li>');
+    if(K.gun) li.push('<li>'+X.esc(gunLb(K.gun.n))+': '+K.gun.rounds+LL2(' proyectiles',' rounds')+(K.gun.src==='wiki'?' (Wikipedia)':' '+E)+'</li>');
     if(!K.bvr&&!K.ir&&!K.gun) li.push('<li>'+LL2('Sin armas aire-aire en su ficha','No air-to-air weapons in its data sheet')+'</li>');
     li.push('<li>'+LL2('Contramedidas','Countermeasures')+': '+(K.cm.fl||K.cm.ch?K.cm.fl+LL2(' bengalas',' flares')+(K.cm.ch?' · '+K.cm.ch+' chaff':'')+' '+E:LL2('ninguna','none'))+' · '+LL2('combustible: rompe el combate al 22 %','fuel: breaks off at 22 %')+' '+E+'</li>');
     return '<div class="d2-side"><h3>'+col+' '+X.esc(a.n)+'</h3><ul>'+li.join('')+'</ul></div>'; }
