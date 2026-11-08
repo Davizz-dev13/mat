@@ -177,15 +177,15 @@ function sonarStep(){ const g=G, O=g.own; const nl=ownNL(O.v)-AC.di+AC.dt;
   const baf=Math.abs(dAng(b,O.c))>150; /* zona ciega de popa (baffles), ±30° */
   const se=shipSL(s)-TL(r)-(crossL(O.d,s.d,g.layer)?AC.layerP:0)-nl;
   s.se=se; s.brg=b; s.baf=baf; const det=se>0&&!baf;
-  const pinging=s.esc&&s.lastPing&&g.t-s.lastPing<3;
+  const pinging=!!(s.esc&&s.lastPing&&g.t-s.lastPing<20); s.pingRow=!!(s.esc&&s.lastPing&&s.lastPing>(g.lastRow||0));
   if((det||pinging)&&s.cid==null){ s.cid='S'+(g.nextS++); s.t0=g.t; g.cont.push(s); s.brgs=[]; say('Nuevo contacto '+s.cid+' por '+p3(b)+'°.','New contact '+s.cid+' bearing '+p3(b)+'°.'); if(!g.sel) g.sel=s.cid; }
   s.det=det; s.ping=pinging;
   if(s.cid&&(det||pinging)&&g.t%20===0){ s.brgs.push({t:g.t,b:Math.round(b*10)/10,ox:O.x,oy:O.y}); if(s.brgs.length>400) s.brgs.shift(); }
  });
  if(g.t%10===0){ /* fila de la cascada */
   const row=new Float32Array(180);
-  g.ships.forEach(s=>{ if(s.baf) return; const amp=s.se>-6?clamp((s.se+6)/24,0,1.2):0; const pg=s.ping?1.4:0; if(!amp&&!pg) return;
-   for(let i=0;i<180;i++){ let d=Math.abs(dAng(i*2+1,s.brg)); const w=s.ping?9:2.2; row[i]+=amp*Math.exp(-d*d/(w*w))+pg*Math.exp(-d*d/(14*14)); } });
+  g.lastRow=g.t; g.ships.forEach(s=>{ const pg=s.pingRow?1.4:0; if(s.baf&&!pg) return; const amp=(s.se>-6&&!s.baf)?clamp((s.se+6)/24,0,1.2):0; if(!amp&&!pg) return;
+   for(let i=0;i<180;i++){ let d=Math.abs(dAng(i*2+1,s.brg)); row[i]+=amp*Math.exp(-d*d/(2.2*2.2))+pg*Math.exp(-d*d/(14*14)); } });
   g.torps.forEach(tp=>{ if(tp.done) return; const b=brgOf(tp.x-O.x,tp.y-O.y); for(let i=0;i<180;i++){ const d=Math.abs(dAng(i*2+1,b)); row[i]+=0.8*Math.exp(-d*d/4); } });
   if(g.boom&&g.t-g.boom.t<12){ const b=g.boom.b; for(let i=0;i<180;i++){ const d=Math.abs(dAng(i*2+1,b)); row[i]+=1.6*Math.exp(-d*d/30); } }
   const fl=clamp((ownNL(O.v)-62)/30,0,0.5);
@@ -316,10 +316,10 @@ function css(){ if(document.getElementById('sb-css')) return; const s=document.c
  '.sbdet summary{cursor:pointer;padding:12px 0;font-weight:700;min-height:24px}',
  '.sbdet p,.sbdet li{font-size:14.5px;line-height:1.5;color:#d4d6cc}',
  '.sbtop{position:sticky;top:0;z-index:5;background:rgba(11,12,10,.97);border-bottom:1px solid var(--line);padding:6px 0;margin:0 0 8px}',
- '.sbtop .r1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}',
- '.sbclk{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:#e8eadf;min-width:68px}',
+ '.sbtop .r1{display:flex;align-items:center;gap:5px;flex-wrap:wrap}',
+ '.sbclk{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:#e8eadf;min-width:62px}',
  '.sbseg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}',
- '.sbseg button{min-height:40px;min-width:36px;padding:6px 6px;border:0;background:transparent;color:var(--tx);font:inherit;font-size:14px;cursor:pointer}',
+ '.sbseg button{min-height:40px;min-width:33px;padding:6px 4px;border:0;background:transparent;color:var(--tx);font:inherit;font-size:14px;cursor:pointer}',
  '.sbseg button.on{background:var(--ac);color:#0b0c0d;font-weight:700}',
  '.sbmini{display:flex;gap:10px;flex-wrap:wrap;font-size:13.5px;color:#c9ccbf;margin-top:6px;font-variant-numeric:tabular-nums}',
  '.sbmini b{color:#eef0e4;font-weight:650}',
