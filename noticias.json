@@ -1,166 +1,328 @@
 {
- "fecha": "2026-11-07",
- "actualizado": "2026-11-07T08:04+01:00",
+ "fecha": "2026-11-08",
+ "actualizado": "2026-11-08T08:06+01:00",
  "items": [
   {
-   "t_es": "Trump confirma nuevos ataques «menores» de EE. UU. en la isla iraní de Qeshm, mientras Catar propone reabrir Ormuz a cambio de inspecciones nucleares",
-   "t_en": "Trump confirms new 'minor' US strikes on Iran's Qeshm island as Qatar proposes reopening Hormuz in exchange for nuclear inspections",
-   "res_es": "Trump dijo que el ejército de EE. UU. atacó el viernes un sistema de defensa antiaérea en Qeshm, en el estrecho de Ormuz, y lo calificó de ataque «menor»; la televisión estatal iraní informó de dos explosiones en la zona de Suza y el ejército iraní afirmó haber derribado un dron MQ-9. Es el primer ataque desde las elecciones de mitad de mandato. El Mando Central ofreció hasta 20 millones de dólares por información sobre el programa nuclear iraní. Según The Guardian, Catar, principal mediador, propone que EE. UU. levante el bloqueo naval y libere parte de 8.000 millones en activos congelados, a cambio de que Irán permita visitas del OIEA a sus instalaciones bombardeadas y reabra el estrecho. Trump dijo que hay «muchos avances» en las conversaciones.",
-   "res_en": "Trump said the US military struck an air defence system on Qeshm island in the Strait of Hormuz on Friday, calling it a 'minor' strike; Iranian state TV reported two explosions in the Suza area and Iran's army said it downed an MQ-9 drone. It is the first strike since the US midterm elections. US Central Command offered up to $20m for information on Iran's nuclear programme. According to The Guardian, lead mediator Qatar proposes that the US lift its naval blockade and release part of $8bn in frozen assets, in return for Iran allowing IAEA visits to its bombed facilities and reopening the strait. Trump said there has been 'a lot of progress' in talks.",
-   "por_que_es": "Los ataques y la mediación avanzan a la vez: de la secuencia de concesiones depende la reapertura de una ruta clave para el petróleo mundial.",
-   "por_que_en": "Strikes and mediation are moving in parallel: the reopening of a key route for the world's oil depends on the sequencing of concessions.",
+   "t_es": "Herzog encarga a Gadi Eisenkot formar el próximo Gobierno de Israel, por delante de Netanyahu",
+   "t_en": "Herzog tasks Gadi Eisenkot with forming Israel's next government, ahead of Netanyahu",
+   "res_es": "El presidente israelí, Isaac Herzog, comunicó el sábado a Gadi Eisenkot, líder del partido Yashar y exjefe del Estado Mayor, que le encargará formar gobierno; el nombramiento formal está previsto para el domingo en Jerusalén. Tras las consultas con los partidos, Eisenkot recibió 67 recomendaciones, incluidas las de las listas de mayoría árabe, frente a 46 de Netanyahu. En las elecciones del 27 de octubre el bloque de Netanyahu logró 53 escaños y el de Eisenkot 48, ninguno con mayoría de 61 sobre 120; los partidos árabes obtuvieron un récord de 19. Eisenkot tiene 28 días, prorrogables 14, para formar coalición. Según Al Jazeera, ha descartado gobernar con los partidos árabes; según la BBC, sumar a los dos partidos ultraortodoxos le daría exactamente 61. En X pidió «un gobierno de emergencia nacional».",
+   "res_en": "Israeli President Isaac Herzog told Gadi Eisenkot, leader of the Yashar party and a former military chief of staff, on Saturday that he will task him with forming a government; the formal appointment is due on Sunday in Jerusalem. After consultations with the parties, Eisenkot received 67 recommendations, including those of the Arab-majority lists, against 46 for Netanyahu. In the 27 October election Netanyahu's bloc won 53 seats and Eisenkot's 48, neither reaching the 61 of 120 needed for a majority; Arab parties won a record 19. Eisenkot has 28 days, extendable by 14, to build a coalition. According to Al Jazeera he has ruled out governing with the Arab parties; adding the two ultra-Orthodox parties would give him exactly 61. On X he called for 'a national emergency government'.",
+   "por_que_es": "Netanyahu, el primer ministro que más tiempo ha gobernado Israel, no recibe el primer encargo, con posibles efectos en la guerra regional, Cisjordania y la relación con EE. UU.",
+   "por_que_en": "Netanyahu, Israel's longest-serving prime minister, does not get the first mandate, with possible effects on the regional war, the West Bank and relations with the US.",
    "reg_es": "Oriente Medio",
    "reg_en": "Middle East",
    "paises": [
-    "us",
-    "iran",
-    "catar"
+    "israel"
    ],
    "fuentes": [
     {
+     "n": "BBC",
+     "url": "https://www.bbc.co.uk/news/articles/cmy8367lj5xlo",
+     "d": "2026-11-07"
+    },
+    {
+     "n": "The Guardian",
+     "url": "https://www.theguardian.com/world/2026/nov/07/israel-president-gadi-eisenkot-form-government",
+     "d": "2026-11-07"
+    },
+    {
      "n": "Al Jazeera",
-     "url": "https://www.aljazeera.com/news/2026/11/7/trump-confirms-new-us-strikes-on-irans-qeshm-island",
-     "d": "2026-11-07"
-    },
-    {
-     "n": "The Guardian",
-     "url": "https://www.theguardian.com/world/2026/nov/07/us-carries-out-another-round-of-minor-strikes-on-iran-trump-says",
-     "d": "2026-11-07"
-    },
-    {
-     "n": "The Guardian",
-     "url": "https://www.theguardian.com/world/2026/nov/07/strait-of-hormuz-qatar-plan-iran-nuclear-inspections",
+     "url": "https://www.aljazeera.com/news/2026/11/7/israels-president-picks-eisenkot-over-netanyahu-to-form-next-government",
      "d": "2026-11-07"
     }
    ]
   },
   {
-   "t_es": "La UE, Polonia y Zelenski rechazan un acuerdo de seguridad EE. UU.-Rusia sobre Europa sin los europeos; misiles balísticos rusos alcanzan Kiev antes de Abu Dabi",
-   "t_en": "The EU, Poland and Zelensky reject a US-Russia security deal on Europe without Europeans; Russian ballistic missiles hit Kyiv ahead of Abu Dhabi",
-   "res_es": "En Varsovia, la jefa de la diplomacia europea, Kaja Kallas, dijo que la UE no aplicará ningún acuerdo del que no sea parte y rechazó reconocer los territorios ocupados o limitar el ejército ucraniano. El ministro polaco Radosław Sikorski pidió primero un alto el fuego y después negociar. Zelenski advirtió en CNN de que no quiere «una Yalta 2.0», tras decir Trump que el acuerdo con Rusia «podría implicar a toda Europa» y Kushner que Washington prepara un marco de seguridad europeo antes de las conversaciones de Abu Dabi del 10 y 11 de noviembre. En la noche del 6 al 7, Rusia lanzó al menos seis misiles balísticos contra Kiev: cinco heridos, entre ellos un niño, y un edificio de una guardería destruido, según los servicios de emergencia.",
-   "res_en": "In Warsaw, EU foreign policy chief Kaja Kallas said the EU will not implement any deal it is not party to and rejected recognising occupied territory or limiting Ukraine's army. Polish Foreign Minister Radosław Sikorski called for a ceasefire first and negotiations afterwards. Zelensky told CNN he does not want 'Yalta 2.0', after Trump said a deal with Russia 'might involve all of Europe' and Kushner said Washington is preparing a European security framework ahead of the Abu Dhabi talks on 10-11 November. Overnight on 6-7 November Russia fired at least six ballistic missiles at Kyiv: five people were injured, including a child, and a building on kindergarten grounds was destroyed, emergency services said.",
-   "por_que_es": "Europa exige estar en la mesa justo cuando EE. UU. amplía la negociación de Ucrania a la seguridad de todo el continente.",
-   "por_que_en": "Europe is demanding a seat at the table just as the US widens the Ukraine negotiation to the security of the whole continent.",
+   "t_es": "EE. UU. crea la «Task Force Iron Gate» para cortar las rutas terrestres de Irán y amplía su bloqueo más allá del mar",
+   "t_en": "US creates 'Task Force Iron Gate' to cut Iran's land routes, extending its blockade beyond the sea",
+   "res_es": "El Mando Central de EE. UU. (CENTCOM) anunció el sábado una nueva fuerza de tarea para impedir que Irán transporte por tierra y por el mar Caspio armas avanzadas, tecnología de doble uso, material sancionado e ingresos ilícitos. Su comandante, el almirante Brad Cooper, dijo que reforzará el bloqueo naval de los puertos iraníes que EE. UU. mantiene desde julio. CENTCOM informó además de que un avión estadounidense inutilizó con munición de precisión el carguero M/V Huda, con bandera de San Cristóbal y Nieves, en el golfo de Omán, y de que desde julio 147 buques han cambiado de rumbo y cinco han sido inutilizados. La agencia iraní IRNA informó de explosiones en Qeshm, Jask, Sirik y Bandar Abbas, un día después de que Trump confirmara ataques «menores» en Qeshm. Siguen las conversaciones con mediación de Catar.",
+   "res_en": "US Central Command (CENTCOM) announced on Saturday a new task force to stop Iran moving advanced weapons, dual-use technology, sanctioned materials and illicit revenue across its land borders and the Caspian Sea. Its commander, Admiral Brad Cooper, said it will reinforce the naval blockade of Iranian ports the US has enforced since July. CENTCOM also said a US aircraft disabled the St Kitts and Nevis-flagged cargo ship M/V Huda with precision munitions in the Gulf of Oman, and that since July 147 ships have been redirected and five disabled. Iran's IRNA news agency reported explosions in Qeshm, Jask, Sirik and Bandar Abbas, a day after Trump confirmed 'minor' strikes on Qeshm. Qatari-mediated talks continue.",
+   "por_que_es": "El bloqueo pasa del mar a las fronteras terrestres y al Caspio, lo que afecta a los vecinos de Irán y a las rutas que aún le quedan.",
+   "por_que_en": "The blockade moves from the sea to land borders and the Caspian, affecting Iran's neighbours and the routes it still has.",
+   "reg_es": "Oriente Medio",
+   "reg_en": "Middle East",
+   "paises": [
+    "us",
+    "iran"
+   ],
+   "fuentes": [
+    {
+     "n": "Al Jazeera",
+     "url": "https://www.aljazeera.com/news/2026/11/8/us-launches-task-force-to-disrupt-irans-land-based-supply-routes",
+     "d": "2026-11-08"
+    },
+    {
+     "n": "CENTCOM",
+     "url": "https://www.centcom.mil/MEDIA/PUBLIC-RELEASES/Article/4644250/centcom-launches-task-force-to-disrupt-iranian-ground-transit-routes-supporting/",
+     "d": "2026-11-07"
+    },
+    {
+     "n": "The Washington Post",
+     "url": "https://www.washingtonpost.com/national-security/2026/11/07/us-military-seeks-disrupt-irans-land-routes-expanding-naval-blockade/",
+     "d": "2026-11-07"
+    }
+   ]
+  },
+  {
+   "t_es": "Rusia lanza 36 misiles balísticos y 172 drones contra la red eléctrica de Ucrania antes de las conversaciones de Abu Dabi",
+   "t_en": "Russia fires 36 ballistic missiles and 172 drones at Ukraine's power grid ahead of the Abu Dhabi talks",
+   "res_es": "Un ataque nocturno con 36 misiles balísticos y 172 drones alcanzó infraestructura energética en 12 regiones, con Kiev como la más afectada: hubo cortes de luz, agua y calefacción, daños en el Puente Norte y en una guardería, y nueve heridos en el país, entre ellos un menor. Zelenski dijo que se atacaron subestaciones que conectan las centrales nucleares de Rivne y Jmelnitski con Kiev, que solo se interceptaron 4 de los 36 balísticos por falta de misiles Patriot y que se usaron misiles norcoreanos KN-23. El alcalde Klitschko informó después de que el agua volvía a funcionar con normalidad. Delegaciones de EE. UU., Ucrania y Rusia tienen previsto reunirse el 10 y 11 de noviembre en Abu Dabi; Zelenski acusó a Moscú de preparar así las conversaciones.",
+   "res_en": "An overnight attack with 36 ballistic missiles and 172 drones hit energy infrastructure in 12 regions, with Kyiv the worst affected: there were power, water and heating cuts, damage to the North Bridge and a kindergarten, and nine people injured nationwide, including a child. Zelensky said substations linking the Rivne and Khmelnytskyi nuclear plants to Kyiv were targeted, that only 4 of the 36 ballistic missiles were intercepted because of a shortage of Patriot interceptors, and that North Korean KN-23 missiles were used. Mayor Klitschko later said the water supply was back to normal. US, Ukrainian and Russian delegations are due to meet in Abu Dhabi on 10-11 November; Zelensky accused Moscow of preparing for the talks this way.",
+   "por_que_es": "Los ataques a la energía a las puertas del invierno llegan días antes de una nueva ronda de negociación a tres bandas.",
+   "por_que_en": "Strikes on energy at the start of winter come days before a new round of three-way negotiations.",
    "reg_es": "Europa",
    "reg_en": "Europe",
    "paises": [
     "ucrania",
     "rusia",
-    "ue",
-    "polonia",
-    "us"
+    "us",
+    "emiratos",
+    "corea_norte"
    ],
    "fuentes": [
     {
-     "n": "Kyiv Post",
-     "url": "https://www.kyivpost.com/post/89408",
-     "d": "2026-11-07"
-    },
-    {
-     "n": "Kyiv Post",
-     "url": "https://www.kyivpost.com/post/89405",
-     "d": "2026-11-07"
-    },
-    {
-     "n": "Kyiv Post",
-     "url": "https://www.kyivpost.com/post/89407",
-     "d": "2026-11-07"
-    },
-    {
-     "n": "Kyiv Post",
-     "url": "https://www.kyivpost.com/post/89404",
-     "d": "2026-11-07"
-    },
-    {
-     "n": "Al Jazeera",
-     "url": "https://www.aljazeera.com/news/2026/11/7/russia-launches-missile-attack-on-kyiv-injuring-residents",
-     "d": "2026-11-07"
-    }
-   ]
-  },
-  {
-   "t_es": "El Senado de Paraguay destituye a Santiago Peña, que queda bajo arresto domiciliario; Pedro Alliana jura como presidente",
-   "t_en": "Paraguay's Senate removes Santiago Peña, who is placed under house arrest; Pedro Alliana is sworn in as president",
-   "res_es": "En lugar de aceptar su dimisión, el Senado aprobó el juicio político contra Peña por 44 de 45 votos y lo acusó de mal desempeño, lo que le retira la inmunidad. La Fiscalía ordenó su arresto domiciliario por sospechas de abuso de confianza, tráfico de influencias y malversación, y emitió una orden de detención contra el exgobernador del Banco Central, Carlos Carvallo. La crisis se desató con el colapso del banco digital Ueno, intervenido por el Banco Central: unos tres millones de clientes no pueden acceder a sus ahorros y pensiones. Peña, que tuvo acciones en la empresa dueña del banco hasta el año pasado, niega cualquier irregularidad. El vicepresidente Pedro Alliana asumió y prometió compensar a los afectados.",
-   "res_en": "Rather than accept his resignation, the Senate impeached Peña by 44 votes out of 45 and charged him with misconduct, stripping him of immunity. Prosecutors ordered his house arrest on suspicion of breach of trust, influence peddling and misappropriation, and issued an arrest warrant for former central bank governor Carlos Carvallo. The crisis was triggered by the collapse of digital bank Ueno, seized by the central bank: some three million customers cannot access their savings and pensions. Peña, who held shares in the bank's parent company until last year, denies wrongdoing. Vice-President Pedro Alliana took office and promised to compensate those affected.",
-   "por_que_es": "Una quiebra bancaria ha derribado a un presidente en días y deja a más de la mitad del país sin acceso a su dinero.",
-   "por_que_en": "A bank failure has toppled a president within days and left more than half the country without access to its money.",
-   "reg_es": "América Latina",
-   "reg_en": "Latin America",
-   "paises": [
-    "paraguay"
-   ],
-   "fuentes": [
-    {
-     "n": "BBC News",
-     "url": "https://www.bbc.co.uk/news/articles/c68jzzvjgdy9o",
-     "d": "2026-11-07"
-    },
-    {
-     "n": "Al Jazeera",
-     "url": "https://www.aljazeera.com/news/2026/11/7/paraguays-santiago-pena-under-arrest-new-president-pedro-alliana-sworn-in",
+     "n": "BBC",
+     "url": "https://www.bbc.co.uk/news/articles/cm4g1nq8158po",
      "d": "2026-11-07"
     },
     {
      "n": "The Guardian",
-     "url": "https://www.theguardian.com/world/2026/nov/07/ousted-paraguay-president-under-house-arrest-after-banking-crisis-leaves-60-of-country-unable-to-access-accounts",
+     "url": "https://www.theguardian.com/world/2026/nov/07/blackout-water-shortage-kyiv-russia-strike-ukraine-energy-grid",
+     "d": "2026-11-07"
+    },
+    {
+     "n": "Kyiv Post",
+     "url": "https://www.kyivpost.com/post/89444",
      "d": "2026-11-07"
     }
    ]
   },
   {
-   "t_es": "Israel: Herzog decidirá el domingo quién intenta formar gobierno; Eisenkot suma 67 apoyos frente a 46 de Netanyahu",
-   "t_en": "Israel: Herzog will decide on Sunday who gets to try forming a government; Eisenkot has 67 endorsements to Netanyahu's 46",
-   "res_es": "Tras unas elecciones del 27 de octubre sin mayoría, 67 de los 120 diputados recomendaron al exjefe del ejército Gadi Eisenkot y 46 a Benjamin Netanyahu. Pero la ventaja de Eisenkot depende de los partidos que representan a los ciudadanos palestinos de Israel, que lograron un récord de 19 escaños y con los que él descarta gobernar. Ningún bloque llega a los 61 escaños: el de Netanyahu tiene 53, y Judaísmo Unido de la Torá no lo respaldó por la falta de una exención del servicio militar para los ultraortodoxos. Herzog no se ha comprometido con ninguno. Según The Guardian, la victoria demócrata en EE. UU. podría empujar a la oposición israelí a unirse para desbancar a Netanyahu.",
-   "res_en": "After an inconclusive 27 October election, 67 of the 120 Knesset members endorsed former army chief Gadi Eisenkot and 46 Benjamin Netanyahu. But Eisenkot's lead relies on parties representing Palestinian citizens of Israel, which won a record 19 seats and with which he rules out governing. No bloc reaches 61 seats: Netanyahu's has 53, and United Torah Judaism withheld its backing over the failure to exempt ultra-Orthodox Israelis from military service. Herzog has not committed to either side. According to The Guardian, the Democratic win in the US could push Israel's opposition to unite to unseat Netanyahu.",
-   "por_que_es": "Netanyahu podría no recibir el primer encargo de formar gobierno, con efectos en la guerra regional y en la relación con EE. UU.",
-   "por_que_en": "Netanyahu may not get the first mandate to form a government, with effects on the regional war and on ties with the US.",
+   "t_es": "Un tiroteo en la plaza del Mercado de Cracovia deja seis muertos; el Gobierno polaco lo califica de acto terrorista",
+   "t_en": "A shooting in Kraków's Market Square leaves six dead; the Polish government calls it an act of terrorism",
+   "res_es": "Un hombre abrió fuego el sábado hacia las 15:00 desde un coche en la plaza del Mercado de Cracovia y mató a seis personas, cuatro mujeres y dos hombres, entre ellas un ciudadano británico; hubo al menos 15 heridos, entre ellos dos policías y cinco extranjeros de Reino Unido, Austria, Alemania, Portugal y Rusia. La policía lo detuvo herido tras un intercambio de disparos; según las autoridades, actuó solo. El ministro del Interior, Marcin Kierwiński, dijo que el sospechoso, un polaco de 25 años, estaba «fascinado por ideologías de extrema derecha» y tenía ideas «ultranacionalistas». El primer ministro Donald Tusk lo calificó de «terrorismo» e informó de que se hallaron los cuerpos de tres familiares del sospechoso en su casa de Ostrowiec Świętokrzyski.",
+   "res_en": "A man opened fire from a car in Kraków's Main Market Square at about 3pm on Saturday, killing six people, four women and two men, including a British citizen; at least 15 were wounded, among them two police officers and five foreigners from the UK, Austria, Germany, Portugal and Russia. Police detained him, wounded, after an exchange of fire; authorities say he acted alone. Interior Minister Marcin Kierwiński said the suspect, a 25-year-old Pole, was 'fascinated by far-right ideologies' and held 'ultra-nationalist' views. Prime Minister Donald Tusk called it 'terrorism' and said the bodies of three of the suspect's relatives were found at his home in Ostrowiec Świętokrzyski.",
+   "por_que_es": "Un ataque con seis muertos en el centro histórico de Cracovia, en un país clave de la OTAN y la UE, investigado como terrorismo ultranacionalista.",
+   "por_que_en": "An attack that killed six in the historic centre of Kraków, in a key NATO and EU country, being investigated as ultra-nationalist terrorism.",
+   "reg_es": "Europa",
+   "reg_en": "Europe",
+   "paises": [
+    "polonia"
+   ],
+   "fuentes": [
+    {
+     "n": "The Guardian",
+     "url": "https://www.theguardian.com/world/2026/nov/07/krakow-poland-shooting-market-square-deaths-gunman",
+     "d": "2026-11-08"
+    },
+    {
+     "n": "Al Jazeera",
+     "url": "https://www.aljazeera.com/news/2026/11/7/casualties-reported-after-shooting-in-polands-krakow",
+     "d": "2026-11-07"
+    },
+    {
+     "n": "BBC",
+     "url": "https://www.bbc.co.uk/news/articles/cmd7q15drwgeo",
+     "d": "2026-11-08"
+    }
+   ]
+  },
+  {
+   "t_es": "Los hutíes denuncian decenas de muertos en bombardeos que atribuyen a Arabia Saudí cerca de Saná",
+   "t_en": "Houthis report dozens killed in strikes they blame on Saudi Arabia near Sanaa",
+   "res_es": "Medios controlados por los hutíes informaron de que bombardeos en la localidad de al Shariya, en la provincia de Saná, mataron a al menos 33 personas e hirieron a 39, en su mayoría mujeres y niños; otras cifras iniciales hablaban de 27. Los hutíes culpan a la coalición liderada por Arabia Saudí, que no ha comentado el ataque, y su dirigente Mahdi al Mashat prometió venganza. Horas antes, la coalición dijo haber interceptado un misil dirigido a Riad. Al Jazeera señala que las fuerzas del Gobierno reconocido internacionalmente afirman haber frenado ofensivas hutíes en Marib y avanzar en al Yauf. La guerra en Yemen se reactivó a raíz de la guerra con Irán; según la ONU, más de 1.600 personas han muerto y más de 300.000 han sido desplazadas desde que se reanudaron los combates. Las cifras no han podido verificarse de forma independiente.",
+   "res_en": "Houthi-run media reported that strikes on the village of al-Shariya, in Sanaa province, killed at least 33 people and wounded 39, mostly women and children; earlier figures said 27. The Houthis blame the Saudi-led coalition, which has not commented, and their leader Mahdi al-Mashat vowed revenge. Hours earlier, the coalition said it intercepted a missile heading for Riyadh. Al Jazeera reports that forces of the internationally recognised government say they halted Houthi offensives in Marib and are advancing in al-Jawf. The war in Yemen reignited as a result of the Iran war; the UN says more than 1,600 people have been killed and more than 300,000 displaced since fighting resumed. The figures could not be independently verified.",
+   "por_que_es": "El frente de Yemen vuelve a escalar y amenaza las rutas del mar Rojo que Arabia Saudí usa como alternativa a Ormuz.",
+   "por_que_en": "The Yemen front is escalating again and threatens the Red Sea routes Saudi Arabia uses as an alternative to Hormuz.",
    "reg_es": "Oriente Medio",
    "reg_en": "Middle East",
    "paises": [
-    "israel",
-    "us"
+    "yemen",
+    "arabia_saudi"
    ],
    "fuentes": [
+    {
+     "n": "BBC",
+     "url": "https://www.bbc.co.uk/news/articles/c65yn1v99ypmo",
+     "d": "2026-11-07"
+    },
     {
      "n": "Al Jazeera",
-     "url": "https://www.aljazeera.com/news/2026/11/7/president-herzog-faces-key-choice-as-israel-struggles-to-form-government",
+     "url": "https://www.aljazeera.com/news/2026/11/7/yemeni-govt-forces-report-advances-as-houthis-say-deadly-strikes-hit-sanaa",
      "d": "2026-11-07"
     },
     {
-     "n": "The Guardian",
-     "url": "https://www.theguardian.com/world/2026/nov/07/us-midterm-results-may-help-unite-israeli-coalition-to-unseat-netanyahu",
+     "n": "Reuters",
+     "url": "https://www.reuters.com/world/middle-east/houthi-run-health-ministry-says-airstrikes-it-blames-saudi-arabia-kill-27-near-2026-11-07/",
      "d": "2026-11-07"
-    }
-   ]
-  },
-  {
-   "t_es": "Tanzania condena a cuatro años de cárcel al líder opositor Tundu Lissu por incitación, tras absolverlo de traición",
-   "t_en": "Tanzania jails opposition leader Tundu Lissu for four years for incitement after acquitting him of treason",
-   "res_es": "Un tribunal de tres jueces en Dar es Salaam absolvió al líder de Chadema de traición, delito que puede castigarse con la muerte, pero lo condenó por incitar a sus seguidores a perturbar las elecciones de 2025, por su lema «Sin reformas, no hay elecciones». Lissu, detenido desde abril de 2025, dijo que nunca fue acusado de incitación y calificó el proceso de persecución política; puede recurrir. Si se confirma la pena, no podría presentarse en 2030. Amnistía Internacional habló de «parodia de justicia». La presidenta Samia Suluhu Hassan ganó en 2025 con el 98 % de los votos, con la oposición excluida; una comisión oficial cifró en al menos 518 los muertos en las protestas, y el Gobierno niega haber usado fuerza excesiva.",
-   "res_en": "A three-judge panel in Dar es Salaam acquitted the Chadema leader of treason, which can carry the death penalty, but convicted him of inciting supporters to disrupt the 2025 election with his slogan 'No Reforms, No Election'. Lissu, detained since April 2025, said he was never charged with incitement and called the case political persecution; he can appeal. If the sentence stands, he would be barred from the 2030 election. Amnesty International called it a 'travesty of justice'. President Samia Suluhu Hassan won in 2025 with 98% of the vote with the opposition excluded; an official commission put the protest death toll at at least 518, and the government denies using excessive force.",
-   "por_que_es": "La condena deja fuera de juego al principal rival del Gobierno y aviva las dudas sobre las libertades políticas en África Oriental.",
-   "por_que_en": "The verdict sidelines the government's main rival and deepens doubts about political freedom in East Africa.",
-   "reg_es": "África",
-   "reg_en": "Africa",
-   "paises": [
-    "tanzania"
-   ],
-   "fuentes": [
-    {
-     "n": "BBC News",
-     "url": "https://www.bbc.co.uk/news/articles/ckp8g4pm0y4lo",
-     "d": "2026-11-06"
-    },
-    {
-     "n": "DW",
-     "url": "https://www.dw.com/en/tanzania-opposition-leader-tundu-lissu-jailed-for-four-years/a-79875248",
-     "d": "2026-11-06"
     }
    ]
   }
  ],
  "archivo": [
+  {
+   "fecha": "2026-11-07",
+   "actualizado": "2026-11-07T08:04+01:00",
+   "items": [
+    {
+     "t_es": "Trump confirma nuevos ataques «menores» de EE. UU. en la isla iraní de Qeshm, mientras Catar propone reabrir Ormuz a cambio de inspecciones nucleares",
+     "t_en": "Trump confirms new 'minor' US strikes on Iran's Qeshm island as Qatar proposes reopening Hormuz in exchange for nuclear inspections",
+     "res_es": "Trump dijo que el ejército de EE. UU. atacó el viernes un sistema de defensa antiaérea en Qeshm, en el estrecho de Ormuz, y lo calificó de ataque «menor»; la televisión estatal iraní informó de dos explosiones en la zona de Suza y el ejército iraní afirmó haber derribado un dron MQ-9. Es el primer ataque desde las elecciones de mitad de mandato. El Mando Central ofreció hasta 20 millones de dólares por información sobre el programa nuclear iraní. Según The Guardian, Catar, principal mediador, propone que EE. UU. levante el bloqueo naval y libere parte de 8.000 millones en activos congelados, a cambio de que Irán permita visitas del OIEA a sus instalaciones bombardeadas y reabra el estrecho. Trump dijo que hay «muchos avances» en las conversaciones.",
+     "res_en": "Trump said the US military struck an air defence system on Qeshm island in the Strait of Hormuz on Friday, calling it a 'minor' strike; Iranian state TV reported two explosions in the Suza area and Iran's army said it downed an MQ-9 drone. It is the first strike since the US midterm elections. US Central Command offered up to $20m for information on Iran's nuclear programme. According to The Guardian, lead mediator Qatar proposes that the US lift its naval blockade and release part of $8bn in frozen assets, in return for Iran allowing IAEA visits to its bombed facilities and reopening the strait. Trump said there has been 'a lot of progress' in talks.",
+     "por_que_es": "Los ataques y la mediación avanzan a la vez: de la secuencia de concesiones depende la reapertura de una ruta clave para el petróleo mundial.",
+     "por_que_en": "Strikes and mediation are moving in parallel: the reopening of a key route for the world's oil depends on the sequencing of concessions.",
+     "reg_es": "Oriente Medio",
+     "reg_en": "Middle East",
+     "paises": [
+      "us",
+      "iran",
+      "catar"
+     ],
+     "fuentes": [
+      {
+       "n": "Al Jazeera",
+       "url": "https://www.aljazeera.com/news/2026/11/7/trump-confirms-new-us-strikes-on-irans-qeshm-island",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "The Guardian",
+       "url": "https://www.theguardian.com/world/2026/nov/07/us-carries-out-another-round-of-minor-strikes-on-iran-trump-says",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "The Guardian",
+       "url": "https://www.theguardian.com/world/2026/nov/07/strait-of-hormuz-qatar-plan-iran-nuclear-inspections",
+       "d": "2026-11-07"
+      }
+     ]
+    },
+    {
+     "t_es": "La UE, Polonia y Zelenski rechazan un acuerdo de seguridad EE. UU.-Rusia sobre Europa sin los europeos; misiles balísticos rusos alcanzan Kiev antes de Abu Dabi",
+     "t_en": "The EU, Poland and Zelensky reject a US-Russia security deal on Europe without Europeans; Russian ballistic missiles hit Kyiv ahead of Abu Dhabi",
+     "res_es": "En Varsovia, la jefa de la diplomacia europea, Kaja Kallas, dijo que la UE no aplicará ningún acuerdo del que no sea parte y rechazó reconocer los territorios ocupados o limitar el ejército ucraniano. El ministro polaco Radosław Sikorski pidió primero un alto el fuego y después negociar. Zelenski advirtió en CNN de que no quiere «una Yalta 2.0», tras decir Trump que el acuerdo con Rusia «podría implicar a toda Europa» y Kushner que Washington prepara un marco de seguridad europeo antes de las conversaciones de Abu Dabi del 10 y 11 de noviembre. En la noche del 6 al 7, Rusia lanzó al menos seis misiles balísticos contra Kiev: cinco heridos, entre ellos un niño, y un edificio de una guardería destruido, según los servicios de emergencia.",
+     "res_en": "In Warsaw, EU foreign policy chief Kaja Kallas said the EU will not implement any deal it is not party to and rejected recognising occupied territory or limiting Ukraine's army. Polish Foreign Minister Radosław Sikorski called for a ceasefire first and negotiations afterwards. Zelensky told CNN he does not want 'Yalta 2.0', after Trump said a deal with Russia 'might involve all of Europe' and Kushner said Washington is preparing a European security framework ahead of the Abu Dhabi talks on 10-11 November. Overnight on 6-7 November Russia fired at least six ballistic missiles at Kyiv: five people were injured, including a child, and a building on kindergarten grounds was destroyed, emergency services said.",
+     "por_que_es": "Europa exige estar en la mesa justo cuando EE. UU. amplía la negociación de Ucrania a la seguridad de todo el continente.",
+     "por_que_en": "Europe is demanding a seat at the table just as the US widens the Ukraine negotiation to the security of the whole continent.",
+     "reg_es": "Europa",
+     "reg_en": "Europe",
+     "paises": [
+      "ucrania",
+      "rusia",
+      "ue",
+      "polonia",
+      "us"
+     ],
+     "fuentes": [
+      {
+       "n": "Kyiv Post",
+       "url": "https://www.kyivpost.com/post/89408",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "Kyiv Post",
+       "url": "https://www.kyivpost.com/post/89405",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "Kyiv Post",
+       "url": "https://www.kyivpost.com/post/89407",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "Kyiv Post",
+       "url": "https://www.kyivpost.com/post/89404",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "Al Jazeera",
+       "url": "https://www.aljazeera.com/news/2026/11/7/russia-launches-missile-attack-on-kyiv-injuring-residents",
+       "d": "2026-11-07"
+      }
+     ]
+    },
+    {
+     "t_es": "El Senado de Paraguay destituye a Santiago Peña, que queda bajo arresto domiciliario; Pedro Alliana jura como presidente",
+     "t_en": "Paraguay's Senate removes Santiago Peña, who is placed under house arrest; Pedro Alliana is sworn in as president",
+     "res_es": "En lugar de aceptar su dimisión, el Senado aprobó el juicio político contra Peña por 44 de 45 votos y lo acusó de mal desempeño, lo que le retira la inmunidad. La Fiscalía ordenó su arresto domiciliario por sospechas de abuso de confianza, tráfico de influencias y malversación, y emitió una orden de detención contra el exgobernador del Banco Central, Carlos Carvallo. La crisis se desató con el colapso del banco digital Ueno, intervenido por el Banco Central: unos tres millones de clientes no pueden acceder a sus ahorros y pensiones. Peña, que tuvo acciones en la empresa dueña del banco hasta el año pasado, niega cualquier irregularidad. El vicepresidente Pedro Alliana asumió y prometió compensar a los afectados.",
+     "res_en": "Rather than accept his resignation, the Senate impeached Peña by 44 votes out of 45 and charged him with misconduct, stripping him of immunity. Prosecutors ordered his house arrest on suspicion of breach of trust, influence peddling and misappropriation, and issued an arrest warrant for former central bank governor Carlos Carvallo. The crisis was triggered by the collapse of digital bank Ueno, seized by the central bank: some three million customers cannot access their savings and pensions. Peña, who held shares in the bank's parent company until last year, denies wrongdoing. Vice-President Pedro Alliana took office and promised to compensate those affected.",
+     "por_que_es": "Una quiebra bancaria ha derribado a un presidente en días y deja a más de la mitad del país sin acceso a su dinero.",
+     "por_que_en": "A bank failure has toppled a president within days and left more than half the country without access to its money.",
+     "reg_es": "América Latina",
+     "reg_en": "Latin America",
+     "paises": [
+      "paraguay"
+     ],
+     "fuentes": [
+      {
+       "n": "BBC News",
+       "url": "https://www.bbc.co.uk/news/articles/c68jzzvjgdy9o",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "Al Jazeera",
+       "url": "https://www.aljazeera.com/news/2026/11/7/paraguays-santiago-pena-under-arrest-new-president-pedro-alliana-sworn-in",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "The Guardian",
+       "url": "https://www.theguardian.com/world/2026/nov/07/ousted-paraguay-president-under-house-arrest-after-banking-crisis-leaves-60-of-country-unable-to-access-accounts",
+       "d": "2026-11-07"
+      }
+     ]
+    },
+    {
+     "t_es": "Israel: Herzog decidirá el domingo quién intenta formar gobierno; Eisenkot suma 67 apoyos frente a 46 de Netanyahu",
+     "t_en": "Israel: Herzog will decide on Sunday who gets to try forming a government; Eisenkot has 67 endorsements to Netanyahu's 46",
+     "res_es": "Tras unas elecciones del 27 de octubre sin mayoría, 67 de los 120 diputados recomendaron al exjefe del ejército Gadi Eisenkot y 46 a Benjamin Netanyahu. Pero la ventaja de Eisenkot depende de los partidos que representan a los ciudadanos palestinos de Israel, que lograron un récord de 19 escaños y con los que él descarta gobernar. Ningún bloque llega a los 61 escaños: el de Netanyahu tiene 53, y Judaísmo Unido de la Torá no lo respaldó por la falta de una exención del servicio militar para los ultraortodoxos. Herzog no se ha comprometido con ninguno. Según The Guardian, la victoria demócrata en EE. UU. podría empujar a la oposición israelí a unirse para desbancar a Netanyahu.",
+     "res_en": "After an inconclusive 27 October election, 67 of the 120 Knesset members endorsed former army chief Gadi Eisenkot and 46 Benjamin Netanyahu. But Eisenkot's lead relies on parties representing Palestinian citizens of Israel, which won a record 19 seats and with which he rules out governing. No bloc reaches 61 seats: Netanyahu's has 53, and United Torah Judaism withheld its backing over the failure to exempt ultra-Orthodox Israelis from military service. Herzog has not committed to either side. According to The Guardian, the Democratic win in the US could push Israel's opposition to unite to unseat Netanyahu.",
+     "por_que_es": "Netanyahu podría no recibir el primer encargo de formar gobierno, con efectos en la guerra regional y en la relación con EE. UU.",
+     "por_que_en": "Netanyahu may not get the first mandate to form a government, with effects on the regional war and on ties with the US.",
+     "reg_es": "Oriente Medio",
+     "reg_en": "Middle East",
+     "paises": [
+      "israel",
+      "us"
+     ],
+     "fuentes": [
+      {
+       "n": "Al Jazeera",
+       "url": "https://www.aljazeera.com/news/2026/11/7/president-herzog-faces-key-choice-as-israel-struggles-to-form-government",
+       "d": "2026-11-07"
+      },
+      {
+       "n": "The Guardian",
+       "url": "https://www.theguardian.com/world/2026/nov/07/us-midterm-results-may-help-unite-israeli-coalition-to-unseat-netanyahu",
+       "d": "2026-11-07"
+      }
+     ]
+    },
+    {
+     "t_es": "Tanzania condena a cuatro años de cárcel al líder opositor Tundu Lissu por incitación, tras absolverlo de traición",
+     "t_en": "Tanzania jails opposition leader Tundu Lissu for four years for incitement after acquitting him of treason",
+     "res_es": "Un tribunal de tres jueces en Dar es Salaam absolvió al líder de Chadema de traición, delito que puede castigarse con la muerte, pero lo condenó por incitar a sus seguidores a perturbar las elecciones de 2025, por su lema «Sin reformas, no hay elecciones». Lissu, detenido desde abril de 2025, dijo que nunca fue acusado de incitación y calificó el proceso de persecución política; puede recurrir. Si se confirma la pena, no podría presentarse en 2030. Amnistía Internacional habló de «parodia de justicia». La presidenta Samia Suluhu Hassan ganó en 2025 con el 98 % de los votos, con la oposición excluida; una comisión oficial cifró en al menos 518 los muertos en las protestas, y el Gobierno niega haber usado fuerza excesiva.",
+     "res_en": "A three-judge panel in Dar es Salaam acquitted the Chadema leader of treason, which can carry the death penalty, but convicted him of inciting supporters to disrupt the 2025 election with his slogan 'No Reforms, No Election'. Lissu, detained since April 2025, said he was never charged with incitement and called the case political persecution; he can appeal. If the sentence stands, he would be barred from the 2030 election. Amnesty International called it a 'travesty of justice'. President Samia Suluhu Hassan won in 2025 with 98% of the vote with the opposition excluded; an official commission put the protest death toll at at least 518, and the government denies using excessive force.",
+     "por_que_es": "La condena deja fuera de juego al principal rival del Gobierno y aviva las dudas sobre las libertades políticas en África Oriental.",
+     "por_que_en": "The verdict sidelines the government's main rival and deepens doubts about political freedom in East Africa.",
+     "reg_es": "África",
+     "reg_en": "Africa",
+     "paises": [
+      "tanzania"
+     ],
+     "fuentes": [
+      {
+       "n": "BBC News",
+       "url": "https://www.bbc.co.uk/news/articles/ckp8g4pm0y4lo",
+       "d": "2026-11-06"
+      },
+      {
+       "n": "DW",
+       "url": "https://www.dw.com/en/tanzania-opposition-leader-tundu-lissu-jailed-for-four-years/a-79875248",
+       "d": "2026-11-06"
+      }
+     ]
+    }
+   ]
+  },
   {
    "fecha": "2026-11-06",
    "actualizado": "2026-11-06T08:12+01:00",
@@ -2239,175 +2401,6 @@
        "n": "CNN",
        "url": "https://www.cnn.com/2026/10/24/china/north-koreas-kim-crosses-china-bridge-intl",
        "d": "2026-10-24"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "fecha": "2026-10-24",
-   "actualizado": "2026-10-24T08:06+02:00",
-   "items": [
-    {
-     "t_es": "Rusia y Ucrania pactan un alto el fuego local en Oleshky, mediado según la Casa Blanca por Melania Trump",
-     "t_en": "Russia and Ukraine agree a local ceasefire in Oleshky, brokered by Melania Trump according to the White House",
-     "res_es": "La Casa Blanca anunció el viernes que Rusia y Ucrania han acordado una tregua en Oleshky, ciudad ocupada por Rusia junto al Dniéper, para llevar ayuda humanitaria y evacuar a civiles, y atribuyó la mediación a la primera dama, Melania Trump. Kiev y Moscú confirmaron el acuerdo y dijeron que dejarán de disparar a partir del 27 de octubre (la Casa Blanca habla del 29). Los vecinos que quedan —unos 2.000 en la ciudad, según DW y The Guardian— sufren una grave escasez de comida, agua y medicinas. Zelenski afirmó además que negociadores de EE. UU., Ucrania y Rusia se reunirán en Abu Dabi en la primera quincena de noviembre.",
-     "res_en": "The White House said on Friday that Russia and Ukraine have agreed a truce in Oleshky, a Russian-occupied city on the Dnipro, to deliver humanitarian aid and evacuate civilians, crediting First Lady Melania Trump with brokering it. Kyiv and Moscow confirmed the deal and said they would stop firing from 27 October (the White House says the 29th). The remaining residents — about 2,000 in the city, according to DW and The Guardian — face severe shortages of food, water and medicine. Zelensky also said US, Ukrainian and Russian negotiators will meet in Abu Dhabi in the first half of November.",
-     "por_que_es": "Es un acuerdo humanitario puntual, pero muestra canales abiertos entre Kiev y Moscú antes de la nueva ronda de negociaciones a tres bandas.",
-     "por_que_en": "It is a limited humanitarian deal, but it shows open channels between Kyiv and Moscow ahead of the next round of three-way talks.",
-     "reg_es": "Europa · Guerra de Ucrania",
-     "reg_en": "Europe · War in Ukraine",
-     "paises": [
-      "ucrania",
-      "rusia",
-      "us"
-     ],
-     "fuentes": [
-      {
-       "n": "BBC News",
-       "url": "https://www.bbc.com/news/articles/c6vgxkvl4w5eo",
-       "d": "2026-10-23"
-      },
-      {
-       "n": "The Guardian",
-       "url": "https://www.theguardian.com/world/2026/oct/23/ukraine-troops-report-ongoing-problems-with-starlink-satellite-network",
-       "d": "2026-10-23"
-      },
-      {
-       "n": "DW",
-       "url": "https://www.dw.com/en/russia-ukraine-agree-to-us-brokered-1-city-ceasefire/a-79746723",
-       "d": "2026-10-23"
-      },
-      {
-       "n": "Al Jazeera",
-       "url": "https://www.aljazeera.com/news/2026/10/23/white-house-says-melania-trump-secured-a-ceasefire-in-ukraines-oleshky",
-       "d": "2026-10-23"
-      }
-     ]
-    },
-    {
-     "t_es": "Ocho países europeos y de Oriente Próximo piden a EE. UU. e Israel que no vuelvan a atacar Irán",
-     "t_en": "Eight European and Middle Eastern countries urge the US and Israel not to strike Iran again",
-     "res_es": "Los ministros de Exteriores de Turquía, Arabia Saudí, Egipto, Pakistán, Reino Unido, Francia, Alemania e Italia, reunidos el viernes en Estambul, advirtieron de que un nuevo ataque contra Irán extendería la guerra y encarecería aún más el petróleo. El turco Hakan Fidan dijo que ninguno de los participantes respalda otra intervención militar; el grupo también exigió el fin de los ataques hutíes contra Arabia Saudí y la reapertura del estrecho de Ormuz. Ese mismo día, el embajador de EE. UU. en Turquía, Tom Barrack, dijo que Washington podría «absolutamente» atacar Irán este fin de semana, aunque Trump sigue abierto a un acuerdo.",
-     "res_en": "The foreign ministers of Turkey, Saudi Arabia, Egypt, Pakistan, the UK, France, Germany and Italy, meeting in Istanbul on Friday, warned that a new attack on Iran would widen the war and push oil prices even higher. Turkey's Hakan Fidan said none of the participants supports another military intervention; the group also demanded an end to Houthi attacks on Saudi Arabia and the reopening of the Strait of Hormuz. The same day, the US ambassador to Turkey, Tom Barrack, said Washington could \"absolutely\" strike Iran this weekend, although Trump remains open to a deal.",
-     "por_que_es": "Es la primera reunión de este tipo entre potencias europeas y regionales, con Ormuz bloqueado y el crudo en su nivel más alto desde mayo.",
-     "por_que_en": "It is a first-of-its-kind meeting of European and regional powers, with Hormuz blockaded and oil at its highest level since May.",
-     "reg_es": "Oriente Próximo · Golfo",
-     "reg_en": "Middle East · Gulf",
-     "paises": [
-      "iran",
-      "us",
-      "israel",
-      "turquia",
-      "arabia_saudi",
-      "egipto",
-      "pakistan",
-      "uk",
-      "francia",
-      "alemania",
-      "italia"
-     ],
-     "fuentes": [
-      {
-       "n": "The Guardian",
-       "url": "https://www.theguardian.com/world/2026/oct/23/european-middle-eastern-ministers-summit-iran-us-israel",
-       "d": "2026-10-23"
-      },
-      {
-       "n": "Al Jazeera",
-       "url": "https://www.aljazeera.com/news/2026/10/23/european-middle-east-ministers-urge-us-iran-diplomacy-not-new-attacks",
-       "d": "2026-10-23"
-      }
-     ]
-    },
-    {
-     "t_es": "Israel derriba edificios en Hebrón y cierra Cisjordania tras la muerte de dos soldados en un ataque",
-     "t_en": "Israel demolishes buildings in Hebron and seals off the West Bank after two soldiers are killed in an attack",
-     "res_es": "Dos palestinos armados mataron el viernes a dos soldados israelíes e hirieron a otros tres en un puesto de control a la entrada de Hebrón antes de ser abatidos. Netanyahu ordenó el cierre total de Cisjordania y anunció que el ejército «destruirá» el barrio del que procedían los atacantes; las excavadoras empezaron a derribar edificios y cientos de familias recibieron órdenes de desalojo, según Al Jazeera. El sábado, fuerzas israelíes entraron en al menos 15 localidades del norte de Cisjordania y detuvieron a decenas de personas. Los ministros Smotrich y Ben Gvir reclamaron una campaña «como en Gaza» y desmantelar la Autoridad Palestina.",
-     "res_en": "Two Palestinian gunmen killed two Israeli soldiers and wounded three others at a checkpoint at the entrance to Hebron on Friday before being shot dead. Netanyahu ordered a full closure of the West Bank and said the army would \"destroy\" the neighbourhood the attackers came from; bulldozers began demolishing buildings and hundreds of families were ordered to leave their homes, according to Al Jazeera. On Saturday Israeli forces raided at least 15 towns in the northern West Bank and detained dozens of people. Ministers Smotrich and Ben Gvir called for a campaign \"like in Gaza\" and for dismantling the Palestinian Authority.",
-     "por_que_es": "Llega a cuatro días de las elecciones israelíes del 27 de octubre, con la seguridad en el centro de la campaña, y Netanyahu dice haber revisado planes para la mayor operación en Cisjordania en décadas.",
-     "por_que_en": "It comes four days before Israel's 27 October election, with security at the heart of the campaign, and Netanyahu says he has reviewed plans for the largest West Bank operation in decades.",
-     "reg_es": "Oriente Próximo · Cisjordania (Palestina)",
-     "reg_en": "Middle East · West Bank (Palestine)",
-     "paises": [
-      "israel"
-     ],
-     "fuentes": [
-      {
-       "n": "BBC News",
-       "url": "https://www.bbc.com/news/articles/cq4g1p974wxko",
-       "d": "2026-10-23"
-      },
-      {
-       "n": "DW",
-       "url": "https://www.dw.com/en/israel-orders-home-demolitions-after-soldiers-killed-in-west-bank/a-79739292",
-       "d": "2026-10-23"
-      },
-      {
-       "n": "Al Jazeera",
-       "url": "https://www.aljazeera.com/news/2026/10/24/israel-raids-towns-detains-dozens-of-palestinians-in-occupied-west-bank",
-       "d": "2026-10-24"
-      }
-     ]
-    },
-    {
-     "t_es": "Siete muertos en un ataque armado contra un funeral en una iglesia de Jordania",
-     "t_en": "Seven killed as gunmen attack a funeral at a church in Jordan",
-     "res_es": "Varios hombres armados abrieron fuego el viernes durante un funeral en una iglesia ortodoxa griega de Karak, al sur de Amán, y mataron a siete personas; decenas resultaron heridas (34 según la BBC, 40 según AP/The Guardian). Los atacantes huyeron en un vehículo y nadie ha reivindicado el ataque. El ministro del Interior, Mazen al-Faraya, lo atribuyó a un «grupo de extremistas», el rey Abdalá II prometió «las penas más duras» y el Gobierno decretó tres días de luto nacional.",
-     "res_en": "Gunmen opened fire during a funeral at a Greek Orthodox church in Karak, south of Amman, on Friday, killing seven people; dozens were wounded (34 according to the BBC, 40 according to AP/The Guardian). The attackers fled in a vehicle and no one has claimed responsibility. Interior Minister Mazen al-Faraya blamed a \"group of extremists\", King Abdullah II promised \"the harshest penalties\" and the government declared three days of national mourning.",
-     "por_que_es": "Los ataques así son muy raros en Jordania, aliado clave de Occidente y custodio de lugares santos cristianos y musulmanes de Jerusalén.",
-     "por_que_en": "Such attacks are very rare in Jordan, a key Western ally and custodian of Christian and Muslim holy sites in Jerusalem.",
-     "reg_es": "Oriente Próximo",
-     "reg_en": "Middle East",
-     "paises": [
-      "jordania"
-     ],
-     "fuentes": [
-      {
-       "n": "BBC News",
-       "url": "https://www.bbc.com/news/articles/ck87zlpzny15o",
-       "d": "2026-10-23"
-      },
-      {
-       "n": "The Guardian",
-       "url": "https://www.theguardian.com/world/2026/oct/24/seven-killed-and-40-injured-after-gunmen-open-fire-at-church-funeral-in-jordan",
-       "d": "2026-10-24"
-      },
-      {
-       "n": "Al Jazeera",
-       "url": "https://www.aljazeera.com/news/2026/10/23/at-least-seven-killed-after-gunmen-open-fire-at-church-in-jordan",
-       "d": "2026-10-23"
-      },
-      {
-       "n": "DW",
-       "url": "https://www.dw.com/en/jordan-karak-church-shooting-leaves-7-dead-dozens-injured/a-79743535",
-       "d": "2026-10-23"
-      }
-     ]
-    },
-    {
-     "t_es": "EE. UU. retira parte de sus aranceles a Canadá a dos semanas de las elecciones de mitad de mandato",
-     "t_en": "US lifts some tariffs on Canada two weeks before the midterm elections",
-     "res_es": "La Casa Blanca anunció el viernes que desde el 30 de octubre retira aranceles a algunos productos canadienses, como tableros de contrachapado, ciertos papeles, maquinaria y equipos de refrigeración, aunque impone otros nuevos a alfombras, algunas válvulas y residuos. La senadora republicana Susan Collins, en una reñida lucha por su escaño de Maine, dijo haber presionado por la medida. EE. UU. aplicó un arancel del 50 % a 20.000 millones de dólares en bienes canadienses tras romperse las negociaciones en agosto, y Canadá respondió con represalias equivalentes; Ottawa dice que estudia el anuncio y está dispuesta a negociar «de buena fe».",
-     "res_en": "The White House said on Friday that from 30 October it will lift tariffs on some Canadian products, such as plywood sheets, some paper products, machinery and refrigeration equipment, while imposing new ones on carpets, certain valves and waste products. Republican Senator Susan Collins, in a tight race to keep her Maine seat, said she had lobbied for the change. The US imposed a 50% tariff on $20bn of Canadian goods after talks collapsed in August, and Canada matched it; Ottawa says it is assessing the move and stands ready to negotiate \"in good faith\".",
-     "por_que_es": "Suaviza ligeramente la guerra comercial entre dos aliados y grandes socios comerciales, días después de que la embajada de EE. UU. acusara a Canadá de injerencia electoral.",
-     "por_que_en": "It slightly eases the trade war between two allies and major trading partners, days after the US embassy accused Canada of election interference.",
-     "reg_es": "América del Norte",
-     "reg_en": "North America",
-     "paises": [
-      "us",
-      "canada"
-     ],
-     "fuentes": [
-      {
-       "n": "BBC News",
-       "url": "https://www.bbc.com/news/articles/c60qk573yzz8o",
-       "d": "2026-10-24"
-      },
-      {
-       "n": "DW",
-       "url": "https://www.dw.com/en/trump-eases-canada-tariffs-ahead-of-us-midterms/a-79747634",
-       "d": "2026-10-23"
       }
      ]
     }
