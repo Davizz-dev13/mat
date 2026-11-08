@@ -572,7 +572,7 @@ const GHOUR=[['de día','by day','día','day'],['al amanecer','at dawn','amanece
 /* plantillas nuevas (además de los 7 casos) */
 function swapTxt(o,pairs){ if(Array.isArray(o)&&o.length===2&&typeof o[0]==='string'){ return o.map(s=>pairs.reduce((a,p)=>a.split(p[0]).join(p[1]),s)); } return o; }
 function remapStep(st,pairs){ st.q=swapTxt(st.q,pairs); st.hint=swapTxt(st.hint,pairs); st.opts.forEach(o=>{ o.t=swapTxt(o.t,pairs); o.why=swapTxt(o.why,pairs); }); return st; }
-const ARMP=[['en la rodilla','en el codo'],['at the knee','at the elbow'],['no pierda la pierna','no pierda el brazo'],['lose the leg','lose the arm']];
+const ARMP=[['herida de bala en el muslo','herida de bala en el brazo'],['gunshot wound to the thigh','gunshot wound to the arm'],['en la rodilla','en el codo'],['at the knee','at the elbow'],['no pierda la pierna','no pierda el brazo'],['lose the leg','lose the arm']];
 const GBRAZO=()=>{ const m=caseById('muslo'); return Object.assign({},m,{id:'brazo',lost0:0.15,w:[66,90],
  title:['Herida de bala en el brazo','Gunshot wound to the arm'],
  mech:S=>['Disparo en el brazo '+SIDE(S)+', por encima del codo. Sangrado arterial: sangre roja que sale a borbotones.','Gunshot to the '+SIDE(S)+' upper arm, above the elbow. Arterial bleeding: bright red blood spurting.'],
@@ -807,7 +807,7 @@ function gBuild(spec,att){
  const ids=[]; for(let i=0;i<n;i++){ const pool=pools[mx].filter(x=>!ids.includes(x)||x==='muslo'||x==='brazo'); ids.push(i===0?pools[mx][Math.floor(r()*(pools[mx].length-1))]:i===2?(ids.includes('leve')?(ctx.cold&&!ids.includes('frio')?'frio':(pick(pool.filter(x=>x!=='pelvis'&&x!=='amputacion'&&x!=='quemado'&&x!=='cabeza'))||'brazo')):(ctx.cold&&r()<0.4&&!ids.includes('frio')?'frio':'leve')):pick(pool)); }
  /* dilemas posibles */
  g.dl={};
- if(n>=2&&r()<0.38){ const lims=['muslo','brazo','amputacion']; if(!lims.includes(ids[0])) ids[0]=pick(lims); if(!lims.includes(ids[1])||ids[1]===ids[0]) ids[1]=pick(lims.filter(x=>x!==ids[0])); for(let i=2;i<ids.length;i++) if(lims.includes(ids[i])) ids[i]='leve'; g.dl.tq=1; }
+ if(n>=2&&r()<0.38){ const lims=mx==='ied'?['muslo','brazo','amputacion']:['muslo','brazo']; if(!lims.includes(ids[0])) ids[0]=pick(lims); if(!lims.includes(ids[1])||ids[1]===ids[0]) ids[1]=pick(lims.filter(x=>x!==ids[0])); for(let i=2;i<ids.length;i++) if(lims.includes(ids[i])) ids[i]='leve'; g.dl.tq=1; }
  if(n>=2&&ids.includes('leve')&&ids.some(x=>GTPL[x].cat==='T1')) g.dl.self=1;
  if(n>=2&&mx==='ied'&&spec.mode==='r'&&r()<0.5) g.dl.exp=1;
  /* módulos secundarios */
