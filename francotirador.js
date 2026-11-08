@@ -9,6 +9,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const nf=(v,d)=>{ d=d==null?1:d; const s=(Math.round(v*Math.pow(10,d))/Math.pow(10,d)).toFixed(d); return EN()?s:s.replace('.',','); };
 const ni=v=>{ const s=String(Math.round(v)); return EN()?s.replace(/\B(?=(\d{3})+(?!\d))/g,','):s.replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+const nfs=(v,d)=>(v<0&&Math.abs(v)>=0.5*Math.pow(10,-(d==null?1:d))?'−':'')+nf(Math.abs(v),d);
 const EST=()=>'<span class="frest">'+L('Estimación','Estimate')+'</span>';
 let RND=Math.random;
 function rng(seed){ let a=seed>>>0; return function(){ a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
@@ -102,9 +103,23 @@ const STAGES=[
  {id:'montana',n:['Alta montaña','High mountains'],d:['2.300 m de altitud y aire fino; disparos en pendiente','2,300 m altitude and thin air; sloped shots'],alt:2300,T:[-2,8],rh:[40,70],lat:42.7,az:[180,0,90],ter:'montana',
   sky:['#3a6fb0','#cfe0f0'],far:'#7d8a96',near:'#56653f',mid:'#7f8a5c',hz:'#d8e2ea'},
  {id:'artico',n:['Campo de tiro ártico','Arctic range'],d:['−18 °C y aire denso a 69° de latitud norte','−18 °C dense air at 69° north'],alt:80,T:[-24,-12],rh:[60,85],lat:69.3,az:[0,270,90],ter:'artico',
-  sky:['#6f8fb3','#dfe8f1'],far:'#a9b6c4',near:'#e9eef2',mid:'#d5dde5',hz:'#eef3f7'}
+  sky:['#6f8fb3','#dfe8f1'],far:'#a9b6c4',near:'#e9eef2',mid:'#d5dde5',hz:'#eef3f7'},
+ {id:'noche',n:['Campo de tiro nocturno','Night range'],d:['La meseta de noche y sin luna: visor de visión nocturna o térmico','The plateau on a moonless night: night-vision or thermal scope'],alt:700,T:[2,9],rh:[60,85],lat:40.4,az:[270,90,0,180],ter:'campo',night:true,
+  sky:['#06090f','#142030'],far:'#1d242c',near:'#171c13',mid:'#20261a',hz:'#26303a'}
 ];
-const MODES={aprende:{n:['Aprende a disparar','Learn to shoot']},facil:{n:['Fácil','Easy']},veterano:{n:['Veterano','Veteran']},desafio:{n:['Desafío','Challenge']}};
+const MODES={aprende:{n:['Aprende a disparar','Learn to shoot']},facil:{n:['Fácil','Easy']},veterano:{n:['Veterano','Veteran']},desafio:{n:['Desafío','Challenge']},movil:{n:['Blancos en movimiento','Moving targets']},record:{n:['Distancias récord','Record distances']}};
+/* modos con computadora balística (reglas de Fácil) */
+const EZ=m=>{ m=m||(G&&G.mode); return m==='facil'||m==='movil'||m==='record'; };
+/* el observador ayuda en todos los modos menos en Desafío (el más difícil) y en las lecciones */
+const SPOT=()=>!!G&&!G.tut&&G.mode!=='desafio'&&CFG.spot!==false;
+const RM=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+/* Distancias récord: los disparos más largos confirmados en combate (Wikipedia, «Longest recorded sniper kills»), aquí contra placas de acero */
+const RECS=[
+ {d:2430,y:2002,who:['Rob Furlong, ejército de Canadá (Afganistán)','Rob Furlong, Canadian Army (Afghanistan)'],gun:'McMillan TAC-50 · .50 BMG',same:1},
+ {d:2475,y:2009,who:['Craig Harrison, ejército británico (Afganistán)','Craig Harrison, British Army (Afghanistan)'],gun:'Accuracy International L115A3 · .338 Lapua Magnum',same:0},
+ {d:2815,y:2012,who:['2.º Regimiento de Comandos de Australia (Afganistán)','Australian 2nd Commando Regiment (Afghanistan)'],gun:'Barrett M82A1 · .50 BMG',same:2},
+ {d:3540,y:2017,who:['JTF2, fuerzas especiales de Canadá (Irak)','JTF2, Canadian special forces (Iraq)'],gun:'McMillan TAC-50 · .50 BMG',same:1}];
+const RECSRC='https://en.wikipedia.org/wiki/Longest_recorded_sniper_kills';
 const MOA_PER_MIL=3.43775;
 
 /* ===== Estado ===== */
@@ -138,39 +153,58 @@ function bandOf(x){ return x<G.wind.e1?0:(x<G.wind.e2?1:2); }
 function comps(w,A){ const r=(w.dir-A)*Math.PI/180; return {tail:-w.s*Math.cos(r),cross:-w.s*Math.sin(r)}; }
 
 /* ===== Mundo ===== */
-function newGame(){ const rf=rifleOf(CFG.rifle), st=stageOf(CFG.stage); const mode=CFG.mode;
+function newGame(){ const mode=CFG.mode; const rf=mode==='record'?rifleOf('m82'):rifleOf(CFG.rifle), st=stageOf(CFG.stage); const ez=EZ(mode);
   const seed=mode==='desafio'?(STAGES.indexOf(st)*7919+RIFLES.indexOf(rf)*104729+20261108):((Date.now()^(Math.random()*1e9))>>>0);
   RND=rng(seed);
   const T=Math.round(rr(st.T[0],st.T[1])), rh=Math.round(rr(st.rh[0],st.rh[1])), dp=Math.round(rr(-12,12));
   const az=st.az[Math.floor(RND()*st.az.length)];
   const env=stageEnv(st,T,rh,dp);
-  let dmin,dmax; if(mode==='facil'){ dmin=300; dmax=800; } else { dmin=600; dmax=rf.maxV; }
-  const n=5; const ds=[]; for(let i=0;i<n;i++){ const f=n===1?0:i/(n-1); ds.push(Math.round((dmin+(dmax-dmin)*f+rr(-25,25))/5)*5); }
+  let dmin,dmax; if(mode==='facil'){ dmin=300; dmax=800; } else if(mode==='movil'){ dmin=300; dmax=700; } else { dmin=600; dmax=rf.maxV; }
+  const n=mode==='record'?RECS.length:5; const ds=[]; for(let i=0;i<n;i++){ const f=n===1?0:i/(n-1); ds.push(Math.round((dmin+(dmax-dmin)*f+rr(-25,25))/5)*5); }
   ds[0]=Math.max(dmin,ds[0]); ds[n-1]=Math.min(dmax,ds[n-1]);
+  if(mode==='record') RECS.forEach((r,i)=>{ ds[i]=r.d; });
   G={zone:Math.max.apply(null,ds)+220};
-  const us=[-120,-60,0,60,120].map(u=>u+rr(-18,18)); for(let i=us.length-1;i>0;i--){ const j=Math.floor(RND()*(i+1)); [us[i],us[j]]=[us[j],us[i]]; }
-  const targets=ds.map((d,i)=>{ const mil=mode==='facil'?1.0:0.75; let w=Math.max(0.3,Math.round(d*mil/1000*10)/10); const shape=i%2?'gong':'placa';
-    const u=us[i]; const g=terrain(st,d,u); return {i:i,d:d,u:u,w:w,h:shape==='gong'?w:w,shape:shape,post:0.9,gy:g,hits:[],res:null,shots:0,pts:0,lased:null}; });
+  const us=(mode==='movil'?[-160,-80,0,80,160]:(mode==='record'?[-90,-30,30,90]:[-120,-60,0,60,120])).map(u=>u+rr(-18,18)); for(let i=us.length-1;i>0;i--){ const j=Math.floor(RND()*(i+1)); [us[i],us[j]]=[us[j],us[i]]; }
+  const targets=ds.map((d,i)=>{ const mil=mode==='record'?0.6:(ez?1.0:0.75); let w=Math.max(0.3,Math.round(d*mil/1000*10)/10); const shape=i%2?'gong':'placa';
+    const u=us[i]; const g=terrain(st,d,u); return {i:i,d:d,u:u,w:w,h:shape==='gong'?w:w,shape:shape,post:0.9,gy:g,hits:[],res:null,shots:0,pts:0,lased:null,rec:mode==='record'?RECS[i]:null}; });
   targets.forEach(t=>{ t.zc=t.gy+t.post+t.h/2; t.e=Math.atan2(t.zc-EYE,Math.hypot(t.d,0))*1000; t.R=Math.hypot(t.d,t.zc-EYE); });
+  if(mode==='movil'){ const sp=[1.0,1.4,1.8,2.2,2.6]; targets.forEach((t,i)=>{ const v=sp[i]; const open=clamp(Math.round(t.R*0.045),12,18); const Tpass=(open+2*t.w)/v; const gap=1.0; const Tp=Tpass+gap;
+      t.mv={v:v,dir:RND()<0.5?-1:1,open:open,Tpass:Tpass,Tp:Tp,ph:Math.round(RND()*Tp*10)/10}; t.u0=t.u; }); }
   const dm=Math.max.apply(null,ds);
   /* límites de tramo lejos (>15 m) de los puntos medios D/6, D/2 y 5D/6 de cada placa: así el tramo que toca a cada tercio no es dudoso */
   const nud=e0=>{ for(let k=0;k<120;k++){ const e=e0+(k%2?-1:1)*5*Math.ceil(k/2); if(targets.every(t=>[t.R/6,t.R/2,5*t.R/6].every(m=>Math.abs(m-e)>15))) return e; } return e0; };
   const e1=nud(Math.round(dm/3)), e2=nud(Math.round(2*dm/3));
   /* viento del puesto en décimas de m/s y grados enteros: el anemómetro lo da exacto */
-  const s0=Math.round(rr(1.5,mode==='facil'?5:6.5)*10)/10, dir0=Math.round(rr(0,360))%360;
+  const s0=Math.round(rr(1.5,mode==='record'?4:(ez?5:6.5))*10)/10, dir0=Math.round(rr(0,360))%360;
   const b=[{s:s0,dir:dir0}];
-  if(mode==='facil'){ b.push({s:s0,dir:dir0},{s:s0,dir:dir0}); }
+  if(ez){ b.push({s:s0,dir:dir0},{s:s0,dir:dir0}); }
   else { b.push({s:s0*rr(0.6,1.45),dir:(dir0+rr(-35,35)+360)%360},{s:s0*rr(0.5,1.5),dir:(dir0+rr(-45,45)+360)%360}); }
   const flags=[{d:Math.round(e1*0.5),u:-170+rr(-8,8),band:0},{d:Math.round((e1+e2)/2),u:-150+rr(-8,8),band:1},{d:Math.round((e2+dm)/2),u:-135+rr(-8,8),band:2}];
   flags.forEach(f=>{ f.gy=terrain(st,f.d,f.u); });
   const a0=zeroAngle(rf,rf);
   G={zone:G.zone,mode:mode,rf:rf,st:st,seed:seed,T:T,rh:rh,dp:dp,az:az,env:env,targets:targets,flags:flags,a0:a0,
      wind:{b:b,e1:e1,e2:e2},t0:performance.now(),cur:0,view:'pano',zoom:12,aim:{u:targets[0].u,e:targets[0].e},pano:{u:0},
-     dialE:0,dialW:0,score:0,shots:[],readK:null,readL:null,busy:false,breath:0,timeLimit:mode==='facil'?0:(mode==='desafio'?12*60:15*60),
-     rounds:mode==='facil'?5:3,over:false,notes:'',anim:null,shake:{x:0,y:0},recoil:0,sheet:null};
+     dialE:0,dialW:0,score:0,shots:[],readK:null,readL:null,busy:false,breath:0,timeLimit:ez?0:(mode==='desafio'?12*60:15*60),
+     rounds:ez?5:3,over:false,notes:'',anim:null,shake:{x:0,y:0},recoil:0,sheet:null,track:true,trackOff:0,trackLag:0,sensor:'nv',fx:[],lastF:0};
   try{ G.notes=localStorage.getItem('mat_fr_notes')||''; }catch(e){}
   CACHE=null; return G; }
 function now(){ return (performance.now()-G.t0)/1000; }
+/* ===== Blancos en movimiento: la placa cruza un claro entre dos protecciones a velocidad constante, siempre en el mismo sentido =====
+   posición lateral x (m) respecto al centro del claro; sin azar: depende solo del reloj de la partida */
+function mvX(t,tm){ const m=t.mv; if(!m) return 0; const s=((tm+m.ph)%m.Tp+m.Tp)%m.Tp; const x=s<m.Tpass?-(m.open/2+t.w)+m.v*s:(m.open/2+t.w+0.05); return x*m.dir; }
+function mvVis(t,tm){ return !t.mv||Math.abs(mvX(t,tm))<=t.mv.open/2-t.w/2+1e-9; }
+/* disparo válido contra una placa móvil: visible al disparar y al llegar, en la misma pasada (así está a la vista todo el vuelo) */
+function mvOK(t,tf,tof){ if(!t.mv) return true; const m=t.mv; return mvVis(t,tf)&&mvVis(t,tf+tof)&&Math.floor((tf+m.ph)/m.Tp)===Math.floor((tf+tof+m.ph)/m.Tp); }
+function mvU(t,tm){ return t.mv?t.u0+mvX(t,tm)/t.R*1000:t.u; }
+function movUpd(tm){ if(!G||G.mode!=='movil') return; G.targets.forEach(t=>{ if(t.mv) t.u=mvU(t,tm); }); }
+/* adelanto (mil, + a la derecha) = velocidad × tiempo de vuelo real, pasado a ángulo a esa distancia */
+function leadMil(t,tof){ return t.mv?t.mv.v*t.mv.dir*tof*1000/t.R:0; }
+/* «Seguir la placa»: la retícula acompaña el movimiento continuo exactamente; solo el salto de una pasada a la siguiente se suaviza */
+function trackUpd(dt){ if(!G||G.mode!=='movil'||G.view!=='scope'||!G.track){ if(G) G.trackPrev=null; return; } const t=G.targets[G.cur]; if(!t||!t.mv) return;
+  if(G.trackPrev&&G.trackPrev.i===t.i&&Math.abs(t.u-G.trackPrev.u)>3) G.trackErr=(G.trackErr||0)+(G.trackPrev.u-t.u);
+  if(!G.trackPrev||G.trackPrev.i!==t.i) G.trackErr=G.aim.u-(t.u+(G.trackOff||0));
+  G.trackPrev={i:t.i,u:t.u}; G.trackErr=(G.trackErr||0)*Math.exp(-dt*12); if(Math.abs(G.trackErr)<0.03) G.trackErr=0;
+  G.aim.u=t.u+(G.trackOff||0)+G.trackErr; G.trackLag=Math.abs(G.trackErr); }
 function timeLeft(){ return G.timeLimit?Math.max(0,G.timeLimit-now()):Infinity; }
 
 /* ===== Física aplicada al disparo ===== */
@@ -190,7 +224,9 @@ function breakdown(R,u,e,t){ const base={R:R,u:u,e:e,t:t,alpha:0,beta:0};
   const w=shotFlight(Object.assign({},base,{nocor:true,nospin:true}));
   const s=shotFlight(Object.assign({},base,{nowind:true,nocor:true}));
   const c=shotFlight(Object.assign({},base,{nowind:true,nospin:true}));
-  const k=1000/R; const drop=-g.y*k; const wind=w.z*k; const spin=(s.z-g.z)*k; const corH=(c.z-g.z)*k, corV=(c.y-g.y)*k;
+  const k=1000/R; let drop=-g.y*k; const wind=w.z*k; const spin=(s.z-g.z)*k; const corH=(c.z-g.z)*k, corV=(c.y-g.y)*k;
+  /* a distancias récord el ángulo es grande y la suma lineal ya no basta: se ajusta con la trayectoria completa (3 pasadas) */
+  if(G.mode==='record'){ let el=drop-corV, wd=-(wind+spin+corH); for(let it=0;it<3;it++){ const f=shotFlight(Object.assign({},base,{alpha:el,beta:wd})); el-=f.y*k; wd-=f.z*k; } drop=el+corV; }
   return {drop:drop,wind:wind,spin:spin,corH:corH,corV:corV,corHcm:(c.z-g.z)*100,corVcm:(c.y-g.y)*100,elev:drop-corV,wdg:-(wind+spin+corH),t:g.t,v:g.v,mach:g.mach,minMach:g.minMach,
     sg:millerSg(G.rf,G.env)}; }
 /* tabla DOPE de la tarjeta: atmósfera estándar a una altitud de densidad dada */
@@ -249,7 +285,7 @@ function css(){ if(document.getElementById('fr-css')) return; const s=document.c
  '.frview{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#000;touch-action:none;-webkit-user-select:none;user-select:none}',
  '.frview canvas{display:block;width:100%;height:min(100vw,62vh);min-height:300px;cursor:grab}',
  '@media(min-width:900px){.frview canvas{height:min(70vh,640px)}}',
- '.frmsg{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:rgba(10,12,8,.82);border:1px solid #3a3f30;color:#f0f0e6;border-radius:999px;padding:6px 14px;font-size:14px;white-space:nowrap;pointer-events:none;max-width:94%;overflow:hidden;text-overflow:ellipsis}',
+ '.frmsg{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:rgba(10,12,8,.82);border:1px solid #3a3f30;color:#f0f0e6;border-radius:16px;padding:6px 14px;font-size:14px;line-height:1.3;text-align:center;pointer-events:none;width:max-content;max-width:92%;animation:frIn .22s ease-out both}',
  '.frmsg.hit{border-color:#b9d36a;color:#e9ffb0;font-weight:700}',
  '.frmsg.miss{border-color:#c46a4f;color:#ffd0c0}',
  '.frhint{position:absolute;left:8px;bottom:8px;right:8px;font-size:12.5px;color:#e6e8de;text-shadow:0 1px 2px #000;pointer-events:none}',
@@ -300,7 +336,26 @@ function css(){ if(document.getElementById('fr-css')) return; const s=document.c
  '.frsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}',
  '.frsum div{border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:10px;text-align:center}',
  '.frsum b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px}',
- '.frsum span{font-size:12px;color:#a8ad98;text-transform:uppercase;letter-spacing:.06em}'
+ '.frsum span{font-size:12px;color:#a8ad98;text-transform:uppercase;letter-spacing:.06em}',
+ '@keyframes frIn{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}',
+ '@keyframes frUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}',
+ '@keyframes frFade{from{opacity:0}to{opacity:1}}',
+ '.frmsg.out{opacity:0;transition:opacity .25s}',
+ '.frsheet{animation:frUp .28s cubic-bezier(.2,.8,.2,1) both}',
+ '.frbtn,.fropt,.frchip,.frtools button,.frtur button{transition:background-color .18s,border-color .18s,color .18s,transform .12s}',
+ '.frbtn:active,.fropt:active,.frtur button:active{transform:scale(.97)}',
+ '.frbtn.sm.on{border-color:#b9d36a;color:#e9ffb0}',
+ '.frspot{border:1px solid #6d7f3a;background:linear-gradient(180deg,#1b2210,#141a0c);border-radius:12px;padding:10px 12px;margin:8px 0 10px}',
+ '.frspot .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0b0c0d;background:#b9d36a;border-radius:999px;padding:2px 8px;margin-bottom:6px}',
+ '.frspot p{margin:2px 0 8px;font-size:15.5px;line-height:1.45;color:#eef3dc}',
+ '.frspot.rec{border-color:#c9a23a;background:linear-gradient(180deg,#241d0c,#17130a)}',
+ '.frspot.rec .tag{background:#e3b94a}',
+ '.frnote{font-size:12.5px;color:#a8ad98;line-height:1.45;margin:6px 0 0}',
+ '.frrec .rr{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid #2a2f22}',
+ '.frrec .rr b{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:22px;min-width:92px;color:#e3b94a}',
+ '.frrec .rr span{font-size:13px;color:#cfd3c2}',
+ '.frrec p{font-size:13.5px;color:#bfc2b8;line-height:1.5}',
+ '@media (prefers-reduced-motion:reduce){.frsheet,.frmsg{animation:none!important}.frbtn,.fropt{transition:none!important}}'
  ].join('\n'); document.head.appendChild(s); }
 
 /* ===== Textos: cómo funciona, fórmulas, validación ===== */
@@ -338,7 +393,12 @@ function validHTML(){ const r=(a,b,c,d)=>'<tr><td>'+a+'</td><td>'+b+'</td><td>'+
  '</table><p>'+L('El viento de la tabla de Lapua (4 m/s) sale un 9–12 % menor que el del simulador; Lapua no publica su método y su cifra tampoco cuadra con el método de Didion aplicado a sus propias velocidades, así que M.A.T mantiene el cálculo físico.','Lapua’s table wind drift (4 m/s) is 9–12% lower than the simulator’s; Lapua does not publish its method and its figure does not match Didion’s method applied to its own velocities either, so M.A.T keeps the physical calculation.')+'</p></div></details>'; }
 
 /* ===== Menú ===== */
-function intro(){ stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } const rf=rifleOf(CFG.rifle), st=stageOf(CFG.stage); const B=bests();
+function recHTML(){ const rf=rifleOf('m82');
+  return '<div class="frsec">'+L('Las cuatro distancias','The four distances')+'</div><div class="frpanel frrec">'+RECS.map((r,i)=>'<div class="rr"><b>'+ni(r.d)+' m</b><span>'+r.y+' · '+esc(L(r.who[0],r.who[1]))+' · '+esc(r.gun)+'</span></div>').join('')+
+   '<p>'+L('Son las distancias de los disparos más largos confirmados en combate de la lista de Wikipedia («Longest recorded sniper kills»). Aquí se tiran contra placas de acero, todas con el ','These are the distances of the longest confirmed combat shots in Wikipedia’s list (“Longest recorded sniper kills”). Here they are fired at steel plates, all with the ')+esc(rf.n)+' (.50 BMG, '+esc(L(rf.bul[0],rf.bul[1]))+'). '+
+   L('El de 2.815 m se hizo con este mismo fusil; los de 2.430 y 3.540 m con el McMillan TAC-50, del mismo cartucho; el de 2.475 m con un .338 Lapua Magnum. Ucrania ha comunicado tiros de 3.800 m (2023) y 4.000 m (2025) con 14,5 mm que nadie ajeno ha podido comprobar, por eso no están.','The 2,815 m shot used this very rifle; the 2,430 and 3,540 m ones a McMillan TAC-50 in the same cartridge; the 2,475 m one a .338 Lapua Magnum. Ukraine has announced 3,800 m (2023) and 4,000 m (2025) shots in 14.5 mm that no outside party has been able to check, so they are left out.')+
+   ' <a href="'+RECSRC+'" target="_blank" rel="noopener">'+L('Fuente','Source')+'</a></p><p class="frnote">'+L('Placas de 0,6 mil (1,5 m a 2.430 m; 2,1 m a 3.540 m), 5 disparos por placa y computadora balística. La torreta llega a 90 mil de elevación como con una base inclinada: simplificado para el juego.','0.6 mil plates (1.5 m at 2,430 m; 2.1 m at 3,540 m), 5 rounds per plate and a ballistic computer. The turret reaches 90 mil of elevation as with a tapered base: simplified for the game.')+'</p></div>'; }
+function intro(){ stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } const rf=CFG.mode==='record'?rifleOf('m82'):rifleOf(CFG.rifle), st=stageOf(CFG.stage); const B=bests();
  const opt=(on,attr,b,s)=>'<button type="button" class="fropt'+(on?' on':'')+'" '+attr+'><b>'+b+'</b><span>'+s+'</span></button>';
  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],['Francotirador']])+
  '<div class="frhero"><img src="img/juegos/francotirador.webp" width="640" height="400" alt="'+esc(L('Tirador con un Barrett M107 en un campo de tiro de Yibuti','Marksman with a Barrett M107 on a range in Djibouti'))+'"><div class="ht"><b>'+L('FRANCOTIRADOR','SNIPER')+'</b><span>'+L('Placas de acero de 300 a 2.000 m. Mide la distancia, lee el viento y gira las torretas: la bala sigue la física de verdad, incluida la rotación de la Tierra.','Steel plates from 300 to 2,000 m. Range it, read the wind and dial the turrets: the bullet follows real physics, including the Earth’s rotation.')+'</span></div></div>';
@@ -346,17 +406,21 @@ function intro(){ stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } cons
  h+='<div class="frsec">'+L('Modo','Mode')+'</div><div class="frgrid c3">'+
   opt(CFG.mode==='facil','data-m="facil"',L('Fácil','Easy'),L('Mides tú y la computadora balística te da la solución desglosada. 300–800 m.','You measure and the ballistic computer gives you the broken-down solution. 300–800 m.'))+
   opt(CFG.mode==='veterano','data-m="veterano"',L('Veterano','Veteran'),L('Sin computadora: instrumentos, tarjeta, fórmulas y tu cabeza. Coriolis, giro y densidad los calculas tú. 600–2.000 m.','No computer: instruments, data card, formulas and your head. You work out Coriolis, spin and density. 600–2,000 m.'))+
-  opt(CFG.mode==='desafio','data-m="desafio"',L('Desafío','Challenge'),L('Reglas de Veterano con condiciones fijas para batir tu récord.','Veteran rules with fixed conditions to beat your record.'))+'</div>';
+  opt(CFG.mode==='desafio','data-m="desafio"',L('Desafío','Challenge'),L('Reglas de Veterano con condiciones fijas para batir tu récord. Sin observador.','Veteran rules with fixed conditions to beat your record. No spotter.'))+'</div>';
+  h+='<div class="frsec">'+L('Retos especiales','Special challenges')+'</div><div class="frgrid c2">'+
+   opt(CFG.mode==='movil','data-m="movil"',L('Blancos en movimiento','Moving targets'),L('Cinco placas cruzan un claro entre dos protecciones, de 1 a 2,6 m/s. El adelanto sale del tiempo de vuelo real. 300–700 m.','Five plates cross a gap between two covers at 1 to 2.6 m/s. The lead comes from the real time of flight. 300–700 m.'))+
+   opt(CFG.mode==='record','data-m="record"',L('Distancias récord','Record distances'),L('Cuatro placas a las distancias de los disparos más largos confirmados: 2.430, 2.475, 2.815 y 3.540 m. Con el .50 BMG.','Four plates at the distances of the longest confirmed shots: 2,430, 2,475, 2,815 and 3,540 m. With the .50 BMG.'))+'</div>';
   if(CFG.mode==='aprende'){ const ls=CFG.lesson?1:0;
   h+='<div class="frsec">'+L('Lección','Lesson')+'</div><div class="frgrid c2">'+opt(ls===0,'data-l="0"',L('Lección 1 · 480 m','Lesson 1 · 480 m'),L('M24 (.308) en terreno llano, a 700 m de altitud. Aprendes el método completo: distancia, aire, caída, viento, giro y Tierra.','M24 (.308) on flat ground at 700 m altitude. You learn the whole method: distance, air, drop, wind, spin and the Earth.'))+
    opt(ls===1,'data-l="1"',L('Lección 2 · 1.540 m','Lesson 2 · 1,540 m'),L('Sako TRG-42 (.338 Lapua) con frío ártico (−12 °C) y tiro al este a 69° de latitud: aquí el Coriolis y el Eötvös ya cuentan.','Sako TRG-42 (.338 Lapua) in Arctic cold (−12 °C), firing east at 69° north: here Coriolis and Eötvös matter.'))+'</div>';
   h+='<div class="frrow"><button type="button" class="frbtn" id="frgo">'+L('Empezar la lección ','Start lesson ')+(ls+1)+'</button></div>';
   h+='<p style="font-size:13.5px;color:#bfc2b8">'+L('Solo placas y gongs de acero en un campo de tiro. Sin personas.','Steel plates and gongs on a range only. No people.')+'</p>';
  } else {
-  h+='<div class="frsec">'+L('Fusil y cartucho','Rifle and cartridge')+'</div><div class="frgrid c2">'+RIFLES.map(r=>opt(CFG.rifle===r.id,'data-r="'+r.id+'"',esc(r.n)+' · '+esc(L(r.cal[0],r.cal[1])),esc(L(r.bul[0],r.bul[1]))+' · BC '+r.model+' '+nf(r.bc,3)+' · V0 '+r.mv+' m/s · '+L('hasta','to')+' '+ni(r.maxV)+' m')).join('')+'</div>';
+  if(CFG.mode==='record') h+=recHTML(); else h+='<div class="frsec">'+L('Fusil y cartucho','Rifle and cartridge')+'</div><div class="frgrid c2">'+RIFLES.map(r=>opt(CFG.rifle===r.id,'data-r="'+r.id+'"',esc(r.n)+' · '+esc(L(r.cal[0],r.cal[1])),esc(L(r.bul[0],r.bul[1]))+' · BC '+r.model+' '+nf(r.bc,3)+' · V0 '+r.mv+' m/s · '+L('hasta','to')+' '+ni(r.maxV)+' m')).join('')+'</div>';
  h+='<p style="font-size:13.5px;color:#bfc2b8;margin:6px 2px">'+L('Ficha del fusil','Rifle entry')+': <a href="#/a/'+rf.ficha+'">'+esc(rf.n)+'</a></p>';
- h+='<div class="frsec">'+L('Escenario','Location')+'</div><div class="frgrid c2">'+STAGES.map(s=>{ const k=CFG.mode+'|'+s.id+'|'+CFG.rifle; const b=B[k]; return opt(CFG.stage===s.id,'data-s="'+s.id+'"',esc(L(s.n[0],s.n[1])),esc(L(s.d[0],s.d[1]))+' · '+L('latitud','latitude')+' '+nf(s.lat,1)+'°'+(b?' · '+L('récord','best')+' '+b:'')); }).join('')+'</div>';
+ h+='<div class="frsec">'+L('Escenario','Location')+'</div><div class="frgrid c2">'+STAGES.map(s=>{ const k=CFG.mode+'|'+s.id+'|'+rf.id; const b=B[k]; return opt(CFG.stage===s.id,'data-s="'+s.id+'"',esc(L(s.n[0],s.n[1])),esc(L(s.d[0],s.d[1]))+' · '+L('latitud','latitude')+' '+nf(s.lat,1)+'°'+(b?' · '+L('récord','best')+' '+b:'')); }).join('')+'</div>';
  h+='<div class="frrow"><span style="color:#bfc2b8">'+L('Unidades del visor','Scope units')+'</span><span class="frseg"><button type="button" data-u="mil" class="'+(CFG.unit==='mil'?'on':'')+'">MIL</button><button type="button" data-u="moa" class="'+(CFG.unit==='moa'?'on':'')+'">MOA</button></span></div>';
+  if(CFG.mode!=='desafio') h+='<div class="frrow"><span style="color:#bfc2b8">'+L('Ayuda: observador','Help: spotter')+'</span><span class="frseg"><button type="button" data-sp="1" class="'+(CFG.spot!==false?'on':'')+'">'+L('Sí','On')+'</button><button type="button" data-sp="0" class="'+(CFG.spot===false?'on':'')+'">'+L('No','Off')+'</button></span></div><p style="font-size:12.5px;color:#a8ad98;margin:-4px 2px 8px">'+L('Tras un fallo te dice dónde fue el impacto y la corrección exacta en clics. En Desafío no hay.','After a miss he tells you where the round went and the exact correction in clicks. Not in Challenge.')+'</p>';
  h+='<div class="frrow"><button type="button" class="frbtn" id="frgo">'+L('Ir al puesto de tiro','Go to the firing position')+'</button></div>';
  h+='<p style="font-size:13.5px;color:#bfc2b8">'+L('Solo placas y gongs de acero en un campo de tiro. Sin personas.','Steel plates and gongs on a range only. No people.')+'</p>';
  }
@@ -368,10 +432,55 @@ function intro(){ stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } cons
  root.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ CFG.stage=b.getAttribute('data-s'); saveCfg(); intro(); });
  root.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ CFG.lesson=+b.getAttribute('data-l'); saveCfg(); intro(); });
  root.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{ CFG.unit=b.getAttribute('data-u'); saveCfg(); intro(); });
+ root.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ CFG.spot=b.getAttribute('data-sp')==='1'; saveCfg(); intro(); });
  const go=document.getElementById('frgo'); if(go) go.onclick=()=>{ if(CFG.mode==='aprende') newLesson(CFG.lesson||0); else newGame(); game(); window.scrollTo(0,0); };
 }
 
 /* ===== Dibujo del mundo ===== */
+
+/* ===== Efectos de dibujo (solo imagen: no tocan la balística) ===== */
+let NOISE=null; function noiseCv(){ if(NOISE) return NOISE; const n=document.createElement('canvas'); n.width=n.height=160; const x=n.getContext('2d'); const im=x.createImageData(160,160);
+  for(let i=0;i<im.data.length;i+=4){ const v=Math.random()*255; im.data[i]=im.data[i+1]=im.data[i+2]=v; im.data[i+3]=255; } x.putImageData(im,0,0); return NOISE=n; }
+/* reverberación: franjas horizontales de la imagen desplazadas; más fuerte con calor y aumentos, con deriva según el viento cruzado */
+function drawShimmer(c,P,tm,dpr){ if(G.zoom<8||RM()) return; const t=G.targets[G.cur]; if(!t) return; const cr=comps(windAt(tm,bandOf(t.d*0.66)),G.az+t.u*0.0572958).cross;
+  const heat=clamp((G.T+8)/48,0.12,1)*(G.st.night?0.35:1); const amp=(0.35+1.1*heat)*Math.min(1.6,G.zoom/12)*dpr; const step=Math.round(5*dpr); const y0=Math.max(0,Math.floor((P.cy-P.r)*dpr)), y1=Math.min(CV.height,Math.ceil((P.cy+P.r)*dpr));
+  const sp=Math.abs(cr)<0.7?2.2:3+Math.abs(cr)*0.9; const run=cr*0.9*dpr;
+  for(let y=y0;y<y1;y+=step){ const dx=amp*Math.sin(y*0.045/dpr-tm*sp)+amp*0.5*Math.sin(y*0.11/dpr+tm*sp*1.7)+run*Math.sin(tm*0.6+y*0.01); c.drawImage(CACHE.cv,0,y,CV.width,step,dx,y,CV.width,step); } }
+/* hierba junto a cada placa: se inclina con el viento cruzado del tramo de esa placa (lo mismo que dicen las banderas) */
+function drawGrass(c,P,tm){ const rm=RM(); G.targets.forEach((t,ti)=>{ const x0=PX(P,t.mv?t.u0:t.u); if(x0<P.cx-P.r-80||x0>P.cx+P.r+80) return; const d=t.d-4; const yg=PZ(P,d,t.gy); if(yg<P.cy-P.r||yg>P.cy+P.r+20) return;
+   const cr=comps(windAt(tm,bandOf(t.d)),G.az+t.u*0.0572958).cross; const k=1/d*1000*P.s; const hh=0.32*k; if(hh<2) return; const lean=clamp(cr*0.16,-0.95,0.95);
+   const spread=(t.mv?t.mv.open/2+3:t.w*3); c.strokeStyle=G.st.night?'rgba(120,130,110,.55)':(G.st.ter==='artico'?'rgba(150,160,170,.6)':(G.st.ter==='desierto'?'rgba(120,92,52,.7)':'rgba(52,64,28,.75)')); c.lineWidth=Math.max(1,0.012*k); c.beginPath();
+   for(let j=0;j<26;j++){ const hs=hash(ti*97+j,17); const u=(t.mv?t.u0:t.u)+(hs-0.5)*2*spread/d*1000; const x=PX(P,u); const y=PZ(P,d+(hash(j,ti)-0.5)*3,t.gy); const h=hh*(0.6+0.7*hash(j,ti+5));
+     for(let b=-1;b<=1;b++){ const fl=rm?0:Math.sin(tm*(2.2+Math.abs(cr)*0.8)+j*1.3+b)*0.1*clamp(Math.abs(cr)/3,0.2,1); const a=lean+fl+b*0.12; c.moveTo(x+b*1.2,y); c.quadraticCurveTo(x+b*1.2+Math.sin(a)*h*0.4,y-h*0.6,x+b*1.2+Math.sin(a)*h,y-Math.cos(a)*h); } }
+   c.stroke(); }); }
+/* placas móviles: carril, placa y las dos protecciones del claro (encima de la placa) */
+function drawMovers(c,P,tm){ if(G.mode!=='movil') return; G.targets.forEach(t=>{ if(!t.mv) return; const d=t.d; const k=P.scope?1/d*1000*P.s:1/d*1000*P.s*2.2; const m=t.mv;
+   const yg=PZ(P,d,t.gy); const half=m.open/2; const uL=t.u0-(half+1.25)*1000/t.R, uR=t.u0+(half+1.25)*1000/t.R;
+   if(P.scope){ c.strokeStyle='rgba(40,38,34,.9)'; c.lineWidth=Math.max(1,0.05*k); c.beginPath(); c.moveTo(PX(P,uL),yg); c.lineTo(PX(P,uR),yg); c.stroke(); }
+   if(P.scope||mvVis(t,tm)) drawObj(c,P,{k:'plate',t:t,d:d,mv:1});
+   const hw=1.25*(P.scope?k:k*0.55), hc=(t.post+t.h+0.45)*k; const night=G.st.night;
+   [uL,uR].forEach(u=>{ const x=PX(P,u); const g=c.createLinearGradient(x-hw,0,x+hw,0); g.addColorStop(0,night?'#3b4038':'#8d877a'); g.addColorStop(0.5,night?'#4a5046':'#a69f90'); g.addColorStop(1,night?'#30342e':'#6f6a5f'); c.fillStyle=g; c.fillRect(x-hw,yg-hc,hw*2,hc+1); c.fillStyle='rgba(0,0,0,.18)'; c.fillRect(x-hw,yg-hc,hw*2,Math.max(1,hc*0.08)); });
+ }); }
+function hitFx(t,rec){ G.fx.push({t:t,t0:performance.now(),dx:rec.dxm,dy:rec.dym}); if(G.fx.length>6) G.fx.shift(); }
+/* placa tocada: destello, ondas de «gong» y chispas */
+function drawFx(c,P){ if(!G.fx.length) return; const pn=performance.now(); const rm=RM(); c.save(); if(P.scope){ c.beginPath(); c.arc(P.cx,P.cy,P.r,0,2*Math.PI); c.clip(); }
+  G.fx=G.fx.filter(f=>pn-f.t0<1100); G.fx.forEach(f=>{ const a=(pn-f.t0)/1000; const t=f.t; const k=P.scope?1/t.d*1000*P.s:1/t.d*1000*P.s*2.2; const x=PX(P,t.u)+(P.scope?f.dx*k:0), y=(P.scope?PY(P,t.e):Math.min(PZ(P,t.d,t.gy)-5,PZ(P,t.d,t.zc)))-(P.scope?f.dy*k:0);
+    const R0=Math.max(t.w*k*0.5,6); if(a<0.18){ c.fillStyle='rgba(255,246,210,'+(1-a/0.18)+')'; c.beginPath(); c.arc(x,y,Math.max(3,R0*0.35),0,2*Math.PI); c.fill(); }
+    if(rm) return; for(let i=0;i<3;i++){ const b=a-i*0.12; if(b<0||b>0.8) continue; c.strokeStyle='rgba(255,236,170,'+(0.55*(1-b/0.8))+')'; c.lineWidth=Math.max(1,2.2*(1-b/0.8)); c.beginPath(); c.arc(x,y,R0*(0.7+b*2.4),0,2*Math.PI); c.stroke(); }
+    if(a<0.35){ c.strokeStyle='rgba(255,220,140,'+(1-a/0.35)+')'; c.lineWidth=1.2; c.beginPath(); for(let i=0;i<9;i++){ const an=i*0.7+hash(i,7)*0.5; const r1=R0*0.3+a*R0*3*(0.6+hash(i,3)); c.moveTo(x+Math.cos(an)*r1*0.6,y-Math.sin(an)*r1*0.6); c.lineTo(x+Math.cos(an)*r1,y-Math.sin(an)*r1); } c.stroke(); } });
+  c.restore(); }
+/* visor nocturno: escala de grises por saturación, tinte de fósforo verde y grano; térmico: blanco caliente */
+function nightFx(c,P,tm,W,H){ c.save(); if(P.scope){ c.beginPath(); c.arc(P.cx,P.cy,P.r,0,2*Math.PI); c.clip(); }
+  c.globalCompositeOperation='saturation'; c.fillStyle='#808080'; c.fillRect(0,0,W,H);
+  if(G.sensor==='nv'){ c.globalCompositeOperation='multiply'; c.fillStyle='#46ff78'; c.fillRect(0,0,W,H); c.globalCompositeOperation='screen'; c.fillStyle='rgba(8,34,14,1)'; c.fillRect(0,0,W,H); }
+  else { c.globalCompositeOperation='screen'; c.fillStyle='rgba(10,10,12,1)'; c.fillRect(0,0,W,H); }
+  c.globalCompositeOperation='source-over'; c.globalAlpha=G.sensor==='nv'?0.13:0.06; const n=noiseCv(); const ox=RM()?0:Math.floor(Math.random()*160), oy=RM()?0:Math.floor(Math.random()*160);
+  c.save(); c.translate(-ox,-oy); c.fillStyle=c.createPattern(n,'repeat'); c.fillRect(0,0,W+160,H+160); c.restore(); c.globalAlpha=1;
+  if(G.sensor==='nv'){ const vg=c.createRadialGradient(W/2,H/2,Math.min(W,H)*0.25,W/2,H/2,Math.max(W,H)*0.7); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,10,0,.55)'); c.fillStyle=vg; c.fillRect(0,0,W,H); }
+  c.restore(); }
+/* paleta: de día la del escenario; de noche, la que «ve» cada sensor */
+function palSt(){ const st=G.st; if(!st.night) return st; const th=G.sensor==='th';
+  return Object.assign({},st,th?{sky:['#000000','#08080a'],far:'#202022',hz:'#18181a',mid:'#3a3a37',near:'#4a4a45',berm:'#6a6a66',plate:'#ffffff',edge:'#f0f0f0'}:{sky:['#07090a','#1d231e'],far:'#384036',hz:'#454e43',mid:'#6d7864',near:'#7c8871',berm:'#59634f',plate:'#ffffff',edge:'#c8d0c0'}); }
 function hex2rgb(h){ h=h.replace('#',''); return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)]; }
 function mix(a,b,t){ t=clamp(t,0,1); return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]; }
 function rgb(c,k){ k=k==null?1:k; return 'rgb('+Math.round(clamp(c[0]*k,0,255))+','+Math.round(clamp(c[1]*k,0,255))+','+Math.round(clamp(c[2]*k,0,255))+')'; }
@@ -385,7 +494,7 @@ function PY(P,e){ return P.scope?(P.Y0-(e-P.ce)*P.s):(P.Y0-e*P.vx*P.s); }
 function eOf(Z,d){ return Math.atan2(Z-EYE,d)*1000; }
 /* a simple vista se usa una perspectiva estilizada (más separación entre distancias) */
 function PZ(P,d,Z){ if(P.scope) return PY(P,eOf(Z,d)); if(G&&G.st.ter==='montana') Z-=d*Math.tan(5*Math.PI/180); return P.Y0+P.H*0.085*Math.pow(1000/Math.max(d,5),0.62)-(Z)*1000/Math.max(d,5)*P.s*2.2; }
-function renderWorld(c,P){ const st=G.st, W=P.W, H=P.H;
+function renderWorld(c,P){ const st=palSt(), W=P.W, H=P.H;
   const sky=c.createLinearGradient(0,0,0,PY(P,0)); sky.addColorStop(0,st.sky[0]); sky.addColorStop(1,st.sky[1]); c.fillStyle=sky; c.fillRect(0,0,W,H);
   const step=P.scope?4:5; const uL=P.cu-(P.cx+8)/P.s, uR=P.cu+(W-P.cx+8)/P.s;
   /* cordillera lejana */
@@ -393,7 +502,7 @@ function renderWorld(c,P){ const st=G.st, W=P.W, H=P.H;
   c.beginPath(); c.moveTo(-5,H+5); for(let x=-5;x<=W+5;x+=step*2){ const u=P.cu+(x-P.cx)/P.s; c.lineTo(x,PY(P,farRidge(st,u)*(P.scope?1:0.5))); } c.lineTo(W+5,H+5); c.closePath(); c.fillStyle=rgb(mix(far,hz,0.45)); c.fill();
   if(st.ter==='montana'||st.ter==='artico'){ c.save(); c.clip(); c.beginPath(); for(let x=-5;x<=W+5;x+=step*2){ const u=P.cu+(x-P.cx)/P.s; const e=farRidge(st,u)*(P.scope?1:0.5); const y=PY(P,e); const y2=PY(P,e*0.78); if(x===-5) c.moveTo(x,y2); c.lineTo(x,y2); } c.lineTo(W+5,-5); c.lineTo(-5,-5); c.closePath(); c.fillStyle='rgba(245,248,252,.75)'; c.fill(); c.restore(); }
   /* objetos ordenados por distancia (de lejos a cerca) */
-  const objs=[]; G.targets.forEach(t=>objs.push({d:t.d+9,k:'berm',t:t},{d:t.d,k:'plate',t:t})); G.flags.forEach(f=>objs.push({d:f.d,k:'flag',f:f})); objs.sort((a,b)=>b.d-a.d); let oi=0;
+  const objs=[]; G.targets.forEach(t=>{ objs.push({d:t.d+9,k:'berm',t:t}); if(!t.mv) objs.push({d:t.d,k:'plate',t:t}); }); G.flags.forEach(f=>objs.push({d:f.d,k:'flag',f:f})); objs.sort((a,b)=>b.d-a.d); let oi=0;
   for(let k=0;k<NB;k++){ const d=BANDS[k];
     while(oi<objs.length && objs[oi].d>=d){ drawObj(c,P,objs[oi]); oi++; }
     const lt=Math.log(d/6)/Math.log(2000); let col; if(d>1500) col=mix(mix(mid,far,0.35),hz,clamp((d-1500)/9000,0,0.75)); else col=mix(near,mid,clamp(Math.log(d/40)/Math.log(1500/40),0,1));
@@ -408,18 +517,21 @@ function renderWorld(c,P){ const st=G.st, W=P.W, H=P.H;
   }
   while(oi<objs.length){ drawObj(c,P,objs[oi]); oi++; }
 }
-function drawObj(c,P,o){ if(o.k==='flag') return; const t=o.t; const st=G.st;
-  if(o.k==='berm'){ const d=t.d+9; const x=PX(P,t.u); const yg=PZ(P,d,t.gy); const wpx=Math.max(P.scope?3:6,t.w*4.5/d*1000*P.s*(P.scope?1:2.2)); const hpx=Math.max(P.scope?2:3,(t.post+t.h*1.6)/d*1000*P.s*(P.scope?1:2.2));
-    c.beginPath(); c.ellipse(x,yg,wpx/2,hpx,0,Math.PI,2*Math.PI); c.fillStyle=st.ter==='artico'?'#c9d3dc':(st.ter==='desierto'?'#b58a57':'#7a6a48'); c.fill(); return; }
+function drawObj(c,P,o){ if(o.k==='flag') return; const t=o.t; const st=palSt();
+  if(o.k==='berm'){ const d=t.d+9; const x=PX(P,t.u); const yg=PZ(P,d,t.gy); const wpx=Math.max(P.scope?3:6,(t.mv?t.mv.open+6:t.w*4.5)/d*1000*P.s*(P.scope?1:2.2)); const hpx=Math.max(P.scope?2:3,(t.post+t.h*1.6)/d*1000*P.s*(P.scope?1:2.2));
+    c.beginPath(); c.ellipse(x,yg,wpx/2,hpx,0,Math.PI,2*Math.PI); c.fillStyle=st.berm||(st.ter==='artico'?'#c9d3dc':(st.ter==='desierto'?'#b58a57':'#7a6a48')); c.fill(); return; }
   const d=t.d; const x=PX(P,t.u); const yg=PZ(P,d,t.gy); const yc=P.scope?PY(P,t.e):Math.min(yg-5,PZ(P,d,t.zc));
   const sx=t.w/d*1000*P.s*(P.scope?1:2.2), sy=t.h/d*1000*P.s*(P.scope?1:2.2); const pano=!P.scope;
-  if(pano){ const w=Math.max(4,sx), h=Math.max(4,sy); c.fillStyle='#3b3a34'; c.fillRect(x-0.6,yc,1.2,yg-yc); c.fillStyle=t.res==='hit'?'#e6f3b0':'#f2f2ec'; c.fillRect(x-w/2,yc-h/2,w,h);
+  if(pano){ const w=Math.max(4,sx), h=Math.max(4,sy); c.fillStyle='#3b3a34'; c.fillRect(x-0.6,yc,1.2,yg-yc); c.fillStyle=st.night?(st.plate):(t.res==='hit'?'#e6f3b0':'#f2f2ec'); c.fillRect(x-w/2,yc-h/2,w,h);
     return; }
   /* poste y patas */
   c.strokeStyle='#2f2b25'; c.lineWidth=Math.max(1,0.08/d*1000*P.s); c.beginPath(); c.moveTo(x-sx*0.25,yg); c.lineTo(x,yc); c.lineTo(x+sx*0.25,yg); c.stroke();
   let sq=1; if(G.anim&&G.anim.swing&&G.anim.t===t){ const a=(performance.now()-G.anim.swing)/1000; if(a<1.6) sq=Math.cos(a*9)*Math.exp(-a*1.8)*0.6+0.4*Math.cos(a*9*0.5+0.3)*Math.exp(-a*2)+ (1-Math.exp(-a*2))*1; sq=clamp(Math.abs(sq),0.15,1); }
   c.save(); c.translate(x,yc); c.scale(sq,1);
-  c.fillStyle='#ecebe4'; c.strokeStyle='#5c5a52'; c.lineWidth=Math.max(0.6,sx*0.03);
+  if(st.night&&G.sensor==='th'){ c.shadowColor='rgba(255,255,255,.85)'; c.shadowBlur=Math.max(3,sx*0.35); }
+  /* acero pintado: degradado suave con luz desde arriba a la izquierda */
+  const pg=c.createLinearGradient(-sx/2,-sy/2,sx/2,sy/2); if(st.night){ pg.addColorStop(0,st.plate); pg.addColorStop(1,st.plate); } else { pg.addColorStop(0,'#fbfaf4'); pg.addColorStop(0.55,'#e9e7de'); pg.addColorStop(1,'#cfccc1'); }
+  c.fillStyle=pg; c.strokeStyle=st.edge||'#5c5a52'; c.lineWidth=Math.max(0.6,sx*0.03);
   if(t.shape==='gong'){ c.beginPath(); c.arc(0,0,sx/2,0,2*Math.PI); c.fill(); c.stroke(); }
   else { c.fillRect(-sx/2,-sy/2,sx,sy); c.strokeRect(-sx/2,-sy/2,sx,sy); }
   t.hits.forEach(hm=>{ c.fillStyle='rgba(70,70,64,.85)'; const rr_=Math.max(1,0.03/d*1000*P.s); c.beginPath(); c.arc(hm[0]/d*1000*P.s,-hm[1]/d*1000*P.s,rr_,0,2*Math.PI); c.fill(); });
@@ -442,7 +554,7 @@ function drawFlags(c,P,tm){ G.flags.forEach((f,i)=>{ const d=f.d; const x=PX(P,f
 function recoilOff(){ if(!G.anim||!G.anim.fired) return 0; const a=(performance.now()-G.anim.fired)/1000; const m=G.rf.gr>500?7:(G.rf.gr>250?4:2.5); return a<0.9?m*Math.exp(-a*7)*Math.cos(a*14):0; }
 function drawReticle(c,P){ const cx=P.cx, cy=P.cy, s=P.s, R=P.r; const moa=CFG.unit==='moa'; const u=moa?1/MOA_PER_MIL:1; /* paso en mil */
   c.save(); c.beginPath(); c.arc(cx,cy,R,0,2*Math.PI); c.clip();
-  c.strokeStyle='rgba(8,8,8,.92)'; c.fillStyle='rgba(8,8,8,.92)'; c.lineWidth=1.1;
+  const rc=G.st.night?'rgba(255,74,58,.95)':'rgba(8,8,8,.92)'; c.strokeStyle=rc; c.fillStyle=rc; c.lineWidth=1.1; if(G.st.night){ c.shadowColor='rgba(255,60,40,.8)'; c.shadowBlur=3; }
   const lim=moa?30:10; /* extensión fina */ const px=v=>v*u*s;
   c.beginPath(); c.moveTo(cx-px(lim),cy); c.lineTo(cx+px(lim),cy); c.moveTo(cx,cy-px(lim*0.6)); c.lineTo(cx,cy+px(lim)); c.stroke();
   c.lineWidth=Math.max(3,R*0.025); c.beginPath(); c.moveTo(cx-R,cy); c.lineTo(cx-px(lim),cy); c.moveTo(cx+px(lim),cy); c.lineTo(cx+R,cy); c.moveTo(cx,cy+px(lim)); c.lineTo(cx,cy+R); c.moveTo(cx,cy-R); c.lineTo(cx,cy-px(lim*0.6)); c.stroke();
@@ -456,7 +568,7 @@ function drawReticle(c,P){ const cx=P.cx, cy=P.cy, s=P.s, R=P.r; const moa=CFG.u
     if(isB&&Math.abs(Math.round(v))%(moa?10:2)===0&&px(big)>16){ c.fillText(String(Math.abs(Math.round(v))),cx+px(v),cy-l-3); if(v>0) c.fillText(String(Math.round(v)),cx-l-9,cy+px(v)+4); } }
   /* árbol de viento */
   const rowStep=moa?5:1; for(let k=1;k*rowStep<=lim;k++){ const yv=k*rowStep; const n=Math.min(1+Math.floor(k/2)+1,5); for(let j=-n;j<=n;j++){ if(j===0) continue; const xv=j*(moa?5:1); const r=Math.max(1,Math.min(2.2,s*u*0.04)); c.beginPath(); c.arc(cx+px(xv),cy+px(yv),r,0,2*Math.PI); c.fill(); } }
-  c.fillStyle='#ff3b2f'; c.beginPath(); c.arc(cx,cy,Math.max(1.6,Math.min(3,s*0.05)),0,2*Math.PI); c.fill();
+  c.fillStyle=G.st.night?'#ffd0c8':'#ff3b2f'; c.beginPath(); c.arc(cx,cy,Math.max(1.6,Math.min(3,s*0.05)),0,2*Math.PI); c.fill();
   c.restore(); }
 function drawMirage(c,P,tm){ if(G.zoom<8) return; const t=G.targets[G.cur]; const band=bandOf(t.d*0.66); const cr=comps(windAt(tm,band),G.az).cross; const k=clamp((G.T+8)/48,0.12,1);
   c.save(); c.beginPath(); c.arc(P.cx,P.cy,P.r,0,2*Math.PI); c.clip(); c.lineWidth=2; c.strokeStyle='rgba(255,255,255,'+(0.035+0.05*k)+')';
@@ -481,30 +593,133 @@ function drawPanoMarks(c,P){ G.targets.forEach((t,i)=>{ const x=PX(P,t.u), y=Mat
 function draw(){ if(!CV||!G) return; const dpr=Math.min(2,window.devicePixelRatio||1); const W=CV.clientWidth, H=CV.clientHeight; if(!W||!H) return;
   if(CV.width!==Math.round(W*dpr)||CV.height!==Math.round(H*dpr)){ CV.width=Math.round(W*dpr); CV.height=Math.round(H*dpr); CACHE=null; }
   const c=CTX; c.setTransform(dpr,0,0,dpr,0,0); const tm=now(); updShake(tm);
-  const P=viewParams(W,H); const key=[G.view,P.cu.toFixed(3),P.ce.toFixed(3),P.s.toFixed(4),W,H,G.hitVer||0].join('|'); const swinging=G.anim&&G.anim.swing&&performance.now()-G.anim.swing<1700;
+  const pn=performance.now(); const dt=G.lastF?Math.min(0.1,(pn-G.lastF)/1000):0; G.lastF=pn; movUpd(tm); trackUpd(dt);
+  if(G.bcam){ drawBulletCam(c,W,H,dpr); return; }
+  const P=viewParams(W,H); const key=[G.view,P.cu.toFixed(3),P.ce.toFixed(3),P.s.toFixed(4),W,H,G.hitVer||0,G.st.night?G.sensor:''].join('|'); const swinging=G.anim&&G.anim.swing&&pn-G.anim.swing<1700;
   if(!CACHE||CACHE.key!==key||swinging){ if(!CACHE) CACHE={cv:document.createElement('canvas')}; const cc=CACHE.cv; cc.width=CV.width; cc.height=CV.height; const x=cc.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); renderWorld(x,P); CACHE.key=swinging?'':key; }
-  c.setTransform(1,0,0,1,0,0); c.drawImage(CACHE.cv,0,0); c.setTransform(dpr,0,0,dpr,0,0);
+  c.setTransform(1,0,0,1,0,0); c.drawImage(CACHE.cv,0,0);
+  if(P.scope) drawShimmer(c,P,tm,dpr);
+  c.setTransform(dpr,0,0,dpr,0,0);
+  if(P.scope) drawGrass(c,P,tm);
+  drawMovers(c,P,tm);
   drawFlags(c,P,tm);
-  if(P.scope){ drawMirage(c,P,tm); drawTrace(c,P);
+  if(P.scope){ drawMirage(c,P,tm); drawTrace(c,P); }
+  drawFx(c,P);
+  if(G.st.night) nightFx(c,P,tm,W,H);
+  if(P.scope){
     c.save(); c.fillStyle='#000'; c.beginPath(); c.rect(0,0,W,H); c.arc(P.cx,P.cy,P.r,0,2*Math.PI,true); c.fill('evenodd'); c.restore();
-    const vg=c.createRadialGradient(P.cx,P.cy,P.r*0.72,P.cx,P.cy,P.r); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.78)'); c.fillStyle=vg; c.beginPath(); c.arc(P.cx,P.cy,P.r,0,2*Math.PI); c.fill();
+    const vg=c.createRadialGradient(P.cx,P.cy,P.r*0.68,P.cx,P.cy,P.r); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(0.8,'rgba(0,0,0,.35)'); vg.addColorStop(1,'rgba(0,0,0,.9)'); c.fillStyle=vg; c.beginPath(); c.arc(P.cx,P.cy,P.r,0,2*Math.PI); c.fill();
+    /* reflejo suave del cristal y anillo del tubo */
+    const gl=c.createLinearGradient(P.cx-P.r,P.cy-P.r,P.cx+P.r*0.2,P.cy+P.r*0.2); gl.addColorStop(0,'rgba(255,255,255,.07)'); gl.addColorStop(0.45,'rgba(255,255,255,0)'); c.fillStyle=gl; c.beginPath(); c.arc(P.cx,P.cy,P.r,0,2*Math.PI); c.fill();
+    c.strokeStyle='rgba(40,44,40,.9)'; c.lineWidth=3; c.beginPath(); c.arc(P.cx,P.cy,P.r-1,0,2*Math.PI); c.stroke();
     drawReticle(c,P);
-    c.fillStyle='rgba(230,235,220,.9)'; c.font='600 12px system-ui,sans-serif'; c.textAlign='left'; c.fillText(G.zoom+'×',10,18); c.textAlign='right'; c.fillText(CFG.unit==='moa'?'MOA':'MIL',W-10,18);
-    if(G.breath){ const hb=(performance.now()-G.breath)/1000; c.textAlign='center'; c.fillStyle=hb>6?'#ffb08a':'#d8f0a0'; c.fillText(L('Respiración contenida ','Breath held ')+nf(hb,1)+' s',W/2,H-40); }
+    hudScope(c,P,W,H,tm);
   } else { drawPanoMarks(c,P); }
+  if(G.iris&&!RM()){ const a=(pn-G.iris)/280; if(a<1){ c.fillStyle='rgba(0,0,0,'+(1-a)*(1-a)+')'; c.fillRect(0,0,W,H); } else G.iris=0; }
 }
+/* ===== Cámara bala: la cámara sigue a la bala por su trayectoria real (la misma que calcula el integrador), en cámara lenta, hasta la placa ===== */
+function v3(x,y,z){ return [x,y,z]; } function vsub(a,b){ return [a[0]-b[0],a[1]-b[1],a[2]-b[2]]; } function vadd(a,b){ return [a[0]+b[0],a[1]+b[1],a[2]+b[2]]; } function vmul(a,k){ return [a[0]*k,a[1]*k,a[2]*k]; }
+function vdot(a,b){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; } function vcross(a,b){ return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]; } function vnorm(a){ const l=Math.hypot(a[0],a[1],a[2])||1; return [a[0]/l,a[1]/l,a[2]/l]; }
+function camStart(rec,anim,done){ const tr=anim.track; if(!tr||tr.length<4) return false; const T=anim.tof; const D=clamp(2.4+1.5*Math.sqrt(T),3,6.5);
+  /* mundo: X hacia el blanco (m), Y altura (m, terreno + ojo), Z a la derecha (m) */
+  const pts=tr.map(p=>[p[0],EYE+p[0]*Math.tan(anim.e/1000)+p[1],p[0]*Math.tan(anim.u/1000)+p[2],p[3]]); pts.unshift([0,EYE-G.rf.sh,0,0]);
+  G.bcam={t0:performance.now(),T:T,D:D,pts:pts,rec:rec,t:anim.t,done:done,hold:1.5,stopD:Math.max(8,anim.t.w*7)}; const m=document.getElementById('frmsg'); if(m) m.hidden=true; const hn=document.getElementById('frhint'); if(hn) hn.style.opacity='0'; return true; }
+function camAt(B,tau){ const p=B.pts; if(tau<=0) return p[0].slice(0,3); for(let i=1;i<p.length;i++){ if(p[i][3]>=tau){ const a=p[i-1],b=p[i],f=(tau-a[3])/((b[3]-a[3])||1); return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]; } } const q=p[p.length-1]; return [q[0],q[1],q[2]]; }
+function camEnd(){ const B=G.bcam; if(!B) return; G.bcam=null; CACHE=null; const hn=document.getElementById('frhint'); if(hn) hn.style.opacity=''; if(B.done) B.done(); }
+function drawBulletCam(c,W,H,dpr){ const B=G.bcam; const st=palSt(); const pn=performance.now(); const el=(pn-B.t0)/1000; const T=B.T;
+  if(B.skip||el>B.D+B.hold){ camEnd(); return; }
+  const u=clamp(el/B.D,0,1); const w=u-0.8*Math.sin(2*Math.PI*u)/(2*Math.PI); const tau=T*w;
+  const Rt=B.rec.R; const bp=camAt(B,tau); const ahead=camAt(B,Math.min(T,tau+0.02)); let dir=vnorm(vsub(ahead,bp)); if(tau>=T) dir=B.lastDir||dir; B.lastDir=dir;
+  /* la cámara va 2,4 m detrás y algo por encima; a 9 m de la placa se queda quieta y la bala se aleja hacia el impacto */
+  const camFor=x=>{ const p=camAt(B,x); const a=camAt(B,Math.min(T,x+0.02)); const d=vnorm(vsub(a,p)); const r0=vnorm(vcross(d,[0,1,0])); return vadd(vadd(vadd(p,vmul(d,-0.9)),[0,0.06,0]),vmul(r0,-0.07)); };
+  let tStop=T; for(let i=B.pts.length-1;i>0;i--){ if(B.pts[i][0]<Rt-B.stopD){ const a=B.pts[i],b=B.pts[i+1]||a; const f=b[0]>a[0]?(Rt-B.stopD-a[0])/(b[0]-a[0]):0; tStop=a[3]+(b[3]-a[3])*clamp(f,0,1); break; } }
+  const cam=camFor(Math.min(tau,tStop)); const t=B.t; const tgt=[t.d,t.zc,(B.rec.uA!=null?B.rec.uA:t.u)/1000*t.d];
+  const k=clamp((tau-tStop*0.55)/(tStop*0.4+1e-6),0,1); const kk=k*k*(3-2*k); let look=vnorm(vadd(vadd(vmul(dir,1-kk),vmul(vnorm(vsub(tgt,cam)),kk)),[0,-0.02*(1-kk),0]));
+  if(tau>tStop){ look=vnorm(vsub(tgt,cam)); }
+  const up0=[0,1,0]; const rgt=vnorm(vcross(look,up0)); const upv=vcross(rgt,look); const F=Math.max(W,H)*1.3; const cx=W/2, cy=H*0.5;
+  const pr=P_=>{ const d=vsub(P_,cam); const z=vdot(d,look); if(z<0.25) return null; return [cx+vdot(d,rgt)/z*F, cy-vdot(d,upv)/z*F, z]; };
+  /* cielo */
+  const hzY=cy+vdot([0,0,0],upv)-(look[1]/Math.max(0.2,Math.hypot(look[0],look[2])))*F; const sky=c.createLinearGradient(0,0,0,Math.max(10,hzY)); sky.addColorStop(0,st.sky[0]); sky.addColorStop(1,st.sky[1]); c.fillStyle=sky; c.fillRect(0,0,W,H);
+  if(!st.night){ const sg=c.createRadialGradient(W*0.78,hzY-H*0.25,4,W*0.78,hzY-H*0.25,H*0.6); sg.addColorStop(0,'rgba(255,248,225,.45)'); sg.addColorStop(1,'rgba(255,248,225,0)'); c.fillStyle=sg; c.fillRect(0,0,W,H); }
+  const far=hex2rgb(st.far), hz=hex2rgb(st.hz), mid=hex2rgb(st.mid), near=hex2rgb(st.near);
+  /* cordillera lejana */
+  c.beginPath(); c.moveTo(-5,H+5); for(let i=0;i<=40;i++){ const L_=cam[2]+(i/40-0.5)*9000; const X=cam[0]+6000; const u_=L_/X*1000; const p=pr([X,EYE+farRidge(G.st,u_)/1000*X,L_]); if(p) c.lineTo(p[0],p[1]); } c.lineTo(W+5,H+5); c.closePath(); c.fillStyle=rgb(mix(far,hz,0.45)); c.fill();
+  /* terreno por franjas, de lejos a cerca */
+  const x0=cam[0]+1.2, x1=Math.max(Rt+400,cam[0]+600); const NBc=46; const objs=[];
+  G.targets.forEach(tt=>objs.push({d:tt.d,t:tt})); G.flags.forEach(f=>objs.push({d:f.d,f:f})); objs.sort((a,b)=>b.d-a.d); let oi=0; while(oi<objs.length&&objs[oi].d>x1) oi++;
+  for(let kb=0;kb<NBc;kb++){ const X=x0+(x1-x0)*Math.pow(1-kb/(NBc-1),2.6); while(oi<objs.length&&objs[oi].d>=X){ camObj(c,pr,objs[oi],st,pn,B); oi++; }
+    const dd=X; let col; if(dd>1500) col=mix(mix(mid,far,0.35),hz,clamp((dd-1500)/9000,0,0.75)); else col=mix(near,mid,clamp(Math.log(Math.max(40,dd)/40)/Math.log(1500/40),0,1));
+    const kz=0.94+0.1*hash(Math.floor(X/3),7); const spread=(X-cam[0])*1.4+6; c.beginPath(); c.moveTo(-5,H+5); let any=false;
+    for(let i=0;i<=28;i++){ const L_=cam[2]+(i/28-0.5)*2*spread; const u_=L_/Math.max(X,1)*1000; const p=pr([X,terrain(G.st,X,u_),L_]); if(p){ c.lineTo(p[0],p[1]); any=true; } }
+    c.lineTo(W+5,H+5); c.closePath(); if(any){ c.fillStyle=rgb(col,kz); c.fill(); }
+    /* matas cercanas: dan la sensación de velocidad */
+    const rel=X-cam[0]; if(rel<260){ c.strokeStyle=st.night?'rgba(150,160,140,.35)':(G.st.ter==='artico'?'rgba(140,155,170,.5)':(G.st.ter==='desierto'?'rgba(120,90,55,.5)':'rgba(40,52,25,.5)')); c.lineWidth=rel<30?1.5:1; c.beginPath(); for(let j=0;j<(rel<40?26:14);j++){ const L_=cam[2]+(hash(Math.floor(X*3),j)-0.5)*spread*1.6; const gy=terrain(G.st,X,L_/Math.max(X,1)*1000); const a=pr([X,gy,L_]), b=pr([X,gy+0.25+0.25*hash(j,Math.floor(X)),L_]); if(a&&b){ c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); } } c.stroke(); } }
+  while(oi<objs.length){ camObj(c,pr,objs[oi],st,pn,B); oi++; }
+  /* estelas de velocidad hacia los bordes (solo imagen) */
+  if(tau<tStop){ const vp=pr(vadd(cam,vmul(look,1000)))||[cx,cy]; c.save(); c.lineCap='round'; for(let i=0;i<22;i++){ const an=hash(i,31)*Math.PI*2; const ph=((pn/1000)*1.6+hash(i,5))%1; const r1=Math.max(W,H)*(0.32+ph*0.55), r2=r1+Math.max(W,H)*(0.06+0.08*ph);
+      c.strokeStyle='rgba(255,255,255,'+(0.10*ph)+')'; c.lineWidth=1+ph; c.beginPath(); c.moveTo(vp[0]+Math.cos(an)*r1,vp[1]+Math.sin(an)*r1); c.lineTo(vp[0]+Math.cos(an)*r2,vp[1]+Math.sin(an)*r2); c.stroke(); } c.restore(); }
+  /* bruma de distancia junto al horizonte */
+  if(!st.night){ const fg=c.createLinearGradient(0,hzY-H*0.06,0,hzY+H*0.12); fg.addColorStop(0,'rgba(215,225,232,0)'); fg.addColorStop(0.5,'rgba(215,225,232,.22)'); fg.addColorStop(1,'rgba(215,225,232,0)'); c.fillStyle=fg; c.fillRect(0,hzY-H*0.06,W,H*0.18); }
+  /* bala: estela, cono de Mach si va supersónica y el proyectil */
+  const hitT=tau>=T; const bs=pr(bp);
+  if(bs&&!hitT){ const back=pr(vadd(bp,vmul(dir,-1.2))), tip=pr(vadd(bp,vmul(dir,0.06))); const vNow=Math.hypot(...vsub(camAt(B,Math.min(T,tau+0.002)),bp))/0.002||0; const M=vNow/G.env.a;
+    const bk=pr(vadd(bp,vmul(dir,-0.22))); if(bk){ const g=c.createLinearGradient(bk[0],bk[1],bs[0],bs[1]); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(1,'rgba(255,250,235,.45)'); c.strokeStyle=g; c.lineCap='round'; c.lineWidth=Math.max(2,0.012/bs[2]*F*3); c.beginPath(); c.moveTo(bk[0],bk[1]); c.lineTo(bs[0],bs[1]); c.stroke(); }
+    if(M>1.02&&tip){ const mu=Math.asin(1/M); const Lc=1.1; const sideV=vnorm(vcross(dir,[0,1,0])); for(const sgn of [-1,1]){ for(const ax of [sideV,upv]){ const e=pr(vadd(vadd(bp,vmul(dir,-Lc*Math.cos(mu))),vmul(ax,sgn*Lc*Math.sin(mu)))); if(e){ c.strokeStyle='rgba(255,255,255,.16)'; c.lineWidth=1.2; c.beginPath(); c.moveTo(tip[0],tip[1]); c.lineTo(e[0],e[1]); c.stroke(); } } } }
+    const sz=Math.max(6,(G.rf.dIn*0.0254)/bs[2]*F*2.2); const ang=tip?Math.atan2(tip[1]-bs[1],tip[0]-bs[0]):-Math.PI/2; c.save(); c.translate(bs[0],bs[1]); c.rotate(ang);
+    const bg=c.createLinearGradient(0,-sz*0.5,0,sz*0.5); bg.addColorStop(0,'#f7d9a8'); bg.addColorStop(0.45,'#c98a4a'); bg.addColorStop(1,'#6e4320'); c.fillStyle=bg;
+    c.beginPath(); c.moveTo(sz*1.9,0); c.quadraticCurveTo(sz*1.1,-sz*0.5,0,-sz*0.5); c.lineTo(-sz*0.9,-sz*0.4); c.lineTo(-sz*0.9,sz*0.4); c.lineTo(0,sz*0.5); c.quadraticCurveTo(sz*1.1,sz*0.5,sz*1.9,0); c.fill();
+    const ph=(tau*G.rf.mv/(G.rf.twistIn*0.0254))*2*Math.PI; c.strokeStyle='rgba(255,240,210,.55)'; c.lineWidth=1; c.beginPath(); const yy=Math.sin(ph)*sz*0.4; c.moveTo(-sz*0.8,yy); c.lineTo(sz*0.6,yy*0.9); c.stroke(); c.restore(); }
+  /* impacto */
+  if(hitT){ const ps=pr(tgt); const a=el-B.D*1; if(ps){ const R0=Math.max(8,t.w/ps[2]*F*0.5); if(a<0.22){ c.fillStyle='rgba(255,248,215,'+(1-a/0.22)+')'; c.beginPath(); c.arc(ps[0],ps[1],R0*1.4,0,2*Math.PI); c.fill(); }
+      for(let i=0;i<3;i++){ const b=a-i*0.14; if(b<0||b>1) continue; c.strokeStyle='rgba(255,232,160,'+(0.6*(1-b))+')'; c.lineWidth=2*(1-b)+0.5; c.beginPath(); c.arc(ps[0],ps[1],R0*(0.8+b*3),0,2*Math.PI); c.stroke(); }
+      if(a<0.5){ c.strokeStyle='rgba(255,214,130,'+(1-a/0.5)+')'; c.lineWidth=1.4; c.beginPath(); for(let i=0;i<14;i++){ const an=i*0.45+hash(i,9); const r1=R0*(0.4+a*5*(0.5+hash(i,4))); c.moveTo(ps[0]+Math.cos(an)*r1*0.55,ps[1]-Math.sin(an)*r1*0.55); c.lineTo(ps[0]+Math.cos(an)*r1,ps[1]-Math.sin(an)*r1); } c.stroke(); } } }
+  if(G.st.night) nightFx(c,{scope:false},performance.now()/1000,W,H);
+  /* letterbox y datos reales del vuelo */
+  const bar=Math.round(H*0.075); c.fillStyle='rgba(0,0,0,.82)'; c.fillRect(0,0,W,bar); c.fillRect(0,H-bar,W,bar);
+  const vNow2=hitT?B.rec.v:(Math.hypot(...vsub(camAt(B,Math.min(T,tau+0.002)),bp))/0.002); const drop=bp[1]-(EYE+bp[0]*Math.tan(B.pts.length?0:0));
+  c.font='800 12px system-ui,sans-serif'; c.textAlign='left'; c.fillStyle='#e3b94a'; c.fillText(L('CÁMARA BALA','BULLET CAM'),12,bar*0.62); c.fillStyle='rgba(235,240,225,.8)'; c.font='600 11px system-ui,sans-serif'; c.fillText(L(' · cámara lenta',' · slow motion'),12+c.measureText(L('CÁMARA BALA','BULLET CAM')).width+18,bar*0.62);
+  c.textAlign='right'; c.font='700 12px system-ui,sans-serif'; c.fillStyle='#fff'; c.fillText(L('Saltar ›','Skip ›'),W-12,bar*0.62);
+  const seg=hitT?[ni(Rt)+' m',nf(T,2)+' s',Math.round(B.rec.v)+' m/s']:[ni(Math.max(0,bp[0]))+' m',nf(tau,2)+' s',Math.round(vNow2)+' m/s · Mach '+nf(vNow2/G.env.a,2)];
+  c.font='700 13px system-ui,sans-serif'; c.fillStyle='#f0f2e6'; c.textAlign='left'; c.fillText(seg[0]+'  ·  '+seg[1],12,H-bar*0.38); c.textAlign='right'; c.fillText(seg[2],W-12,H-bar*0.38);
+  const los=bp[1]-(EYE+bp[0]*Math.tan(B.rec.ie/1000)); if(!hitT){ c.textAlign='center'; c.font='600 11.5px system-ui,sans-serif'; c.fillStyle='rgba(235,240,225,.85)'; c.fillText(L('sobre la línea de mira ','above line of sight ')+(los>=0?'+':'−')+nf(Math.abs(los),2)+' m',W/2,bar+18); }
+  if(hitT){ const a=el-B.D; c.globalAlpha=clamp(a/0.3,0,1); c.textAlign='center'; c.fillStyle='#e9ffb0'; c.font='400 '+Math.round(Math.min(W,H)*0.12)+'px Anton,Impact,sans-serif'; c.fillText(L('IMPACTO','HIT'),W/2,H*0.3); c.font='700 14px system-ui,sans-serif'; c.fillStyle='#fff'; c.fillText(ni(Rt)+' m · '+nf(T,2)+' s',W/2,H*0.3+26); if(t.rec){ c.font='600 12.5px system-ui,sans-serif'; c.fillStyle='#e3b94a'; c.fillText(L('distancia del récord de ','record distance of ')+t.rec.y,W/2,H*0.3+46); } c.globalAlpha=1; }
+  if(u<0.06&&!RM()){ c.fillStyle='rgba(0,0,0,'+(1-u/0.06)+')'; c.fillRect(0,0,W,H); }
+  if(el>B.D+B.hold-0.3){ c.fillStyle='rgba(0,0,0,'+clamp((el-(B.D+B.hold-0.3))/0.3,0,1)+')'; c.fillRect(0,0,W,H); }
+}
+function camObj(c,pr,o,st,pn,B){ if(o.f){ const f=o.f; const L_=f.u/1000*f.d; const a=pr([f.d,f.gy,L_]), b=pr([f.d,f.gy+4,L_]); if(!a||!b) return; c.strokeStyle='#d9d6cc'; c.lineWidth=Math.max(1,(a[1]-b[1])*0.02); c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke();
+    const g=flagGeom(f,now()); const th=g.thd*Math.PI/180; const tip=pr([f.d,f.gy+4-1.6*Math.cos(th),L_+1.6*Math.sin(th)*g.side]), lo=pr([f.d,f.gy+3.1-1.6*Math.cos(th)*0.8,L_+1.6*Math.sin(th)*g.side*0.9]); const b2=pr([f.d,f.gy+3.1,L_]);
+    if(tip&&lo&&b2){ c.fillStyle='#e0472f'; c.beginPath(); c.moveTo(b[0],b[1]); c.lineTo(tip[0],tip[1]); c.lineTo(lo[0],lo[1]); c.lineTo(b2[0],b2[1]); c.closePath(); c.fill(); } return; }
+  const t=o.t; const uu=(t===B.t&&B.rec.uA!=null)?B.rec.uA:t.u; const L_=uu/1000*t.d; const L0=(t.mv?t.u0:t.u)/1000*t.d;
+  const base=pr([t.d,t.gy,L_]), top=pr([t.d,t.zc,L_]); if(!base||!top) return; const sc=(top[1]-base[1])/(t.zc-t.gy||1); const px=Math.abs(sc);
+  /* talud detrás */ const tb=pr([t.d+8,t.gy,L0]); if(tb){ const ww=(t.mv?t.mv.open+6:t.w*4.5)*Math.abs((pr([t.d+8,t.gy+1,L0])||tb)[1]-tb[1]); c.fillStyle=st.berm||(st.ter==='artico'?'#c9d3dc':(st.ter==='desierto'?'#b58a57':'#7a6a48')); c.beginPath(); c.ellipse(tb[0],tb[1],ww/2,(t.post+t.h*1.6)*Math.abs((pr([t.d+8,t.gy+1,L0])||tb)[1]-tb[1]),0,Math.PI,2*Math.PI); c.fill(); }
+  c.strokeStyle='#2f2b25'; c.lineWidth=Math.max(1,0.06*px); c.beginPath(); c.moveTo(base[0],base[1]); c.lineTo(top[0],top[1]+t.h/2*px); c.stroke();
+  let sw=1; if(t===B.t&&pn-B.t0>B.D*1000){ const a=(pn-B.t0)/1000-B.D; sw=Math.cos(a*8)*Math.exp(-a*1.6)*0.55+0.45+(1-Math.exp(-a*2))*0.55; sw=clamp(Math.abs(sw),0.12,1); }
+  const sx=t.w*px, sy=t.h*px*sw; c.save(); if(st.night&&G.sensor==='th'){ c.shadowColor='rgba(255,255,255,.85)'; c.shadowBlur=Math.max(3,sx*0.3); }
+  const pg=c.createLinearGradient(top[0]-sx/2,top[1]-sy/2,top[0]+sx/2,top[1]+sy/2); if(st.night){ pg.addColorStop(0,st.plate); pg.addColorStop(1,st.plate); } else { pg.addColorStop(0,'#fbfaf4'); pg.addColorStop(0.55,'#e9e7de'); pg.addColorStop(1,'#cfccc1'); } c.fillStyle=pg; c.strokeStyle=st.edge||'#5c5a52'; c.lineWidth=Math.max(0.6,sx*0.03);
+  if(t.shape==='gong'){ c.beginPath(); c.ellipse(top[0],top[1],sx/2,Math.max(0.5,sy/2),0,0,2*Math.PI); c.fill(); c.stroke(); } else { c.fillRect(top[0]-sx/2,top[1]-sy/2,sx,sy); c.strokeRect(top[0]-sx/2,top[1]-sy/2,sx,sy); }
+  c.restore();
+  if(t.mv){ [-1,1].forEach(sg=>{ const Lc=L0+sg*(t.mv.open/2+1.25); const a=pr([t.d-1,t.gy,Lc]), b=pr([t.d-1,t.gy+t.post+t.h+0.45,Lc]); if(a&&b){ const hw=1.25*Math.abs(b[1]-a[1])/(t.post+t.h+0.45); c.fillStyle=st.night?'#3b4038':'#8d877a'; c.fillRect(a[0]-hw,b[1],hw*2,a[1]-b[1]); } }); } }
+function hudScope(c,P,W,H,tm){ c.save(); c.font='600 12px system-ui,sans-serif'; c.textBaseline='alphabetic';
+  const pill=(txt,x,y,al,col)=>{ c.font='700 11.5px system-ui,sans-serif'; const w=c.measureText(txt).width+12; const x0=al==='right'?x-w:(al==='center'?x-w/2:x); c.fillStyle='rgba(0,0,0,.55)'; c.beginPath(); if(c.roundRect) c.roundRect(x0,y-14,w,19,9); else c.rect(x0,y-14,w,19); c.fill(); c.fillStyle=col||'rgba(235,240,225,.95)'; c.textAlign='left'; c.fillText(txt,x0+6,y); };
+  pill(G.zoom+'×',8,22,'left'); pill(CFG.unit==='moa'?'MOA':'MIL',W-8,22,'right'); const yb=H-38;
+  const t=G.targets[G.cur]; if(t){ let lab='P'+(t.i+1)+(t.lased?' · '+ni(t.lased)+' m':''); if(t.mv) lab+=' · '+nf(t.mv.v,1)+' m/s '+(t.mv.dir>0?'→':'←'); pill(lab,8,yb,'left'); }
+  if(G.st.night) pill(G.sensor==='nv'?L('VISIÓN NOCTURNA','NIGHT VISION'):L('TÉRMICO','THERMAL'),W-8,yb,'right',G.sensor==='nv'?'#9dff9d':'#f2f2f2');
+  if(G.breath){ const hb=(performance.now()-G.breath)/1000; pill(L('Respiración contenida ','Breath held ')+nf(hb,1)+' s',W/2,yb-24,'center',hb>6?'#ffb08a':'#d8f0a0'); }
+  if(G.mode==='movil'&&t&&t.mv&&!t.res){ if(t.tofE==null) t.tofE=shotFlight({R:t.R,u:t.u0,e:t.e,t:0,alpha:0,beta:0,nowind:true,nocor:true,nospin:true}).t; const ok=mvOK(t,now(),t.tofE+0.05); if(!ok) pill(L('Placa tapada a la llegada: espera','Plate behind cover on arrival: wait'),W/2,yb-24,'center','#ffcf8a'); }
+  c.restore(); }
 function updShake(tm){ if(G.breath){ const hb=(performance.now()-G.breath)/1000; if(hb>12){ G.breath=0; msg(L('Has soltado el aire','You let your breath go')); }
    const a=hb>6?Math.min(0.5,(hb-6)*0.09):0; G.shake.x=a*(Math.sin(tm*7.3)+0.6*Math.sin(tm*12.9+1)); G.shake.y=a*(Math.cos(tm*6.1)+0.5*Math.sin(tm*10.7)); }
   else { G.shake.x=0; G.shake.y=0; } }
 function loop(){ RAF=0; if(!CV||!document.body.contains(CV)){ CV=null; return; } draw(); RAF=requestAnimationFrame(loop); }
 function stopLoop(){ if(RAF) cancelAnimationFrame(RAF); RAF=0; CV=null; if(G&&G.timer){ clearInterval(G.timer); G.timer=0; } }
-let MSGT=0; function msg(t,cls){ const m=document.getElementById('frmsg'); if(!m) return; m.textContent=t; m.className='frmsg'+(cls?' '+cls:''); m.hidden=false; clearTimeout(MSGT); MSGT=setTimeout(()=>{ m.hidden=true; },cls?3200:2400); }
+let MSGT=0; function msg(t,cls){ const m=document.getElementById('frmsg'); if(!m) return; m.textContent=t; m.className='frmsg'+(cls?' '+cls:''); m.hidden=false; void m.offsetWidth; clearTimeout(MSGT); MSGT=setTimeout(()=>{ m.classList.add('out'); MSGT=setTimeout(()=>{ m.hidden=true; },260); },(cls?3200:2400)+Math.min(2600,t.length*25)); }
 
 /* ===== Pantalla de juego ===== */
+const EMAX=()=>G&&G.mode==='record'?90:40; /* recorrido de la torreta; en récord, base inclinada (simplificado para el juego) */
 const U=()=>CFG.unit==='moa'; const CLICK=()=>U()?0.25/MOA_PER_MIL:0.1; /* un clic en mil */
 function fmtAng(mil,signs){ const v=U()?mil*MOA_PER_MIL:mil; return nf(Math.abs(v),U()?2:1)+' '+(U()?'MOA':'mil'); }
 function fmtE(mil){ return (mil>=0?L('Arriba ','Up '):L('Abajo ','Down '))+fmtAng(mil); }
-function fmtW(mil){ return Math.abs(mil)<0.005?'0':((mil>=0?L('D ','R '):L('I ','L '))+fmtAng(mil)); }
+function fmtW(mil){ return Math.abs(mil)<0.005?fmtAng(0):((mil>=0?L('D ','R '):L('I ','L '))+fmtAng(mil)); }
 function game(){ stopLoop(); const rf=G.rf, st=G.st;
  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],['Francotirador','#/francotirador'],[L(MODES[G.mode].n[0],MODES[G.mode].n[1])]])+
   '<div class="frtop"><span><b>'+esc(rf.n)+'</b> · '+esc(L(rf.cal[0],rf.cal[1]))+' · '+esc(L(st.n[0],st.n[1]))+'</span><span id="frstat"></span><button type="button" class="frbtn sec sm" id="frquit">'+L('Salir','Quit')+'</button></div>'+
@@ -516,18 +731,18 @@ function game(){ stopLoop(); const rf=G.rf, st=G.st;
  bindView(); side(); status(); coach();
  G.timer=setInterval(()=>{ if(!document.getElementById('frstat')){ clearInterval(G.timer); return; } status(); if(G.timeLimit&&timeLeft()<=0&&!G.over){ endGame(L('Se acabó el tiempo','Time is up')); } },500);
  RAF=requestAnimationFrame(loop);
- msg(G.tut?L('Sigue la lección paso a paso, debajo de la vista','Follow the lesson step by step, below the view'):G.mode==='facil'?L('Mide con el telémetro y el anemómetro, y pide la solución','Use the rangefinder and the wind meter, then get the solution'):L('Mide, calcula y dispara. Toca una placa para elegirla','Measure, compute and fire. Tap a plate to pick it'));
+ msg(G.tut?L('Sigue la lección paso a paso, debajo de la vista','Follow the lesson step by step, below the view'):G.mode==='movil'?L('Las placas cruzan entre dos protecciones: mide, pide la solución con el adelanto y dispara cuando quieras','The plates cross between two covers: measure, get the solution with the lead and fire whenever you like'):G.mode==='record'?L('Cuatro placas a las distancias de los tiros récord. Mide y pide la solución: la bala tarda segundos en llegar','Four plates at the record-shot distances. Measure and get the solution: the bullet takes seconds to arrive'):EZ()?L('Mide con el telémetro y el anemómetro, y pide la solución','Use the rangefinder and the wind meter, then get the solution'):L('Mide, calcula y dispara. Toca una placa para elegirla','Measure, compute and fire. Tap a plate to pick it'));
 }
 function status(){ const s=document.getElementById('frstat'); if(!s) return; const t=G.targets[G.cur]; const tl=timeLeft();
  s.innerHTML='P'+(G.cur+1)+'/'+G.targets.length+' · '+L('disparos','rounds')+' '+(G.rounds-t.shots)+' · '+L('puntos','score')+' <b>'+G.score+'</b>'+(isFinite(tl)?' · '+Math.floor(tl/60)+':'+String(Math.floor(tl%60)).padStart(2,'0'):''); }
 function chipsHTML(){ return '<div class="frchips">'+G.targets.map((t,i)=>'<button type="button" class="frchip'+(i===G.cur?' on':'')+(t.res==='hit'?' ok':(t.res==='miss'?' ko':''))+'" data-t="'+i+'">P'+(i+1)+' · '+(t.shape==='gong'?L('gong','gong'):L('placa','plate'))+' '+Math.round(t.w*100)+(t.shape==='gong'?' cm':'×'+Math.round(t.h*100)+' cm')+(t.res==='hit'?' · '+L('tocada','hit'):(t.res==='miss'?' · '+L('fallada','missed'):''))+'</button>').join('')+'</div>'; }
 function toolsHTML(){ const T_=[['kestrel',L('Anemómetro','Wind meter')],['lrf',L('Telémetro','Rangefinder')],['comp',L('Brújula y GPS','Compass & GPS')],['card',L('Tarjeta','Data card')],['notes',L('Notas y calculadora','Notes & calculator')]];
- if(G.mode==='facil') T_.push(['pc',L('Computadora balística','Ballistic computer')]); else T_.push(['flags',L('Prismáticos: banderas','Binoculars: flags')]);
+ if(EZ()) T_.push(['pc',L('Computadora balística','Ballistic computer')]); else T_.push(['flags',L('Prismáticos: banderas','Binoculars: flags')]);
  T_.push(['form',L('Fórmulas','Formulas')]);
  return '<div class="frtools">'+T_.map(t=>'<button type="button" data-tool="'+t[0]+'"'+(t[0]==='pc'?' class="hl"':'')+'>'+t[1]+'</button>').join('')+'</div>'; }
 function side(){ const sd=document.getElementById('frside'); if(!sd) return; const t=G.targets[G.cur]; const hint=document.getElementById('frhint');
  if(G.view==='pano'){
-  sd.innerHTML='<div class="frrow" style="margin:0"><button type="button" class="frbtn" id="frtog" style="flex:1">'+L('Mirar por la mira','Look through the scope')+'</button></div>'+
+  sd.innerHTML='<div class="frrow" style="margin:0"><button type="button" class="frbtn" id="frtog" style="flex:1">'+L('Mirar por la mira','Look through the scope')+'</button>'+(G.st.night?'<button type="button" class="frbtn sec on" id="frsn">'+(G.sensor==='nv'?L('Visión nocturna','Night vision'):L('Térmico','Thermal'))+'</button>':'')+'</div>'+
    '<div class="frpanel"><h4>'+L('Placas','Plates')+'</h4>'+chipsHTML()+'</div><div class="frpanel"><h4>'+L('Instrumentos','Instruments')+'</h4>'+toolsHTML()+'</div>';
   if(hint) hint.textContent=L('Arrastra para mirar alrededor · toca una placa o una bandera','Drag to look around · tap a plate or a flag');
  } else {
@@ -536,30 +751,34 @@ function side(){ const sd=document.getElementById('frside'); if(!sd) return; con
    '<div class="frtur"><div class="bt"><button type="button" data-d="e" data-v="-10">−'+(U()?'2,5':'1')+'</button><button type="button" data-d="e" data-v="-1">−</button></div><div class="val" id="frve"><small>'+L('Elevación','Elevation')+'</small>'+fmtE(G.dialE)+'</div><div class="bt"><button type="button" data-d="e" data-v="1">+</button><button type="button" data-d="e" data-v="10">+'+(U()?'2,5':'1')+'</button></div></div>'+
    '<div class="frtur"><div class="bt"><button type="button" data-d="w" data-v="-10">'+L('I','L')+(U()?'2,5':'1')+'</button><button type="button" data-d="w" data-v="-1">'+L('I','L')+'</button></div><div class="val" id="frvw"><small>'+L('Deriva','Windage')+'</small>'+fmtW(G.dialW)+'</div><div class="bt"><button type="button" data-d="w" data-v="1">'+L('D','R')+'</button><button type="button" data-d="w" data-v="10">'+L('D','R')+(U()?'2,5':'1')+'</button></div></div>'+
    '<div class="frtur"><div class="bt"><button type="button" data-z="-1">−</button></div><div class="val"><small>'+L('Aumentos','Magnification')+'</small>'+G.zoom+'×</div><div class="bt"><button type="button" data-z="1">+</button></div></div>'+
-   '<div class="frrow" style="margin:6px 0 0"><button type="button" class="frbtn sec sm" id="frctr">'+L('Centrar en P','Center on P')+(G.cur+1)+'</button><button type="button" class="frbtn sec sm" id="fr0">'+L('Torretas a cero','Zero turrets')+'</button></div></div>'+
+   '<div class="frrow" style="margin:6px 0 0"><button type="button" class="frbtn sec sm" id="frctr">'+L('Centrar en P','Center on P')+(G.cur+1)+'</button><button type="button" class="frbtn sec sm" id="fr0">'+L('Torretas a cero','Zero turrets')+'</button>'+
+    (G.mode==='movil'?'<button type="button" class="frbtn sec sm'+(G.track?' on':'')+'" id="frtk">'+L('Seguir la placa: ','Track the plate: ')+(G.track?L('sí','on'):L('no','off'))+'</button>':'')+
+    (G.st.night?'<button type="button" class="frbtn sec sm on" id="frsn">'+L('Visor: ','Scope: ')+(G.sensor==='nv'?L('visión nocturna','night vision'):L('térmico','thermal'))+'</button>':'')+'</div></div>'+
    '<div class="frpanel"><h4>'+L('Placa','Plate')+'</h4>'+chipsHTML()+'</div><div class="frpanel"><h4>'+L('Instrumentos','Instruments')+'</h4>'+toolsHTML()+'</div>';
   if(hint) hint.textContent=L('Arrastra para apuntar · sujeción con la retícula o torretas','Drag to aim · hold with the reticle or dial');
  }
  const q=id=>document.getElementById(id);
- q('frtog').onclick=()=>{ G.view=G.view==='pano'?'scope':'pano'; if(G.view==='scope'){ const t=G.targets[G.cur]; if(!G.aimSet){ G.aim={u:t.u,e:t.e}; G.aimSet=true; } } else { G.breath=0; G.pano.u=clamp(G.aim.u,-200,200); } CACHE=null; side(); const vw=document.getElementById('frview'); if(vw&&vw.getBoundingClientRect().top<0) vw.scrollIntoView({block:'start'}); };
+ q('frtog').onclick=()=>{ G.view=G.view==='pano'?'scope':'pano'; G.iris=performance.now(); if(G.view==='scope'){ const t=G.targets[G.cur]; if(!G.aimSet||t.mv){ G.aim={u:t.u,e:t.e}; G.trackOff=0; G.aimSet=true; } } else { G.breath=0; G.pano.u=clamp(G.aim.u,-200,200); } CACHE=null; side(); const vw=document.getElementById('frview'); if(vw&&vw.getBoundingClientRect().top<0) vw.scrollIntoView({block:'start'}); };
  sd.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ selTarget(+b.getAttribute('data-t'),true); });
  sd.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>tool(b.getAttribute('data-tool')));
+ const sn0=q('frsn'); if(sn0) sn0.onclick=()=>{ G.sensor=G.sensor==='nv'?'th':'nv'; CACHE=null; G.iris=performance.now(); side(); msg(G.sensor==='nv'?L('Visión nocturna: amplifica la poca luz que hay','Night vision: amplifies what little light there is'):L('Térmico: ves el calor; las placas llevan mantas térmicas, como en los campos de tiro para estos visores','Thermal: you see heat; the plates carry heat pads, as on ranges for these scopes')); };
  if(G.view==='scope'){
-  sd.querySelectorAll('[data-d]').forEach(b=>{ const f=()=>{ const v=+b.getAttribute('data-v')*CLICK(); if(b.getAttribute('data-d')==='e') G.dialE=Math.round((G.dialE+v)/CLICK())*CLICK(); else G.dialW=Math.round((G.dialW+v)/CLICK())*CLICK(); G.dialE=clamp(G.dialE,-5,40); G.dialW=clamp(G.dialW,-12,12); q('frve').innerHTML='<small>'+L('Elevación','Elevation')+'</small>'+fmtE(G.dialE); q('frvw').innerHTML='<small>'+L('Deriva','Windage')+'</small>'+fmtW(G.dialW); };
+  sd.querySelectorAll('[data-d]').forEach(b=>{ const f=()=>{ const v=+b.getAttribute('data-v')*CLICK(); if(b.getAttribute('data-d')==='e') G.dialE=Math.round((G.dialE+v)/CLICK())*CLICK(); else G.dialW=Math.round((G.dialW+v)/CLICK())*CLICK(); G.dialE=clamp(G.dialE,-5,EMAX()); G.dialW=clamp(G.dialW,-12,12); q('frve').innerHTML='<small>'+L('Elevación','Elevation')+'</small>'+fmtE(G.dialE); q('frvw').innerHTML='<small>'+L('Deriva','Windage')+'</small>'+fmtW(G.dialW); };
     let rep=0,del=0; b.addEventListener('pointerdown',e=>{ e.preventDefault(); f(); del=setTimeout(()=>{ rep=setInterval(f,70); },420); });
     const stop=()=>{ clearTimeout(del); clearInterval(rep); }; b.addEventListener('pointerup',stop); b.addEventListener('pointerleave',stop); b.addEventListener('pointercancel',stop); });
   sd.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{ zoomStep(+b.getAttribute('data-z')); side(); });
-  q('frctr').onclick=()=>{ const t=G.targets[G.cur]; G.aim={u:t.u,e:t.e}; };
+  q('frctr').onclick=()=>{ const t=G.targets[G.cur]; G.aim={u:t.u,e:t.e}; G.trackOff=0; };
+  const tk=q('frtk'); if(tk) tk.onclick=()=>{ G.track=!G.track; if(G.track){ const t=G.targets[G.cur]; G.trackOff=clamp(G.aim.u-t.u,-20,20); } side(); };
   q('fr0').onclick=()=>{ G.dialE=0; G.dialW=0; side(); };
   q('frbr').onclick=()=>{ G.breath=G.breath?0:performance.now(); side(); };
   q('frfire').onclick=()=>fire();
  }
 }
-function selTarget(i,center){ if(G.over) return; G.cur=i; if(center){ const t=G.targets[i]; if(G.view==='scope') G.aim={u:t.u,e:t.e}; else G.pano.u=clamp(t.u,-200,200); G.aimSet=true; G.aim={u:t.u,e:t.e}; } side(); status(); }
+function selTarget(i,center){ if(G.over) return; G.cur=i; if(center){ const t=G.targets[i]; if(G.view==='scope') G.aim={u:t.u,e:t.e}; else G.pano.u=clamp(t.mv?t.u0:t.u,-200,200); G.aimSet=true; G.aim={u:t.u,e:t.e}; G.trackOff=0; } side(); status(); }
 function bindView(){ const v=CV; let down=null, moved=0;
- v.addEventListener('pointerdown',e=>{ down={x:e.clientX,y:e.clientY}; moved=0; v.setPointerCapture(e.pointerId); });
+ v.addEventListener('pointerdown',e=>{ if(G&&G.bcam){ G.bcam.skip=true; return; } down={x:e.clientX,y:e.clientY}; moved=0; v.setPointerCapture(e.pointerId); });
  v.addEventListener('pointermove',e=>{ if(!down) return; const dx=e.clientX-down.x, dy=e.clientY-down.y; moved+=Math.abs(dx)+Math.abs(dy); down={x:e.clientX,y:e.clientY};
-   const P=viewParams(v.clientWidth,v.clientHeight); if(G.view==='scope'){ G.aim.u=clamp(G.aim.u-dx/P.s,-320,320); G.aim.e=clamp(G.aim.e+dy/P.s,-120,80); } else { G.pano.u=clamp(G.pano.u-dx/P.s,-260,260); } });
+   const P=viewParams(v.clientWidth,v.clientHeight); if(G.view==='scope'){ if(G.mode==='movil'&&G.track&&G.targets[G.cur].mv){ G.trackOff=clamp((G.trackOff||0)-dx/P.s,-20,20); } else G.aim.u=clamp(G.aim.u-dx/P.s,-320,320); G.aim.e=clamp(G.aim.e+dy/P.s,-120,80); } else { G.pano.u=clamp(G.pano.u-dx/P.s,-260,260); } });
  v.addEventListener('pointerup',e=>{ if(down&&moved<8&&G.view==='pano'){ const r=v.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top; const P=viewParams(v.clientWidth,v.clientHeight);
      let best=-1,bd=34; G.targets.forEach((t,i)=>{ const dd=Math.hypot(PX(P,t.u)-x,Math.min(PZ(P,t.d,t.gy)-5,PZ(P,t.d,t.zc))-y-8); if(dd<bd){ bd=dd; best=i; } });
      if(best>=0) selTarget(best,false); else { let bf=-1,fd=40; G.flags.forEach((f,i)=>{ const dd=Math.hypot(PX(P,f.u)-x,PZ(P,f.d,f.gy)-y-10); if(dd<fd){ fd=dd; bf=i; } }); if(bf>=0) tool('flags',bf); } }
@@ -578,9 +797,11 @@ if(!window.__frHash){ window.__frHash=1; window.addEventListener('hashchange',()
 /* ===== Instrumentos ===== */
 function kestrel(){ const w=windAt(now(),0); const r={T:G.T,rh:G.rh,P:G.env.P,da:G.env.da,s:Math.round(w.s*10)/10,dir:Math.round(w.dir)%360,at:now()}; G.readK=r; return r; }
 function raycast(u,e){ for(let d=30; d<4000; d+=d<500?5:15){ if(eOf(terrain(G.st,d,u),d)>=e) return d; } return 0; }
-function aimedTarget(u,e){ let best=null,bd=1e9; G.targets.forEach(t=>{ const half=Math.max(t.w,t.h)/t.d*1000/2; const da=Math.hypot(t.u-u,t.e-e); if(da<=Math.max(half*1.6,1.2)&&da<bd){ bd=da; best=t; } }); return best; }
+function aimedTarget(u,e){ let best=null,bd=1e9; G.targets.forEach(t=>{ const half=Math.max(t.w,t.h)/t.d*1000/2; const tol=Math.max(half*1.6,1.2);
+   /* placa móvil: vale apuntar por delante (adelanto) dentro del claro */
+   const du=t.mv?Math.max(0,Math.abs(t.u-u)-(t.mv.open*1000/t.R)*0.6):Math.abs(t.u-u); const da=Math.hypot(du,t.e-e); if(da<=tol&&da<bd){ bd=da; best=t; } }); return best; }
 function lase(){ let t=null; if(G.view==='scope') t=aimedTarget(G.aim.u,G.aim.e); else t=G.targets[G.cur];
- const lim=G.mode==='facil'?3000:2500;
+ const lim=G.mode==='record'?4500:(EZ()?3000:2500);
  if(!t){ const d=G.view==='scope'?raycast(G.aim.u,G.aim.e):0; if(!d) return {none:true}; const R=Math.hypot(d,terrain(G.st,d,G.aim.u)-EYE); if(R>lim) return {far:true}; return {R:Math.round(R),ang:Math.atan2(terrain(G.st,d,G.aim.u)-EYE,d)*180/Math.PI,az:(G.az+G.aim.u*0.0572958+360)%360,ground:true}; }
  if(t.R>lim) return {far:true,i:t.i};
  const R=Math.round(t.R); /* sin error aleatorio: la lectura es la distancia real redondeada al metro */
@@ -588,13 +809,13 @@ function lase(){ let t=null; if(G.view==='scope') t=aimedTarget(G.aim.u,G.aim.e)
 function heading(){ const u=G.view==='scope'?G.aim.u:G.pano.u; return (G.az+u*0.0572958+360)%360; }
 function tool(k,arg){ const rf=G.rf;
  if(k==='kestrel'){ const show=()=>{ const r=G.readK; return '<div class="frdev"><div class="frlcd">'+(r?
-    '<div class="r"><span>'+L('Temperatura','Temperature')+'</span><b>'+nf(r.T,1)+' °C</b></div><div class="r"><span>'+L('Humedad relativa','Relative humidity')+'</span><b>'+r.rh+' %</b></div><div class="r"><span>'+L('Presión de estación','Station pressure')+'</span><b>'+nf(r.P,1)+' hPa</b></div><div class="r"><span>'+L('Altitud de densidad','Density altitude')+'</span><b>'+ni(r.da)+' m</b></div><div class="big">'+nf(r.s,1)+' m/s</div><div class="r"><span>'+L('Viento desde','Wind from')+'</span><b>'+r.dir+'°</b></div>'+(G.mode==='facil'?'<div class="r"><span>'+L('Cruzado sobre tu rumbo','Crosswind on your heading')+'</span><b>'+(function(){ const cr=comps({s:r.s,dir:r.dir},G.az+G.targets[G.cur].u*0.0572958).cross; return nf(Math.abs(cr),1)+' m/s '+(cr>=0?L('→ empuja a la derecha','→ pushes right'):L('← empuja a la izquierda','← pushes left')); })()+'</b></div>':'')
+    '<div class="r"><span>'+L('Temperatura','Temperature')+'</span><b>'+nf(r.T,1)+' °C</b></div><div class="r"><span>'+L('Humedad relativa','Relative humidity')+'</span><b>'+r.rh+' %</b></div><div class="r"><span>'+L('Presión de estación','Station pressure')+'</span><b>'+nf(r.P,1)+' hPa</b></div><div class="r"><span>'+L('Altitud de densidad','Density altitude')+'</span><b>'+ni(r.da)+' m</b></div><div class="big">'+nf(r.s,1)+' m/s</div><div class="r"><span>'+L('Viento desde','Wind from')+'</span><b>'+r.dir+'°</b></div>'+(EZ()?'<div class="r"><span>'+L('Cruzado sobre tu rumbo','Crosswind on your heading')+'</span><b>'+(function(){ const cr=comps({s:r.s,dir:r.dir},G.az+G.targets[G.cur].u*0.0572958).cross; return nf(Math.abs(cr),1)+' m/s '+(cr>=0?L('→ empuja a la derecha','→ pushes right'):L('← empuja a la izquierda','← pushes left')); })()+'</b></div>':'')
     :'<div class="big" style="font-size:18px">'+L('Pulsa MEDIR','Press MEASURE')+'</div>')+'</div>'+
     '<div class="frrow"><button type="button" class="frbtn" id="frkm">'+L('MEDIR','MEASURE')+'</button>'+(r?'<button type="button" class="frbtn sec" id="frkn">'+L('Anotar','Write down')+'</button>':'')+'</div></div><p style="font-size:13px;color:#a8ad98">'+L('Mide el aire y el viento en tu puesto (tramo 1). Lejos el viento puede ser otro: míralo en las banderas.','Measures the air and the wind at your position (zone 1). Further out the wind may differ: check the flags.')+'</p>'; };
    const bind=s=>{ s.querySelector('#frkm').onclick=()=>{ kestrel(); s.querySelector('.bd').innerHTML=show(); bind(s); }; const n=s.querySelector('#frkn'); if(n) n.onclick=()=>{ const r=G.readK; addNote(L('Anemómetro','Meter')+': '+nf(r.T,1)+'°C '+r.rh+'% '+nf(r.P,1)+'hPa DA '+ni(r.da)+'m · '+L('viento','wind')+' '+nf(r.s,1)+' m/s '+L('desde','from')+' '+r.dir+'°'); msg(L('Anotado','Written down')); }; };
    sheet(L('Anemómetro (tipo Kestrel)','Wind meter (Kestrel type)'),show(),bind,'kestrel'); return; }
  if(k==='lrf'){ const r=lase(); let h; if(r.none) h='<div class="frlcd"><div class="big" style="font-size:20px">'+L('Sin eco','No echo')+'</div></div>'; else if(r.far) h='<div class="frlcd"><div class="big" style="font-size:20px">'+L('Sin lectura','No reading')+'</div></div><p>'+L('Fuera del alcance del telémetro (2.500 m en este modo). Mide con la retícula: D = tamaño (m) × 1000 / mil.','Beyond the rangefinder’s reach (2,500 m in this mode). Range with the reticle: D = size (m) × 1000 / mil.')+EST()+'</p>';
-   else h='<div class="frlcd"><div class="big">'+ni(r.R)+' m</div><div class="r"><span>'+L('Ángulo','Angle')+'</span><b>'+(r.ang>=0?'+':'')+nf(r.ang,1)+'°</b></div><div class="r"><span>'+L('Rumbo','Heading')+'</span><b>'+nf(r.az,1)+'°</b></div>'+(G.mode==='facil'?'<div class="r"><span>'+L('Distancia horizontal','Horizontal distance')+'</span><b>'+ni(r.R*Math.cos(r.ang*Math.PI/180))+' m</b></div>':'')+'</div>'+(r.ground?'<p>'+L('Has medido el terreno, no una placa.','You ranged the ground, not a plate.')+'</p>':'<p>P'+(r.i+1)+' · '+(G.targets[r.i].shape==='gong'?L('gong de ','gong ')+Math.round(G.targets[r.i].w*100)+' cm':L('placa de ','plate ')+Math.round(G.targets[r.i].w*100)+'×'+Math.round(G.targets[r.i].h*100)+' cm')+'</p>');
+   else h='<div class="frlcd"><div class="big">'+ni(r.R)+' m</div><div class="r"><span>'+L('Ángulo','Angle')+'</span><b>'+(r.ang>=0?'+':'')+nfs(r.ang,1)+'°</b></div><div class="r"><span>'+L('Rumbo','Heading')+'</span><b>'+nf(r.az,1)+'°</b></div>'+(EZ()?'<div class="r"><span>'+L('Distancia horizontal','Horizontal distance')+'</span><b>'+ni(r.R*Math.cos(r.ang*Math.PI/180))+' m</b></div>':'')+'</div>'+(r.ground?'<p>'+L('Has medido el terreno, no una placa.','You ranged the ground, not a plate.')+'</p>':'<p>P'+(r.i+1)+' · '+(G.targets[r.i].shape==='gong'?L('gong de ','gong ')+Math.round(G.targets[r.i].w*100)+' cm':L('placa de ','plate ')+Math.round(G.targets[r.i].w*100)+'×'+Math.round(G.targets[r.i].h*100)+' cm')+'</p>');
    sheet(L('Telémetro láser','Laser rangefinder'),h+(r.R&&!r.ground?'<div class="frrow"><button type="button" class="frbtn sec" id="frln">'+L('Anotar','Write down')+'</button></div>':''),s=>{ const n=s.querySelector('#frln'); if(n) n.onclick=()=>{ addNote('P'+(r.i+1)+': '+ni(r.R)+' m · '+nf(r.ang,1)+'° · '+L('rumbo','heading')+' '+nf(r.az,1)+'°'); msg(L('Anotado','Written down')); }; },'lrf'); return; }
  if(k==='comp'){ const hd=heading(); const e=G.view==='scope'?G.aim.e:0; sheet(L('Brújula y GPS','Compass & GPS'),'<div class="frlcd"><div class="big">'+Math.round(hd)+'°</div><div class="r"><span>'+L('Rumbo (verdadero) de la vista','View heading (true)')+'</span><b>'+['N','NE','E','SE','S','SW','W','NW'][Math.round(hd/45)%8].replace('W',EN()?'W':'O')+'</b></div><div class="r"><span>'+L('Latitud (GPS)','Latitude (GPS)')+'</span><b>'+nf(G.st.lat,1)+'° N</b></div><div class="r"><span>'+L('Altitud del puesto','Position altitude')+'</span><b>'+ni(G.st.alt)+' m</b></div>'+(G.view==='scope'?'<div class="r"><span>'+L('Inclinación del visor','Scope inclination')+'</span><b>'+nf(e*0.0572958,1)+'°</b></div>':'')+'</div><p style="font-size:13px;color:#a8ad98">'+L('Acimut 90° = este, 270° = oeste. La línea de tiro de este puesto mira a ','Azimuth 90° = east, 270° = west. This position’s firing line faces ')+G.az+'°.</p>',null,'comp'); return; }
  if(k==='card'){ let di=0; if(G.readK){ while(di<DAS.length-1&&G.readK.da>=DAS[di+1]) di++; } cardSheet(di); return; }
@@ -626,7 +847,7 @@ function flagsSheet(i){ const f=G.flags[i]; const g=flagGeom(f,now()); const ban
  const b=bands[f.band];
  let h='<canvas id="frfc" width="600" height="360" style="width:100%;height:auto;border-radius:10px;background:#9db3c9"></canvas>';
  h+='<p class="frbig">'+L('Bandera ','Flag ')+(i+1)+' · '+ni(f.d)+' m · '+L('tramo ','zone ')+(f.band+1)+': '+ni(b[0])+'–'+(b[1]?ni(b[1])+' m':L('más allá','beyond'))+'</p>';
- if(G.mode==='facil') h+='<p>'+L('Viento cruzado aquí: ','Crosswind here: ')+'<b>'+nf(Math.abs(g.cross),1)+' m/s</b> '+(g.cross>=0?L('hacia la derecha','to the right'):L('hacia la izquierda','to the left'))+'. '+L('En Fácil es igual en todo el recorrido.','In Easy it is the same along the whole path.')+'</p>';
+ if(EZ()) h+='<p>'+L('Viento cruzado aquí: ','Crosswind here: ')+'<b>'+nf(Math.abs(g.cross),1)+' m/s</b> '+(g.cross>=0?L('hacia la derecha','to the right'):L('hacia la izquierda','to the left'))+'. '+L('En Fácil es igual en todo el recorrido.','In Easy it is the same along the whole path.')+'</p>';
  else h+='<p class="frbig">'+L('Ángulo con el mástil (transportador de los prismáticos): ','Angle from the pole (binocular protractor): ')+'<b>'+nf(g.th,1)+'°</b> '+(g.cross>=0?L('hacia la derecha','to the right'):L('hacia la izquierda','to the left'))+'</p><p style="font-size:13.5px;color:#bfc2b8">'+L('Ángulo / 4 = viento cruzado en mph sobre tu línea de tiro a P','Angle / 4 = crosswind in mph across your line of fire to P')+(G.cur+1)+L(' (FM 23-10). 1 mph = 0,44704 m/s. La bandera cuelga hacia donde empuja el viento.',' (FM 23-10). 1 mph = 0.44704 m/s. The flag hangs the way the wind pushes.')+'</p>';
  h+='<div class="frrow">'+G.flags.map((x,j)=>'<button type="button" class="frbtn '+(j===i?'':'sec')+' sm" data-fl="'+j+'">'+L('Bandera ','Flag ')+(j+1)+'</button>').join('')+'</div>';
  sheet(L('Prismáticos','Binoculars'),h,s=>{ s.querySelectorAll('[data-fl]').forEach(bb=>bb.onclick=()=>flagsSheet(+bb.getAttribute('data-fl')));
@@ -640,54 +861,81 @@ function flagsSheet(i){ const f=G.flags[i]; const g=flagGeom(f,now()); const ban
      requestAnimationFrame(draw_); }; draw_(); },'flags'); }
 function pcSheet(){ const t=G.targets[G.cur]; const K=G.readK, R_=G.readL&&G.readL.i===t.i?G.readL:null;
  if(!K||!R_){ sheet(L('Computadora balística','Ballistic computer'),'<p class="frbig">'+L('Necesito tus lecturas de esta placa:','I need your readings for this plate:')+'</p><p>'+(K?'<span class="frok">✓</span> ':'· ')+L('Anemómetro: temperatura, presión y viento','Wind meter: temperature, pressure and wind')+'<br>'+(R_?'<span class="frok">✓</span> ':'· ')+L('Telémetro: distancia y ángulo de P','Rangefinder: distance and angle of P')+(t.i+1)+'</p><div class="frrow">'+(K?'':'<button type="button" class="frbtn sec" id="frk">'+L('Abrir anemómetro','Open wind meter')+'</button>')+(R_?'':'<button type="button" class="frbtn sec" id="frl">'+L('Medir P','Range P')+(t.i+1)+'</button>')+'</div>',s=>{ const a=s.querySelector('#frk'); if(a) a.onclick=()=>tool('kestrel'); const b=s.querySelector('#frl'); if(b) b.onclick=()=>tool('lrf'); },'pc'); return; }
- const bd=breakdown(R_.R,t.u,t.e,now()); const A=G.az+t.u*0.0572958; const cr=comps({s:K.s,dir:K.dir},A).cross;
+ const bd=breakdown(R_.R,t.mv?t.u0:t.u,t.e,now()); const A=G.az+(t.mv?t.u0:t.u)*0.0572958; const ld=t.mv?leadMil(t,bd.t):0; const wTot=bd.wdg+ld; const cr=comps({s:K.s,dir:K.dir},A).cross;
  const row=(a,b)=>'<span>'+a+'</span><b>'+b+'</b>';
- let h='<div class="frkv">'+row(L('Distancia · ángulo','Distance · angle'),ni(R_.R)+' m · '+nf(R_.ang,1)+'°')+row(L('Altitud de densidad','Density altitude'),ni(K.da)+' m')+row(L('Viento cruzado','Crosswind'),nf(Math.abs(cr),1)+' m/s '+(cr>=0?L('→ derecha','→ right'):L('← izquierda','← left')))+row(L('Rumbo · latitud','Heading · latitude'),Math.round(A)+'° · '+nf(G.st.lat,1)+'° N')+'</div>';
+ let h='<div class="frkv">'+row(L('Distancia · ángulo','Distance · angle'),ni(R_.R)+' m · '+nfs(R_.ang,1)+'°')+row(L('Altitud de densidad','Density altitude'),ni(K.da)+' m')+row(L('Viento cruzado','Crosswind'),nf(Math.abs(cr),1)+' m/s '+(cr>=0?L('→ derecha','→ right'):L('← izquierda','← left')))+row(L('Rumbo · latitud','Heading · latitude'),Math.round(A)+'° · '+nf(G.st.lat,1)+'° N')+'</div>';
  h+='<div class="frpanel" style="margin:10px 0"><h4>'+L('Elevación','Elevation')+'</h4><div class="frlcd"><div class="big">'+fmtE(bd.elev)+'</div></div><div class="frkv" style="margin-top:6px">'+row(L('Caída de la bala','Bullet drop'),fmtE(bd.drop))+row(L('Coriolis vertical (Eötvös)','Vertical Coriolis (Eötvös)'),(bd.corV>=0?L('la bala sube ','bullet rises '):L('la bala baja ','bullet drops '))+nf(Math.abs(bd.corVcm),1)+' cm → '+fmtE(-bd.corV))+'</div></div>';
- h+='<div class="frpanel" style="margin:10px 0"><h4>'+L('Deriva','Windage')+'</h4><div class="frlcd"><div class="big">'+fmtW(bd.wdg)+'</div></div><div class="frkv" style="margin-top:6px">'+row(L('Viento','Wind'),fmtW(-bd.wind))+row(L('Deriva por giro','Spin drift'),fmtW(-bd.spin))+row(L('Coriolis horizontal','Horizontal Coriolis'),nf(Math.abs(bd.corHcm),1)+' cm → '+fmtW(-bd.corH))+'</div></div>';
+ h+='<div class="frpanel" style="margin:10px 0"><h4>'+L('Deriva','Windage')+'</h4><div class="frlcd"><div class="big">'+fmtW(wTot)+'</div></div><div class="frkv" style="margin-top:6px">'+row(L('Viento','Wind'),fmtW(-bd.wind))+row(L('Deriva por giro','Spin drift'),fmtW(-bd.spin))+row(L('Coriolis horizontal','Horizontal Coriolis'),nf(Math.abs(bd.corHcm),1)+' cm → '+fmtW(-bd.corH))+
+   (t.mv?row('<b>'+L('Adelanto (placa en movimiento)','Lead (moving plate)')+'</b>','<b>'+fmtW(ld)+'</b>'):'')+'</div>'+
+   (t.mv?'<p class="frnote">'+L('La placa va a ','The plate moves at ')+nf(t.mv.v,1)+' m/s '+(t.mv.dir>0?L('hacia la derecha','to the right'):L('hacia la izquierda','to the left'))+L('. Mientras vuela la bala (','. While the bullet flies (')+nf(bd.t,2)+' s) '+L('recorre ','it covers ')+nf(t.mv.v*bd.t,2)+' m: '+nf(t.mv.v*bd.t,2)+' × 1000 ÷ '+ni(R_.R)+' = '+fmtAng(Math.abs(ld))+'. '+L('Con «Seguir la placa» la retícula va con ella y el adelanto lo pones en la deriva.','With “Track the plate” the reticle moves with it and the lead goes on the windage turret.')+'</p>':'')+'</div>';
  h+='<div class="frkv">'+row(L('Tiempo de vuelo','Time of flight'),nf(bd.t,2)+' s')+row(L('Velocidad al llegar','Impact velocity'),Math.round(bd.v)+' m/s (Mach '+nf(bd.mach,2)+')')+row(L('Régimen','Regime'),bd.minMach<1?'<span class="frko">'+L('llega subsónica: más caída y más viento','arrives subsonic: more drop and more wind')+'</span>':(bd.minMach<1.2?'<span class="frko">'+L('entra en transónico','goes transonic')+'</span>':L('supersónica todo el vuelo','supersonic all the way')))+'</div>';
  h+='<div class="frrow"><button type="button" class="frbtn" id="frap">'+L('Ajustar torretas','Dial it in')+'</button></div><p style="font-size:12.5px;color:#a8ad98">'+L('También puedes sujetar con la retícula en vez de girar las torretas.','You can also hold with the reticle instead of dialing.')+'</p>';
- sheet(L('Computadora balística','Ballistic computer'),h,s=>{ s.querySelector('#frap').onclick=()=>{ G.dialE=Math.round(bd.elev/CLICK())*CLICK(); G.dialW=Math.round(bd.wdg/CLICK())*CLICK(); closeSheet(); if(G.view!=='scope'){ G.view='scope'; G.aim={u:t.u,e:t.e}; G.aimSet=true; CACHE=null; } side(); const vw=document.getElementById('frview'); if(vw&&vw.getBoundingClientRect().top<0) vw.scrollIntoView({block:'start',behavior:'smooth'}); msg(L('Torretas: ','Turrets: ')+fmtE(G.dialE)+' · '+fmtW(G.dialW)); }; },'pc'); }
+ sheet(L('Computadora balística','Ballistic computer'),h,s=>{ s.querySelector('#frap').onclick=()=>{ G.dialE=Math.round(bd.elev/CLICK())*CLICK(); G.dialW=Math.round(wTot/CLICK())*CLICK(); G.dialE=clamp(G.dialE,-5,EMAX()); G.dialW=clamp(G.dialW,-12,12); closeSheet(); if(G.view!=='scope'){ G.view='scope'; G.aim={u:t.u,e:t.e}; G.trackOff=0; G.aimSet=true; CACHE=null; G.iris=performance.now(); } side(); const vw=document.getElementById('frview'); if(vw&&vw.getBoundingClientRect().top<0) vw.scrollIntoView({block:'start',behavior:'smooth'}); msg(L('Torretas: ','Turrets: ')+fmtE(G.dialE)+' · '+fmtW(G.dialW)); }; },'pc'); }
 
 function shoot(t,tg,aimU,aimE,dialE,dialW,held,tm){ let R=t.R; if(!tg){ const d=raycast(aimU,aimE); R=d?Math.hypot(d,terrain(G.st,d,aimU)-EYE):2500; }
  /* sin azar: el impacto es la solución exacta del integrador para lo que has girado en las torretas y donde está la retícula */
  const mvAdj=0, ea=0, wa=0, tsg=0;
  const fl=shotFlight({R:R,u:aimU,e:aimE,t:tm,alpha:dialE,beta:dialW,track:true});
  const iu=aimU+fl.z/R*1000, ie=aimE+fl.y/R*1000;
- const dxm=(iu-t.u)*R/1000, dym=(ie-t.e)*R/1000; const hit=!!tg&&(t.shape==='gong'?Math.hypot(dxm,dym)<=t.w/2:(Math.abs(dxm)<=t.w/2&&Math.abs(dym)<=t.h/2));
- return {R:R,fl:fl,iu:iu,ie:ie,dxm:dxm,dym:dym,hit:hit,mvAdj:mvAdj,ea:ea,wa:wa,tsg:tsg}; }
+ const uA=t.mv?mvU(t,tm+fl.t):t.u; /* placa móvil: donde está cuando llega la bala */
+ const dxm=(iu-uA)*R/1000, dym=(ie-t.e)*R/1000; const hit=!!tg&&mvOK(t,tm,fl.t)&&(t.shape==='gong'?Math.hypot(dxm,dym)<=t.w/2:(Math.abs(dxm)<=t.w/2&&Math.abs(dym)<=t.h/2));
+ return {R:R,fl:fl,iu:iu,ie:ie,dxm:dxm,dym:dym,hit:hit,mvAdj:mvAdj,ea:ea,wa:wa,tsg:tsg,uA:uA}; }
 /* ===== Disparo ===== */
-function fire(){ if(G.busy||G.over) return; let t=G.targets[G.cur]; const tm=now();
+function fire(){ if(G.busy||G.over) return; let t=G.targets[G.cur]; const tm=now(); movUpd(tm); trackUpd(0); /* la retícula, donde está la placa en este instante */
+ if(G.mode==='movil'&&G.track&&G.trackLag>0.05){ msg(L('Espera: la retícula aún está volviendo a la placa','Wait: the reticle is still swinging back onto the plate')); return; }
  const aimU=G.aim.u+G.shake.x, aimE=G.aim.e+G.shake.y; const tg=aimedTarget(aimU,aimE); if(tg){ t=tg; G.cur=tg.i; }
  if(t.res==='hit'||t.shots>=G.rounds){ msg(L('Esa placa ya está resuelta: elige otra','That plate is done: pick another')); return; }
  const sh=shoot(t,tg,aimU,aimE,G.dialE,G.dialW,!!G.breath,tm); const {R,fl,iu,ie,dxm,dym,hit,mvAdj,ea,wa,tsg}=sh; const held=!!G.breath;
+ if(tg&&t.mv&&!mvOK(t,tm,fl.t)){ msg(mvVis(t,tm)?L('Espera: cuando llegue la bala la placa estaría tapada por la protección','Wait: by the time the bullet arrives the plate would be behind cover'):L('Espera a que la placa salga de la protección','Wait for the plate to come out from behind cover')); return; }
  t.shots++; G.breath=0;
- const bd=breakdown(t.R,t.u,t.e,tm);
+ const bd=breakdown(t.R,t.mv?t.u0:t.u,t.e,tm);
  const rec={shk:Math.hypot(G.shake.x,G.shake.y),i:t.i,R:t.R,hit:hit,dxm:dxm,dym:dym,dialE:G.dialE,dialW:G.dialW,holdE:aimE-t.e,holdW:aimU-t.u,bd:bd,mvAdj:mvAdj,disp:Math.hypot(ea,wa),tsg:tsg,tof:fl.t,v:fl.v,mach:fl.mach,minMach:fl.minMach,held:held,
-   az:G.az+aimU*0.0572958,iu:iu,ie:ie,shot:t.shots,pts:0};
- if(hit){ const tab=G.mode==='facil'?[3,2,1,1,1]:[5,3,1]; rec.pts=Math.round((tab[t.shots-1]||1)*(1+t.d/1000)); G.score+=rec.pts; t.pts=rec.pts; t.res='hit'; t.hits.push([dxm,dym]); }
+   az:G.az+aimU*0.0572958,iu:iu,ie:ie,shot:t.shots,pts:0,ground:!tg,lead:t.mv?leadMil(t,bd.t):0,uA:sh.uA,tm:tm};
+ if(hit){ const tab=EZ()?[3,2,1,1,1]:[5,3,1]; rec.pts=Math.round((tab[t.shots-1]||1)*(1+t.d/1000)); G.score+=rec.pts; t.pts=rec.pts; t.res='hit'; t.hits.push([dxm,dym]); }
  else if(t.shots>=G.rounds) t.res='miss';
  G.shots.push(rec); G.last=rec;
  G.anim={fired:performance.now(),track:fl.track,u:aimU,e:aimE,tof:fl.t,iu:iu,ie:ie,hit:hit,t:t}; G.busy=true; side(); status();
  const fx=document.getElementById('frview'); if(fx){ fx.style.transform='translateY(2px)'; setTimeout(()=>{ fx.style.transform=''; },90); }
- setTimeout(()=>{ if(!G||G.anim.t!==t) return; if(hit){ G.anim.swing=performance.now(); G.hitVer=(G.hitVer||0)+1; msg(L('IMPACTO','HIT')+' · P'+(t.i+1)+' · '+ni(t.R)+' m','hit'); } else msg(L('Fallo','Miss')+' · '+missTxt(rec),'miss'); },fl.t*1000+60);
- setTimeout(()=>{ if(!G) return; G.busy=false; side(); debrief(rec); },fl.t*1000+(hit?1500:1100));
+ const g0=G; const alive=()=>G===g0&&!G.over&&!!document.getElementById('frside'); rec.anim=G.anim;
+ const finalHit=hit&&G.targets.every(x=>x.res); const camOn=hit&&!RM()&&!G.tut&&(finalHit||!!t.rec);
+ if(camOn&&camStart(rec,G.anim,()=>{ if(!alive()) return; G.anim.swing=performance.now(); G.hitVer=(G.hitVer||0)+1; hitFx(t,rec); msg(L('IMPACTO','HIT')+' · P'+(t.i+1)+' · '+ni(t.R)+' m','hit'); setTimeout(()=>{ if(!alive()) return; G.busy=false; side(); debrief(rec); },700); })){ if(window.MAT_FR) window.MAT_FR.lastShot=rec; return rec; }
+ setTimeout(()=>{ if(!alive()||G.anim.t!==t) return; if(hit){ hitFx(t,rec); G.anim.swing=performance.now(); G.hitVer=(G.hitVer||0)+1; msg(L('IMPACTO','HIT')+' · P'+(t.i+1)+' · '+ni(t.R)+' m'+(t.rec?' · '+L('distancia del récord de ','record distance of ')+t.rec.y:''),'hit'); } else msg(L('Fallo','Miss')+' · '+missTxt(rec),'miss'); },fl.t*1000+60);
+ setTimeout(()=>{ if(!alive()) return; G.busy=false; side(); debrief(rec); },fl.t*1000+(hit?1500:1100));
  if(window.MAT_FR) window.MAT_FR.lastShot=rec; return rec; }
+/* observador: dónde ha ido el impacto respecto a la placa y la corrección exacta en clics (con la misma puntería) */
+function spotCorr(r){ const t=G.targets[r.i]; const bd=r.bd; const ce=bd.elev-(r.dialE+r.holdE); const cw=bd.wdg+(r.lead||0)-(r.dialW+r.holdW); const k=CLICK();
+  return {ce:Math.round(ce/k)*k, cw:Math.round(cw/k)*k, rawE:ce, rawW:cw}; }
+function cmTxt(m){ const cm=Math.abs(m)*100; const r=cm<20?Math.max(5,Math.round(cm/5)*5):Math.round(cm/10)*10; if(r>=100) return nf(cm/100,1)+' m'; return r+' cm'; }
+function spotHTML(r){ const t=G.targets[r.i];
+  let tx; if(r.ground){ tx=L('«La bala ha dado en el suelo a unos ','“The round hit the ground about ')+ni(Math.round(r.R/10)*10)+L(' m: no estabas apuntando a la placa. Centra la retícula en P',' m out: you weren’t aiming at the plate. Put the reticle on P')+(t.i+1)+L(' y repite.»',' and go again.”');
+    return '<div class="frspot"><span class="tag">'+L('Ayuda · observador','Help · spotter')+'</span><p>'+tx+'</p></div>'; }
+  const v=r.dym, hz=r.dxm; const vt=Math.abs(v)>=0.01?(v>0?L('alto','high'):L('bajo','low')):''; const ht=Math.abs(hz)>=0.01?(hz>0?L('a la derecha','right'):L('a la izquierda','left')):'';
+  const dist=Math.hypot(v,hz); const parts=[]; if(vt) parts.push(nf(Math.abs(v)*100,0)+' cm '+vt); if(ht) parts.push(nf(Math.abs(hz)*100,0)+' cm '+ht);
+  tx=L('«Impacto ','“Impact ')+[vt,ht].filter(Boolean).join(L(' y ',' and '))+L(', a unos ',', about ')+cmTxt(dist)+L(' del centro',' from centre')+' ('+parts.join(', ')+').';
+  if(t.mv){ const behind=hz*t.mv.dir<0; tx+=' '+(behind?L('Te has quedado corto de adelanto.','You were short on lead.'):L('Te has pasado de adelanto.','Too much lead.')); }
+  const c=spotCorr(r); const a=[]; if(Math.abs(c.ce)>1e-6) a.push((c.ce>0?L('Sube ','Come up '):L('Baja ','Come down '))+fmtAng(c.ce)); if(Math.abs(c.cw)>1e-6) a.push(L('corrige ','')+fmtAng(c.cw)+' '+(c.cw>0?L('a la derecha','right'):L('a la izquierda','left')));
+  if(a.length){ a[0]=a[0].charAt(0).toUpperCase()+a[0].slice(1); tx+=' '+a.join(L(' y ',' and '))+'.'; }
+  tx+=(r.shk>0.005?L(' Y suelta el aire antes: el visor temblaba.',' And breathe out sooner: the scope was shaking.'):'')+L('»','”');
+  return '<div class="frspot"><span class="tag">'+L('Ayuda · observador','Help · spotter')+'</span><p>'+tx+'</p>'+(a.length?'<button type="button" class="frbtn sec sm" id="frspa">'+L('Girar las torretas así','Dial that in')+'</button>':'')+'</div>'; }
 function missTxt(r){ const v=r.dym*100, h=r.dxm*100; return (Math.abs(v)>=1?nf(Math.abs(v),0)+' cm '+(v>0?L('alto','high'):L('bajo','low')):'')+(Math.abs(v)>=1&&Math.abs(h)>=1?' · ':'')+(Math.abs(h)>=1?nf(Math.abs(h),0)+' cm '+(h>0?L('a la derecha','right'):L('a la izquierda','left')):''); }
 function debrief(r){ if(!G||G.over&&!r) return; if(G.tut&&!r._tut){ r._tut=1; tutShot(r); } const t=G.targets[r.i], bd=r.bd; const row=(a,b)=>'<span>'+a+'</span><b>'+b+'</b>';
- const effE=r.dialE+r.holdE, effW=r.dialW+r.holdW; const dE=effE-bd.elev, dW=effW-bd.wdg;
- let h='<p class="frbig">'+(r.hit?'<b class="frok">'+L('IMPACTO','HIT')+'</b>':'<b class="frko">'+L('FALLO','MISS')+'</b>')+' · P'+(t.i+1)+' · '+ni(r.R)+' m · '+(r.hit?'+'+r.pts+' '+L('puntos','points'):L('impacto ','impact ')+missTxt(r)+' '+L('del centro','from centre'))+'</p>';
+ const effE=r.dialE+r.holdE, effW=r.dialW+r.holdW; const dE=effE-bd.elev, dW=effW-bd.wdg-(r.lead||0);
+ let h='<p class="frbig">'+(r.hit?'<b class="frok">'+L('IMPACTO','HIT')+'</b>':'<b class="frko">'+L('FALLO','MISS')+'</b>')+' · P'+(t.i+1)+' · '+ni(r.ground?t.R:r.R)+' m · '+(r.hit?'+'+r.pts+' '+L('puntos','points'):(r.ground?L('la bala ha dado en el suelo a unos ','the round hit the ground about ')+ni(Math.round(r.R/10)*10)+' m':L('impacto ','impact ')+missTxt(r)+' '+L('del centro','from centre')))+'</p>';
+  if(r.hit&&t.rec) h+='<div class="frspot rec"><span class="tag">'+ni(t.rec.d)+' m · '+t.rec.y+'</span><p>'+L('Has tocado la placa a la distancia del disparo récord de ','You hit the plate at the distance of the record shot by ')+esc(L(t.rec.who[0],t.rec.who[1]))+' ('+esc(t.rec.gun)+'). '+L('La bala ha tardado ','The bullet took ')+nf(r.tof,1)+L(' s en llegar.',' s to arrive.')+'</p></div>';
  h+='<div class="frkv">'+row(L('Tiempo de vuelo','Time of flight'),nf(r.tof,2)+' s')+row(L('Velocidad al llegar','Impact velocity'),Math.round(r.v)+' m/s · Mach '+nf(r.mach,2))+row(L('Transónica','Transonic'),r.minMach<1.2?'<span class="frko">'+L('sí, Mach mínimo ','yes, minimum Mach ')+nf(r.minMach,2)+'</span>':L('no','no'))+'</div>';
  h+='<div class="frpanel" style="margin:10px 0"><h4>'+L('Valores reales de este disparo','True values for this shot')+'</h4><div class="frkv">'+
-  row(L('Caída','Drop'),fmtAng(bd.drop))+row(L('Coriolis vertical (Eötvös)','Vertical Coriolis (Eötvös)'),(Math.abs(bd.corVcm)<0.05?'':(bd.corV>=0?'+':'−'))+nf(Math.abs(bd.corVcm),1)+' cm ('+fmtAng(bd.corV)+')')+row('<b>'+L('Alza necesaria','Elevation needed')+'</b>','<b>'+fmtE(bd.elev)+'</b>')+
-  row(L('Viento','Wind'),fmtAng(bd.wind)+' '+(bd.wind>=0?L('a la derecha','right'):L('a la izquierda','left')))+row(L('Deriva por giro','Spin drift'),fmtAng(bd.spin)+' '+L('a la derecha','right'))+row(L('Coriolis horizontal','Horizontal Coriolis'),nf(Math.abs(bd.corHcm),1)+' cm '+(bd.corH>=0?L('a la derecha','right'):L('a la izquierda','left')))+row('<b>'+L('Deriva necesaria','Windage needed')+'</b>','<b>'+fmtW(bd.wdg)+'</b>')+'</div></div>';
+  row(L('Caída','Drop'),fmtAng(bd.drop))+row(L('Coriolis vertical (Eötvös)','Vertical Coriolis (Eötvös)'),(Math.abs(bd.corVcm)<0.05?'':(bd.corV>=0?'+':'−'))+nf(Math.abs(bd.corVcm),1)+' cm ('+(Math.abs(bd.corV)<0.005?'':(bd.corV>=0?'+':'−'))+fmtAng(bd.corV)+')')+row('<b>'+L('Alza necesaria','Elevation needed')+'</b>','<b>'+fmtE(bd.elev)+'</b>')+
+  row(L('Viento','Wind'),fmtAng(bd.wind)+' '+(bd.wind>=0?L('a la derecha','right'):L('a la izquierda','left')))+row(L('Deriva por giro','Spin drift'),fmtAng(bd.spin)+' '+L('a la derecha','right'))+row(L('Coriolis horizontal','Horizontal Coriolis'),nf(Math.abs(bd.corHcm),1)+' cm '+(bd.corH>=0?L('a la derecha','right'):L('a la izquierda','left')))+(r.lead?row(L('Adelanto (placa en movimiento)','Lead (moving plate)'),fmtW(r.lead)):'')+row('<b>'+L('Deriva necesaria','Windage needed')+'</b>','<b>'+fmtW(bd.wdg+(r.lead||0))+'</b>')+'</div></div>';
  h+='<div class="frpanel" style="margin:10px 0"><h4>'+L('Lo que pusiste','What you set')+'</h4><div class="frkv">'+row(L('Torretas','Turrets'),fmtE(r.dialE)+' · '+fmtW(r.dialW))+row(L('Sujeción con la retícula','Reticle hold'),fmtE(r.holdE)+' · '+fmtW(r.holdW))+
   row(L('Diferencia','Difference'),(Math.abs(dE)<0.05?L('alza exacta','elevation spot on'):(dE>0?L('alto ','high '):L('bajo ','low '))+fmtAng(dE))+' · '+(Math.abs(dW)<0.05?L('deriva exacta','windage spot on'):(dW>0?L('a la derecha ','right '):L('a la izquierda ','left '))+fmtAng(dW)))+
   row(L('Dispersión aleatoria','Random dispersion'),'0 · '+L('el impacto sale exacto de lo que pusiste','the impact follows exactly from what you set'))+(r.shk>0.005?row(L('Temblor del visor (aire contenido demasiado)','Scope shake (breath held too long)'),'<span class="frko">'+fmtAng(r.shk)+'</span>'):'')+'</div></div>';
- if(G.mode==='facil'&&!r.hit){ const ce=-r.dym/r.R*1000, cw=-r.dxm/r.R*1000; h+='<p class="frbig"><b>'+L('Observador','Spotter')+':</b> '+L('«Impacto ','“Impact ')+missTxt(r)+'. '+(Math.abs(ce)>=0.05?(ce>0?L('Sube ','Come up '):L('Baja ','Come down '))+fmtAng(ce):'')+(Math.abs(ce)>=0.05&&Math.abs(cw)>=0.05?L(' y ',' and '):'')+(Math.abs(cw)>=0.05?L('corrige ','hold ')+fmtAng(cw)+' '+(cw>0?L('a la derecha','right'):L('a la izquierda','left')):'')+L('.»','.”')+'</p>'; }
- const more=t.res!=='hit'&&t.shots<G.rounds; const next=G.targets.findIndex(x=>!x.res);
+ if(SPOT()&&!r.hit){ h=spotHTML(r)+h; }
+ if(r.hit&&r.anim&&r.anim.track&&!RM()&&!G.tut) h+='<div class="frrow" style="margin:4px 0 8px"><button type="button" class="frbtn sec sm" id="frcam">'+L('Ver la cámara bala','Watch the bullet cam')+'</button></div>';
+  const more=t.res!=='hit'&&t.shots<G.rounds; const next=G.targets.findIndex(x=>!x.res);
   if(G.tut) h+='<div class="frrow"><button type="button" class="frbtn" id="frcon">'+L('Seguir con la lección','Back to the lesson')+'</button></div>'; else h+='<div class="frrow">'+(more?'<button type="button" class="frbtn" id="frag">'+L('Otro disparo','Fire again')+' ('+(G.rounds-t.shots)+')</button>':'')+(next>=0?'<button type="button" class="frbtn'+(more?' sec':'')+'" id="frnx">'+L('Siguiente placa','Next plate')+' (P'+(next+1)+')</button>':'<button type="button" class="frbtn" id="frend">'+L('Ver resultado','See result')+'</button>')+'</div>';
- sheet(L('Informe del disparo','Shot debrief'),h,s=>{ const cn=s.querySelector('#frcon'); if(cn) cn.onclick=()=>{ closeSheet(); const c=document.getElementById('frcoach'); if(c) c.scrollIntoView({block:'start',behavior:'smooth'}); }; const a=s.querySelector('#frag'); if(a) a.onclick=()=>{ closeSheet(); if(G.mode==='facil'&&!r.hit){ /* el observador ya te dijo la corrección */ } };
+ sheet(L('Informe del disparo','Shot debrief'),h,s=>{ const cn=s.querySelector('#frcon'); if(cn) cn.onclick=()=>{ closeSheet(); const c=document.getElementById('frcoach'); if(c) c.scrollIntoView({block:'start',behavior:'smooth'}); }; const a=s.querySelector('#frag'); if(a) a.onclick=()=>{ closeSheet(); };
+    const cm=s.querySelector('#frcam'); if(cm) cm.onclick=()=>{ closeSheet(); const vw=document.getElementById('frview'); if(vw) vw.scrollIntoView({block:'center',behavior:RM()?'auto':'smooth'}); G.busy=true; side(); camStart(r,r.anim,()=>{ if(!G||G.over) return; G.busy=false; side(); debrief(r); }); };
+    const sp=s.querySelector('#frspa'); if(sp) sp.onclick=()=>{ const c=spotCorr(r); G.dialE=clamp(Math.round((G.dialE+c.ce)/CLICK())*CLICK(),-5,EMAX()); G.dialW=clamp(Math.round((G.dialW+c.cw)/CLICK())*CLICK(),-12,12); closeSheet(); side(); msg(L('Torretas: ','Turrets: ')+fmtE(G.dialE)+' · '+fmtW(G.dialW)); };
    const n=s.querySelector('#frnx'); if(n) n.onclick=()=>{ closeSheet(); G.cur=next; G.dialE=0; G.dialW=0; G.view='pano'; G.aimSet=false; G.pano.u=clamp(G.targets[next].u,-200,200); CACHE=null; side(); status(); msg(L('P','P')+(next+1)+': '+L('mide y calcula','measure and compute')); };
    const e=s.querySelector('#frend'); if(e) e.onclick=()=>{ closeSheet(); endGame(); }; },'debrief');
  if(next<0&&!more) setTimeout(()=>{},0);
@@ -918,9 +1166,11 @@ export function route(app,x){ APP=app; X=x; css(); CFG=loadCfg();
  if(P_.m&&MODES[P_.m]) CFG.mode=P_.m; if(P_.r&&RIFLES.some(r=>r.id===P_.r)) CFG.rifle=P_.r; if(P_.s&&STAGES.some(s=>s.id===P_.s)) CFG.stage=P_.s; if(P_.u==='moa'||P_.u==='mil') CFG.unit=P_.u;
  intro(); }
 /* para QA automática */
-window.MAT_FR={G:()=>G,cfg:o=>{ Object.assign(CFG,o||{}); saveCfg(); return CFG; },start:()=>{ newGame(); game(); return G; },lase:lase,kestrel:kestrel,tool:tool,fire:fire,manual:manualSolve,breakdown:breakdown,
- dial:(e,w)=>{ G.dialE=e; G.dialW=w; side(); },aimAt:(i,he,hw)=>{ const t=G.targets[i]; G.cur=i; G.view='scope'; G.aimSet=true; G.aim={u:t.u+(hw||0),e:t.e+(he||0)}; CACHE=null; side(); },
+window.MAT_FR={G:()=>G,cfg:o=>{ Object.assign(CFG,o||{}); saveCfg(); return CFG; },cam:()=>G.bcam,camSkip:()=>{ if(G.bcam) G.bcam.skip=true; },start:()=>{ newGame(); game(); return G; },lase:lase,kestrel:kestrel,tool:tool,fire:fire,manual:manualSolve,breakdown:breakdown,
+ dial:(e,w)=>{ G.dialE=e; G.dialW=w; side(); },aimAt:(i,he,hw)=>{ const t=G.targets[i]; G.cur=i; G.view='scope'; G.aimSet=true; movUpd(now()); G.aim={u:t.u+(hw||0),e:t.e+(he||0)}; G.trackOff=hw||0; G.trackLag=0; G.trackErr=0; G.trackPrev={i:i,u:t.u}; CACHE=null; side(); },
  view:v=>{ G.view=v; CACHE=null; side(); },setAz:a=>{ G.az=a; },setStage:o=>{ Object.assign(G,o); },debrief:()=>debrief(G.last),dope:da=>dopeTable(G.rf,da),closeSheet:closeSheet,
  solver:{fly:fly,atmos:atmos,zeroAngle:zeroAngle,millerSg:millerSg},
  sim:(i,e,w,held)=>{ const t=G.targets[i]; const s=shoot(t,t,t.u,t.e,e,w,held!==false,now()); return {hit:s.hit,dx:s.dxm,dy:s.dym,minMach:s.fl.minMach,t:s.fl.t}; },
- newGame:()=>newGame(),tut:{start:n=>{ newLesson(n); game(); return G; },sol:()=>G.tut.sol,steps:()=>tutSteps().map(s=>s.id),go:s=>tutGo(s),state:()=>G.tut,check:()=>tutCheck()}};
+ newGame:()=>newGame(),now:()=>now(),mv:{x:mvX,vis:mvVis,u:mvU,lead:leadMil,upd:movUpd},spot:spotCorr,
+  testShot:(i,E,W_,hu,he,tm)=>{ const t=G.targets[i]; movUpd(tm); const aimU=t.u+(hu||0), aimE=t.e+(he||0); const sh=shoot(t,t,aimU,aimE,E,W_,true,tm); const bd=breakdown(t.R,t.mv?t.u0:t.u,t.e,tm);
+    const r={i:i,R:t.R,dxm:sh.dxm,dym:sh.dym,dialE:E,dialW:W_,holdE:aimE-t.e,holdW:aimU-t.u,bd:bd,lead:t.mv?leadMil(t,bd.t):0,hit:sh.hit,tof:sh.fl.t,vis:mvOK(t,tm,sh.fl.t)}; r.c=spotCorr(r); return r; },tut:{start:n=>{ newLesson(n); game(); return G; },sol:()=>G.tut.sol,steps:()=>tutSteps().map(s=>s.id),go:s=>tutGo(s),state:()=>G.tut,check:()=>tutCheck()}};
