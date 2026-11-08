@@ -355,7 +355,7 @@ function PX(P,u){ return P.cx+(u-P.cu)*P.s; }
 function PY(P,e){ return P.scope?(P.Y0-(e-P.ce)*P.s):(P.Y0-e*P.vx*P.s); }
 function eOf(Z,d){ return Math.atan2(Z-EYE,d)*1000; }
 /* a simple vista se usa una perspectiva estilizada (más separación entre distancias) */
-function PZ(P,d,Z){ if(P.scope) return PY(P,eOf(Z,d)); return P.Y0+P.H*0.085*Math.pow(1000/Math.max(d,5),0.62)-(Z)*1000/Math.max(d,5)*P.s*2.2; }
+function PZ(P,d,Z){ if(P.scope) return PY(P,eOf(Z,d)); if(G&&G.st.ter==='montana') Z-=d*Math.tan(5*Math.PI/180); return P.Y0+P.H*0.085*Math.pow(1000/Math.max(d,5),0.62)-(Z)*1000/Math.max(d,5)*P.s*2.2; }
 function renderWorld(c,P){ const st=G.st, W=P.W, H=P.H;
   const sky=c.createLinearGradient(0,0,0,PY(P,0)); sky.addColorStop(0,st.sky[0]); sky.addColorStop(1,st.sky[1]); c.fillStyle=sky; c.fillRect(0,0,W,H);
   const step=P.scope?4:5; const uL=P.cu-(P.cx+8)/P.s, uR=P.cu+(W-P.cx+8)/P.s;
@@ -459,7 +459,7 @@ function draw(){ if(!CV||!G) return; const dpr=Math.min(2,window.devicePixelRati
     const vg=c.createRadialGradient(P.cx,P.cy,P.r*0.72,P.cx,P.cy,P.r); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.78)'); c.fillStyle=vg; c.beginPath(); c.arc(P.cx,P.cy,P.r,0,2*Math.PI); c.fill();
     drawReticle(c,P);
     c.fillStyle='rgba(230,235,220,.9)'; c.font='600 12px system-ui,sans-serif'; c.textAlign='left'; c.fillText(G.zoom+'×',10,18); c.textAlign='right'; c.fillText(CFG.unit==='moa'?'MOA':'MIL',W-10,18);
-    if(G.breath){ const hb=(performance.now()-G.breath)/1000; c.textAlign='center'; c.fillStyle=hb>6?'#ffb08a':'#d8f0a0'; c.fillText(L('Respiración contenida ','Breath held ')+nf(hb,1)+' s',W/2,H-12); }
+    if(G.breath){ const hb=(performance.now()-G.breath)/1000; c.textAlign='center'; c.fillStyle=hb>6?'#ffb08a':'#d8f0a0'; c.fillText(L('Respiración contenida ','Breath held ')+nf(hb,1)+' s',W/2,H-40); }
   } else { drawPanoMarks(c,P); }
 }
 function updShake(tm){ if(G.breath){ const hb=(performance.now()-G.breath)/1000; if(hb>12){ G.breath=0; msg(L('Has soltado el aire','You let your breath go')); }
@@ -510,7 +510,7 @@ function side(){ const sd=document.getElementById('frside'); if(!sd) return; con
   if(hint) hint.textContent=L('Arrastra para apuntar · sujeción con la retícula o torretas','Drag to aim · hold with the reticle or dial');
  }
  const q=id=>document.getElementById(id);
- q('frtog').onclick=()=>{ G.view=G.view==='pano'?'scope':'pano'; if(G.view==='scope'){ const t=G.targets[G.cur]; if(!G.aimSet){ G.aim={u:t.u,e:t.e}; G.aimSet=true; } } else { G.breath=0; G.pano.u=clamp(G.aim.u,-200,200); } CACHE=null; side(); };
+ q('frtog').onclick=()=>{ G.view=G.view==='pano'?'scope':'pano'; if(G.view==='scope'){ const t=G.targets[G.cur]; if(!G.aimSet){ G.aim={u:t.u,e:t.e}; G.aimSet=true; } } else { G.breath=0; G.pano.u=clamp(G.aim.u,-200,200); } CACHE=null; side(); const vw=document.getElementById('frview'); if(vw&&vw.getBoundingClientRect().top<0) vw.scrollIntoView({block:'start'}); };
  sd.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ selTarget(+b.getAttribute('data-t'),true); });
  sd.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>tool(b.getAttribute('data-tool')));
  if(G.view==='scope'){
@@ -616,7 +616,7 @@ function pcSheet(){ const t=G.targets[G.cur]; const K=G.readK, R_=G.readL&&G.rea
  h+='<div class="frpanel" style="margin:10px 0"><h4>'+L('Deriva','Windage')+'</h4><div class="frlcd"><div class="big">'+fmtW(bd.wdg)+'</div></div><div class="frkv" style="margin-top:6px">'+row(L('Viento','Wind'),fmtW(-bd.wind))+row(L('Deriva por giro','Spin drift'),fmtW(-bd.spin))+row(L('Coriolis horizontal','Horizontal Coriolis'),nf(Math.abs(bd.corHcm),1)+' cm → '+fmtW(-bd.corH))+'</div></div>';
  h+='<div class="frkv">'+row(L('Tiempo de vuelo','Time of flight'),nf(bd.t,2)+' s')+row(L('Velocidad al llegar','Impact velocity'),Math.round(bd.v)+' m/s (Mach '+nf(bd.mach,2)+')')+row(L('Régimen','Regime'),bd.minMach<1?'<span class="frko">'+L('llega subsónica: más dispersión','arrives subsonic: more spread')+'</span>':(bd.minMach<1.2?'<span class="frko">'+L('entra en transónico','goes transonic')+'</span>':L('supersónica todo el vuelo','supersonic all the way')))+'</div>';
  h+='<div class="frrow"><button type="button" class="frbtn" id="frap">'+L('Ajustar torretas','Dial it in')+'</button></div><p style="font-size:12.5px;color:#a8ad98">'+L('También puedes sujetar con la retícula en vez de girar las torretas.','You can also hold with the reticle instead of dialing.')+'</p>';
- sheet(L('Computadora balística','Ballistic computer'),h,s=>{ s.querySelector('#frap').onclick=()=>{ G.dialE=Math.round(bd.elev/CLICK())*CLICK(); G.dialW=Math.round(bd.wdg/CLICK())*CLICK(); closeSheet(); if(G.view!=='scope'){ G.view='scope'; G.aim={u:t.u,e:t.e}; G.aimSet=true; CACHE=null; } side(); msg(L('Torretas: ','Turrets: ')+fmtE(G.dialE)+' · '+fmtW(G.dialW)); }; },'pc'); }
+ sheet(L('Computadora balística','Ballistic computer'),h,s=>{ s.querySelector('#frap').onclick=()=>{ G.dialE=Math.round(bd.elev/CLICK())*CLICK(); G.dialW=Math.round(bd.wdg/CLICK())*CLICK(); closeSheet(); if(G.view!=='scope'){ G.view='scope'; G.aim={u:t.u,e:t.e}; G.aimSet=true; CACHE=null; } side(); const vw=document.getElementById('frview'); if(vw&&vw.getBoundingClientRect().top<0) vw.scrollIntoView({block:'start',behavior:'smooth'}); msg(L('Torretas: ','Turrets: ')+fmtE(G.dialE)+' · '+fmtW(G.dialW)); }; },'pc'); }
 
 function shoot(t,tg,aimU,aimE,dialE,dialW,held,tm){ let R=t.R; if(!tg){ const d=raycast(aimU,aimE); R=d?Math.hypot(d,terrain(G.st,d,aimU)-EYE):2500; }
  const rf=G.rf; const sig=0.3*rf.moa*0.2909+(held?0:0.1);
