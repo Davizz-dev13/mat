@@ -255,10 +255,10 @@ const CSS=`
 .arm-card .t{font-weight:700;padding:8px 12px 0}.arm-card .d{color:var(--dim,#9aa0a6);font-size:13px;padding:2px 12px 10px}
 .arm-wrap{display:grid;grid-template-columns:1fr;gap:14px}
 @media(min-width:980px){.arm-wrap{grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);align-items:start}}
-.arm-stage{position:relative;border-radius:10px;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#3a4046 0%,#1d2124 70%,#141618 100%);touch-action:none;user-select:none;-webkit-user-select:none}
+.arm-stage{position:relative;border-radius:10px;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#3d444b 0%,#1e2226 68%,#131517 100%);box-shadow:inset 0 0 70px rgba(0,0,0,.38);touch-action:none;user-select:none;-webkit-user-select:none}
 .arm-stage canvas{display:block;width:100%;height:100%}
 .arm-stage{aspect-ratio:16/11}@media(min-width:600px){.arm-stage{aspect-ratio:16/9}}
-.arm-hint{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:#c9cdd1;opacity:.75;pointer-events:none}
+.arm-hint{position:absolute;left:8px;bottom:8px;font-size:11.5px;color:#d9dde1;opacity:.85;pointer-events:none;background:rgba(10,12,14,.45);padding:2px 8px;border-radius:6px;max-width:calc(100% - 16px)}
 .arm-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c9cdd1;font-size:14px}
 .arm-btns{position:absolute;right:8px;top:8px;display:flex;gap:6px}
 .arm-lrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 0}.arm-lrow[hidden],.arm-lb[hidden],.arm-bnote[hidden]{display:none}
@@ -305,7 +305,7 @@ let ACTIVE=null;
 function stop(){ if(ACTIVE){ ACTIVE.destroy(); ACTIVE=null; } }
 window.addEventListener('hashchange',()=>{ if(!/^#\/armero\/./.test(location.hash)) stop(); });
 
-function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0=opt.pitch!=null?opt.pitch:0.14; let ZK=opt.zoom||1; const ZK0=ZK;
+function viewer(stage,opt){ opt=opt||{}; const EZ=!!opt.ease&&!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches); const Y0=opt.yaw!=null?opt.yaw:-1.4, P0=opt.pitch!=null?opt.pitch:0.14; let ZK=opt.zoom||1; const ZK0=ZK;
   const canvas=document.createElement('canvas'); stage.appendChild(canvas);
   let R; try{ R=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'}); R.setClearColor(0x000000,0); }catch(e){ return null; }
   const mob=Math.min(screen.width,screen.height)<700;
@@ -321,53 +321,87 @@ function viewer(stage,opt){ opt=opt||{}; const Y0=opt.yaw!=null?opt.yaw:-1.4, P0
   scene.add(new THREE.HemisphereLight(0xe6ecf5,0x2a2c30,0.4));
   const sun=new THREE.DirectionalLight(0xffffff,0.55); sun.castShadow=true; sun.shadow.mapSize.set(mob?1024:2048,mob?1024:2048); sun.shadow.bias=-0.0004; sun.shadow.radius=5; sun.shadow.blurSamples=12; sun.shadow.normalBias=0.002; scene.add(sun); scene.add(sun.target);
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.ShadowMaterial({opacity:0.28,transparent:true,depthWrite:false})); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-  const cam=new THREE.PerspectiveCamera(28,1,0.01,50); scene.add(cam);
+  /* suelo de estudio (opt.ease): un foco de luz suave en el suelo bajo la pieza, para que no flote sobre el fondo oscuro */
+  let floor=null; if(EZ){ const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d'); const gr=g.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.45,'rgba(255,255,255,0.55)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,128,128);
+    const ft=new THREE.CanvasTexture(c); ft.colorSpace=THREE.SRGBColorSpace; floor=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:ft,color:0x9aa4ae,transparent:true,opacity:0.16,depthWrite:false,toneMapped:false}));
+    floor.rotation.x=-Math.PI/2; floor.renderOrder=-2; floor.layers.set(1); scene.add(floor); } /* capa 1: solo la ve la cámara principal (no entra en la sombra de contacto del soldado) */
+  const cam=new THREE.PerspectiveCamera(28,1,0.01,50); scene.add(cam); if(EZ) cam.layers.enable(1);
   { /* luz de contorno que sigue a la cámara: separa las armas oscuras del fondo */ const rim=new THREE.DirectionalLight(0xdfe8ff,opt.rim!=null?opt.rim:1.1); rim.position.set(1.4,2.2,-8); cam.add(rim); const rt=new THREE.Object3D(); cam.add(rt); rim.target=rt; }
   const pivot=new THREE.Group(); scene.add(pivot); const holder=new THREE.Group(); pivot.add(holder);
   const inv=[]; // uniformes uInv que siguen al soporte
   const PRE=[]; /* ganchos antes de cada render (sombra de contacto del soldado) */
   let yaw=Y0, pitch=P0, dist=2, fitD=2, auto=true, idleT=0, dirty=true, raf=0, visible=true, last=performance.now();
+  /* movimiento suave (opt.ease; Armero y «Crea tu soldado»): la cámara sigue a un objetivo con un muelle amortiguado crítico — sin saltos al girar, al centrar, al cambiar de postura o al montar piezas;
+     inercia al soltar el dedo, el giro automático arranca y frena poco a poco. Con «reducir movimiento» del sistema, todo va directo como antes. */
+  let tY=Y0, tP=P0, tD=2, vY=0, vP=0, vD=0, wY=0, wP=0, spin=0, OM=8, drag=false, lastMv=0, fitted=false, shown=false, moving=false; const off=new THREE.Vector3(), offV=new THREE.Vector3(); const TK=[];
+  const sp=(x,v,g,w,dt)=>{ const y=x-g, e=Math.exp(-w*dt), c=v+w*y; return [g+(y+c*dt)*e,(v-w*c*dt)*e]; };
+  const wrapTo=(y,ref)=>y+Math.PI*2*Math.round((ref-y)/(Math.PI*2));
+  if(EZ){ canvas.style.opacity='0'; canvas.style.transition='opacity .45s ease'; }
+  function ezStep(dt){ let mv=false;
+    if(auto){ idleT+=dt; const want=idleT>3.5?0.35:0; spin+=(want-spin)*(1-Math.exp(-dt*1.4)); if(spin>1e-4){ tY+=spin*dt; mv=true; } } else spin=0;
+    if(!drag){ if(Math.abs(wY)>1e-3||Math.abs(wP)>1e-3){ tY+=wY*dt; tP=Math.max(-0.7,Math.min(0.9,tP+wP*dt)); const k=Math.exp(-dt*3.4); wY*=k; wP*=k; mv=true; } else { wY=0; wP=0; } }
+    let r=sp(yaw,vY,tY,OM,dt); yaw=r[0]; vY=r[1]; r=sp(pitch,vP,tP,OM,dt); pitch=r[0]; vP=r[1]; r=sp(dist,vD,tD,Math.min(OM,9),dt); dist=r[0]; vD=r[1];
+    ['x','y','z'].forEach(a=>{ const q=sp(off[a],offV[a],0,7,dt); off[a]=q[0]; offV[a]=q[1]; });
+    const still=Math.abs(yaw-tY)<1e-4&&Math.abs(vY)<1e-4&&Math.abs(pitch-tP)<1e-4&&Math.abs(vP)<1e-4&&Math.abs(dist-tD)<1e-5*Math.max(1,tD)&&Math.abs(vD)<1e-5&&off.lengthSq()<1e-10&&offV.lengthSq()<1e-10;
+    if(still){ yaw=tY; pitch=tP; dist=tD; vY=vP=vD=0; off.set(0,0,0); offV.set(0,0,0); } else mv=true;
+    return mv; }
+  function settle(){ yaw=tY; pitch=tP; dist=tD; vY=vP=vD=0; wY=wP=0; spin=0; off.set(0,0,0); offV.set(0,0,0); for(let i=TK.length-1;i>=0;i--){ let on=false; try{ on=TK[i](30); }catch(e){} if(!on) TK.splice(i,1); } dirty=true; loop(); } /* termina también deslizamientos y fundidos (pruebas y «Centrar») */
   function size(){ const w=stage.clientWidth||360, h=stage.clientHeight||270; R.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); dirty=true; }
   const ro=new ResizeObserver(size); ro.observe(stage); size();
   const io=new IntersectionObserver(es=>{ visible=es[0].isIntersecting; if(visible) loop(); },{threshold:0.01}); io.observe(stage);
-  function place(){ cam.position.set(Math.sin(yaw)*Math.cos(pitch)*dist, Math.sin(pitch)*dist, Math.cos(yaw)*Math.cos(pitch)*dist); cam.lookAt(0,0,0); }
+  function place(){ cam.position.set(off.x+Math.sin(yaw)*Math.cos(pitch)*dist, off.y+Math.sin(pitch)*dist, off.z+Math.cos(yaw)*Math.cos(pitch)*dist); cam.lookAt(off); }
   let lastR=0, fEma=0, fN=0, drops=0;
-  function loop(){
-    if(!alive||raf) return; raf=requestAnimationFrame(t=>{ raf=0; if(!alive) return; const dt=Math.min(0.05,(t-last)/1000); last=t;
-      if(auto){ idleT+=dt; if(idleT>3.5){ yaw+=dt*0.35; dirty=true; } }
-      if(dirty){ place(); for(const f of PRE) f(R,scene,cam); R.render(scene,cam); dirty=false;
+  const MAN=()=>!!(window.MAT_DEV&&window.MAT_VMAN); /* solo pruebas: reloj manual para grabar fotograma a fotograma */
+  function frame(t,dtF){ const dt=dtF!=null?dtF:Math.min(0.05,(t-last)/1000); last=t;
+      if(EZ){ moving=ezStep(dt); if(moving) dirty=true; } else if(auto){ idleT+=dt; if(idleT>3.5){ yaw+=dt*0.35; dirty=true; } }
+      for(let i=TK.length-1;i>=0;i--){ let on=false; try{ on=TK[i](dt); }catch(e){ on=false; } if(on) dirty=true; else TK.splice(i,1); }
+      if(dirty){ place(); for(const f of PRE) f(R,scene,cam); R.render(scene,cam); dirty=false; if(EZ&&fitted&&!shown){ shown=true; canvas.style.opacity='1'; }
         /* resolución adaptativa (Fase 7): si el móvil no llega a ~30 fps de forma sostenida, baja la densidad de píxeles en pasos de 0,25 (mínimo 1) */
-        const gap=t-lastR; lastR=t; if(gap>0&&gap<250){ fEma=fEma?fEma*0.94+gap*0.06:gap; fN++; if(fN>50&&fEma>34&&R.getPixelRatio()>1.01&&drops<3){ drops++; R.setPixelRatio(Math.max(1,R.getPixelRatio()-0.25)); fN=0; fEma=0; dirty=true; } } }
-      if(visible&&!document.hidden&&(auto||dirty)) loop(); }); }
+        const gap=t-lastR; lastR=t; if(dtF==null&&gap>0&&gap<250){ fEma=fEma?fEma*0.94+gap*0.06:gap; fN++; if(fN>50&&fEma>34&&R.getPixelRatio()>1.01&&drops<3){ drops++; R.setPixelRatio(Math.max(1,R.getPixelRatio()-0.25)); fN=0; fEma=0; dirty=true; } } } }
+  function loop(){
+    if(!alive||raf||MAN()) return; raf=requestAnimationFrame(t=>{ raf=0; if(!alive) return; frame(t);
+      if(visible&&!document.hidden&&(auto||dirty||moving||TK.length)) loop(); }); }
   const P=new Map(); let pd0=0, d0=0;
-  stage.addEventListener('pointerdown',e=>{ stage.setPointerCapture&&stage.setPointerCapture(e.pointerId); P.set(e.pointerId,{x:e.clientX,y:e.clientY}); idleT=0; if(P.size===2){ const a=[...P.values()]; pd0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); d0=dist; } });
+  stage.addEventListener('pointerdown',e=>{ try{ stage.setPointerCapture&&stage.setPointerCapture(e.pointerId); }catch(_){} P.set(e.pointerId,{x:e.clientX,y:e.clientY}); idleT=0; if(EZ){ drag=true; wY=wP=0; spin=0; OM=24; lastMv=performance.now(); } if(P.size===2){ const a=[...P.values()]; pd0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); d0=EZ?tD:dist; } });
   stage.addEventListener('pointermove',e=>{ const p=P.get(e.pointerId); if(!p) return; idleT=0;
-     if(P.size===1){ yaw-=(e.clientX-p.x)*0.009; pitch=Math.max(-0.7,Math.min(0.9,pitch+(e.clientY-p.y)*0.006)); }
+     if(P.size===1){ if(EZ){ const now=performance.now(), dtm=Math.max(8,now-lastMv)/1000, dy=-(e.clientX-p.x)*0.009, dp=(e.clientY-p.y)*0.006; lastMv=now; tY+=dy; const p0=tP; tP=Math.max(-0.7,Math.min(0.9,tP+dp));
+         wY=wY*0.6+0.4*Math.max(-7,Math.min(7,dy/dtm)); wP=wP*0.6+0.4*Math.max(-4,Math.min(4,(tP-p0)/dtm)); }
+       else { yaw-=(e.clientX-p.x)*0.009; pitch=Math.max(-0.7,Math.min(0.9,pitch+(e.clientY-p.y)*0.006)); } }
      p.x=e.clientX; p.y=e.clientY;
-     if(P.size===2&&pd0){ const a=[...P.values()]; const pd=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); dist=Math.max(fitD*0.35,Math.min(fitD*1.8,d0*pd0/pd)); }
+     if(P.size===2&&pd0){ const a=[...P.values()]; const pd=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); const nd=Math.max(fitD*0.35,Math.min(fitD*1.8,d0*pd0/pd)); if(EZ){ tD=nd; wY=wP=0; } else dist=nd; }
      dirty=true; loop(); });
-  const up=e=>{ P.delete(e.pointerId); if(P.size<2) pd0=0; };
+  const up=e=>{ P.delete(e.pointerId); if(P.size<2) pd0=0; if(EZ&&!P.size){ drag=false; if(performance.now()-lastMv>90){ wY=wP=0; } OM=10; loop(); } };
   stage.addEventListener('pointerup',up); stage.addEventListener('pointercancel',up);
-  stage.addEventListener('wheel',e=>{ e.preventDefault(); idleT=0; dist=Math.max(fitD*0.35,Math.min(fitD*1.8,dist*(1+Math.sign(e.deltaY)*0.1))); dirty=true; loop(); },{passive:false});
+  stage.addEventListener('wheel',e=>{ e.preventDefault(); idleT=0; if(EZ){ spin=0; OM=10; tD=Math.max(fitD*0.35,Math.min(fitD*1.8,tD*(1+Math.sign(e.deltaY)*0.1))); } else dist=Math.max(fitD*0.35,Math.min(fitD*1.8,dist*(1+Math.sign(e.deltaY)*0.1))); dirty=true; loop(); },{passive:false});
   let lastTap=0; stage.addEventListener('pointerup',e=>{ const t=performance.now(); if(t-lastTap<300){ reset(); } lastTap=t; });
-  function reset(){ yaw=Y0; pitch=FP!=null?FP:P0; dist=fitD; idleT=0; dirty=true; loop(); }
+  function reset(){ if(EZ){ tY=wrapTo(Y0,yaw); tP=FP!=null?FP:P0; tD=fitD; wY=wP=0; spin=0; OM=7; idleT=0; dirty=true; loop(); return; } yaw=Y0; pitch=FP!=null?FP:P0; dist=fitD; idleT=0; dirty=true; loop(); }
   const _b=new THREE.Box3(), _c=new THREE.Vector3(), _s=new THREE.Vector3();
   function shade(){ holder.updateMatrixWorld(true); _b.setFromObject(holder); if(_b.isEmpty()) return; _b.getCenter(_c); _b.getSize(_s); const Lm=Math.max(_s.x,_s.z,_s.y);
-    ground.position.set(_c.x,_b.min.y-0.004,_c.z); ground.scale.set(Lm*2.2,Lm*2.2,1);
+    ground.position.set(_c.x,_b.min.y-0.004,_c.z); ground.scale.set(Lm*2.2,Lm*2.2,1); if(floor){ floor.position.set(_c.x,_b.min.y-0.006,_c.z); floor.scale.set(Lm*1.9,Lm*1.9,1); }
     sun.position.set(_c.x+Lm*0.08,_c.y+Lm*2,_c.z+Lm*0.12); sun.target.position.copy(_c); const sc=sun.shadow.camera; sc.left=-Lm*0.75; sc.right=Lm*0.75; sc.top=Lm*0.75; sc.bottom=-Lm*0.75; sc.near=0.01; sc.far=Lm*4; sc.updateProjectionMatrix(); sun.target.updateMatrixWorld();
     const im=holder.matrixWorld.clone().invert(); inv.forEach(u=>u.value.copy(im)); R.shadowMap.needsUpdate=true; dirty=true; loop(); }
-  function fit(obj){ holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(obj); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
-     const tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)); const len=Math.max(s.x,s.y,s.z); fitD=(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
+  function fit(obj){ const H0=holder.position.clone(); holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(obj); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
+     const tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)); const len=Math.max(s.x,s.y,s.z); fitD=(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK;
+     if(EZ&&fitted){ off.add(holder.position).sub(H0); tD=fitD; OM=7; } else { dist=tD=fitD; vD=0; } fitted=true; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
   let FA=0, FP=null; /* FA: margen de encaje para «cabe entero en cualquier giro» (figura tumbada); 0 = encuadre normal */
   function fitAllD(pitch){ holder.updateMatrixWorld(true); const pts=[], v=new THREE.Vector3(); holder.traverse(m=>{ if(!m.isMesh) return; let p=m; while(p){ if(!p.visible) return; p=p.parent; } const P=m.geometry.attributes.position; if(!P) return; const st_=Math.max(1,Math.floor(P.count/400));
       for(let i=0;i<P.count;i+=st_){ if(m.isSkinnedMesh) m.getVertexPosition(i,v); else v.fromBufferAttribute(P,i); pts.push(m.localToWorld(v.clone())); } });
     const tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), ax=FA*tv*cam.aspect, ay=FA*tv; let d=0; const cp=Math.cos(pitch), sp=Math.sin(pitch);
     for(let k=0;k<24;k++){ const yw=k*Math.PI/12; const dir=new THREE.Vector3(Math.sin(yw)*cp,sp,Math.cos(yw)*cp), r=new THREE.Vector3(Math.cos(yw),0,-Math.sin(yw)), u=new THREE.Vector3().crossVectors(dir,r).negate();
       for(const p of pts){ const z=p.dot(dir); const dd=z+Math.max(Math.abs(p.dot(r))/ax,Math.abs(p.dot(u))/ay); if(dd>d) d=dd; } } return d; }
-  function recenter(){ holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(holder); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
-     const ratio=dist/fitD, tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), len=Math.max(s.x,s.y,s.z); fitD=FA?fitAllD(FP!=null?FP:pitch):(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; dist=fitD*ratio; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
+  function recenter(){ const H0=holder.position.clone(); holder.position.set(0,0,0); holder.updateMatrixWorld(true); const b=new THREE.Box3().setFromObject(holder); const c=b.getCenter(new THREE.Vector3()), s=b.getSize(new THREE.Vector3()); holder.position.set(-c.x,-c.y,-c.z);
+     const ratio=(EZ?tD:dist)/fitD, tv=Math.tan(THREE.MathUtils.degToRad(cam.fov/2)), len=Math.max(s.x,s.y,s.z); fitD=FA?fitAllD(FP!=null?FP:pitch):(Math.max(len*0.6/(tv*cam.aspect), s.y*0.8/tv)+len*0.08)*ZK; if(EZ&&fitted){ off.add(holder.position).sub(H0); tD=fitD*ratio; OM=7; } else { dist=tD=fitD*ratio; vD=0; } fitted=true; cam.near=fitD/50; cam.far=fitD*20; cam.updateProjectionMatrix(); shade(); }
+  /* fundido cruzado: al cambiar equipo, camuflaje o versión, la imagen anterior se funde con la nueva en vez de saltar */
+  function xhold(){ if(!EZ||!fitted||!shown||!alive) return null; try{ const old=stage.querySelector('canvas.mat-xf'); if(old) old.remove(); place(); for(const f of PRE) f(R,scene,cam); R.render(scene,cam);
+      const c2=document.createElement('canvas'); c2.width=canvas.width; c2.height=canvas.height; c2.getContext('2d').drawImage(canvas,0,0); c2.className='mat-xf'; c2.setAttribute('aria-hidden','true');
+      c2.style.cssText='position:absolute;left:'+canvas.offsetLeft+'px;top:'+canvas.offsetTop+'px;width:'+canvas.clientWidth+'px;height:'+canvas.clientHeight+'px;pointer-events:none;opacity:1'; if(canvas.style.filter) c2.style.filter=canvas.style.filter;
+      stage.insertBefore(c2,canvas.nextSibling); let done=false;
+      const rel=d=>{ if(done) return; done=true; d=d||0.4; let t=0; TK.push(dt=>{ t+=dt; const u=Math.min(1,t/d); c2.style.opacity=String(1-u*u*(3-2*u)); if(u>=1){ c2.remove(); return false; } return true; }); setTimeout(()=>{ if(c2.parentNode&&!MAN()) c2.remove(); },d*1000+1500); dirty=true; loop(); };
+      setTimeout(()=>rel(0.4),2500); dirty=true; return rel; }catch(e){ return null; } }
+  function xfade(d){ const r=xhold(); if(r) r(d); }
   function dispose(o){ o.traverse(q=>{ if(q.geometry) q.geometry.dispose(); }); }
-  return { scene, holder, R, ground, sun, cam, pre(f){ PRE.push(f); }, fit, recenter, reset, fitK(k){ ZK=ZK0*(k||1); recenter(); }, fitAll(m,p){ FA=m||0; FP=m?(p!=null?p:null):null; recenter(); }, dbg(){ return {dist,fitD,aspect:cam.aspect,fov:cam.fov,yaw,pitch,cw:stage.clientWidth,ch:stage.clientHeight}; }, look(y,p){ yaw=y; if(p!=null) pitch=p; dirty=true; loop(); }, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?4:0; loop(); },
+  return { scene, holder, R, ground, sun, cam, pre(f){ PRE.push(f); }, fit, recenter, reset, fitK(k){ ZK=ZK0*(k||1); recenter(); }, fitAll(m,p){ FA=m||0; FP=m?(p!=null?p:null):null; recenter(); }, dbg(){ return {dist,fitD,aspect:cam.aspect,fov:cam.fov,yaw,pitch,cw:stage.clientWidth,ch:stage.clientHeight,ez:EZ,tY,tP,tD}; }, look(y,p,now){ if(EZ){ tY=wrapTo(y,yaw); if(p!=null) tP=p; wY=wP=0; OM=7; if(now) settle(); dirty=true; loop(); return; } yaw=y; if(p!=null) pitch=p; dirty=true; loop(); },
+    ez:EZ, settle, tick(f){ TK.push(f); loop(); }, frame(dt){ frame(performance.now(),dt); }, xfade(d){ xfade(d); }, xhold(){ return xhold(); }, track(u){ inv.push(u); }, redraw(){ dirty=true; loop(); }, setAuto(v){ auto=v; idleT=v?(EZ?3.5:4):0; if(EZ&&!v){ spin=0; tY=yaw+vY*0.12; } loop(); },
     destroy(){ alive=false; if(raf) cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); dispose(scene); envRT.dispose(); pm.dispose(); R.dispose(); try{R.forceContextLoss();}catch(e){} } };
 }
 
@@ -533,7 +567,7 @@ function page(app,ctx,w){
    '<div id="armcred"></div>';
   ctx.set(shell,w.n+' · '+L('Armero 3D','3D Gunsmith'));
   const stage=document.getElementById('armst'); stop();
-  const V=viewer(stage,{yaw:-1.25,pitch:0.2,zoom:0.86});
+  const V=viewer(stage,{yaw:-1.25,pitch:0.2,zoom:0.86,ease:1});
   if(!V){ stage.querySelector('.arm-load').textContent=L('Tu navegador no puede mostrar 3D (WebGL).','Your browser cannot show 3D (WebGL).'); }
   ACTIVE=V;
   const UW=mkU(), UA=mkU(); if(V){ V.track(UW.uInv); V.track(UA.uInv); }
@@ -563,7 +597,7 @@ function page(app,ctx,w){
     else if(b.dataset.c){ st.camo=b.dataset.c; camo(); }
     else if(b.dataset.s){ const s=b.dataset.s, a=b.dataset.a; if(a) st.on[s]=a; else delete st.on[s]; if(s==='optic'&&!isDot(st.on.optic)) delete st.on.mag; sync(); }
     renderUI(); stats(); });
-  function camo(){ setU(UW,st.camo); setU(UA,st.ca?st.camo:'orig'); V&&V.redraw(); }
+  function camo(){ V&&V.xfade&&V.xfade(0.35); setU(UW,st.camo); setU(UA,st.ca?st.camo:'orig'); V&&V.redraw(); }
   function stats(){
     const v=cur(), S=v.st, on=SLOTS.map(([s])=>st.on[s]).filter(Boolean).map(a=>ACC[a]);
     const wOn=on.filter(a=>a.slot!=='stock'), add=wOn.reduce((s,a)=>s+(a.g||0),0), sup=on.find(a=>a.slot==='muzzle'), stk=on.find(a=>a.slot==='stock');
@@ -600,23 +634,38 @@ function page(app,ctx,w){
     if(m.stockNode) weapon.traverse(o=>{ if(o.name&&o.name.includes(m.stockNode)) o.visible=!st.on.stock; }); }
   function where(v,s,a){ return whereAt(v,s,a,st.on); }
   function make(a,s){ return makeAcc(a,s,st.on); }
+  /* montar y desmontar: cada pieza entra deslizándose por donde se monta de verdad (la mira baja al raíl, el silenciador entra por la boca girando, la culata por detrás, la empuñadura y el bípode desde abajo, la linterna desde su lado) y sale igual; si solo cambia de sitio (mira con magnificador), se desplaza */
+  const SLD={optic:[0,1,0],mag:[0,1,0],laser:[0,1,0],under:[0,-1,0],bipod:[0,-1,0],muzzle:[0,0,1],stock:[0,0,-1]};
+  let WLEN=1;
+  function slide(o,s,inn,from,fromR,delay){ if(!V||!V.ez||!V.tick){ if(!inn) V.holder.remove(o); return; } const fp=o.position.clone(), fr=o.rotation.z; const m=mt(cur())||{};
+    const dv=s==='light'?[Math.sign(m.sx||1),0,0]:(SLD[s]||[0,1,0]); const D=0.075*Math.max(0.3,Math.min(1,WLEN/0.9));
+    const away=fp.clone().add(new THREE.Vector3(...dv).multiplyScalar(D)); const A=inn?(from||away):fp, Bp=inn?fp:away; const dur=inn?(from?0.38:0.45):0.28, twist=s==='muzzle'&&!from?Math.PI*0.75:0; const r0=fromR!=null?fromR:fr;
+    o.userData.sl=(o.userData.sl||0)+1; const id=o.userData.sl; let t=-(delay||0); o.position.copy(A); if(inn&&twist) o.rotation.z=fr+twist;
+    V.tick(dt=>{ if(o.userData.sl!==id) return false; t+=dt; const u=Math.max(0,Math.min(1,t/dur)), e=inn?(from?(u<0.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2):1-Math.pow(1-u,3)):u*u*(3-2*u);
+      o.position.lerpVectors(A,Bp,e); if(inn&&twist) o.rotation.z=fr+twist*(1-e); else if(inn&&from) o.rotation.z=r0+(fr-r0)*e; else if(!inn&&twist) o.rotation.z=fr+twist*e;
+      if(V.R) V.R.shadowMap.needsUpdate=true; if(u>=1){ if(!inn) V.holder.remove(o); else { o.position.copy(fp); o.rotation.z=fr; } return false; } return true; }); }
   async function sync(){
     if(!V||!weapon) return; const my=token; const v=cur();
     const keyOf=s=>st.on[s]?st.on[s]+(s==='mag'?'@'+(st.on.optic||''):'')+(s==='optic'&&st.on.mag?'+m':''):null;
-    for(const s of Object.keys(mounted)){ if(keyOf(s)!==mounted[s].k){ V.holder.remove(mounted[s].o); delete mounted[s]; } }
+    const gone={};
+    for(const s of Object.keys(mounted)){ if(keyOf(s)!==mounted[s].k){ gone[s]=mounted[s]; V.holder.remove(mounted[s].o); delete mounted[s]; } }
+    const added=[];
     for(const [s,a] of Object.entries(st.on)){ if(mounted[s]) continue; const P=where(v,s,a); if(!P) continue; const k=keyOf(s);
       try{ const o=await make(a,s); if(my!==token||keyOf(s)!==k||mounted[s]) continue;
         o.position.set(...P.p); if(P.r) o.rotation.set(...P.r);
         if(P.sub){ o.updateMatrixWorld(true); for(const [nm,d] of Object.entries(P.sub)){ let hit=null; o.traverse(q=>{ if(!hit&&q.name&&q.name.includes(nm)) hit=q; }); if(hit){ const wp=hit.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(...d)); hit.parent.worldToLocal(wp); hit.position.copy(wp); } } }
-        prep(o,UA,MCA); V.holder.add(o); mounted[s]={a,k,o}; }catch(e){ console.warn('armero acc',a,e); } }
+        prep(o,UA,MCA); V.holder.add(o); mounted[s]={a,k,o}; added.push([s,a,o]); }catch(e){ console.warn('armero acc',a,e); } }
     setVis(); beamsUp(); V.recenter();
+    if(my!==token) return;
+    added.forEach(([s,a,o])=>{ const g=gone[s]; if(g&&g.a===a){ slide(o,s,true,g.o.position.clone(),g.o.rotation.z); delete gone[s]; } else slide(o,s,true,null,null,g?0.16:0); });
+    Object.entries(gone).forEach(([s,g])=>{ V.holder.add(g.o); slide(g.o,s,false); });
   }
   async function load(){
     if(!V) return; const my=++token; const v=cur();
     stage.querySelector('.arm-load')&&(stage.querySelector('.arm-load').style.display='flex');
     try{ const g=await getGLB(v.file); if(my!==token) return;
-      if(weapon){ V.holder.remove(weapon); } Object.keys(mounted).forEach(s=>{ V.holder.remove(mounted[s].o); delete mounted[s]; }); BC.detach();
-      weapon=g.scene.clone(true); await addFx(weapon,v); if(my!==token) return; prep(weapon,UW,MCW); V.holder.add(weapon); V.fit(weapon); xSetup(weapon); fireSetup();
+      if(weapon&&V.xfade) V.xfade(0.4); if(weapon){ V.holder.remove(weapon); } Object.keys(mounted).forEach(s=>{ mounted[s].o.userData.sl=-1; V.holder.remove(mounted[s].o); delete mounted[s]; }); [...V.holder.children].forEach(c=>{ if(c.userData&&c.userData.sl) V.holder.remove(c); }); BC.detach();
+      weapon=g.scene.clone(true); await addFx(weapon,v); if(my!==token) return; prep(weapon,UW,MCW); V.holder.add(weapon); V.fit(weapon); { const s_=new THREE.Box3().setFromObject(weapon).getSize(new THREE.Vector3()); WLEN=Math.max(s_.x,s_.y,s_.z)||1; } xSetup(weapon); fireSetup();
       const ld=stage.querySelector('.arm-load'); if(ld) ld.style.display='none';
       await sync();
     }catch(e){ const ld=stage.querySelector('.arm-load'); if(ld) ld.textContent=L('No se pudo cargar el modelo. Comprueba la conexión.','The model could not be loaded. Check your connection.'); }

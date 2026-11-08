@@ -33,7 +33,7 @@ const CSS=`
 .sd-est{display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(181,154,43,.18);border:1px solid rgba(181,154,43,.5);margin-bottom:6px}
 .sd-btn{display:inline-block;border:0;border-radius:10px;padding:11px 16px;font-size:15px;font-weight:600;background:#4f6a36;color:#fff;cursor:pointer;margin:4px 6px 4px 0}
 .sd-btn.sec{background:rgba(255,255,255,.08);color:inherit;border:1px solid var(--line,#3a424c)}
-.sd-stage{position:relative;width:100%;height:min(78vh,620px);min-height:380px;border-radius:12px;background:radial-gradient(ellipse at 50% 35%,#3a4148,#1b1f24 70%);overflow:hidden;touch-action:none;margin-bottom:8px}
+.sd-stage{position:relative;width:100%;height:min(78vh,620px);min-height:380px;border-radius:12px;background:radial-gradient(ellipse at 50% 35%,#3e464e,#1b1f24 70%);box-shadow:inset 0 0 80px rgba(0,0,0,.4);overflow:hidden;touch-action:none;margin-bottom:8px}
 .sd-stage canvas{display:block;width:100%;height:100%}.sd-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:.85;text-align:center;padding:20px}
 .sd-stage .arm-btns{position:absolute;right:8px;top:8px;display:flex;gap:6px;z-index:2}.sd-stage .arm-btns button{background:rgba(20,22,24,.75);color:#e8eaec;border:1px solid #444b52;border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer}
 .sd-role{border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;margin-top:8px;font-size:14px}
