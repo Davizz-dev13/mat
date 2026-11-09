@@ -21,11 +21,11 @@ window.MAT_ESP_CRONO=function(app,X){
       ex.sort(function(a,b){ return a[1].localeCompare(b[1],EN?'en':'es'); }); AG=AG.concat(ex); })();
     var f=Q.f||'', dsel=Q.d||'';
     var all=(D.items||[]).slice().sort(function(a,b){ return a.f<b.f?-1:a.f>b.f?1:0; });
-    var decs=[]; all.forEach(function(it){ var d=it.f.slice(0,3)+'0'; if(decs.indexOf(d)<0) decs.push(d); });
+    var decs=[]; all.forEach(function(it){ if(f&&it.ag.indexOf(f)<0) return; var d=it.f.slice(0,3)+'0'; if(decs.indexOf(d)<0) decs.push(d); });
     var L=all.filter(function(it){ return (!f||it.ag.indexOf(f)>=0)&&(!dsel||it.f.slice(0,3)+'0'===dsel); });
     var h=head+'<div class="cr" data-noi18n><h1>'+T.h+'</h1><p class="sub">'+T.sub+'</p>';
     if(D.cifras&&D.cifras.length){ h+='<h2>'+T.fig+'</h2><div class="cr-figs">'+D.cifras.map(function(c){ return '<div class="cr-fig"><div class="kv">'+esc(EN?c.v_en:c.v_es)+'</div><div class="kk">'+esc(EN?c.k_en:c.k_es)+'</div><div class="cr-fs">'+esc(EN?c.d_en:c.d_es)+' · <a href="'+esc(c.src)+'" target="_blank" rel="noopener">'+T.figsrc+': Wikipedia</a></div></div>'; }).join('')+'</div>'; }
-    var chip=function(g){ return '<a class="chip" href="'+href({f:g[0],d:dsel})+'" aria-pressed="'+(f===g[0])+'">'+(g[2]&&P[g[2]]?'<img src="'+P[g[2]].flag+'" alt="" width="18" height="12" loading="lazy" style="margin-right:5px;vertical-align:-1px">':'')+esc(g[1])+'</a>'; };
+    var chip=function(g){ var dk=(dsel&&all.some(function(it){ return it.ag.indexOf(g[0])>=0&&it.f.slice(0,3)+'0'===dsel; }))?dsel:''; return '<a class="chip" href="'+href({f:g[0],d:dk})+'" aria-pressed="'+(f===g[0])+'">'+(g[2]&&P[g[2]]?'<img src="'+P[g[2]].flag+'" alt="" width="18" height="12" loading="lazy" style="margin-right:5px;vertical-align:-1px">':'')+esc(g[1])+'</a>'; };
     var AGM=AG.filter(function(g){ return !g[3]&&all.some(function(it){ return it.ag.indexOf(g[0])>=0; }); }), AGX=AG.filter(function(g){ return g[3]; });
     h+='<div class="chips" role="group" aria-label="'+T.who+'"><a class="chip" href="'+href({d:dsel})+'" aria-pressed="'+(!f)+'">'+T.all+'</a>'+AGM.map(chip).join('')+'</div>';
     if(AGX.length){ var xin=AGX.some(function(g){ return g[0]===f; }); h+='<details class="cr-more"'+(xin?' open':'')+'><summary class="chip">'+(EN?'More countries':'Más países')+' ('+AGX.length+')'+(xin?' · '+esc(agl(f)[1]):'')+'</summary><div class="chips" role="group" aria-label="'+T.who+'">'+AGX.map(chip).join('')+'</div></details>'; }
