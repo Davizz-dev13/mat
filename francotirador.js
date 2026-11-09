@@ -376,6 +376,42 @@ function css(){ if(document.getElementById('fr-css')) return; const s=document.c
  '.frrec .rr b{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:22px;min-width:92px;color:#e3b94a}',
  '.frrec .rr span{font-size:13px;color:#cfd3c2}',
  '.frrec p{font-size:13.5px;color:#bfc2b8;line-height:1.5}',
+ '.fmmn{padding-bottom:0}',
+ '.fmhd{position:relative;display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);overflow:hidden;margin:8px 0 10px;padding:8px}',
+ '.fmhd img{width:92px;height:58px;object-fit:cover;border-radius:8px;flex:none;filter:saturate(.85) brightness(.8)}',
+ '.fmhd .ht{min-width:0}',
+ '.fmhd .ht>b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px;letter-spacing:.03em;line-height:1}',
+ '.fmst{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}',
+ '.fmstc{display:inline-flex;align-items:center;min-height:26px;padding:2px 9px;border:1px solid var(--line);border-radius:999px;background:#12140f;color:#d6d8d2;font:inherit;font-size:12.5px;white-space:nowrap}',
+ 'button.fmstc{cursor:pointer;border-color:#6d7f3a}',
+ '.fmstc.dim{color:#a8ad98;white-space:normal}',
+ '.fmtabs{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:6px;margin:0 0 8px}',
+ '.fmtab{display:block;min-width:0;min-height:54px;text-align:left;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);color:var(--tx);padding:7px 8px;font:inherit;cursor:pointer;touch-action:manipulation}',
+ '.fmtab small{display:block;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:#a8ad98;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+ '.fmtab b{display:block;font-size:13px;line-height:1.25;margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}',
+ '.fmtab.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset;background:#1a1d14}',
+ '.fmpane{border:1px solid var(--ac);border-radius:var(--r);background:#11130e;padding:4px 8px 8px;margin:0 0 8px;animation:frUp .2s ease-out both}',
+ '.fmpane .frsec{margin:8px 0 6px}',
+ '.fmpane .frrow{margin:8px 0}',
+ '.fmpn{font-size:13.5px;color:#bfc2b8;margin:8px 2px}',
+ '.frgrid.fmch{grid-template-columns:repeat(2,minmax(0,1fr))}',
+ '.frgrid.fmch.c3{grid-template-columns:repeat(3,minmax(0,1fr))}',
+ '.frgrid.fmch.c1{grid-template-columns:1fr}',
+ '.fmch .fropt{padding:8px 10px;min-height:44px}',
+ '.fmch .fropt b{font-size:14.5px}',
+ '.fmch .fropt span{font-size:12px;line-height:1.3}',
+ '.fmsel{font-size:13.5px;line-height:1.45;color:#cfd3c2;border-left:3px solid var(--ac);padding:4px 0 4px 10px;margin:4px 0 8px}',
+ '.fmsel b{color:var(--tx);font-weight:700}',
+ '.fmmn .frdet{margin:8px 0}',
+ '.fmmn .frdet>summary{padding:10px 0}',
+ '.fmmn .frdet .frpanel{margin:0 0 10px}',
+ '.fmgob{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;align-items:center;margin:10px -8px 0;padding:10px 8px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(rgba(11,12,13,.82),#0b0c0d 40%);border-top:1px solid var(--line);backdrop-filter:blur(4px)}',
+ '.fmgl{flex:1;min-width:0;font-size:13px;color:#cfd3c2;line-height:1.3}',
+ '.fmgl span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
+ '.fmgl small{display:block;color:#e3b94a;font-size:12px}',
+ '.fmgo{min-height:52px;padding:10px 22px;font-size:17px;letter-spacing:.06em;flex:none}',
+ '@media(min-width:800px){.frgrid.fmch.c2{grid-template-columns:repeat(3,minmax(0,1fr))}.fmhd img{width:150px;height:84px}.fmhd .ht>b{font-size:38px}.fmtab b{font-size:15px}}',
+ '@media (prefers-reduced-motion:reduce){.fmpane{animation:none!important}}',
  '@media (prefers-reduced-motion:reduce){.frsheet,.frmsg{animation:none!important}.frbtn,.fropt{transition:none!important}}'
  ].join('\n'); document.head.appendChild(s); }
 
@@ -420,44 +456,92 @@ function recHTML(){ const rf=rifleOf('m82');
    '<p>'+L('Son las distancias de los disparos más largos confirmados en combate de la lista de Wikipedia («Longest recorded sniper kills»). Aquí se tiran contra siluetas de acero, todas con el ','These are the distances of the longest confirmed combat shots in Wikipedia’s list (“Longest recorded sniper kills”). Here they are fired at steel silhouettes, all with the ')+esc(rf.n)+' (.50 BMG, '+esc(L(rf.bul[0],rf.bul[1]))+'). '+
    L('El de 2.815 m se hizo con este mismo fusil; los de 2.430 y 3.540 m con el McMillan TAC-50, del mismo cartucho; el de 2.475 m con un .338 Lapua Magnum. Ucrania ha comunicado tiros de 3.800 m (2023) y 4.000 m (2025) con 14,5 mm que nadie ajeno ha podido comprobar, por eso no están.','The 2,815 m shot used this very rifle; the 2,430 and 3,540 m ones a McMillan TAC-50 in the same cartridge; the 2,475 m one a .338 Lapua Magnum. Ukraine has announced 3,800 m (2023) and 4,000 m (2025) shots in 14.5 mm that no outside party has been able to check, so they are left out.')+
    ' <a href="'+RECSRC+'" target="_blank" rel="noopener">'+L('Fuente','Source')+'</a></p><p class="frnote">'+L('Siluetas IPSC de 0,6 mil de ancho (1,5 m a 2.430 m; 2,1 m a 3.540 m), un cargador de 10 por silueta (el del M82A1) y computadora balística. La torreta llega a 90 mil de elevación como con una base inclinada: simplificado para el juego.','0.6 mil wide IPSC silhouettes (1.5 m at 2,430 m; 2.1 m at 3,540 m), one 10-round magazine per silhouette (the M82A1’s) and a ballistic computer. The turret reaches 90 mil of elevation as with a tapered base: simplified for the game.')+'</p></div>'; }
+let UIT=null; /* pestaña abierta del menú (solo en memoria: al volver del juego sale cerrada) */
+function frStats(){ const o={med:null,far:0}; try{ const M=window.MAT_MED; if(M&&M.cat){ const ids=M.cat().MED.filter(x=>x.sec==='fr').map(x=>x.id); const st=JSON.parse(localStorage.getItem('mat_med')||'null')||{}; const got=ids.filter(id=>st.m&&st.m[id]).length; o.med=[got,ids.length]; o.far=+((st.c||{}).fr_far)||0; } }catch(e){} return o; }
 function intro(){ stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } const rf=CFG.mode==='record'?rifleOf('m82'):rifleOf(CFG.rifle), st=stageOf(CFG.stage); const B=bests();
  const opt=(on,attr,b,s)=>'<button type="button" class="fropt'+(on?' on':'')+'" '+attr+'><b>'+b+'</b><span>'+s+'</span></button>';
- let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],['Francotirador']])+
- '<div class="frhero"><img src="img/juegos/francotirador.webp" width="640" height="400" alt="'+esc(L('Tirador con un Barrett M107 en un campo de tiro de Yibuti','Marksman with a Barrett M107 on a range in Djibouti'))+'"><div class="ht"><b>'+L('FRANCOTIRADOR','SNIPER')+'</b><span>'+L('Siluetas de acero de 300 a 2.000 m. Mide la distancia, lee el viento y gira las torretas: la bala sigue la física de verdad, incluida la rotación de la Tierra. Si fallas, ves el impacto, corriges y vuelves a tirar hasta vaciar el cargador.','Steel silhouettes from 300 to 2,000 m. Range it, read the wind and dial the turrets: the bullet follows real physics, including the Earth’s rotation. Miss, and you see the impact, correct and fire again until the magazine is empty.')+'</span></div></div>';
-  h+='<div class="frsec">'+L('¿Nunca has disparado?','Never fired a shot?')+'</div><div class="frgrid">'+opt(CFG.mode==='aprende','data-m="aprende"',L('Aprende a disparar','Learn to shoot'),L('Clase guiada paso a paso: te explico cada medida y cada cuenta, tú las haces y yo las compruebo. Tres lecciones: 480 m, 1.540 m y un rescate de rehén a 75 m.','A step-by-step guided class: I explain each reading and each sum, you do them and I check them. Three lessons: 480 m, 1,540 m and a hostage rescue at 75 m.'))+'</div>';
- h+='<div class="frsec">'+L('Modo','Mode')+'</div><div class="frgrid c3">'+
-  opt(CFG.mode==='facil','data-m="facil"',L('Fácil','Easy'),L('Mides tú y la computadora balística te da la solución desglosada. 300–800 m.','You measure and the ballistic computer gives you the broken-down solution. 300–800 m.'))+
-  opt(CFG.mode==='veterano','data-m="veterano"',L('Veterano','Veteran'),L('Sin computadora: instrumentos, tarjeta, fórmulas y tu cabeza. Coriolis, giro y densidad los calculas tú. 600–2.000 m.','No computer: instruments, data card, formulas and your head. You work out Coriolis, spin and density. 600–2,000 m.'))+
-  opt(CFG.mode==='desafio','data-m="desafio"',L('Desafío','Challenge'),L('Reglas de Veterano con condiciones fijas para batir tu récord. Sin observador.','Veteran rules with fixed conditions to beat your record. No spotter.'))+'</div>';
-  h+='<div class="frsec">'+L('Retos especiales','Special challenges')+'</div><div class="frgrid c2">'+
-   opt(CFG.mode==='movil','data-m="movil"',L('Blancos en movimiento','Moving targets'),L('Cinco siluetas cruzan un claro entre dos protecciones, de 1 a 2,6 m/s. El adelanto sale del tiempo de vuelo real. 300–700 m.','Five targets cross a gap between two covers at 1 to 2.6 m/s. The lead comes from the real time of flight. 300–700 m.'))+
-   opt(CFG.mode==='record','data-m="record"',L('Distancias récord','Record distances'),L('Cuatro siluetas a las distancias de los disparos más largos confirmados: 2.430, 2.475, 2.815 y 3.540 m. Con el .50 BMG.','Four targets at the distances of the longest confirmed shots: 2,430, 2,475, 2,815 and 3,540 m. With the .50 BMG.'))+
-   opt(CFG.mode==='rehen','data-m="rehen"',L('Rescate de rehén','Hostage rescue'),L('Simulacro policial: el atracador se cubre con el rehén. Elige dónde y cuándo disparar sin tocar al rehén. 75–250 m, cinco escenarios y lección guiada.','Police drill: the hostage-taker hides behind the hostage. Choose where and when to fire without touching the hostage. 75–250 m, five scenarios and a guided lesson.'))+'</div>';
-  if(CFG.mode==='rehen'){ h+=rhIntro(rf,B); } else if(CFG.mode==='aprende'){ const ls=CFG.lesson===2?2:(CFG.lesson?1:0);
-  h+='<div class="frsec">'+L('Lección','Lesson')+'</div><div class="frgrid c2">'+opt(ls===0,'data-l="0"',L('Lección 1 · 480 m','Lesson 1 · 480 m'),L('M24 (.308) en terreno llano, a 700 m de altitud. Aprendes el método completo: distancia, aire, caída, viento, giro y Tierra.','M24 (.308) on flat ground at 700 m altitude. You learn the whole method: distance, air, drop, wind, spin and the Earth.'))+
-   opt(ls===1,'data-l="1"',L('Lección 2 · 1.540 m','Lesson 2 · 1,540 m'),L('Sako TRG-42 (.338 Lapua) con frío ártico (−12 °C) y tiro al este a 69° de latitud: aquí el Coriolis y el Eötvös ya cuentan.','Sako TRG-42 (.338 Lapua) in Arctic cold (−12 °C), firing east at 69° north: here Coriolis and Eötvös matter.'))+'</div><div class="frgrid">'+opt(ls===2,'data-l="2"',L('Lección 3 · Rescate de rehén','Lesson 3 · Hostage rescue'),L('M24 a 75 m: el atracador se cubre con el rehén. Aprendes la zona expuesta, cuándo disparar y la sujeción.','M24 at 75 m: the hostage-taker hides behind the hostage. You learn the exposed area, when to fire and holdover.'))+'</div>';
-  h+='<div class="frrow"><button type="button" class="frbtn" id="frgo">'+L('Empezar la lección ','Start lesson ')+(ls+1)+'</button></div>';
-  h+='<p style="font-size:13.5px;color:#bfc2b8">'+L('Siluetas de acero de campo de tiro, como las de competición: solo el contorno, sin rasgos ni sangre.','Steel range silhouettes, as used in competition: just the outline, no features, no blood.')+'</p>';
- } else {
-  if(CFG.mode==='record') h+=recHTML(); else h+='<div class="frsec">'+L('Fusil y cartucho','Rifle and cartridge')+'</div><div class="frgrid c2">'+RIFLES.map(r=>opt(CFG.rifle===r.id,'data-r="'+r.id+'"',esc(r.n)+' · '+esc(L(r.cal[0],r.cal[1])),esc(L(r.bul[0],r.bul[1]))+' · BC '+r.model+' '+nf(r.bc,3)+' · V0 '+r.mv+' m/s · '+L('hasta','to')+' '+ni(r.maxV)+' m')).join('')+'</div>';
- h+='<p style="font-size:13.5px;color:#bfc2b8;margin:6px 2px">'+L('Ficha del fusil','Rifle entry')+': <a href="#/a/'+rf.ficha+'">'+esc(rf.n)+'</a></p>';
- h+='<div class="frsec">'+L('Escenario','Location')+'</div><div class="frgrid c2">'+STAGES.map(s=>{ const k=CFG.mode+'|'+s.id+'|'+rf.id; const b=B[k]; return opt(CFG.stage===s.id,'data-s="'+s.id+'"',esc(L(s.n[0],s.n[1])),esc(L(s.d[0],s.d[1]))+' · '+L('latitud','latitude')+' '+nf(s.lat,1)+'°'+(b?' · '+L('récord','best')+' '+b:'')); }).join('')+'</div>';
- h+='<div class="frrow"><span style="color:#bfc2b8">'+L('Unidades del visor','Scope units')+'</span><span class="frseg"><button type="button" data-u="mil" class="'+(CFG.unit==='mil'?'on':'')+'">MIL</button><button type="button" data-u="moa" class="'+(CFG.unit==='moa'?'on':'')+'">MOA</button></span></div>';
-  if(CFG.mode!=='desafio') h+='<div class="frrow"><span style="color:#bfc2b8">'+L('Ayuda: observador','Help: spotter')+'</span><span class="frseg"><button type="button" data-sp="1" class="'+(CFG.spot!==false?'on':'')+'">'+L('Sí','On')+'</button><button type="button" data-sp="0" class="'+(CFG.spot===false?'on':'')+'">'+L('No','Off')+'</button></span></div><p style="font-size:12.5px;color:#a8ad98;margin:-4px 2px 8px">'+L('Tras un fallo te dice dónde fue el impacto y la corrección exacta en clics. En Desafío no hay.','After a miss he tells you where the round went and the exact correction in clicks. Not in Challenge.')+'</p>';
- h+='<div class="frrow"><button type="button" class="frbtn" id="frgo">'+L('Ir al puesto de tiro','Go to the firing position')+'</button></div>';
- h+='<p style="font-size:13.5px;color:#bfc2b8">'+L('Siluetas de acero de campo de tiro, como las de competición: solo el contorno, sin rasgos ni sangre.','Steel range silhouettes, as used in competition: just the outline, no features, no blood.')+'</p>';
+ const M=CFG.mode, ls=CFG.lesson===2?2:(CFG.lesson?1:0), rsL=CFG.rscn==='L', ri=clamp(CFG.rscn|0,0,RH_SCN.length-1);
+ /* textos de cada modo (los de siempre) y uno corto para la pestaña */
+ const MD={
+  aprende:[L('Aprende a disparar','Learn to shoot'),L('Clase guiada · 3 lecciones','Guided class · 3 lessons'),L('Clase guiada paso a paso: te explico cada medida y cada cuenta, tú las haces y yo las compruebo. Tres lecciones: 480 m, 1.540 m y un rescate de rehén a 75 m.','A step-by-step guided class: I explain each reading and each sum, you do them and I check them. Three lessons: 480 m, 1,540 m and a hostage rescue at 75 m.')],
+  facil:[L('Fácil','Easy'),L('Con computadora · 300–800 m','With computer · 300–800 m'),L('Mides tú y la computadora balística te da la solución desglosada. 300–800 m.','You measure and the ballistic computer gives you the broken-down solution. 300–800 m.')],
+  veterano:[L('Veterano','Veteran'),L('Sin computadora · 600–2.000 m','No computer · 600–2,000 m'),L('Sin computadora: instrumentos, tarjeta, fórmulas y tu cabeza. Coriolis, giro y densidad los calculas tú. 600–2.000 m.','No computer: instruments, data card, formulas and your head. You work out Coriolis, spin and density. 600–2,000 m.')],
+  desafio:[L('Desafío','Challenge'),L('Condiciones fijas · récord','Fixed conditions · record'),L('Reglas de Veterano con condiciones fijas para batir tu récord. Sin observador.','Veteran rules with fixed conditions to beat your record. No spotter.')],
+  movil:[L('Blancos en movimiento','Moving targets'),L('Cruzan un claro · 300–700 m','Crossing a gap · 300–700 m'),L('Cinco siluetas cruzan un claro entre dos protecciones, de 1 a 2,6 m/s. El adelanto sale del tiempo de vuelo real. 300–700 m.','Five targets cross a gap between two covers at 1 to 2.6 m/s. The lead comes from the real time of flight. 300–700 m.')],
+  record:[L('Distancias récord','Record distances'),L('2.430–3.540 m · .50 BMG','2,430–3,540 m · .50 BMG'),L('Cuatro siluetas a las distancias de los disparos más largos confirmados: 2.430, 2.475, 2.815 y 3.540 m. Con el .50 BMG.','Four targets at the distances of the longest confirmed shots: 2,430, 2,475, 2,815 and 3,540 m. With the .50 BMG.')],
+  rehen:[L('Rescate de rehén','Hostage rescue'),L('Simulacro policial · 75–250 m','Police drill · 75–250 m'),L('Simulacro policial: el atracador se cubre con el rehén. Elige dónde y cuándo disparar sin tocar al rehén. 75–250 m, cinco escenarios y lección guiada.','Police drill: the hostage-taker hides behind the hostage. Choose where and when to fire without touching the hostage. 75–250 m, five scenarios and a guided lesson.')]};
+ const mo=k=>opt(M===k,'data-m="'+k+'"',MD[k][0],MD[k][1]);
+ const LES=[[L('Lección 1 · 480 m','Lesson 1 · 480 m'),'M24 · '+L('llano','flat'),L('M24 (.308) en terreno llano, a 700 m de altitud. Aprendes el método completo: distancia, aire, caída, viento, giro y Tierra.','M24 (.308) on flat ground at 700 m altitude. You learn the whole method: distance, air, drop, wind, spin and the Earth.')],
+  [L('Lección 2 · 1.540 m','Lesson 2 · 1,540 m'),'TRG-42 · '+L('ártico','Arctic'),L('Sako TRG-42 (.338 Lapua) con frío ártico (−12 °C) y tiro al este a 69° de latitud: aquí el Coriolis y el Eötvös ya cuentan.','Sako TRG-42 (.338 Lapua) in Arctic cold (−12 °C), firing east at 69° north: here Coriolis and Eötvös matter.')],
+  [L('Lección 3 · Rescate de rehén','Lesson 3 · Hostage rescue'),'M24 · 75 m',L('M24 a 75 m: el atracador se cubre con el rehén. Aprendes la zona expuesta, cuándo disparar y la sujeción.','M24 at 75 m: the hostage-taker hides behind the hostage. You learn the exposed area, when to fire and holdover.')]];
+ /* clave del récord de la selección actual (la misma que guarda el juego) */
+ const bk=M==='rehen'?(rsL?null:'rehen|'+RH_SCN[ri].id+'|'+rf.id):(M==='aprende'?null:M+'|'+st.id+'|'+rf.id), bHere=bk?B[bk]:null;
+ /* pestañas: modo · escenario/lección · rifle · ajustes */
+ const tEsc=M==='aprende'?[L('Lección','Lesson'),LES[ls][0]]:(M==='rehen'?[L('Escenario','Scenario'),rsL?L('Aprende: rescate guiado','Learn: guided rescue'):L(RH_SCN[ri].n[0],RH_SCN[ri].n[1])]:[L('Escenario','Location'),L(st.n[0],st.n[1])]);
+ const rFix=M==='aprende'||(M==='rehen'&&rsL)||M==='record';
+ const tRif=M==='aprende'?rifleOf(ls===1?LESSONS[1].rf:'m24').n:(M==='rehen'&&rsL?rifleOf('m24').n:rf.n);
+ const spOK=M!=='desafio'&&M!=='rehen'&&M!=='aprende';
+ const tAj=M==='aprende'?'MIL':(CFG.unit==='moa'?'MOA':'MIL')+(spOK?' · '+L('obs.','spotter')+' '+(CFG.spot!==false?L('sí','on'):L('no','off')):'');
+ const MS={aprende:L('Aprende','Learn'),facil:L('Fácil','Easy'),veterano:L('Veterano','Veteran'),desafio:L('Desafío','Challenge'),movil:L('En movimiento','Moving'),record:L('Récord','Record'),rehen:L('Rehén','Hostage')};
+ const TABS=[['modo',L('Modo','Mode'),MS[M]||M],['esc',tEsc[0],tEsc[1]],['rifle',L('Rifle','Rifle'),tRif+(rFix?' 🔒':'')],['aj',L('Ajustes','Settings'),tAj]];
+ if(UIT&&!TABS.some(t=>t[0]===UIT)) UIT=null;
+ const S_=frStats();
+ let h='<div class="frw fmmn" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],['Francotirador']]);
+ h+='<div class="fmhd"><img src="img/juegos/francotirador.webp" width="640" height="400" alt="'+esc(L('Tirador con un Barrett M107 en un campo de tiro de Yibuti','Marksman with a Barrett M107 on a range in Djibouti'))+'"><div class="ht"><b>'+L('FRANCOTIRADOR','SNIPER')+'</b><div class="fmst">';
+ const chips=[]; if(S_.med&&S_.med[0]>0) chips.push('<button type="button" class="fmstc" id="frmed" title="'+L('Ver medallas','See medals')+'">🎖 '+S_.med[0]+'/'+S_.med[1]+' '+L('medallas','medals')+'</button>');
+ if(S_.far>0) chips.push('<span class="fmstc">⌖ '+L('máx.','max')+' '+ni(S_.far)+' m</span>');
+ const nb=Object.keys(B).length; if(nb) chips.push('<span class="fmstc">🏆 '+nb+' '+(nb===1?L('récord','record'):L('récords','records'))+'</span>');
+ if(!chips.length) chips.push('<span class="fmstc dim">'+L('Siluetas de acero · balística real','Steel silhouettes · real ballistics')+'</span>');
+ h+=chips.join('')+'</div></div></div>';
+ h+='<div class="fmtabs" role="tablist">'+TABS.map(t=>'<button type="button" role="tab" class="fmtab'+(UIT===t[0]?' on':'')+'" data-tab="'+t[0]+'" aria-selected="'+(UIT===t[0])+'" aria-expanded="'+(UIT===t[0])+'"><small>'+t[1]+' '+(UIT===t[0]?'▴':'▾')+'</small><b>'+esc(t[2])+'</b></button>').join('')+'</div>';
+ /* panel de la pestaña abierta, en el sitio */
+ let p='';
+ if(UIT==='modo'){
+  p+='<div class="frsec">'+L('Modo','Mode')+'</div><div class="frgrid c3 fmch">'+mo('facil')+mo('veterano')+mo('desafio')+'</div>';
+  p+='<div class="frsec">'+L('Retos especiales','Special challenges')+'</div><div class="frgrid c3 fmch">'+mo('movil')+mo('record')+mo('rehen')+'</div>';
+  p+='<div class="frsec">'+L('¿Nunca has disparado?','Never fired a shot?')+'</div><div class="frgrid fmch">'+mo('aprende')+'</div>';
+ } else if(UIT==='esc'){
+  if(M==='aprende') p+='<div class="frgrid c3 fmch">'+LES.map((l,i)=>opt(ls===i,'data-l="'+i+'"',l[0],l[1])).join('')+'</div>';
+  else if(M==='rehen') p+='<div class="frgrid c2 fmch">'+opt(rsL,'data-rs="L"',L('Aprende: rescate guiado','Learn: guided rescue'),L('Banco · 75 m · paso a paso','Bank · 75 m · step by step'))+
+    RH_SCN.map((s,i)=>{ const b=B['rehen|'+s.id+'|'+rf.id]; return opt(!rsL&&ri===i,'data-rs="'+i+'"',esc(L(s.n[0],s.n[1])),ni(s.d)+' m'+(b?' · '+L('récord','best')+' '+b:'')); }).join('')+'</div>';
+  else p+='<div class="frgrid c2 fmch">'+STAGES.map(s=>{ const b=B[M+'|'+s.id+'|'+rf.id]; return opt(CFG.stage===s.id,'data-s="'+s.id+'"',esc(L(s.n[0],s.n[1])),esc(L(s.d[0],s.d[1]))+' · '+L('latitud','latitude')+' '+nf(s.lat,1)+'°'+(b?' · '+L('récord','best')+' '+b:'')); }).join('')+'</div>';
+ } else if(UIT==='rifle'){
+  if(M==='record') p+='<p class="fmpn">'+L('En «Distancias récord» se tira siempre con el ','“Record distances” is always fired with the ')+esc(rf.n)+' (.50 BMG).</p>'+recHTML();
+  else if(M==='aprende'||rsL) p+='<p class="fmpn">'+L('En la lección el fusil va fijo: ','In the lesson the rifle is fixed: ')+esc(tRif)+'.</p>';
+  else p+='<div class="frgrid c2 fmch">'+RIFLES.map(r=>opt(CFG.rifle===r.id,'data-r="'+r.id+'"',esc(r.n),esc(L(r.cal[0],r.cal[1]))+' · '+esc(L(r.bul[0],r.bul[1]))+' · BC '+r.model+' '+nf(r.bc,3)+' · V0 '+r.mv+' m/s · '+L('hasta','to')+' '+ni(r.maxV)+' m · '+L('cargador de ','magazine of ')+(r.mag||5))).join('')+'</div>';
+  if(M!=='aprende'&&!rsL) p+='<p class="fmpn">'+L('Ficha del fusil','Rifle entry')+': <a href="#/a/'+rf.ficha+'">'+esc(rf.n)+'</a></p>';
+ } else if(UIT==='aj'){
+  if(M==='aprende') p+='<p class="fmpn">'+L('Las lecciones van siempre en MIL y con el profesor, que hace de observador.','Lessons always use MIL, and the instructor acts as your spotter.')+'</p>';
+  else { p+='<div class="frrow"><span style="color:#bfc2b8">'+L('Unidades del visor','Scope units')+'</span><span class="frseg"><button type="button" data-u="mil" class="'+(CFG.unit==='mil'?'on':'')+'">MIL</button><button type="button" data-u="moa" class="'+(CFG.unit==='moa'?'on':'')+'">MOA</button></span></div>';
+   if(spOK) p+='<div class="frrow"><span style="color:#bfc2b8">'+L('Ayuda: observador','Help: spotter')+'</span><span class="frseg"><button type="button" data-sp="1" class="'+(CFG.spot!==false?'on':'')+'">'+L('Sí','On')+'</button><button type="button" data-sp="0" class="'+(CFG.spot===false?'on':'')+'">'+L('No','Off')+'</button></span></div><p style="font-size:12.5px;color:#a8ad98;margin:-4px 2px 8px">'+L('Tras un fallo te dice dónde fue el impacto y la corrección exacta en clics. En Desafío no hay.','After a miss he tells you where the round went and the exact correction in clicks. Not in Challenge.')+'</p>';
+   else p+='<p class="fmpn">'+(M==='desafio'?L('En Desafío no hay observador.','There is no spotter in Challenge.'):L('En el rescate de rehén no hay observador: el simulacro te marca cada impacto.','There is no spotter in the hostage rescue: the drill marks every impact.'))+'</p>'; }
  }
- h+=howHTML()+formulasHTML(false)+validHTML()+'</div>';
+ if(p) h+='<div class="fmpane" role="tabpanel">'+p+'</div>';
+ /* resumen de lo elegido: el texto completo del modo y, si toca, del escenario o la lección */
+ let sm='<b>'+(MD[M]?MD[M][0]:'')+'</b> · '+(MD[M]?MD[M][2]:'');
+ if(M==='aprende') sm+='<br><b>'+LES[ls][0]+'</b> · '+LES[ls][2];
+ else if(M==='rehen') sm+='<br><b>'+(rsL?L('Aprende: rescate guiado','Learn: guided rescue'):esc(L(RH_SCN[ri].n[0],RH_SCN[ri].n[1])))+'</b> · '+(rsL?L('Puerta de banco a 75 m, paso a paso: zona expuesta, cuándo disparar y sujeción. Con barra de ritmo.','Bank door at 75 m, step by step: exposed area, when to fire and holdover. With a timing bar.'):esc(L(RH_SCN[ri].dsc[0],RH_SCN[ri].dsc[1])));
+ h+='<div class="fmsel">'+sm+'</div>';
+ if(M==='rehen'){ const rb=rhIntro(rf,B); const i0=rb.indexOf('<div class="frpanel"'), i1=rb.indexOf('<div class="frsec">',i0); h+='<details class="frdet"><summary>'+L('Briefing del simulacro','Drill briefing')+'</summary>'+rb.slice(i0,i1)+'</details>'; }
+ h+='<details class="frdet"><summary>'+L('Sobre el juego','About the game')+'</summary><div class="in"><p>'+L('Siluetas de acero de 300 a 2.000 m. Mide la distancia, lee el viento y gira las torretas: la bala sigue la física de verdad, incluida la rotación de la Tierra. Si fallas, ves el impacto, corriges y vuelves a tirar hasta vaciar el cargador.','Steel silhouettes from 300 to 2,000 m. Range it, read the wind and dial the turrets: the bullet follows real physics, including the Earth’s rotation. Miss, and you see the impact, correct and fire again until the magazine is empty.')+'</p><p>'+L('Siluetas de acero de campo de tiro, como las de competición: solo el contorno, sin rasgos ni sangre.','Steel range silhouettes, as used in competition: just the outline, no features, no blood.')+'</p></div></details>';
+ h+=howHTML()+formulasHTML(false)+validHTML();
+ /* barra fija con lo elegido y EMPEZAR */
+ const line=(MD[M]?MD[M][0]:'')+' · '+tEsc[1]+(M==='aprende'||rsL?'':' · '+tRif);
+ h+='<div class="fmgob"><div class="fmgl"><span>'+esc(line)+'</span>'+(bHere?'<small>🏆 '+L('récord','best')+' '+bHere+'</small>':'')+'</div><button type="button" class="frbtn fmgo" id="frgo">'+L('EMPEZAR','START')+' ▸</button></div>';
+ h+='</div>';
  X.set(h,'Francotirador');
  const root=APP;
- root.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ CFG.mode=b.getAttribute('data-m'); saveCfg(); intro(); });
- root.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ CFG.rifle=b.getAttribute('data-r'); saveCfg(); intro(); });
- root.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ CFG.stage=b.getAttribute('data-s'); saveCfg(); intro(); });
- root.querySelectorAll('[data-rs]').forEach(b=>b.onclick=()=>{ const v=b.getAttribute('data-rs'); CFG.rscn=v==='L'?'L':+v; saveCfg(); intro(); });
- root.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ CFG.lesson=+b.getAttribute('data-l'); saveCfg(); intro(); });
+ const pick=()=>{ UIT=null; saveCfg(); intro(); };
+ root.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{ const t=b.getAttribute('data-tab'); UIT=UIT===t?null:t; intro(); });
+ root.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ CFG.mode=b.getAttribute('data-m'); pick(); });
+ root.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ CFG.rifle=b.getAttribute('data-r'); pick(); });
+ root.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ CFG.stage=b.getAttribute('data-s'); pick(); });
+ root.querySelectorAll('[data-rs]').forEach(b=>b.onclick=()=>{ const v=b.getAttribute('data-rs'); CFG.rscn=v==='L'?'L':+v; pick(); });
+ root.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ CFG.lesson=+b.getAttribute('data-l'); pick(); });
  root.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{ CFG.unit=b.getAttribute('data-u'); saveCfg(); intro(); });
  root.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ CFG.spot=b.getAttribute('data-sp')==='1'; saveCfg(); intro(); });
- const go=document.getElementById('frgo'); if(go) go.onclick=()=>{ if(CFG.mode==='aprende'){ if(CFG.lesson===2) rhNew(true); else newLesson(CFG.lesson||0); } else if(CFG.mode==='rehen') rhNew(CFG.rscn==='L'); else newGame(); game(); window.scrollTo(0,0); };
+ const md=document.getElementById('frmed'); if(md) md.onclick=()=>{ try{ window.MAT_MED.open(); }catch(e){} };
+ const go=document.getElementById('frgo'); if(go) go.onclick=()=>{ UIT=null; if(CFG.mode==='aprende'){ if(CFG.lesson===2) rhNew(true); else newLesson(CFG.lesson||0); } else if(CFG.mode==='rehen') rhNew(CFG.rscn==='L'); else newGame(); game(); window.scrollTo(0,0); };
 }
 
 /* ===== Dibujo del mundo ===== */
