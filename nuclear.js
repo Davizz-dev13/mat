@@ -148,6 +148,14 @@ function css(){ if(document.getElementById('nu-css')) return; var s=document.cre
  '.nu .yv{font-size:22px;font-weight:750;color:#ffb38a;margin-right:6px}.nu .yn{color:var(--mu);font-size:13px}'+
  '.nu input[type=range]{width:100%;height:32px;padding:0;margin:4px 0;background:transparent;border:0;accent-color:#e8452c}'+
  '.nu .row2{display:flex;flex-wrap:wrap;gap:6px;align-items:center}'+
+ '.nu .nut-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 8px}'+
+ '.nu .nut-tab{display:block;min-width:0;min-height:54px;text-align:left;border:1px solid var(--line);border-radius:var(--r,10px);background:var(--s1);color:var(--tx);padding:7px 8px;font:inherit;cursor:pointer;touch-action:manipulation}'+
+ '.nu .nut-tab small{display:block;font-size:11px;color:var(--mu);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '.nu .nut-tab b{display:block;font-size:12.5px;line-height:1.25;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+ '.nu .nut-tab[aria-selected="true"]{border-color:var(--ac2,var(--ac));box-shadow:0 0 0 1px var(--ac2,var(--ac)) inset;background:var(--s2)}'+
+ '.nu .nut-opt[data-nut="1"] .nut-p:not(.nut-p1),.nu .nut-opt[data-nut="2"] .nut-p:not(.nut-p2),.nu .nut-opt[data-nut="3"] .nut-p:not(.nut-p3){display:none}'+
+ '.nu .nut-p{min-height:96px}.nu .nut-go{margin:8px 0 10px}.nu .nut-go .det{margin-left:0;flex:1 1 auto}'+
+ '.nu .nut-d{margin:0 0 12px;border:1px solid var(--line);border-radius:var(--r,10px);background:var(--s1)}.nu .nut-d>summary{cursor:pointer;padding:11px 12px;font-weight:600;min-height:44px;box-sizing:border-box}.nu .nut-d[open]>summary{border-bottom:1px solid var(--line)}.nu .nut-d>#nu-tab{padding:4px 8px 8px;overflow-x:auto}'+
  '.nu .det{margin-left:auto;min-height:44px;font-size:15px;font-weight:700;border-color:#a2402f!important;background:#3a1612!important;color:#ffd9cf!important;padding:0 18px}'+
  '.nu .mapw{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0e1113;margin:10px 0 0}'+
  '.nu #nu-map{height:62vh;min-height:340px;max-height:640px;background:#dfe3e6}.nu .dk #nu-map{background:#0e1113}'+
@@ -191,17 +199,18 @@ function render(app,X){
   var h='<div class="nu" data-noi18n>'+
   '<div class="ctx"><b>'+T2('Para qué sirve esto:','What this is for:')+'</b> '+T2('divulgación. Muestra, con datos públicos y modelos clásicos (Congreso de EE. UU., Glasstone y Dolan), la escala de los efectos de una sola detonación sobre una ciudad real. No es una predicción ni representa ningún plan: los efectos reales dependerían de muchísimos factores. Ver <a href="javascript:void 0" data-how="1">fuentes y método</a>.','education. Using public data and classic models (U.S. Congress, Glasstone & Dolan), it shows the scale of the effects of a single detonation over a real city. It is not a prediction and does not represent any plan: real effects would depend on a great many factors. See <a href="javascript:void 0" data-how="1">sources and method</a>.')+'</div>'+
   '<div class="gno" id="nu-org" hidden></div>'+
-  '<div class="grid"><div>'+
-  '<div class="lbl">'+T2('1 · Ciudad (punto cero en el centro)','1 · City (ground zero at the centre)')+'</div>'+
+  '<div class="grid"><div class="nut-opt" data-nut="'+NUT+'">'+
+  '<div class="nut-tabs" role="tablist">'+[[1,'1 · 🏙️',T2('Ciudad','City')],[2,'2 · 💥',T2('Potencia','Yield')],[3,'3 · 📍',T2('Explosión','Burst')]].map(function(x){ return '<button type="button" role="tab" class="nut-tab" data-nutt="'+x[0]+'" aria-selected="'+(NUT===x[0])+'"><small>'+x[1]+' '+x[2]+'</small><b id="nut-v'+x[0]+'">…</b></button>'; }).join('')+'</div>'+
+  '<div class="nut-p nut-p1"><div class="lbl">'+T2('1 · Ciudad (punto cero en el centro)','1 · City (ground zero at the centre)')+'</div>'+
   '<button type="button" class="citb" id="nu-cb" aria-expanded="false"></button><div class="pick" id="nu-pick" hidden><input type="search" id="nu-q" placeholder="'+T2('Busca una ciudad o un país…','Search a city or a country…')+'" autocomplete="off" aria-label="'+T2('Buscar ciudad','Search city')+'"><div class="plist" id="nu-pl"></div></div>'+
-  '<div class="chips" id="nu-qc">'+QUICK.filter(function(k){ return IDX[k]!=null; }).map(function(k){ var c=D.c[IDX[k]]; return '<button type="button" class="chip" data-ci="'+IDX[k]+'">'+e(cn(c))+'</button>'; }).join('')+'</div>'+
-  '<div class="lbl">'+T2('2 · Potencia','2 · Yield')+'</div>'+
+  '<div class="chips" id="nu-qc">'+QUICK.filter(function(k){ return IDX[k]!=null; }).map(function(k){ var c=D.c[IDX[k]]; return '<button type="button" class="chip" data-ci="'+IDX[k]+'">'+e(cn(c))+'</button>'; }).join('')+'</div></div>'+
+  '<div class="nut-p nut-p2"><div class="lbl">'+T2('2 · Potencia','2 · Yield')+'</div>'+
   '<div><span class="yv" id="nu-yv"></span><span class="yn" id="nu-yn"></span></div>'+
   '<input type="range" id="nu-ys" min="0" max="1000" step="1" aria-label="'+T2('Potencia','Yield')+'">'+
-  '<div class="chips" id="nu-yc">'+D.fx.y.map(function(y){ return '<button type="button" class="chip" data-y="'+y[3]+'" data-yid="'+y[0]+'">'+e(EN()?y[2]:y[1])+' · '+ykt(y[3])+'</button>'; }).join('')+'</div>'+
-  '<div class="lbl">'+T2('3 · Tipo de explosión','3 · Type of burst')+'</div>'+
-  '<div class="row2"><button type="button" class="chip" data-b="air">'+T2('Aérea','Air burst')+'</button><button type="button" class="chip" data-b="surf">'+T2('En superficie','Surface burst')+'</button>'+
-  '<button type="button" class="btn det" id="nu-det">'+T2('Detonar','Detonate')+'</button></div>'+
+  '<div class="chips" id="nu-yc">'+D.fx.y.map(function(y){ return '<button type="button" class="chip" data-y="'+y[3]+'" data-yid="'+y[0]+'">'+e(EN()?y[2]:y[1])+' · '+ykt(y[3])+'</button>'; }).join('')+'</div></div>'+
+  '<div class="nut-p nut-p3"><div class="lbl">'+T2('3 · Tipo de explosión','3 · Type of burst')+'</div>'+
+  '<div class="row2"><button type="button" class="chip" data-b="air">'+T2('Aérea','Air burst')+'</button><button type="button" class="chip" data-b="surf">'+T2('En superficie','Surface burst')+'</button></div></div>'+
+  '<div class="row2 nut-go"><button type="button" class="btn det" id="nu-det">'+T2('Detonar','Detonate')+'</button></div>'+
   '<div id="nu-fo"></div>'+
   '<div class="mapw" id="nu-mw"><div id="nu-map" role="application" aria-label="'+T2('Mapa de efectos','Effects map')+'"></div><div class="flash" id="nu-fl"></div>'+
   '<div class="mtools"><button type="button" id="nu-fit" aria-label="'+T2('Encuadrar','Fit')+'" title="'+T2('Encuadrar','Fit')+'">⤢</button><button type="button" id="nu-dk" aria-label="'+T2('Mapa claro u oscuro','Light or dark map')+'" title="'+T2('Mapa claro / oscuro','Light / dark map')+'"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button></div></div>'+
@@ -210,10 +219,10 @@ function render(app,X){
   '<div id="nu-res"></div>'+
   '<div class="box"><label class="tog"><input type="checkbox" id="nu-cmp"> '+T2('Comparar con otra potencia','Compare with another yield')+'</label><div id="nu-cmpb"></div></div>'+
   '<div class="acts"><button type="button" class="btn" id="nu-sh">'+T2('Compartir','Share')+'</button><a class="btn" id="nu-wm" href="#/guerra-nuclear?tab=alcance">'+T2('¿Qué misiles llegan aquí?','Which missiles reach here?')+'</a></div>'+
-  '<div id="nu-tab"></div><div class="box cloud" id="nu-cl"></div>'+
+  '<details class="nut-d"><summary>📏 '+T2('Radio de cada efecto (tabla)','Radius of each effect (table)')+'</summary><div id="nu-tab"></div></details><div class="box cloud" id="nu-cl"></div>'+
   '</div></div>'+
   '<div class="note">'+T2('<b>Simulación divulgativa y muy aproximada.</b> Los efectos reales dependerían de la hora (la población de día y de noche es distinta), el tiempo, el relieve, los edificios, los refugios y la altura exacta de la explosión. Las cifras de víctimas no incluyen la lluvia radiactiva, las tormentas de fuego, el colapso de los servicios sanitarios ni los efectos a largo plazo.','<b>Educational, very rough simulation.</b> Real effects would depend on the time of day (daytime and night-time population differ), weather, terrain, buildings, shelters and the exact height of burst. Casualty figures exclude fallout, firestorms, the collapse of health services and long-term effects.')+'</div>'+
-  '<div id="nu-how"></div></div>';
+  '</div>';
   X.set(h,T2('Guerra nuclear: impacto','Nuclear war: impact'));
   if(window.MAT_GN_FLY){ window.MAT_GN_FLY=0; try{ var mw0=document.getElementById('nu-mw'); if(mw0){ var yy=mw0.getBoundingClientRect().top+(window.scrollY||0)-Math.max(56,((window.innerHeight||700)-mw0.offsetHeight)/2); window.scrollTo(0,Math.max(0,yy)); } }catch(x){} }
   var R0=app.querySelector('.nu');
@@ -231,6 +240,7 @@ function render(app,X){
   ys.addEventListener('change',function(){ upd('m'); });
   R0.querySelector('#nu-yc').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y]'); if(!b) return; S.y=+b.getAttribute('data-y'); S.yid=b.getAttribute('data-yid'); ys.value=y2s(S.y); upd('m'); });
   [].forEach.call(R0.querySelectorAll('[data-b]'),function(b){ b.addEventListener('click',function(){ S.b=b.getAttribute('data-b'); upd('m'); }); });
+  { var ntb=R0.querySelector('.nut-tabs'); if(ntb) ntb.addEventListener('click',function(ev){ var b=ev.target.closest('[data-nutt]'); if(!b) return; ev.stopPropagation(); NUT=+b.getAttribute('data-nutt'); nutTabs(); }); }
   R0.querySelector('#nu-det').addEventListener('click',function(){ upd(true); try{ if(window.MAT_MED) window.MAT_MED.event('nuc.det',{c:CUR&&CUR.g&&CUR.g.n}); }catch(_){} try{ R0.querySelector('#nu-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} });
   var ck=R0.querySelector('#nu-cmp'); ck.checked=!!S.y2; ck.addEventListener('change',function(){ S.y2=ck.checked?(S.y>=1000?S.y/10:Math.min(50000,S.y*10)):0; S.y2=snapY(S.y2); upd('m'); });
   R0.querySelector('#nu-cmpb').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y2]'); if(!b) return; S.y2=+b.getAttribute('data-y2'); upd('m'); });
@@ -280,7 +290,10 @@ function upd(anim){ var R0=document.querySelector('.nu'); if(!R0) return; var g=
   [].forEach.call(R0.querySelectorAll('[data-b]'),function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-b')===S.b)); });
   var A=eff(S.y,S.b), B=S.y2?eff(S.y2,S.b):null; CUR={A:A,B:B,g:g};
   UM=(anim===true&&!MAP)?'w':(anim===true?'det':(anim==='m'?'m':'q'));
-  foPanel(); cmpPanel(); results(); table(); cloud(); writeQ(); draw(anim); cntRun(); }
+  foPanel(); cmpPanel(); results(); table(); cloud(); writeQ(); draw(anim); cntRun(); nutTabs(); }
+/* pestañas Ciudad / Potencia / Explosión (solo interfaz): cuál se ve y su valor actual */
+var NUT=1; function nutTabs(){ var o=document.querySelector('.nu .nut-opt'); if(!o) return; o.setAttribute('data-nut',NUT); [].forEach.call(o.querySelectorAll('.nut-tab'),function(b){ b.setAttribute('aria-selected',String(+b.getAttribute('data-nutt')===NUT)); });
+  try{ var g=gz(), v1=document.getElementById('nut-v1'), v2=document.getElementById('nut-v2'), v3=document.getElementById('nut-v3'); if(v1) v1.textContent=g.n||'—'; if(v2) v2.textContent=ykt(S.y); if(v3) v3.textContent=S.b==='surf'?T2('En superficie','Surface'):T2('Aérea','Air'); }catch(_){} }
 var WD=[[0,'N','N'],[45,'NE','NE'],[90,'E','E'],[135,'SE','SE'],[180,'S','S'],[225,'SO','SW'],[270,'O','W'],[315,'NO','NW']];
 function foPanel(){ var el=document.getElementById('nu-fo'); if(!el) return; var h='';
   if(S.b==='surf'){ h='<div class="box"><h3>'+T2('Lluvia radiactiva (modelo simplificado)','Radioactive fallout (simplified model)')+'</h3>'+
@@ -479,7 +492,7 @@ function gnSet(tab,reuse){ var X=X0, prev=GN.tab; GN.tab=tab; var seq=++GN.seq;
   var body=document.getElementById('gn-body'); body.innerHTML='<p class="sub" style="padding:24px 0">'+T2('Cargando…','Loading…')+'</p>';
   var SX={p:X.p,qs:X.qs,esc:X.esc,crumbs:function(){ return ''; },set:function(h,t){ body.innerHTML=h; document.title=(t?t+' · ':'')+'M.A.T'; },alive:function(){ return seq===GN.seq&&document.body.contains(body); }};
   if(reuse&&prev!==tab){ var tb=document.getElementById('gn-tabs'); if(tb){ var y=tb.getBoundingClientRect().top+(window.scrollY||0)-8; if((window.scrollY||0)>y) window.scrollTo(0,Math.max(0,y)); } }
-  var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi'), hd=document.getElementById('gn-hd'); if(ha&&hi&&prev!==tab){ ha.open=(tab==='alcance'); hi.open=(tab==='impacto'); if(hd) hd.open=false; }
+  var ha=document.getElementById('gn-ha'), hi=document.getElementById('gn-hi'), hd=document.getElementById('gn-hd'); if(ha&&hi&&prev!==tab){ ha.open=(tab==='alcance'); hi.open=false; if(hd) hd.open=false; }
   var fail=function(err){ if(!SX.alive()) return; body.innerHTML='<p class="sub" style="padding:24px 0">'+T2('No se pudo cargar esta parte. Actualiza la página.','Could not load this part. Refresh the page.')+'</p>'; if(window.console) console.error(err); };
   if(tab==='alcance'){ gnScript('alc-js','alcance.js').then(function(){ if(!SX.alive()) return; window.MAT_ALCANCE(body,SX); }).catch(fail); }
   else if(tab==='defensa'){ gnScript('df-js','defensa.js').then(function(){ if(!SX.alive()) return; window.MAT_DEFENSA(body,SX); }).catch(fail); }
