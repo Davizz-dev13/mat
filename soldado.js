@@ -42,11 +42,16 @@ details.sd-d summary{cursor:pointer;font-size:13px;opacity:.9;margin-top:6px}
 .sd-warn{font-size:12px;opacity:.8;margin-top:4px}
 .sd-wp{display:flex;gap:10px;align-items:center}.sd-wp img{width:120px;height:48px;object-fit:contain;border-radius:6px;background:#20252b}
 .sd-cam{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.sd-cam button{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer}.sd-cam button.on{border-color:#fff}
+
+.sdx-cat{border-top:1px solid rgba(255,255,255,.08)}.sdx-cat:first-child{border-top:0}.sdx-cat>summary{display:flex;align-items:center;gap:8px;min-height:46px;cursor:pointer;list-style:none;padding:4px 0}.sdx-cat>summary::-webkit-details-marker{display:none}.sdx-cat>summary::before{content:'▸';flex:none;width:14px;opacity:.7;transition:transform .15s}.sdx-cat[open]>summary::before{transform:rotate(90deg)}.sdx-cat>summary h3{flex:1;min-width:0;margin:0!important}.sdx-cs{flex:none;font-size:12px;opacity:.75;white-space:nowrap;border:1px solid var(--line,#3a424c);border-radius:999px;padding:2px 9px}.sdx-cs.on{opacity:1;background:#4f6a36;border-color:#7e9c5a;color:#fff}.sdx-cat[open]{padding-bottom:6px}.sdx-bar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border:1px solid var(--line,#2c333b);border-radius:12px;background:rgba(11,12,13,.94);backdrop-filter:blur(4px)}.sdx-bl{flex:1;min-width:0;font-size:13px;line-height:1.3}.sdx-bl small{display:block;opacity:.7;font-size:11px;text-transform:uppercase;letter-spacing:.04em}.sdx-bl b{font-size:17px}.sdx-bar .sd-btn{margin:0;flex:none}@media(min-width:980px){.sdx-bar{display:none}}
 `;
 function css(){ if(!document.getElementById('sd-css')){ const s=document.createElement('style'); s.id='sd-css'; s.textContent=CSS; document.head.appendChild(s); } }
 function data(){ return DATA?Promise.resolve(DATA):fetch('soldado.json?v='+VER).then(r=>{ if(!r.ok) throw 0; return r.json(); }).then(d=>DATA=d); }
 function arm(){ return ARM?Promise.resolve(ARM):import('./armero.js?v='+VER).then(m=>ARM=m); }
 const KEY='mat_soldado';
+/* categorías de equipo plegables (solo interfaz): cuáles están abiertas */
+const SDX_KEY='mat_sd_ui'; const SDX_OPEN=new Set((()=>{ try{ const u=JSON.parse(localStorage.getItem(SDX_KEY)||'{}'); return Array.isArray(u.open)?u.open:[]; }catch(e){ return []; } })());
+function sdxSave(){ try{ localStorage.setItem(SDX_KEY,JSON.stringify({open:[...SDX_OPEN]})); }catch(e){} }
 function loadSt(){ let s=null; try{ s=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
   return Object.assign({h:175,kg:80,role:null,lvl:0,q:{},arma:null,camo:'od',v:4,terr:0,g:0},s||{}); }
 function saveSt(st){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} try{ window.MAT_MED&&window.MAT_MED.event('soldado.equipo',{role:st.role,arma:!!st.arma,lvl:st.lvl}); }catch(_){} }
@@ -79,17 +84,17 @@ function page(app,ctx){
    '<div class="sd-card"><h2>'+L('1 · Tus datos','1 · About you')+'</h2><div class="sd-in"><label>'+L('Altura (cm)','Height (cm)')+'<input id="sdh" type="number" inputmode="numeric" min="140" max="215" value="'+st.h+'"></label><label>'+L('Peso corporal (kg)','Body weight (kg)')+'<input id="sdkg" type="number" inputmode="decimal" min="40" max="160" step="0.5" value="'+st.kg+'"></label></div><div class="sd-warn">'+L('Solo se usan en tu navegador; no se envían a ningún sitio.','Only used in your browser; nothing is sent anywhere.')+'</div></div>'+
    '<div class="sd-card"><h2>'+L('2 · Rol (cargas medidas en combate)','2 · Role (loads measured in combat)')+'</h2><div class="sd-chips" id="sdroles">'+D.roles.map(r=>'<button type="button" class="sd-chip" data-r="'+r.id+'">'+esc(LL(r.n))+'</button>').join('')+'<button type="button" class="sd-chip" data-r="tirador" disabled title="'+L('Sin datos publicados','No published data')+'">'+L('Francotirador','Sniper')+'</button><button type="button" class="sd-chip" data-r="">'+L('Libre','Custom')+'</button></div><div id="sdrole"></div></div>'+
    '<div class="sd-card"><h2>'+L('3 · Arma principal (del Armero 3D)','3 · Primary weapon (from the 3D Gunsmith)')+'</h2><div id="sdarma"><p class="sd-warn">'+L('Cargando armas…','Loading weapons…')+'</p></div></div>'+
-   '<div class="sd-card"><h2>'+L('4 · Equipo','4 · Gear')+'</h2><p class="sd-warn">'+L('Cada peso lleva su fuente. Toca + / − para añadir o quitar.','Every weight carries its source. Tap + / − to add or remove.')+'</p><div id="sdgear"></div></div>'+
-   '</div><div class="sd-side"><div class="sd-card" id="sdres"></div><div class="sd-card" id="sdmov"></div>'+
+   '<div class="sd-card"><h2>'+L('4 · Equipo','4 · Gear')+'</h2><p class="sd-warn">'+L('Cada peso lleva su fuente. Toca + / − para añadir o quitar.','Every weight carries its source. Tap + / − to add or remove.')+' '+L('Toca una categoría para abrirla.','Tap a category to open it.')+'</p><div id="sdgear"></div></div>'+
+   '<div class="sdx-bar" id="sdxbar"></div></div><div class="sd-side"><div class="sd-card" id="sdres"></div><div class="sd-card" id="sdmov"></div>'+
    '<div class="sd-card"><button type="button" class="sd-btn" id="sdeq">'+L('Equipar (ver en 3D)','Equip (view in 3D)')+'</button><button type="button" class="sd-btn sec" id="sdclr">'+L('Vaciar','Clear')+'</button><div id="sd3d"></div></div>'+
    '</div></div><div class="sd-card" id="sdsrc"></div>';
   ctx.set(h,L('Crea tu soldado','Build your soldier'));
   /* precarga del 3D en segundo plano (no con «ahorro de datos») */
   { const cn=navigator.connection; if(!(cn&&(cn.saveData||/(^|-)2g$/.test(cn.effectiveType||'')))){ const go=()=>{ if(!document.getElementById('sdeq')) return; Promise.all([arm(),import('./soldado3d.js?v='+VER)]).then(([,S3])=>{ S3.prefetch&&S3.prefetch(); }).catch(()=>{}); }; (window.requestIdleCallback||((f)=>setTimeout(f,1200)))(go,{timeout:2500}); } }
   const $=id=>document.getElementById(id);
-  function gearHTML(){ return D.cats.map(c=>{ const ids=itemsByCat(c[0]); if(!ids.length) return ''; return '<h3>'+esc(LL(c[1]))+(c[2]?' <small style="opacity:.6">'+L('(uno)','(one)')+'</small>':'')+'</h3>'+ids.map(id=>{ const it=D.items[id], q=st.q[id]||0, src=LL(it.src)||[];
+  function gearHTML(){ return D.cats.map(c=>{ const ids=itemsByCat(c[0]); if(!ids.length) return ''; const nOn=ids.reduce((a,id)=>a+(st.q[id]||0),0), gOn=ids.reduce((a,id)=>a+(st.q[id]||0)*D.items[id].g,0); return '<details class="sdx-cat" data-c="'+esc(c[0])+'"'+(SDX_OPEN.has(c[0])?' open':'')+'><summary><h3>'+esc(LL(c[1]))+(c[2]?' <small style="opacity:.6">'+L('(uno)','(one)')+'</small>':'')+'</h3><span class="sdx-cs'+(nOn?' on':'')+'">'+(nOn?nOn+' · '+kg(gOn/1000):ids.length+' '+(ids.length===1?L('opción','option'):L('opciones','options')))+'</span></summary>'+ids.map(id=>{ const it=D.items[id], q=st.q[id]||0, src=LL(it.src)||[];
     const blocked=(c[0]==='plate'&&st.q.iba&&id!=='side');
-    return '<div class="sd-it'+(q?' on':'')+'" data-i="'+id+'"><div class="nm">'+esc(LL(it.n))+(it.nij?' <i style="opacity:.7">· '+esc(LL(it.nij))+'</i>':'')+'<small>'+(it.unit?nf(it.g/1000,1)+' kg/'+LL(it.unit):fmtG(it.g))+(it.note?' · '+esc(LL(it.note)):'')+(blocked?' · '+L('el chaleco IBA ya incluye 2 placas SAPI','the IBA vest already includes 2 SAPI plates'):'')+' · '+src.slice(0,1).map(s=>'<a href="'+esc(s[1])+'" target="_blank" rel="noopener">'+L('fuente','source')+'</a>').join('')+'</small></div><div class="w">'+(q?kg(it.g*q/1000):'')+'</div><div class="sd-q"><button type="button" data-m="-1" aria-label="−">−</button><span>'+q+'</span><button type="button" data-m="1" aria-label="+"'+(blocked?' disabled':'')+'>+</button></div></div>'; }).join(''); }).join(''); }
+    return '<div class="sd-it'+(q?' on':'')+'" data-i="'+id+'"><div class="nm">'+esc(LL(it.n))+(it.nij?' <i style="opacity:.7">· '+esc(LL(it.nij))+'</i>':'')+'<small>'+(it.unit?nf(it.g/1000,1)+' kg/'+LL(it.unit):fmtG(it.g))+(it.note?' · '+esc(LL(it.note)):'')+(blocked?' · '+L('el chaleco IBA ya incluye 2 placas SAPI','the IBA vest already includes 2 SAPI plates'):'')+' · '+src.slice(0,1).map(s=>'<a href="'+esc(s[1])+'" target="_blank" rel="noopener">'+L('fuente','source')+'</a>').join('')+'</small></div><div class="w">'+(q?kg(it.g*q/1000):'')+'</div><div class="sd-q"><button type="button" data-m="-1" aria-label="−">−</button><span>'+q+'</span><button type="button" data-m="1" aria-label="+"'+(blocked?' disabled':'')+'>+</button></div></div>'; }).join('')+'</details>'; }).join(''); }
   function fmtG(g){ return g>=1000?nf(g/1000,2)+' kg':nf(g,0)+' g'; }
   function roleHTML(){ const r=D.roles.find(x=>x.id===st.role); if(!r){ return st.role==='tirador'?'':'<p class="sd-warn">'+L('Elige un rol para cargar un equipo típico medido en el informe, o monta el tuyo libremente abajo.','Choose a role to load a typical kit measured in the report, or build your own freely below.')+'</p><p class="sd-warn">'+L('Francotirador: el informe no tiene un apartado de francotirador y no hemos encontrado otra fuente publicada con su carga; por eso no hay plantilla (puedes montarlo en «Libre»).','Sniper: the report has no sniper section and we found no other published source for its load, so there is no preset (you can build it under “Custom”).')+'</p>'; }
     const lv=[[L('Carga de combate','Fighting load'),0],[L('Marcha de aproximación','Approach march'),1],[L('Marcha de emergencia','Emergency march'),2]];
@@ -143,7 +148,8 @@ function page(app,ctx){
     ' '+L('Esto es una estimación educativa, no una evaluación médica ni de aptitud.','This is an educational estimate, not a medical or fitness assessment.')+
     ' <a href="'+esc(D.atp_src[1])+'" target="_blank" rel="noopener">ATP 3-21.18</a> · <a href="'+esc(D.fm_src[1])+'" target="_blank" rel="noopener">FM 21-18</a> · <a href="#/license">'+L('Licencias de los modelos 3D','3D model licences')+'</a></div>'; }
   function renderAll(){ $('sdrole').innerHTML=roleHTML(); [...$('sdroles').children].forEach(b=>b.classList.toggle('on',b.dataset.r===(st.role||'')&&!b.disabled)); $('sdarma').innerHTML=armaHTML(); $('sdgear').innerHTML=gearHTML(); calc(); }
-  function calc(){ $('sdres').innerHTML=resHTML(); $('sdmov').innerHTML=movHTML(); saveSt(st); if(ACTIVE3D) ACTIVE3D.update(st); }
+  function sdxBar(){ const b=$('sdxbar'); if(!b) return; const T=totals(st), bw=+st.kg||0; b.innerHTML='<div class="sdx-bl"><small>'+L('Carga total','Total load')+'</small><b>'+kg(T.tot)+'</b>'+(bw?' · '+nf(T.tot/bw*100,1)+' % '+L('de tu peso','of your weight'):'')+'</div><button type="button" class="sd-btn sec" id="sdxgo">'+L('Ver resultado','See result')+' ↓</button>'; }
+  function calc(){ $('sdres').innerHTML=resHTML(); $('sdmov').innerHTML=movHTML(); saveSt(st); if(ACTIVE3D) ACTIVE3D.update(st); sdxBar(); }
   $('sdsrc').innerHTML=srcHTML();
   if(pre){ st.role=null; }
   renderAll();
@@ -152,7 +158,7 @@ function page(app,ctx){
      $('sdarma').innerHTML=armaHTML(); calc(); }).catch(()=>{ $('sdarma').innerHTML='<p class="sd-warn">'+L('No se pudieron cargar las armas.','Could not load the weapons.')+'</p>'; });
   const main=document.querySelector('.sd-wrap');
   main.addEventListener('input',e=>{ const t=e.target; if(t.id==='sdh') st.h=Math.max(140,Math.min(215,+t.value||175)); else if(t.id==='sdkg') st.kg=+t.value||0; else if(t.id==='sdv') st.v=+t.value||0; else if(t.id==='sdg') st.g=+t.value||0; else return;
-     if(t.id==='sdh'){ saveSt(st); if(ACTIVE3D) ACTIVE3D.update(st); return; } $('sdres').innerHTML=resHTML(); const mv=$('sdmov'); if(t.id!=='sdv'&&t.id!=='sdg') mv.innerHTML=movHTML(); else { const keep=t.id; mv.innerHTML=movHTML(); const n=$(keep); if(n){ n.focus(); try{ n.setSelectionRange(n.value.length,n.value.length); }catch(e){} } } saveSt(st); });
+     if(t.id==='sdh'){ saveSt(st); if(ACTIVE3D) ACTIVE3D.update(st); return; } $('sdres').innerHTML=resHTML(); sdxBar(); const mv=$('sdmov'); if(t.id!=='sdv'&&t.id!=='sdg') mv.innerHTML=movHTML(); else { const keep=t.id; mv.innerHTML=movHTML(); const n=$(keep); if(n){ n.focus(); try{ n.setSelectionRange(n.value.length,n.value.length); }catch(e){} } } saveSt(st); });
   main.addEventListener('change',e=>{ const t=e.target; if(t.id==='sdt'){ st.terr=+t.value; $('sdmov').innerHTML=movHTML(); saveSt(st); }
      else if(t.id==='sdw'){ st.arma=t.value?{id:t.value,v:0,on:{},camo:'orig',ca:false}:null; $('sdarma').innerHTML=armaHTML(); calc(); } });
   main.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
@@ -165,7 +171,9 @@ function page(app,ctx){
       if(it.c==='plate'&&id!=='side'&&q>0){ D.order.forEach(k=>{ if(k!==id&&D.items[k]&&D.items[k].c==='plate'&&k!=='side') delete st.q[k]; }); delete st.q.iba; }
       if(q) st.q[id]=q; else delete st.q[id]; $('sdgear').innerHTML=gearHTML(); calc(); return; }
     if(b.id==='sdclr'){ st.q={}; st.role=null; st.arma=null; renderAll(); return; }
-    if(b.id==='sdeq'){ equip(); return; } });
+    if(b.id==='sdeq'){ equip(); return; }
+    if(b.id==='sdxgo'){ const r=$('sdres'); if(r) r.scrollIntoView({behavior:'smooth',block:'start'}); return; } });
+  $('sdgear').addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.classList||!d.classList.contains('sdx-cat')) return; const c=d.dataset.c; if(d.open) SDX_OPEN.add(c); else SDX_OPEN.delete(c); sdxSave(); },true);
   function equip(){ const box=$('sd3d'); if(ACTIVE3D){ box.scrollIntoView({behavior:'smooth',block:'center'}); return; }
     box.innerHTML='<div class="sd-stage" id="sdst"><div class="sd-load">'+L('Cargando soldado 3D…','Loading 3D soldier…')+'</div></div><div id="sdcam"></div><div class="sd-src" id="sdcred"></div>';
     box.scrollIntoView({behavior:'smooth',block:'start'});
