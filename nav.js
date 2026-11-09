@@ -29,7 +29,7 @@ function gamesHTML(){
     var th='<span class="ri" style="background-image:url(img/juegos/'+g[1]+'.webp)"></span>';
     if(G&&G.soon&&g[0]==='#/duelo') h+='<span class="rc off" aria-disabled="true">'+th+'<span class="rt">'+esc(g[2])+'</span><span class="nw sn">'+t('soon')+'</span></span>';
     else h+='<a class="rc" href="'+g[0]+'">'+th+'<span class="rt">'+esc(g[2])+'</span></a>'; });
-  if(!G||G.reto) h+='<a class="rc" href="#/reto"><span class="ri thr">'+ICO_RETO+'</span><span class="rt">'+t('reto')+'</span><span class="nw">'+t('nw')+'</span></a>';
+  if(!G||G.reto) h+='<a class="rc" href="#/reto"><span class="ri" style="background-image:url(img/juegos/reto.webp?v=2)"></span><span class="rt">'+t('reto')+'</span><span class="nw">'+t('nw')+'</span></a>';
   var fe=f?featHTML(f[0],'img/juegos/'+f[1]+'.webp',t('feat'),f[2],f[3],t('play')):'';
   return '<div class="ddh"><span>'+t('j')+'</span><a href="#/juegos">'+t('all')+'</a></div><div class="mm">'+fe+'<div class="mmg">'+h+'</div></div>';
 }
