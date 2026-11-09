@@ -618,6 +618,38 @@ function css(){ if(document.getElementById('sb-css')) return; const s=document.c
   '.sbdeb .sbtbl tr{animation:sbIn .4s cubic-bezier(.2,.7,.2,1) both}',
   '.sbdeb .sbtbl tr:nth-child(2){animation-delay:.05s}.sbdeb .sbtbl tr:nth-child(3){animation-delay:.1s}.sbdeb .sbtbl tr:nth-child(4){animation-delay:.15s}.sbdeb .sbtbl tr:nth-child(5){animation-delay:.2s}.sbdeb .sbtbl tr:nth-child(6){animation-delay:.25s}.sbdeb .sbtbl tr:nth-child(n+7){animation-delay:.3s}',
   '.sbtut{animation:sbIn .3s cubic-bezier(.2,.7,.2,1)}',
+ '.sqxmn{padding-bottom:0}',
+ '.sqxhd{position:relative;display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);overflow:hidden;margin:8px 0 10px;padding:8px}',
+ '.sqxhd img{width:92px;height:58px;object-fit:cover;border-radius:8px;flex:none;filter:saturate(.75) brightness(.75)}',
+ '.sqxhd .ht{min-width:0}',
+ '.sqxhd .ht>b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px;letter-spacing:.03em;line-height:1}',
+ '.sqxst{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}',
+ '.sqxstc{display:inline-flex;align-items:center;min-height:26px;padding:2px 9px;border:1px solid var(--line);border-radius:999px;background:#12140f;color:#d6d8d2;font:inherit;font-size:12.5px;white-space:nowrap}',
+ 'button.sqxstc{cursor:pointer;border-color:#6d7f3a}',
+ '.sqxstc.dim{color:#a8ad98;white-space:normal}',
+ '.sqxtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 8px}',
+ '.sqxtab{display:block;min-width:0;min-height:54px;text-align:left;border:1px solid var(--line);border-radius:var(--r);background:var(--s1);color:var(--tx);padding:7px 8px;font:inherit;cursor:pointer;touch-action:manipulation}',
+ '.sqxtab small{display:block;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:#a8ad98;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+ '.sqxtab b{font-size:13px;line-height:1.25;margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}',
+ '.sqxtab.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset;background:#1a1d14}',
+ '.sqxpane{border:1px solid var(--ac);border-radius:var(--r);background:#11130e;padding:4px 8px 8px;margin:0 0 8px;animation:sbIn .2s ease-out both}',
+ '.sqxpane .sbsec{margin:8px 0 6px}',
+ '.sqxpn{font-size:13.5px;color:#bfc2b8;margin:8px 2px;line-height:1.45}',
+ '.sbgr.sqxch{grid-template-columns:repeat(2,minmax(0,1fr))}',
+ '.sbgr.sqxch.c1{grid-template-columns:1fr}',
+ '.sqxch .sbopt{padding:8px 10px;min-height:44px}',
+ '.sqxch .sbopt b{font-size:14.5px}',
+ '.sqxch .sbopt span{font-size:12px;line-height:1.3}',
+ '.sqxsel{font-size:13.5px;line-height:1.45;color:#cfd3c2;border-left:3px solid var(--ac);padding:4px 0 4px 10px;margin:4px 0 8px}',
+ '.sqxsel b{color:var(--tx);font-weight:700}',
+ '.sqxmn .sbdet{margin:8px 0}',
+ '.sqxgob{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;align-items:center;margin:10px -8px 0;padding:10px 8px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(rgba(11,12,13,.82),#0b0c0d 40%);border-top:1px solid var(--line);backdrop-filter:blur(4px)}',
+ '.sqxgl{flex:1;min-width:0;font-size:13px;color:#cfd3c2;line-height:1.3}',
+ '.sqxgl span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
+ '.sqxgl small{display:block;color:#e3b94a;font-size:12px}',
+ '.sbbtn.sqxgo{min-height:52px;padding:10px 22px;font-size:17px;letter-spacing:.06em;flex:none}',
+ '@media(min-width:800px){.sqxhd img{width:150px;height:84px}.sqxhd .ht>b{font-size:38px}.sqxtab b{font-size:15px}}',
+ '@media (prefers-reduced-motion:reduce){.sqxpane{animation:none!important}}',
   '@media (prefers-reduced-motion:reduce){.sbw *,.sbw *::before{animation:none!important;transition:none!important}}',
   ''
  ].join('\n'); document.head.appendChild(s); }
@@ -627,27 +659,65 @@ const opt=(on,attr,b,s)=>'<button type="button" class="sbopt'+(on?' on':'')+'" '
 function crumbs(){ return X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Submarino','Submarine')]]); }
 
 let HEROAN=false;
+let SQT=null; /* pestaña abierta del menú (solo en memoria) */
+function sqStats(){ const o={med:null,hit:0}; try{ const M=window.MAT_MED; if(M&&M.cat){ const ids=M.cat().MED.filter(x=>x.sec==='sb').map(x=>x.id); const st=JSON.parse(localStorage.getItem('mat_med')||'null')||{}; const got=ids.filter(id=>st.m&&st.m[id]).length; o.med=[got,ids.length]; o.hit=+((st.c||{}).sb_hit)||0; } }catch(e){} return o; }
 function intro(){ stopLoop(); if(FX){ if(FX.raf) cancelAnimationFrame(FX.raf); FX=null; } G=null; LN=null; const B=bests(); const sub=SUBS.find(s=>s.id===CFG.sub)||SUBS[0];
- let h='<div class="sbw" data-noi18n>'+crumbs()+
- '<div class="sbhero'+(HEROAN?'':' an')+'"><img src="img/juegos/submarino.webp" width="640" height="400" alt="'+esc(L(CARD_ALT[0],CARD_ALT[1]))+'"><div class="ht"><b>'+L('SUBMARINO','SUBMARINE')+'</b><span>'+L('No ves nada: solo oyes. Escucha con el sonar, calcula a qué distancia y rumbo va el blanco, lanza un torpedo filoguiado y escapa de la escolta.','You see nothing: you only listen. Track with sonar, work out the target’s range and course, fire a wire-guided torpedo and slip away from the escort.')+'</span></div></div>';
-   h+='<div class="sbsec">'+L('Modo','Mode')+'</div><div class="sbgr c3">'+
-  opt(CFG.mode==='aprende','data-m="aprende"',L('Aprende','Learn'),L('Tutorial guiado para quien empieza: el tutor te explica cada paso (sonar, ruido, capa, TMA, torpedo y evasión) con las cuentas hechas y comprueba lo que haces.','Guided tutorial for beginners: the tutor explains each step (sonar, noise, layer, TMA, torpedo and evasion) with the worked numbers and checks what you do.'))+
-  opt(CFG.mode==='facil','data-m="facil"',L('Fácil','Easy'),L('La computadora de tiro calcula la solución cuando tienes datos suficientes y guía el torpedo sola.','The fire-control computer works out the solution once you have enough data and guides the torpedo itself.'))+
-  opt(CFG.mode==='veterano','data-m="veterano"',L('Veterano','Veteran'),L('Pones tú el punto de distancia, el rumbo y la velocidad sobre el plot. La calidad de tu solución solo se ve tras disparar.','You place the range dot, course and speed on the plot yourself. Your solution’s quality is shown only after firing.'))+'</div>';
-   if(CFG.mode==='aprende'){ h+='<p class="sbnote">'+L('Aprende usa siempre la misma patrulla de instrucción con el S-80 Plus «Isaac Peral»: un mercante escoltado por una fragata y la capa térmica a 60 m. Siete pasos, unos 10 minutos. Si sigues lo que te enseña, impactas y escapas siempre.','Learn always uses the same training patrol with the S-80 Plus Isaac Peral: a merchant escorted by a frigate and the thermal layer at 60 m. Seven steps, about 10 minutes. Follow what it teaches and you always hit and escape.')+'</p>'; }
-  else { h+='<div class="sbsec">'+L('Submarino','Submarine')+'</div><div class="sbgr c2">'+SUBS.map(s=>opt(CFG.sub===s.id,'data-s="'+s.id+'"',esc(SN(s)),esc(L(s.note[0],s.note[1]))+'<br>'+L('Máx.','Max')+' '+nf(s.vmax,1)+' '+L('nudos','kn')+' · '+L('prueba','test')+' '+ni(s.test)+' m · '+s.tubes+' '+L('tubos','tubes')+'<br>'+L('Ruido a 4 nudos','Noise at 4 kn')+' '+s.sl4+' dB · '+L('cavita desde','cavitates from')+' '+nf(vcav(s,50),1)+' '+L('nudos a 50 m','kn at 50 m')+' '+EST())).join('')+'</div>';
- h+='<p class="sbnote">'+L('Fichas','Entries')+': '+SUBS.map(s=>'<a href="#/a/'+s.ficha+'">'+esc(SN(s))+'</a>').join(' · ')+'</p>';
- h+='<div class="sbsec">'+L('Patrulla','Patrol')+'</div><div class="sbgr c2">'+PATROLS.map(p=>{ const k=p.id+'|'+CFG.mode+'|'+CFG.sub; const b=B[k]; return opt(CFG.patrol===p.id,'data-p="'+p.id+'"',esc(L(p.n[0],p.n[1])),esc(L(p.d[0],p.d[1]))+'<br>'+L('Capa térmica a','Thermal layer at')+' '+p.layer+' m · '+L('semilla','seed')+' '+p.seed+(b!=null?' · '+L('Tu récord','Your best')+': '+ni(b):'')); }).join('')+'</div>'; }
- h+='<div class="sbrow" style="margin-top:14px"><button type="button" class="sbbtn pri" data-go style="flex:1 1 100%;min-height:52px;font-size:17px">'+(CFG.mode==='aprende'?L('Empezar el tutorial','Start the tutorial'):L('Empezar patrulla','Start patrol'))+'</button></div>';
+ const M=CFG.mode, APR=M==='aprende', pat=PATROLS.find(p=>p.id===CFG.patrol)||PATROLS[0], S_=sqStats();
+ /* textos de cada modo (los de siempre) y uno corto para la pestaña */
+ const MD={
+  aprende:[L('Aprende','Learn'),L('Tutorial guiado · 7 pasos','Guided tutorial · 7 steps'),L('Tutorial guiado para quien empieza: el tutor te explica cada paso (sonar, ruido, capa, TMA, torpedo y evasión) con las cuentas hechas y comprueba lo que haces.','Guided tutorial for beginners: the tutor explains each step (sonar, noise, layer, TMA, torpedo and evasion) with the worked numbers and checks what you do.')],
+  facil:[L('Fácil','Easy'),L('La computadora calcula','The computer solves it'),L('La computadora de tiro calcula la solución cuando tienes datos suficientes y guía el torpedo sola.','The fire-control computer works out the solution once you have enough data and guides the torpedo itself.')],
+  veterano:[L('Veterano','Veteran'),L('Solución a mano','Manual solution'),L('Pones tú el punto de distancia, el rumbo y la velocidad sobre el plot. La calidad de tu solución solo se ve tras disparar.','You place the range dot, course and speed on the plot yourself. Your solution’s quality is shown only after firing.')]};
+ const APRN=L('Aprende usa siempre la misma patrulla de instrucción con el S-80 Plus «Isaac Peral»: un mercante escoltado por una fragata y la capa térmica a 60 m. Siete pasos, unos 10 minutos. Si sigues lo que te enseña, impactas y escapas siempre.','Learn always uses the same training patrol with the S-80 Plus Isaac Peral: a merchant escorted by a frigate and the thermal layer at 60 m. Seven steps, about 10 minutes. Follow what it teaches and you always hit and escape.');
+ const subInfo=s=>esc(L(s.note[0],s.note[1]))+'<br>'+L('Máx.','Max')+' '+nf(s.vmax,1)+' '+L('nudos','kn')+' · '+L('prueba','test')+' '+ni(s.test)+' m · '+s.tubes+' '+L('tubos','tubes')+'<br>'+L('Ruido a 4 nudos','Noise at 4 kn')+' '+s.sl4+' dB · '+L('cavita desde','cavitates from')+' '+nf(vcav(s,50),1)+' '+L('nudos a 50 m','kn at 50 m')+' '+EST();
+ const patInfo=p=>{ const b=B[p.id+'|'+CFG.mode+'|'+CFG.sub]; return esc(L(p.d[0],p.d[1]))+'<br>'+L('Capa térmica a','Thermal layer at')+' '+p.layer+' m · '+L('semilla','seed')+' '+p.seed+(b!=null?' · '+L('Tu récord','Your best')+': '+ni(b):''); };
+ const fichas='<p class="sqxpn">'+L('Fichas','Entries')+': '+SUBS.map(s=>'<a href="#/a/'+s.ficha+'">'+esc(SN(s))+'</a>').join(' · ')+'</p>';
+ const s80=SUBS.find(s=>s.id==='s80')||sub;
+ const TABS=[['modo',L('Modo','Mode'),MD[M]?MD[M][0]:''],['sub',L('Submarino','Submarine'),(APR?'🔒 ':'')+SN(APR?s80:sub)],['pat',L('Patrulla','Patrol'),APR?'🔒 '+L('Instrucción','Training'):L(pat.n[0],pat.n[1]).replace(/^(Patrulla|Patrol) /,'')]];
+ if(!TABS.some(t=>t[0]===SQT)) SQT=null;
+ let h='<div class="sbw sqxmn" data-noi18n>'+crumbs();
+ h+='<div class="sqxhd"><img src="img/juegos/submarino.webp" width="640" height="400" alt="'+esc(L(CARD_ALT[0],CARD_ALT[1]))+'"><div class="ht"><b>'+L('SUBMARINO','SUBMARINE')+'</b><div class="sqxst">';
+ const chips=[]; if(S_.med&&S_.med[0]>0) chips.push('<button type="button" class="sqxstc" id="sqxmed" title="'+L('Ver medallas','See medals')+'">🎖 '+S_.med[0]+'/'+S_.med[1]+' '+L('medallas','medals')+'</button>');
+ if(S_.hit>0) chips.push('<span class="sqxstc">💥 '+ni(S_.hit)+' '+(S_.hit===1?L('impacto','hit'):L('impactos','hits'))+'</span>');
+ const nb=Object.keys(B).length; if(nb) chips.push('<span class="sqxstc">🏆 '+nb+' '+(nb===1?L('récord','record'):L('récords','records'))+'</span>');
+ if(!chips.length) chips.push('<span class="sqxstc dim">'+L('Sonar pasivo · torpedo filoguiado','Passive sonar · wire-guided torpedo')+'</span>');
+ h+=chips.join('')+'</div></div></div>';
+ h+='<div class="sqxtabs" role="tablist">'+TABS.map(t=>'<button type="button" role="tab" class="sqxtab'+(SQT===t[0]?' on':'')+'" data-tab="'+t[0]+'" aria-selected="'+(SQT===t[0])+'" aria-expanded="'+(SQT===t[0])+'"><small>'+t[1]+' '+(SQT===t[0]?'▴':'▾')+'</small><b>'+esc(t[2])+'</b></button>').join('')+'</div>';
+ /* panel de la pestaña abierta, en el sitio */
+ let p='';
+ if(SQT==='modo'){
+  p+='<div class="sbsec">'+L('Modo','Mode')+'</div><div class="sbgr sqxch">'+opt(M==='facil','data-m="facil"',MD.facil[0],MD.facil[1])+opt(M==='veterano','data-m="veterano"',MD.veterano[0],MD.veterano[1])+'</div>';
+  p+='<div class="sbsec">'+L('¿Es tu primera vez?','First time?')+'</div><div class="sbgr sqxch c1">'+opt(APR,'data-m="aprende"',MD.aprende[0],MD.aprende[1])+'</div>';
+ } else if(SQT==='sub'){
+  if(APR) p+='<p class="sqxpn">'+L('En Aprende el submarino va fijo: ','In Learn the submarine is fixed: ')+esc(SN(s80))+'.</p>';
+  else p+='<div class="sbgr sqxch">'+SUBS.map(s=>opt(CFG.sub===s.id,'data-s="'+s.id+'"',esc(SN(s)),esc(L(s.note[0],s.note[1]).split(':')[0])+' · '+nf(s.vmax,1)+' '+L('nudos','kn')+' · '+s.tubes+' '+L('tubos','tubes'))).join('')+'</div>';
+  p+=fichas;
+ } else if(SQT==='pat'){
+  if(APR) p+='<p class="sqxpn">'+APRN+'</p>';
+  else p+='<div class="sbgr sqxch">'+PATROLS.map(q=>{ const b=B[q.id+'|'+CFG.mode+'|'+CFG.sub]; return opt(CFG.patrol===q.id,'data-p="'+q.id+'"',esc(L(q.n[0],q.n[1])),L('Capa','Layer')+' '+q.layer+' m'+(b!=null?' · 🏆 '+ni(b):'')); }).join('')+'</div>';
+ }
+ if(p) h+='<div class="sqxpane" role="tabpanel">'+p+'</div>';
+ /* resumen de lo elegido, con los textos completos */
+ let sm='<b>'+MD[M][0]+'</b> · '+MD[M][2];
+ if(APR) sm+='<br>'+APRN;
+ else sm+='<br><b>'+esc(SN(sub))+'</b> · '+subInfo(sub)+'<br><b>'+esc(L(pat.n[0],pat.n[1]))+'</b> · '+patInfo(pat);
+ h+='<div class="sqxsel">'+sm+'</div>';
+ h+='<details class="sbdet"><summary>'+L('Sobre el juego','About the game')+'</summary><p>'+L('No ves nada: solo oyes. Escucha con el sonar, calcula a qué distancia y rumbo va el blanco, lanza un torpedo filoguiado y escapa de la escolta.','You see nothing: you only listen. Track with sonar, work out the target’s range and course, fire a wire-guided torpedo and slip away from the escort.')+'</p>'+fichas+'</details>';
  h+=howItWorks();
+ /* barra fija con lo elegido y EMPEZAR */
+ const bH=APR?null:B[pat.id+'|'+CFG.mode+'|'+CFG.sub];
+ const line=APR?MD.aprende[0]+' · '+MD.aprende[1]:MD[M][0]+' · '+SN(sub)+' · '+L(pat.n[0],pat.n[1]).split(' · ')[0];
+ h+='<div class="sqxgob"><div class="sqxgl"><span>'+esc(line)+'</span>'+(bH!=null?'<small>🏆 '+L('récord','best')+' '+ni(bH)+'</small>':'')+'</div><button type="button" class="sbbtn pri sqxgo" data-go>'+L('EMPEZAR','START')+' ▸</button></div>';
  h+='</div>';
  X.set(h,L('Submarino','Submarine')); HEROAN=true;
  const root=APP.querySelector('.sbw');
  root.addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return;
-  if(b.dataset.m){ CFG.mode=b.dataset.m; saveCfg(); intro(); }
-  else if(b.dataset.s){ CFG.sub=b.dataset.s; saveCfg(); intro(); }
-  else if(b.dataset.p){ CFG.patrol=b.dataset.p; saveCfg(); intro(); }
-  else if(b.hasAttribute('data-go')){ start(); }
+  if(b.dataset.tab){ SQT=SQT===b.dataset.tab?null:b.dataset.tab; intro(); }
+  else if(b.dataset.m){ CFG.mode=b.dataset.m; SQT=null; saveCfg(); intro(); }
+  else if(b.dataset.s){ CFG.sub=b.dataset.s; SQT=null; saveCfg(); intro(); }
+  else if(b.dataset.p){ CFG.patrol=b.dataset.p; SQT=null; saveCfg(); intro(); }
+  else if(b.id==='sqxmed'){ try{ window.MAT_MED.open(); }catch(e){} }
+  else if(b.hasAttribute('data-go')){ SQT=null; start(); window.scrollTo(0,0); }
  });
 }
 const CARD_ALT=['El submarino S-81 «Isaac Peral» atracado en Cartagena, 2023','The submarine S-81 Isaac Peral alongside in Cartagena, 2023'];
