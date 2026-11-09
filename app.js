@@ -296,10 +296,201 @@ function bindControls(all,group){
   Array.prototype.forEach.call(document.querySelectorAll('.ochip'),function(c){c.addEventListener('click',function(){st.orig=c.getAttribute('data-o');Array.prototype.forEach.call(document.querySelectorAll('.ochip'),function(x){x.setAttribute('aria-pressed',String(x===c));});draw();});});
   draw();
 }
-function buscar(){ CUR='';
-  var h=crumbs([['Inicio','#/'],['Buscar']])+'<h1>Buscar</h1><p class="sub">'+I.length+' modelos de '+Object.keys(P).length+' países y programas.</p>'+controls(I)+'<div id="onuhit"></div><div id="res"></div>';
-  set(h,'Buscar'); bindControls(I,false); (function(){var oh=document.getElementById('onuhit'),qq=document.getElementById('q');if(!oh||!qq||!window.MAT_ONU)return;var K=['onu','un','unitednations','nacionesunidas','cascosazules','bluehelmets','peacekeeping','misionesdepaz','unifil','finul','undof','unficyp','minusca','monusco','unmiss','unisfa','minurso','unmik','untso','unmogip'];var f=function(){var s=norm(qq.value),hit=s.length>=2&&K.some(function(k){return k===s||k.indexOf(s)===0;});oh.innerHTML=hit?'<div class="list" style="margin-top:10px"><a class="row" href="#/onu"><div class="th"><img src="flags/un.png" alt="" style="object-fit:contain;background:#4b92db"></div><div class="m"><div class="nm">ONU · Naciones Unidas</div><div class="ds">Sección: material de la ONU y misiones de paz</div></div><div class="ch">›</div></a></div>':'';};qq.addEventListener('input',f);f();})(); var q=document.getElementById('q'); q.placeholder='Nombre, p. ej. Spitfire, MiG-29, Apache'; if(!('ontouchstart' in window)) q.focus();
+function buscar(){ CUR=''; var EN_=window.MAT_LANG==='en', o0=qs(); st.q=o0.q||'';
+  var h=crumbs([['Inicio','#/'],['Buscar']])+'<h1>Buscar</h1><p class="sub">'+I.length+' modelos de '+Object.keys(P).length+' países y programas.</p>'+controls(I)+'<div id="onuhit"></div><div id="mxsec"></div><div id="res"></div>';
+  set(h,'Buscar');
+  var q=document.getElementById('q'), so=document.getElementById('sort'), res=document.getElementById('res'), sec=document.getElementById('mxsec');
+  var ro=document.createElement('option'); ro.value='rel'; ro.textContent=EN_?'Best match first':'Más relevantes primero'; ro.setAttribute('data-noi18n',''); so.insertBefore(ro,so.firstChild);
+  var mode=st.q.trim()?'rel':st.sort; so.value=mode;
+  var shown=0, LIST=[], GRP=null;
+  function more(){ var n=Math.min(LIST.length,shown+60), hh='', op=false; for(var i=shown;i<n;i++){ var a=LIST[i]; if(GRP&&(i===0||LIST[i-1].cat!==a.cat)){ if(op) hh+='</div>'; hh+='<h2 data-noi18n>'+esc(sxCat(a.cat))+' <span class="cnt">· '+GRP[a.cat].toLocaleString(EN_?'en-US':'es-ES')+'</span></h2><div class="list">'; op=true; } else if(!op){ hh+='<div class="list">'; op=true; } hh+=row(a); }
+    if(op) hh+='</div>'; shown=n; var box=res.querySelector('.mxall'); var tmp=document.createElement('div'); tmp.innerHTML=hh;
+    while(tmp.firstChild) box.appendChild(tmp.firstChild);
+    var b=res.querySelector('.mxmore'); if(b){ if(shown<LIST.length){ b.hidden=false; b.textContent=(EN_?'Show more (':'Ver más (')+(LIST.length-shown).toLocaleString(EN_?'en-US':'es-ES')+(EN_?' left)':' restantes)'); } else b.hidden=true; } }
+  function draw(){
+    var s=st.q.trim(), L=I.filter(function(a){return (!st.era||inEra(a,st.era))&&genOk(a);}), R=null;
+    sec.innerHTML=''; GRP=null;
+    if(s){ R=sxSearch(s); var ok={}; L.forEach(function(a){ok[a.id]=1;}); var lst=R.items.filter(function(a){return ok[a.id];});
+      if(R.secs.length) sec.innerHTML='<div class="list" style="margin-top:10px" data-noi18n>'+R.secs.slice(0,4).map(function(x){return '<a class="row" href="'+esc(x.h)+'"><div class="m"><div class="nm">'+esc(x.n)+'</div><div class="ds">'+esc(x.k)+'</div></div><div class="ch">›</div></a>';}).join('')+'</div>';
+      L=lst; }
+    if(!s||mode!=='rel'){ var sm=mode==='rel'?'crono':mode;
+      if(sm==='vel') L.sort(function(a,b){return sortSpeed(b)-sortSpeed(a);}); else if(sm==='new') L.sort(function(a,b){return (b.anio||0)-(a.anio||0);}); else if(sm==='uni') L.sort(function(a,b){return (b.uni_n||0)-(a.uni_n||0);}); else L.sort(function(a,b){return (a.anio||9999)-(b.anio||9999);}); }
+    else { GRP={}; var ord=[]; L.forEach(function(a){ if(!GRP[a.cat]){GRP[a.cat]=0; ord.push(a.cat);} GRP[a.cat]++; }); var rk={}; ord.forEach(function(c,i){rk[c]=i;}); L=L.map(function(a,i){return [a,i];}).sort(function(x,y){return rk[x[0].cat]-rk[y[0].cat]||x[1]-y[1];}).map(function(x){return x[0];}); }
+    LIST=L; shown=0;
+    if(!L.length){ res.innerHTML=s?sxEmpty(s,R):'<p class="empty">Sin resultados.</p>'; res.setAttribute('data-q',s); sxSugBind(res,function(v){ q.value=v; st.q=v; mode='rel'; so.value='rel'; draw(); }); return; }
+    res.innerHTML='<p class="cnt" style="margin:12px 0 0" data-noi18n>'+L.length.toLocaleString(EN_?'en-US':'es-ES')+(EN_?(L.length===1?' result':' results'):(L.length===1?' resultado':' resultados'))+'</p><div class="mxall"></div><button class="btn mxmore" type="button" hidden data-noi18n></button>';
+    res.querySelector('.mxmore').addEventListener('click',more); more(); res.setAttribute('data-q',s);
+    sxSugBind(res,function(v){ q.value=v; st.q=v; mode='rel'; so.value='rel'; draw(); });
+  }
+  var tmr=0; q.value=st.q;
+  q.addEventListener('input',function(){ st.q=q.value; clearTimeout(tmr); tmr=setTimeout(function(){ if(st.q.trim()&&mode==='crono'&&so.value==='crono'){mode='rel'; so.value='rel';} draw(); try{ history.replaceState(history.state,'','#/buscar'+(st.q.trim()?'?q='+encodeURIComponent(st.q.trim()):'')); }catch(e){} },110); });
+  q.addEventListener('keydown',function(e){ if(e.key==='Enter'){ var f=res.querySelector('a.row'); if(f&&st.q.trim()){ e.preventDefault(); location.hash=f.getAttribute('href'); } } });
+  so.addEventListener('change',function(){ mode=so.value; if(mode!=='rel') st.sort=mode; draw(); });
+  Array.prototype.forEach.call(document.querySelectorAll('.chip:not(.ochip):not(.gchip)'),function(c){c.addEventListener('click',function(){st.era=c.getAttribute('data-era');Array.prototype.forEach.call(document.querySelectorAll('.chip:not(.ochip):not(.gchip)'),function(x){x.setAttribute('aria-pressed',String(x===c));});draw();});});
+  Array.prototype.forEach.call(document.querySelectorAll('.gchip'),function(c){c.addEventListener('click',function(){st.gen=c.getAttribute('data-g');Array.prototype.forEach.call(document.querySelectorAll('.gchip'),function(x){x.setAttribute('aria-pressed',String(x===c));});draw();});});
+  draw();
+  (function(){var oh=document.getElementById('onuhit'),qq=document.getElementById('q');if(!oh||!qq||!window.MAT_ONU)return;var K=['onu','un','unitednations','nacionesunidas','cascosazules','bluehelmets','peacekeeping','misionesdepaz','unifil','finul','undof','unficyp','minusca','monusco','unmiss','unisfa','minurso','unmik','untso','unmogip'];var f=function(){var s=norm(qq.value),hit=s.length>=2&&K.some(function(k){return k===s||k.indexOf(s)===0;});oh.innerHTML=hit?'<div class="list" style="margin-top:10px"><a class="row" href="#/onu"><div class="th"><img src="flags/un.png" alt="" style="object-fit:contain;background:#4b92db"></div><div class="m"><div class="nm">ONU · Naciones Unidas</div><div class="ds">Sección: material de la ONU y misiones de paz</div></div><div class="ch">›</div></a></div>':'';};qq.addEventListener('input',f);f();})();
+  q.placeholder=EN_?'Name, e.g. Spitfire, MiG-29, Apache':'Nombre, p. ej. Spitfire, MiG-29, Apache'; q.setAttribute('enterkeyhint','search'); if(!('ontouchstart' in window)) q.focus();
 }
+/* M.A.T · buscador rápido (9 nov 2026, Jose: «la barra de búsqueda tarda mucho y es liosa»).
+   La lupa de la cabecera abre un panel (no una página): índice compacto en memoria construido una vez a partir de los datos ya cargados
+   (nombre, alias, categoría, tipo, país), resultados agrupados por categoría con su número, el mejor primero, flechas y Enter, Esc o ✕ para cerrar.
+   La página #/buscar sigue mostrando la lista completa (60 en 60). No descarga nada nuevo. */
+var SXI=null, SXS=null, SXC={};
+var SXCAT_EN={aviones:'Aircraft',helicopteros:'Helicopters',buques:'Ships',submarinos:'Submarines',tanques:'Tanks',blindados:'Armoured vehicles',logistica:'Logistics and medical',armamento:'Weapons',espacio:'Space race',armas:'Firearms'};
+function sxCat(c){ return window.MAT_LANG==='en'?(SXCAT_EN[c]||c):(CN[c]||c); }
+function sxT(s){ return window.MAT_LANG==='en'&&window.MAT_T?window.MAT_T(s):s; }
+var SXTY=null;
+function sxType(a){ if(!SXTY){ SXTY={}; TIPOS.forEach(function(t){SXTY[t.id]=t.n;}); var G={g_pistola:['Pistola','Pistol'],g_revolver:['Revólver','Revolver'],g_subfusil:['Subfusil','Submachine gun'],g_cerrojo:['Fusil de cerrojo','Bolt-action rifle'],g_asalto:['Fusil de asalto','Assault rifle'],g_batalla:['Fusil de combate','Battle rifle'],g_carabina:['Carabina','Carbine'],g_dmr:['Fusil de tirador designado','Marksman rifle'],g_franco:['Fusil de francotirador','Sniper rifle'],g_amet_ligera:['Ametralladora ligera','Light machine gun'],g_amet_media:['Ametralladora media o pesada','Medium/heavy machine gun'],g_escopeta:['Escopeta','Shotgun']}; for(var k in G) SXTY[k]=G[k]; }
+  var t=SXTY[a.tipo]; if(Array.isArray(t)) return window.MAT_LANG==='en'?t[1]:t[0]; return t?sxT(t):sxCat(a.cat); }
+function sxWords(s){ return String(s||'').split(/[\s\/(),;:«»"“”']+/).map(norm).filter(Boolean); }
+function sxBuild(){ if(SXI) return SXI; var t0=performance.now();
+  SXI=I.map(function(a){ var nm=[a.n].concat(a.k||[]); if(a.nen&&a.nen!==a.n) nm.push(a.nen);
+    var f=[], w=[]; nm.forEach(function(x){ var n=norm(x); if(n&&f.indexOf(n)<0) f.push(n); var ws=sxWords(x); ws.forEach(function(y,i){ if(w.indexOf(y)<0) w.push(y); if(i<ws.length-1){ var j=y+ws[i+1]; if(w.indexOf(j)<0) w.push(j);} }); });
+    var c=[a.pais].concat(a.orig||[]);
+    var pop=(a.img?3:0)+(a.uni_n?Math.min(4,Math.log(a.uni_n+1)/Math.LN10):0)+(a.serv?1:0);
+    return {a:a,f:f,j:f.join('|'),fs:'|'+f.join('|')+'|',ws:'|'+w.join('|')+'|',w:w,c:c,pop:pop}; });
+  SXI.ms=Math.round(performance.now()-t0); return SXI; }
+/* palabras de categoría/tipo y gentilicios (ES/EN) → filtros */
+var SXCW={avion:['aviones'],aviones:['aviones'],aeronave:['aviones'],aircraft:['aviones'],plane:['aviones'],airplane:['aviones'],jet:['aviones'],
+  caza:['aviones','caza'],fighter:['aviones','caza'],bombardero:['aviones','bombardero'],bomber:['aviones','bombardero'],dron:['aviones','dron'],drone:['aviones','dron'],uav:['aviones','dron'],
+  helicoptero:['helicopteros'],heli:['helicopteros'],helicopter:['helicopteros'],
+  tanque:['tanques'],carro:['tanques'],carrodecombate:['tanques'],tank:['tanques'],mbt:['tanques'],
+  blindado:['blindados'],apc:['blindados'],ifv:['blindados'],
+  buque:['buques'],barco:['buques'],navio:['buques'],ship:['buques'],warship:['buques'],fragata:['buques','fragatas'],frigate:['buques','fragatas'],destructor:['buques','destructores'],destroyer:['buques','destructores'],
+  portaaviones:['buques','portaaviones'],carrier:['buques','portaaviones'],corbeta:['buques','corbetas'],corvette:['buques','corbetas'],acorazado:['buques','acorazados'],battleship:['buques','acorazados'],crucero:['buques','cruceros'],cruiser:['buques','cruceros'],
+  submarino:['submarinos'],submarine:['submarinos'],sub:['submarinos'],
+  misil:['armamento'],missile:['armamento'],bomba:['armamento','w_bomba'],bomb:['armamento','w_bomba'],
+  camion:['logistica','l_camion'],truck:['logistica','l_camion'],
+  fusil:['armas'],rifle:['armas'],pistola:['armas','g_pistola'],pistol:['armas','g_pistola'],escopeta:['armas','g_escopeta'],shotgun:['armas','g_escopeta'],subfusil:['armas','g_subfusil'],smg:['armas','g_subfusil'],ametralladora:['armas'],revolver:['armas','g_revolver'],arma:['armas'],
+  satelite:['espacio','e_sat'],satellite:['espacio','e_sat'],cohete:['espacio','e_lanz'],rocket:['espacio','e_lanz'],astronauta:['espacio','e_astro'],astronaut:['espacio','e_astro']};
+var SXDEM={ruso:['rusia','urss','imperio_ruso'],rusa:['rusia','urss','imperio_ruso'],russian:['rusia','urss','imperio_ruso'],sovietico:['urss'],sovietica:['urss'],soviet:['urss'],
+  americano:['us'],americana:['us'],estadounidense:['us'],eeuu:['us'],usa:['us'],american:['us'],us:['us'],
+  espanol:['espana'],espanola:['espana'],spanish:['espana'],frances:['francia'],francesa:['francia'],french:['francia'],aleman:['alemania'],alemana:['alemania'],german:['alemania'],
+  britanico:['uk'],britanica:['uk'],ingles:['uk'],inglesa:['uk'],british:['uk'],chino:['china'],china:['china'],chinese:['china'],italiano:['italia'],italiana:['italia'],italian:['italia'],
+  japones:['japon'],japonesa:['japon'],japanese:['japon'],sueco:['suecia'],sueca:['suecia'],swedish:['suecia'],israeli:['israel'],turco:['turquia'],turca:['turquia'],turkish:['turquia'],
+  indio:['india'],indian:['india'],irani:['iran'],iranian:['iran'],ucraniano:['ucrania'],ucraniana:['ucrania'],ukrainian:['ucrania'],polaco:['polonia'],polaca:['polonia'],polish:['polonia'],
+  brasileno:['brasil'],brasilena:['brasil'],brazilian:['brasil'],argentino:['argentina'],argentina:['argentina'],canadiense:['canada'],canadian:['canada'],australiano:['australia'],australian:['australia'],
+  surcoreano:['corea_sur'],norcoreano:['corea_norte'],holandes:['paises_bajos'],dutch:['paises_bajos'],noruego:['noruega'],norwegian:['noruega'],finlandes:['finlandia'],finnish:['finlandia']};
+var SXSTOP={de:1,del:1,la:1,el:1,los:1,las:1,y:1,the:1,of:1,and:1,un:1,una:1};
+function sxLook(M,t){ if(M[t]) return M[t]; if(t.length>3&&/s$/.test(t)&&M[t.slice(0,-1)]) return M[t.slice(0,-1)]; if(t.length>4&&/es$/.test(t)&&M[t.slice(0,-2)]) return M[t.slice(0,-2)]; return null; }
+var SXPN=null;
+function sxCountry(t){ if(!SXPN){ SXPN={}; Object.keys(P).forEach(function(k){ if(k==='multi') return; var n=P[k].n.replace(/\s*\(.*\)\s*/g,''); SXPN[norm(n)]=[k]; var e=window.MAT_T?window.MAT_T(P[k].n):''; if(e&&e!==P[k].n) SXPN[norm(e.replace(/\s*\(.*\)\s*/g,''))]=[k]; }); SXPN.rusia=['rusia','urss','imperio_ruso']; SXPN.russia=['rusia','urss','imperio_ruso']; }
+  return sxLook(SXDEM,t)||(t.length>=4?SXPN[t]:null)||null; }
+function sxTextScore(x,qn,toks){ var s=0,i,f=x.f,w,p;
+  /* atajo: si la consulta no aparece en ningún nombre ni palabra, 0 sin recorrer listas */
+  if(x.j.indexOf(qn)<0&&(toks.length<2||x.ws.indexOf('|'+toks[0])<0)) return 0;
+  if(x.fs.indexOf('|'+qn+'|')>=0) s=(f[0]===qn)?92:91;
+  else if((p=x.fs.indexOf('|'+qn))>=0){ for(i=0;i<f.length;i++) if(f[i].indexOf(qn)===0){ s=Math.max(s,(i?76:78)-Math.min(6,(f[i].length-qn.length)/4)); break; } }
+  if(s<92){ if(x.ws.indexOf('|'+qn+'|')>=0) s=Math.max(s,90);
+    else if(qn.length>=2&&x.ws.indexOf('|'+qn)>=0){ w=x.w; for(i=0;i<w.length;i++) if(w[i].indexOf(qn)===0){ s=Math.max(s,74-Math.min(6,(w[i].length-qn.length)/3)); break; } } }
+  if(!s&&toks.length>1&&toks.every(function(t){ return x.ws.indexOf('|'+t)>=0; })) s=62;
+  if(!s&&qn.length>=3&&x.j.indexOf(qn)>=0) s=40;
+  return s; }
+function sxSecs(){ if(SXS&&SXS.lang===window.MAT_LANG) return SXS.L; var EN_=window.MAT_LANG==='en', L=[];
+  Object.keys(CN).forEach(function(c){ L.push({n:sxCat(c),h:'#/'+c,k:EN_?'Section':'Sección',c:[c]}); });
+  try{ gamesData(EN_).forEach(function(g){ L.push({n:g[2],h:g[0],k:EN_?'Game':'Juego'}); }); }catch(e){}
+  try{ var d=document.createElement('div'); d.innerHTML=secTiles(); Array.prototype.forEach.call(d.querySelectorAll('a[href^="#/"]'),function(a){ var t=a.querySelector('.t'); var n=t?t.textContent.trim():''; if(n&&!L.some(function(x){return x.h===a.getAttribute('href');})) L.push({n:n,h:a.getAttribute('href'),k:EN_?'Section':'Sección'}); }); }catch(e){}
+  L.forEach(function(x){ x.f=norm(x.n); x.w=sxWords(x.n); });
+  SXS={lang:window.MAT_LANG,L:L}; return L; }
+function sxSearch(raw){ var key=window.MAT_LANG+'|'+raw; if(SXC[key]) return SXC[key]; var t0=performance.now(), X=sxBuild();
+  var s=String(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/carros? de combate/g,'tanque').replace(/main battle tanks?/g,'tank').replace(/aircraft carriers?/g,'carrier');
+  var toks0=s.split(/[\s,;]+/).map(norm).filter(function(t){return t&&!SXSTOP[t];});
+  var qn=norm(s), cats=null, tipos=null, ctry=null, rest=[], used={};
+  toks0.forEach(function(t){ var c=sxLook(SXCW,t), p=sxCountry(t);
+    if(c&&toks0.length>0){ cats=cats||[]; if(cats.indexOf(c[0])<0) cats.push(c[0]); if(c[1]){ tipos=tipos||[]; tipos.push(c[1]); } used[t]=1; }
+    else if(p&&toks0.length>1){ ctry=(ctry||[]).concat(p); used[t]=1; }
+    else rest.push(t); });
+  var rq=rest.join(''), out=[];
+  function pass(rq){ var o=[], fh=0;
+  for(var i=0;i<X.length;i++){ var x=X[i], a=x.a, sc=sxTextScore(x,qn,toks0);
+    if(cats&&used[qn]) sc=sc*0.6;
+    if(cats||ctry){ var okc=(!cats||cats.indexOf(a.cat)>=0)&&(!tipos||tipos.indexOf(a.tipo)>=0)&&(!ctry||x.c.some(function(k){return ctry.indexOf(k)>=0;}));
+      if(okc){ var rs=rq?sxTextScore(x,rq,rest):55; if(rs){ fh++; sc=Math.max(sc,rq?rs+8:55); } } }
+    if(sc>0) o.push([sc+x.pop*(sc>=60?1.5:0.6),x.pop,a]); }
+  o.fh=fh; return o; }
+  out=pass(rq);
+  /* «helicóptero de ataque»: si la palabra que sobra no aparece dentro del filtro, se muestra el filtro entero */
+  if((cats||ctry)&&rq&&!out.fh) out=pass('');
+  /* «leopardo», «aviones»: si casi nada coincide, se prueba sin la última vocal o la «s» final */
+  if(out.length<3&&!cats&&!ctry&&qn.length>=5){ var q2=qn.replace(/(os|as|es|o|a|e|s)$/,''); if(q2!==qn&&q2.length>=4){ var seen={}, i; out.forEach(function(r){seen[r[2].id]=1;}); for(i=0;i<X.length;i++){ if(seen[X[i].a.id]) continue; var s2=sxTextScore(X[i],q2,[q2]); if(s2>=60) out.push([s2*0.9+X[i].pop*1.5,X[i].pop,X[i].a]); } } }
+  out.sort(function(x,y){ return y[0]-x[0]||y[1]-x[1]||x[2].n.length-y[2].n.length; });
+  var items=out.map(function(r){return r[2];});
+  var secs=sxSecs().map(function(x){ var sc=0; if(x.f===qn) sc=100; else if(qn.length>=2&&x.f.indexOf(qn)===0) sc=90; else if(qn.length>=3&&x.w.some(function(w){return w.indexOf(qn)===0;})) sc=80; if(!sc&&cats&&x.c&&x.c.indexOf(cats[0])>=0&&!ctry&&!rq) sc=92; return [sc,x]; }).filter(function(r){return r[0];}).sort(function(a,b){return b[0]-a[0];}).map(function(r){return r[1];});
+  var ctr=[]; if(ctry){ ctry.slice(0,2).forEach(function(k){ if(P[k]) ctr.push(k); }); } else if(toks0.length===1){ var pc=sxCountry(qn); if(pc) ctr=pc.filter(function(k){return P[k];}).slice(0,3); else if(qn.length>=3) Object.keys(P).forEach(function(k){ if(k!=='multi'&&ctr.length<3&&norm(sxT(P[k].n)).indexOf(qn)===0) ctr.push(k); }); }
+  var R={items:items,secs:secs,ctry:ctr,top:out.length?out[0][0]:0,ms:Math.round(performance.now()-t0),dbg:out.slice(0,6).map(function(r){return Math.round(r[0]*10)/10+' '+r[2].n;})}; SXC[key]=R; return R; }
+/* «Sin resultados»: nombres parecidos (bigramas) */
+function sxNear(qn){ var X=sxBuild(); if(qn.length<3) return []; var g={}; for(var i=0;i<qn.length-1;i++) g[qn.substr(i,2)]=1; var gn=Object.keys(g).length, best=[];
+  X.forEach(function(x){ var w=x.f[0]; if(!w) return; var hit=0, seen={}; for(var j=0;j<w.length-1;j++){ var b=w.substr(j,2); if(g[b]&&!seen[b]){hit++; seen[b]=1;} } if(hit<2) return; var sc=2*hit/(gn+Math.min(w.length-1,gn+6)); best.push([sc,x.a]); });
+  best.sort(function(a,b){return b[0]-a[0];}); var out=[], names={}; best.forEach(function(r){ if(out.length<5&&!names[r[1].n]){ names[r[1].n]=1; out.push(r[1]); } }); return out; }
+function sxEmpty(raw,R){ var EN_=window.MAT_LANG==='en', near=sxNear(norm(raw));
+  return '<div class="mx-empty" data-noi18n><p class="mx-et">'+(EN_?'No results for «':'Sin resultados para «')+esc(raw)+'»</p>'+
+    (near.length?'<p class="mx-es">'+(EN_?'Did you mean…':'¿Quizás buscabas…')+'</p><div class="mx-sg">'+near.map(function(a){return '<button type="button" class="chip mx-sug" data-v="'+esc(a.n)+'">'+esc(a.n)+'</button>';}).join('')+'</div>':'')+
+    '<p class="mx-es">'+(EN_?'Tips: type the designation (F-35, T-90, AK-47), a family name (Leopard, Typhoon) or a category plus a country («Russian submarine»).':'Consejos: escribe la designación (F-35, T-90, AK-47), el nombre de la familia (Leopard, Typhoon) o una categoría con un país («submarino ruso»).')+'</p></div>'; }
+function sxSugBind(root,fn){ Array.prototype.forEach.call(root.querySelectorAll('.mx-sug'),function(b){ b.addEventListener('click',function(){ fn(b.getAttribute('data-v')); }); }); }
+function sxRow(a,i){ var EN_=window.MAT_LANG==='en';
+  return '<a class="mx-o" role="option" id="mxo'+i+'" href="#/a/'+esc(a.id)+'"><span class="mx-th">'+thumb(a)+'</span><span class="mx-m"><span class="mx-n" data-noi18n>'+esc(a.n)+'</span><span class="mx-d" data-noi18n><span class="mx-ty">'+esc(sxType(a))+'</span><span class="mx-pc">'+flag(a.pais,'mini')+esc(sxT(pname(a)))+'</span>'+(a.anio?'<span class="mx-yr">'+esc(a.anio)+'</span>':'')+'</span></span></a>'; }
+var SXOPEN=null;
+function sxOpen(init){ if(SXOPEN){ SXOPEN.q.focus(); return; } var EN_=window.MAT_LANG==='en';
+  var ov=document.createElement('div'); ov.className='mx-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label',EN_?'Search':'Buscar'); ov.setAttribute('data-noi18n','');
+  ov.innerHTML='<div class="mx-pn"><div class="mx-hd"><svg class="mx-lu" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'+
+    '<input id="mxq" class="mx-in" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="mxres" aria-autocomplete="list" placeholder="'+(EN_?'Leopard, F-35, Russia…':'Leopard, F-35, Rusia…')+'">'+
+    '<button type="button" class="mx-x" aria-label="'+(EN_?'Close':'Cerrar')+'"><span aria-hidden="true">✕</span><span class="mx-xl">'+(EN_?'Close':'Cerrar')+'</span></button></div>'+
+    '<div class="mx-bd" id="mxres" role="listbox" aria-label="'+(EN_?'Results':'Resultados')+'"></div>'+
+    '<div class="mx-ft"><span><kbd>↑</kbd><kbd>↓</kbd> '+(EN_?'move':'moverte')+'</span><span><kbd>Enter</kbd> '+(EN_?'open':'abrir')+'</span><span><kbd>Esc</kbd> '+(EN_?'close':'cerrar')+'</span></div></div>';
+  document.body.appendChild(ov); var prevOv=document.body.style.overflow; document.body.style.overflow='hidden';
+  var q=ov.querySelector('#mxq'), box=ov.querySelector('#mxres'), act=-1, tmr=0, raf=0, lastIn=0, pushed=false, openG={};
+  try{ history.pushState({mx:1,matk:(history.state&&history.state.matk)||null},''); pushed=true; }catch(e){}
+  function close(nav){ if(!SXOPEN) return; SXOPEN=null; clearTimeout(tmr); if(raf) cancelAnimationFrame(raf); document.body.style.overflow=prevOv; ov.remove(); window.removeEventListener('popstate',onPop); window.removeEventListener('hashchange',onHash); document.removeEventListener('keydown',onKey,true);
+    if(nav){ if(pushed&&history.state&&history.state.mx) location.replace(nav); else location.hash=nav; } else if(pushed&&history.state&&history.state.mx) history.back(); }
+  function onPop(){ if(SXOPEN){ pushed=false; close(); } }
+  function onHash(){ pushed=false; close(); }
+  window.addEventListener('popstate',onPop); window.addEventListener('hashchange',onHash);
+  function opts(){ return box.querySelectorAll('.mx-o'); }
+  function setAct(i){ var O=opts(); if(!O.length){act=-1; q.removeAttribute('aria-activedescendant'); return;} act=(i+O.length)%O.length; Array.prototype.forEach.call(O,function(o,j){ o.classList.toggle('on',j===act); o.setAttribute('aria-selected',String(j===act)); }); q.setAttribute('aria-activedescendant',O[act].id); O[act].scrollIntoView({block:'nearest'}); }
+  function home(){ var ex=EN_?['Leopard 2','F-35','Eurofighter','Russian submarine','AK-47','Nimitz','Apache','HIMARS']:['Leopard 2','F-35','Eurofighter','Submarino ruso','AK-47','Nimitz','Apache','HIMARS'];
+    box.innerHTML='<div class="mx-hm"><p class="mx-es">'+(EN_?'Type a name, a designation or «category + country». Results appear as you type.':'Escribe un nombre, una designación o «categoría + país». Los resultados salen mientras escribes.')+'</p><p class="mx-gh">'+(EN_?'Try':'Prueba')+'</p><div class="mx-sg">'+ex.map(function(v){return '<button type="button" class="chip mx-sug" data-v="'+esc(v)+'">'+esc(v)+'</button>';}).join('')+'</div>'+
+      '<p class="mx-gh">'+(EN_?'Categories':'Categorías')+'</p><div class="mx-sg">'+Object.keys(CN).map(function(c){return '<a class="chip" href="#/'+c+'">'+esc(sxCat(c))+'</a>';}).join('')+'</div>'+
+      '<p class="mx-all"><a href="#/buscar">'+(EN_?'See the full list of the ':'Ver la lista completa de los ')+I.length.toLocaleString(EN_?'en-US':'es-ES')+(EN_?' models ›':' modelos ›')+'</a></p></div>';
+    box.setAttribute('data-q',''); bindSug(); act=-1; }
+  function bindSug(){ sxSugBind(box,function(v){ q.value=v; draw(); q.focus(); }); }
+  function draw(){ var raw=q.value.trim(); if(!raw) return home(); var t0=performance.now(), R=sxSearch(raw), h='', idx=0, N=R.items.length, mob=window.innerWidth<700;
+    var G={}, ord=[]; R.items.forEach(function(a){ if(!G[a.cat]){ G[a.cat]=[]; ord.push(a.cat);} G[a.cat].push(a); });
+    var sh=''; if(R.secs.length||R.ctry.length){ var h0=h; h='<div class="mx-g"><div class="mx-gh">'+(EN_?'Sections and countries':'Secciones y países')+'</div>';
+      R.secs.slice(0,3).forEach(function(x){ h+='<a class="mx-o mx-s" role="option" id="mxo'+(idx++)+'" href="'+esc(x.h)+'"><span class="mx-m"><span class="mx-n">'+esc(x.n)+'</span><span class="mx-d"><span class="mx-ty">'+esc(x.k)+'</span></span></span><span class="mx-ch">›</span></a>'; });
+      R.ctry.forEach(function(k){ h+='<a class="mx-o mx-s" role="option" id="mxo'+(idx++)+'" href="#/fuerzas?a=p:'+esc(k)+'"><span class="mx-m"><span class="mx-n">'+flag(k,'mini')+esc(sxT(P[k].n))+'</span><span class="mx-d"><span class="mx-ty">'+(EN_?'Country: armed forces and equipment':'País: fuerzas armadas y material')+'</span></span></span><span class="mx-ch">›</span></a>'; });
+      h+='</div>'; sh=h; h=h0; }
+    var secFirst=!!(R.secs.length||!N);
+    if(secFirst){ h+=sh; sh=''; }
+    var per=ord.length>2?(mob?3:4):(mob?5:6);
+    ord.forEach(function(c){ var L=G[c], n=openG[c]?Math.min(L.length,openG[c]):Math.min(L.length,per);
+      h+='<div class="mx-g"><div class="mx-gh">'+esc(sxCat(c))+' <span class="mx-cnt">'+L.length.toLocaleString(EN_?'en-US':'es-ES')+'</span></div>';
+      for(var i=0;i<n;i++) h+=sxRow(L[i],idx++);
+      if(L.length>n) h+='<button type="button" class="mx-more" data-c="'+c+'">'+(openG[c]?(EN_?'Show more':'Ver más'):(EN_?'See all ':'Ver los ')+L.length.toLocaleString(EN_?'en-US':'es-ES'))+' ›</button>';
+      h+='</div>'; if(sh){ h+=sh; sh=''; } });
+    if(!N&&!R.secs.length&&!R.ctry.length) h=sxEmpty(raw,R);
+    else h+='<a class="mx-all mx-o" role="option" id="mxo'+(idx++)+'" href="#/buscar?q='+encodeURIComponent(raw)+'">'+(N===1?(EN_?'Open it on the full results page ›':'Verlo en la página de resultados ›'):(EN_?'See all ':'Ver los ')+N.toLocaleString(EN_?'en-US':'es-ES')+(EN_?' results on one page ›':' resultados en una página ›'))+'</a>';
+    box.innerHTML=h; box.scrollTop=0; box.setAttribute('data-q',raw); box.setAttribute('data-total',String(N)); box.setAttribute('data-ms',String(R.ms));
+    Array.prototype.forEach.call(box.querySelectorAll('.mx-more'),function(b){ b.addEventListener('click',function(){ var c=b.getAttribute('data-c'); openG[c]=(openG[c]||per)+40; var y=box.scrollTop; draw2(); box.scrollTop=y; }); });
+    bindSug(); setAct(N||R.secs.length||R.ctry.length?0:-1); box.setAttribute('data-rms',String(Math.round(performance.now()-t0))); }
+  function draw2(){ var y=box.scrollTop; draw(); box.scrollTop=y; }
+  q.addEventListener('input',function(){ openG={}; clearTimeout(tmr); if(raf) cancelAnimationFrame(raf); raf=0; var v=q.value.trim(); if(!v){ home(); return; } var now=performance.now(), fast=now-lastIn<110; lastIn=now; /* tecleo rápido (<110 ms entre teclas): espera 60 ms; si no, se pinta al momento */ if(fast) tmr=setTimeout(draw,60); else draw(); });
+  function onKey(e){ if(e.key==='Escape'){ e.preventDefault(); close(); return; }
+    if(e.target!==q) return;
+    if(e.key==='ArrowDown'){ e.preventDefault(); if(box.getAttribute('data-q')!==q.value.trim()) draw(); setAct(act+1); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); setAct(act-1); }
+    else if(e.key==='Enter'){ e.preventDefault(); if(box.getAttribute('data-q')!==q.value.trim()) draw(); var O=opts(); var o=O[act>=0?act:0]; if(o) close(o.getAttribute('href')); } }
+  document.addEventListener('keydown',onKey,true);
+  box.addEventListener('click',function(e){ var a=e.target.closest&&e.target.closest('a[href^="#/"]'); if(!a||e.metaKey||e.ctrlKey||e.shiftKey) return; e.preventDefault(); close(a.getAttribute('href')); });
+  ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
+  ov.querySelector('.mx-x').addEventListener('click',function(){ close(); });
+  SXOPEN={q:q,close:close};
+  if(init){ q.value=init; } sxBuild(); if(q.value.trim()) draw(); else home(); q.focus();
+}
+window.MAT_SEARCH={open:sxOpen,search:function(s){ return sxSearch(s); },build:function(){ var X=sxBuild(); return {n:X.length,ms:X.ms}; }};
+(function(){ document.addEventListener('click',function(e){ var lk=e.target&&e.target.closest&&e.target.closest('header a[href="#/buscar"]'); if(!lk||e.metaKey||e.ctrlKey||e.shiftKey||e.button) return; e.preventDefault(); sxOpen(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='/'&&!SXOPEN&&!e.metaKey&&!e.ctrlKey){ var t=e.target, tg=t&&t.tagName; if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||(t&&t.isContentEditable)) return; e.preventDefault(); sxOpen(); } });
+  var idle=window.requestIdleCallback||function(f){ return setTimeout(f,1200); }; idle(function(){ try{ sxBuild(); }catch(e){} },{timeout:4000}); })();
 /* M.A.T · fichas (nov. 2026): franja de 4 cifras clave bajo el título, elegidas por categoría. Solo cifras que están en los datos; si falta una, se omite. */
 function kfL(es,en){return window.MAT_LANG==='en'?en:es;}
 function kfN(n,d){ if(n==null||n===''||isNaN(+n)) return null; return (+n).toLocaleString(window.MAT_LANG==='en'?'en-US':'es-ES',{maximumFractionDigits:d||0}); }
