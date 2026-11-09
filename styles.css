@@ -1287,3 +1287,11 @@ html[lang=en] .rc.on .rt:after,html[lang=en] .ddfe.on .go:after{content:" · tap
 .verfotos .vfbtn:hover,.verfotos .vfbtn:focus-visible{background:rgba(143,154,106,.28);border-color:var(--ac2)}
 .verfotos .vfic{width:18px;height:18px;flex:0 0 18px;color:var(--ac2)}
 .verfotos .vfnote{margin:6px 0 0;font-size:11px;line-height:1.4;color:var(--dim);text-align:center}
+
+/* Menú a 320 px: el botón EN se salía de la pantalla (repaso 9 nov 2026) */
+@media (max-width:359px){header.top{padding-left:8px;padding-right:6px}
+ header.top .brand{letter-spacing:.06em;font-size:18px}
+ .topnav .ddb,.topnav .langsw{letter-spacing:.02em}
+ .topnav .ddb{padding:0 3px;gap:2px}
+ .topnav .langsw{min-width:30px;padding:0 4px}
+ .topnav > a{min-width:26px}}
