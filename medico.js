@@ -506,10 +506,11 @@ function curStep(g,S){ if(g.pre.length) return g.pre[0]; return S.steps[S.step]|
 function enterStep(g,S){ while(S.step<S.steps.length){ const st=S.steps[S.step]; if(st.when&&!st.when(S)){ S.step++; continue; } if(!st._in){ st._in=1; if(st.enter) st.enter(S); } break; } if(S.step>=S.steps.length&&!S.dead){ S.done=1; S.doneT=S.t; } }
 function stepPh(g,S){ const st=curStep(g,S); return st?st.ph:(S.done?'done':'evac'); }
 /* regla de Jose: el tiempo de una acción correcta no agrava el shock (casos fijos); solo lo agravan el tiempo de pensar y los errores */
-function simG(g,dt){ g.t+=dt; g.pts.forEach(S=>{ if(S.dec&&!S.dead&&!S.done&&!(!g.gen&&g.ff&&g.ff.ok&&g.ff.tgt===S)){ const d=defic(S); if(d>=0.30&&S.trans<0.01) S.lost+=S.bv*0.01*dt/120; } sim(S,dt); }); if(g.pts.every(S=>S.dead||S.done)) g.end=1; }
+function simG(g,dt){ if(g.gen&&!g.ff){ const room=Math.max(0,GTH(g.mode)-(g.th||0)); if(dt>room) dt=room; g.th=(g.th||0)+dt; if(!(dt>0)) return; } g.t+=dt; g.pts.forEach(S=>{ if(S.dec&&!S.dead&&!S.done&&!(!g.gen&&g.ff&&g.ff.ok&&g.ff.tgt===S)){ const d=defic(S); if(d>=0.30&&S.trans<0.01) S.lost+=S.bv*0.01*dt/120; } sim(S,dt); }); if(g.pts.every(S=>S.dead||S.done)) g.end=1; }
 /* aplica una elección: devuelve {ok,dur} y deja g.ff pendiente (la UI avanza el tiempo; el modo sin pantalla lo hace de golpe) */
 function act(g,S,optIdx){
  const st=curStep(g,S); if(!st||g.ff||g.end) return null;
+ if(g.gen&&(g.th||0)<GTH(g.mode)){ simG(g,GTH(g.mode)-(g.th||0)); if(g.end||(S.dead&&st!==g.pre[0])) return null; }
  const o=st.opts[optIdx]; const okv=typeof o.ok==='function'?o.ok(S):o.ok;
  const who=st===g.pre[0]?null:S;
  const rec={st:st,o:o,ok:okv,t:(who||S).t,pt:who?who.id:'*'};
@@ -523,7 +524,7 @@ function act(g,S,optIdx){
  return {ok:okv,dur:o.e.t||0};
 }
 function finishAct(g){
- const f=g.ff; if(!f) return; g.ff=null;
+ const f=g.ff; if(!f) return; g.ff=null; g.th=0;
  const S=f.S, st=f.st, o=f.o;
  if(S&&S.dead) return;
  if(o.e.end) o.e.end(S||g.pts[g.cur]);
@@ -542,7 +543,7 @@ function playHeadless(g,strategy,think){
   const st=curStep(g,S); if(!st){ g.end=1; break; }
   simG(g,think||0);
   if(S.dead) continue;
-  const idx=strategy(g,S,st); const r=act(g,S,idx); if(!r) break;
+  const idx=strategy(g,S,st); const r=act(g,S,idx); if(!r){ if(S.dead) continue; break; }
   let left=r.dur; while(left>0&&!g.end){ const h=Math.min(5,left); simG(g,h); left-=h; } finishAct(g);
   if(g.multi&&!pending(g)&&strategy.next) g.cur=strategy.next(g);
  }
@@ -881,8 +882,11 @@ function gTick(g){ if(!g.gen||g.end) return; g.acts++; if(g.pts.every(P=>P.dead|
   if(!e.ev.cond()) continue;
   const st=e.ev.make(); if(!st) { e.done=1; continue; } e.done=1; g.pre.push(st); g.evlog.push(st.q); }
 }
+/* casos infinitos: cada decisión cuenta exactamente el tiempo de pensar con el que genGame valida la partida (GTH: 10 s de juego en Realista, 6 s en Fácil y Aprende).
+   Si el jugador piensa más, el herido espera; si contesta antes, el resto pasa al elegir. Así, jugando lo correcto a cualquier ritmo, la partida es la que se validó y el herido se salva. */
+const GTH=m=>m==='r'?10:6;
 function genGame(spec){ let g=null;
- for(let att=0;att<12;att++){ const t=gBuild(spec,att); const th=spec.mode==='r'?10:6;
+ for(let att=0;att<12;att++){ const t=gBuild(spec,att); const th=GTH(spec.mode);
   const strat=(g_,S,st)=>{ for(let i=0;i<st.opts.length;i++){ const o=st.opts[i]; if(typeof o.ok==='function'?o.ok(S):o.ok) return i; } return 0; }; strat.next=gPrio;
   playHeadless(t,strat,th); const ok=t.pts.every(S=>outcome(S)==='ok')&&t.acts>0;
   if(ok||att===11){ g=gBuild(spec,att); g.tries=att; break; } }
