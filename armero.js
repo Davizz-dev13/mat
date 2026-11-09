@@ -301,6 +301,43 @@ const CSS=`
 .arm-sw{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-2px;border:1px solid #5a6066}
 .arm-tg{display:inline-flex;align-items:center;gap:6px;margin:8px 0 0;font-size:13px;color:#d5d8db;cursor:pointer}
 .arm-soldtile{display:block;margin:6px 0 14px;padding:12px 14px;border:1px solid var(--line,#2c333b);border-radius:10px;background:rgba(120,140,90,.12);text-decoration:none;color:inherit}.arm-soldtile b{display:block;font-size:16px;margin-bottom:3px}.arm-soldtile span{font-size:13px;opacity:.85}
+.amx-q{display:flex;align-items:center;gap:8px;margin:10px 0 8px;border:1px solid var(--line,#2c3136);border-radius:10px;background:#15181b;padding:0 10px}
+.amx-q span{opacity:.6;font-size:15px}.amx-q input{flex:1;min-width:0;background:transparent;border:0;color:inherit;font:inherit;font-size:15px;padding:10px 0;outline:none}
+.amx-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-flow:row dense;gap:8px;margin:0 0 12px}
+@media(min-width:760px){.amx-g{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}}
+.amx-t{position:relative;display:flex;flex-direction:column;min-width:0;padding:0;text-align:left;border:1px solid var(--line,#2c3136);border-radius:10px;overflow:visible;background:#15181b;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation;transition:border-color .2s,transform .15s}
+.amx-t:active{transform:scale(.97)}
+.amx-t img{display:block;width:100%;height:auto;aspect-ratio:5/2;object-fit:cover;background:#22262a;border-radius:9px 9px 0 0;filter:saturate(.9);transition:filter .2s}
+.amx-t .n{display:block;font-weight:700;font-size:13px;line-height:1.2;padding:6px 7px 0;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.amx-t .k{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--dim,#9aa0a6);padding:2px 8px 7px;margin-top:auto}
+.amx-t .k i{font-style:normal;transition:transform .25s}
+.amx-t.on{border-color:#d6b25e;box-shadow:0 0 0 1px #d6b25e inset;background:#1d1c15}.amx-t.on img{filter:none}.amx-t.on .k{color:#d6b25e}.amx-t.on .k i{transform:rotate(180deg)}
+.amx-t.on::after{content:'';position:absolute;left:50%;bottom:-9px;margin-left:-8px;border:8px solid transparent;border-bottom:0;border-top-color:#d6b25e;z-index:2}
+.amx-t.dim{opacity:.45}
+.amx-p{grid-column:1/-1;border:1px solid #d6b25e;border-radius:10px;background:#111310;padding:8px 8px 10px;transform-origin:top center;animation:amxDrop .28s cubic-bezier(.2,.8,.25,1) both}
+.amx-ph{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px}.amx-ph b{font-size:15px}.amx-ph span{color:var(--dim,#9aa0a6);font-size:12.5px;flex:1}
+.amx-x{background:none;border:1px solid #444b52;color:#e3e6e8;border-radius:999px;width:30px;height:30px;font-size:15px;line-height:1;cursor:pointer;flex:none}
+.amx-wg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(min-width:760px){.amx-wg{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(min-width:1100px){.amx-wg{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.amx-w{display:block;min-width:0;border:1px solid var(--line,#2c3136);border-radius:9px;overflow:hidden;background:#15181b;color:inherit;text-decoration:none;animation:amxIn .32s ease-out both;animation-delay:calc(var(--i,0)*28ms)}
+.amx-w img{display:block;width:100%;height:auto;aspect-ratio:5/2;object-fit:cover;background:#22262a}
+.amx-w .t{font-weight:700;font-size:13.5px;line-height:1.25;padding:6px 8px 0}.amx-w .d{color:var(--dim,#9aa0a6);font-size:11.5px;line-height:1.3;padding:2px 8px 8px}
+.amx-r{margin:0 0 12px}.amx-r .amx-p{animation:none}.amx-none{font-size:13.5px;color:var(--dim,#9aa0a6);margin:4px 2px}
+.amx-sg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-flow:row dense;gap:6px;margin:10px 0 0}
+@media(min-width:600px){.amx-sg{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.amx-st{position:relative;min-width:0;min-height:50px;text-align:left;border:1px solid var(--line,#2c3136);border-radius:9px;background:#15181b;color:#e3e6e8;padding:6px 8px;font:inherit;cursor:pointer;touch-action:manipulation}
+.amx-st small{display:block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim,#9aa0a6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amx-st b{display:block;font-size:12.5px;line-height:1.25;margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:600;color:#c9cdd1}
+.amx-st.has b{color:#d6b25e;font-weight:700}.amx-st.has small::before{content:'● ';color:#d6b25e}
+.amx-st.on{border-color:#d6b25e;box-shadow:0 0 0 1px #d6b25e inset;background:#1d1c15}
+.amx-st.on::after{content:'';position:absolute;left:50%;bottom:-8px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#d6b25e;z-index:2}
+.amx-sp{grid-column:1/-1;border:1px solid #d6b25e;border-radius:9px;background:#111310;padding:4px 8px 10px;margin:2px 0}
+.amx-sp.an{transform-origin:top center;animation:amxDrop .24s cubic-bezier(.2,.8,.25,1) both}.amx-sp.an .arm-chip{animation:amxIn .26s ease-out both;animation-delay:calc(var(--i,0)*22ms)}
+.amx-sp .arm-slot{margin:6px 0 0}
+@media(max-width:420px){.amx-t .n{font-size:11.5px;letter-spacing:-.02em;padding:6px 5px 0}.amx-t .k{padding:2px 5px 7px}}
+@keyframes amxDrop{from{opacity:0;transform:translateY(-10px) scaleY(.92)}to{opacity:1;transform:none}}
+@keyframes amxIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.amx-p,.amx-w,.amx-sp.an,.amx-sp.an .arm-chip{animation:none}}
 `;
 
 const CACHE={};
@@ -423,15 +460,48 @@ function viewer(stage,opt){ opt=opt||{}; const EZ=!!opt.ease&&!(window.matchMedi
 const CATS=[['rifle',['Fusiles y carabinas','Rifles and carbines']],['smg',['Subfusiles y armas de defensa personal','SMGs and personal defence weapons']],['sniper',['Tirador y francotirador','Marksman and sniper rifles']],['pistol',['Pistolas','Pistols']],['mg',['Ametralladoras','Machine guns']],['shotgun',['Escopetas','Shotguns']]];
 const CAT0={m4a1:'rifle',scar:'rifle',mp7:'smg','sr-25':'sniper',m82:'sniper'};
 const AUTH=()=>{ const a=[...new Set(W.map(w=>w.au?w.au[0]:'GoldbergR'))]; return a.length>1?a.slice(0,-1).join(', ')+' '+L('y','and')+' '+a[a.length-1]:a[0]; };
+const AMX_SH={rifle:['Fusiles y carabinas','Rifles & carbines'],smg:['Subfusiles y PDW','SMGs & PDWs'],sniper:['Tirador y francotirador','Marksman & sniper'],pistol:['Pistolas','Pistols'],mg:['Ametralladoras','Machine guns'],shotgun:['Escopetas','Shotguns']};
+const AMX_COV=['m4a1','mp7','m82'];
+const amxWs=c=>W.filter(w=>(w.cat||CAT0[w.id]||'rifle')===c);
+const amxN=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
+function amxCard(w,i){ const n=allAcc(w).length; return '<a class="amx-w" style="--i:'+i+'" data-id="'+w.id+'" href="#/armero/'+w.id+'"><img src="'+DIR+(w.img||w.id)+'.jpg?v='+VER+'" alt="'+esc(w.n)+'" loading="lazy" width="800" height="320"><div class="t">'+esc(w.n)+'</div><div class="d">'+esc(LL(w.kind))+' · '+(n?n+' '+L('accesorios','accessories'):L('solo camuflajes','camouflages only'))+'</div></a>'; }
+function amxWire(){
+  const g=document.getElementById('amxg'), q=document.getElementById('amxq'), rr=document.getElementById('amxr'); if(!g) return;
+  const RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let cur=null; try{ cur=localStorage.getItem('mat_armero_cat')||null; }catch(e){}
+  if(cur&&!g.querySelector('.amx-t[data-c="'+cur+'"]')) cur=null;
+  function show(c,user){ const old=g.querySelector('.amx-p'); if(old) old.remove();
+    g.querySelectorAll('.amx-t').forEach(t=>{ const on=t.dataset.c===c; t.classList.toggle('on',on); t.setAttribute('aria-expanded',on?'true':'false'); });
+    if(!c) return; const tile=g.querySelector('.amx-t[data-c="'+c+'"]'); const ct=CATS.find(x=>x[0]===c), ws=amxWs(c);
+    const p=document.createElement('div'); p.className='amx-p'; p.id='amxp'; p.setAttribute('role','region'); p.setAttribute('aria-label',LL(ct[1]));
+    p.innerHTML='<div class="amx-ph"><b>'+LL(ct[1])+'</b><span>'+ws.length+' '+(ws.length===1?L('arma','weapon'):L('armas','weapons'))+'</span><button type="button" class="amx-x" aria-label="'+L('Cerrar','Close')+'">✕</button></div><div class="amx-wg">'+ws.map(amxCard).join('')+'</div>';
+    tile.after(p);
+    if(user){ const r=tile.getBoundingClientRect(); if(r.bottom+160>innerHeight) window.scrollTo({top:Math.max(0,r.top+scrollY-70),behavior:RM?'auto':'smooth'}); } }
+  function pick(c){ cur=(cur===c)?null:c; try{ if(cur) localStorage.setItem('mat_armero_cat',cur); else localStorage.removeItem('mat_armero_cat'); }catch(e){} show(cur,true); }
+  g.addEventListener('click',e=>{ if(e.target.closest('.amx-x')){ pick(cur); return; } const t=e.target.closest('.amx-t'); if(t) pick(t.dataset.c); });
+  const mem=e=>{ const a=e.target.closest('.amx-w'); if(a) try{ sessionStorage.setItem('amx_last',a.dataset.id); }catch(_){} };
+  g.addEventListener('click',mem); rr.addEventListener('click',mem);
+  q.addEventListener('input',()=>{ const s=amxN(q.value); if(!s){ rr.hidden=true; rr.innerHTML=''; g.querySelectorAll('.amx-t').forEach(t=>t.classList.remove('dim')); show(cur,false); return; }
+    const hit=W.filter(w=>amxN(w.n+' '+w.id+' '+LL(w.kind)+' '+(w.kind&&w.kind.join?w.kind.join(' '):'')).includes(s));
+    const cs=new Set(hit.map(w=>w.cat||CAT0[w.id]||'rifle')); g.querySelectorAll('.amx-t').forEach(t=>t.classList.toggle('dim',!cs.has(t.dataset.c)));
+    const old=g.querySelector('.amx-p'); if(old) old.remove(); g.querySelectorAll('.amx-t.on').forEach(t=>{ t.classList.remove('on'); t.setAttribute('aria-expanded','false'); });
+    rr.hidden=false; rr.innerHTML='<div class="amx-p"><div class="amx-ph"><b>'+L('Resultados','Results')+'</b><span>'+hit.length+'</span></div>'+(hit.length?'<div class="amx-wg">'+hit.map(amxCard).join('')+'</div>':'<p class="amx-none">'+L('Ninguna arma coincide. Prueba con otro nombre o abre una categoría.','No weapon matches. Try another name or open a category.')+'</p>')+'</div>'; });
+  show(cur,false);
+  let last=null; try{ last=sessionStorage.getItem('amx_last'); sessionStorage.removeItem('amx_last'); }catch(e){}
+  if(last){ const a=g.querySelector('.amx-w[data-id="'+last+'"]'); if(a) setTimeout(()=>{ try{ a.scrollIntoView({block:'center'}); }catch(e){} },60); }
+}
 function hub(app,ctx){
   const own=Object.values(ACC).filter(a=>a.own).length, total=Object.keys(ACC).length;
   const h=ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Armero 3D','3D Gunsmith')]])+
   '<h1>'+L('Armero 3D','3D Gunsmith')+'</h1><p class="sub">'+L('Gira el arma en 3D, monta accesorios reales que existen para ella (miras, magnificador, silenciador, culata, empuñadura, láser, linterna, bípode) y prueba camuflajes. Los datos cambian solo con cifras publicadas por el fabricante; si no hay dato, no se inventa.','Spin the weapon in 3D, mount real accessories that exist for it (optics, magnifier, suppressor, stock, grip, laser, light, bipod) and try camouflages. Figures only change with numbers published by the maker; no data, no number.')+'</p>'+
+  '<label class="amx-q"><span aria-hidden="true">⌕</span><input type="search" id="amxq" autocomplete="off" placeholder="'+L('Buscar arma (Glock, AK, M249…)','Search a weapon (Glock, AK, M249…)')+'" aria-label="'+L('Buscar arma','Search a weapon')+'"></label>'+
+  '<div class="amx-r" id="amxr" hidden></div>'+
+  '<div class="amx-g" id="amxg">'+CATS.map(([c,t])=>{ const ws=amxWs(c); if(!ws.length) return ''; const cv=ws.find(w=>AMX_COV.includes(w.id))||ws[0]; return '<button type="button" class="amx-t" data-c="'+c+'" aria-expanded="false" title="'+esc(LL(t))+'"><img src="'+DIR+(cv.img||cv.id)+'.jpg?v='+VER+'" alt="" loading="lazy" width="800" height="320"><span class="n">'+LL(AMX_SH[c]||t)+'</span><span class="k"><span>'+ws.length+' '+(ws.length===1?L('arma','weapon'):L('armas','weapons'))+'</span><i aria-hidden="true">▾</i></span></button>'; }).join('')+'</div>'+
   '<a class="arm-soldtile" href="#/soldado"><b>'+L('Crea tu soldado','Build your soldier')+' →</b><span>'+L('Elige equipo real (chaleco, placas NIJ, casco, mochila y un arma del Armero), calcula el peso total, el % de tu peso corporal y la movilidad según doctrina publicada, y equípalo en 3D.','Pick real gear (vest, NIJ plates, helmet, pack and a weapon from the Gunsmith), work out the total load, its % of your body weight and mobility per published doctrine, and equip it in 3D.')+'</span></a>'+
-  CATS.map(([c,t])=>{ const ws=W.filter(w=>(w.cat||CAT0[w.id]||'rifle')===c); return ws.length?'<h2 class="arm-cat">'+LL(t)+' <span>('+ws.length+')</span></h2><div class="arm-hub">'+ws.map(w=>{ const n=allAcc(w).length; return '<a class="arm-card" href="#/armero/'+w.id+'"><img src="'+DIR+(w.img||w.id)+'.jpg?v='+VER+'" alt="'+esc(w.n)+'" loading="lazy" width="800" height="320"><div class="t">'+esc(w.n)+'</div><div class="d">'+esc(LL(w.kind))+' · '+(n?n+' '+L('accesorios','accessories'):L('solo camuflajes','camouflages only'))+'</div></a>'; }).join('')+'</div>':''; }).join('')+
   '<p class="arm-note">'+L(W.length+' armas y '+total+' accesorios ('+own+' modelados por M.A.T). Seguiremos añadiendo armas y accesorios por tandas.',W.length+' weapons and '+total+' accessories ('+own+' modelled by M.A.T). More weapons and accessories will be added in batches.')+'</p>'+
   '<p class="arm-note">'+L('Modelos 3D de las armas: '+AUTH()+' en Sketchfab, licencia CC BY 4.0 (autor en cada arma). Los accesorios marcados «MAT» son modelos aproximados hechos por M.A.T a partir de las medidas oficiales de cada fabricante (fuente en cada uno). Nada sacado de videojuegos ni generado con IA.','Weapon 3D models: '+AUTH()+' on Sketchfab, CC BY 4.0 licence (author on each weapon). Accessories marked "MAT" are approximate models built by M.A.T from each maker\'s official dimensions (source on each). Nothing taken from video games or generated with AI.')+'</p>';
   ctx.set(h,L('Armero 3D','3D Gunsmith'));
+  amxWire();
 }
 
 /* Colocación de accesorios (compartida con «Crea tu soldado») */
@@ -593,19 +663,29 @@ function page(app,ctx,w){
   const isDot=a=>a&&ACC[a]&&ACC[a].dot;
   function chip(sk,a){ const x=ACC[a]; const dis=sk==='mag'&&!isDot(st.on.optic);
     return '<button type="button" class="arm-chip'+(st.on[sk]===a?' on':'')+(dis?' dis':'')+'" data-s="'+sk+'" data-a="'+a+'"'+(dis?' disabled':'')+'>'+esc(x.n)+(x.own?' <i class="arm-own">MAT</i>':'')+'<small>'+esc(LL(x.k))+(x.g?' · '+fmtG(x.g):'')+'</small></button>'; }
+  let amxO=null, amxA=false;
   function renderUI(){
-    const v=cur(); let h='';
-    if(w.V.length>1) h+='<div class="arm-slot"><div class="sl">'+(w.vlab?LL(w.vlab):L('Calibre (versiones oficiales)','Calibre (official versions)'))+'</div><div class="arm-chips">'+w.V.map((x,i)=>'<button type="button" class="arm-chip'+(i===st.v?' on':'')+'" data-v="'+i+'">'+esc(LL(x.lab))+'</button>').join('')+'</div></div>';
-    SLOTS.forEach(([sk,nm])=>{ const opts=accs(v,sk); if(!opts.length) return;
-      h+='<div class="arm-slot"><div class="sl">'+LL(nm)+(sk==='mag'?' <span class="arm-src">· '+L('va detrás de un punto rojo u holográfico','goes behind a red-dot or holographic sight')+'</span>':'')+'</div><div class="arm-chips"><button type="button" class="arm-chip'+(!st.on[sk]?' on':'')+'" data-s="'+sk+'" data-a="">'+(sk==='stock'?L('De serie','Standard'):L('Ninguno','None'))+'</button>'+
-      opts.map(a=>chip(sk,a)).join('')+'</div></div>'; });
-    h+='<div class="arm-slot"><div class="sl">'+L('Camuflaje','Camouflage')+'</div><div class="arm-chips">'+CAMO.map(c=>'<button type="button" class="arm-chip arm-cm'+(st.camo===c[0]?' on':'')+'" data-c="'+c[0]+'"><span class="arm-sw" style="background:'+sw(c[2])+'"></span>'+esc(LL(c[1]))+'</button>').join('')+'</div>'+
+    const v=cur(); const E=[];
+    if(w.V.length>1) E.push({k:'_v',lab:(w.vlab?LL(w.vlab):L('Calibre (versiones oficiales)','Calibre (official versions)')),val:LL(v.lab),has:false,
+      body:'<div class="arm-slot"><div class="sl">'+(w.vlab?LL(w.vlab):L('Calibre (versiones oficiales)','Calibre (official versions)'))+'</div><div class="arm-chips">'+w.V.map((x,i)=>'<button type="button" class="arm-chip'+(i===st.v?' on':'')+'" data-v="'+i+'">'+esc(LL(x.lab))+'</button>').join('')+'</div></div>'});
+    SLOTS.forEach(([sk,nm])=>{ const opts=accs(v,sk); if(!opts.length) return; const a=st.on[sk];
+      E.push({k:sk,lab:LL(nm),val:a&&ACC[a]?ACC[a].n:(sk==='stock'?L('De serie','Standard'):L('Ninguno','None')),has:!!a,
+      body:'<div class="arm-slot"><div class="sl">'+LL(nm)+(sk==='mag'?' <span class="arm-src">· '+L('va detrás de un punto rojo u holográfico','goes behind a red-dot or holographic sight')+'</span>':'')+'</div><div class="arm-chips"><button type="button" class="arm-chip'+(!st.on[sk]?' on':'')+'" data-s="'+sk+'" data-a="">'+(sk==='stock'?L('De serie','Standard'):L('Ninguno','None'))+'</button>'+
+      opts.map(a=>chip(sk,a)).join('')+'</div></div>'}); });
+    const cm=CAMO.find(c=>c[0]===st.camo)||CAMO[0];
+    E.push({k:'_c',lab:L('Camuflaje','Camouflage'),val:LL(cm[1]),has:st.camo!=='orig',
+      body:'<div class="arm-slot"><div class="sl">'+L('Camuflaje','Camouflage')+'</div><div class="arm-chips">'+CAMO.map(c=>'<button type="button" class="arm-chip arm-cm'+(st.camo===c[0]?' on':'')+'" data-c="'+c[0]+'"><span class="arm-sw" style="background:'+sw(c[2])+'"></span>'+esc(LL(c[1]))+'</button>').join('')+'</div>'+
        '<label class="arm-tg"><input type="checkbox" id="armca"'+(st.ca?' checked':'')+'> '+L('Aplicar también a los accesorios','Apply to the accessories too')+'</label>'+
-       '<p class="arm-note" style="margin:6px 0 0">'+L('Patrones genéricos generados por M.A.T (no son diseños registrados); se aplican a las piezas de polímero y anodizadas, no al acero ni a las lentes.','Generic patterns generated by M.A.T (not trademarked designs); applied to polymer and anodised parts, not to steel or lenses.')+'</p></div>';
+       '<p class="arm-note" style="margin:6px 0 0">'+L('Patrones genéricos generados por M.A.T (no son diseños registrados); se aplican a las piezas de polímero y anodizadas, no al acero ni a las lentes.','Generic patterns generated by M.A.T (not trademarked designs); applied to polymer and anodised parts, not to steel or lenses.')+'</p></div>'});
+    if(amxO&&!E.some(e=>e.k===amxO)) amxO=null;
+    let h='<div class="amx-sg" id="amxsg">'+E.map(e=>'<button type="button" class="amx-st'+(e.has?' has':'')+(e.k===amxO?' on':'')+'" data-amx="'+e.k+'" aria-expanded="'+(e.k===amxO)+'"><small>'+esc(e.lab)+'</small><b>'+esc(e.val)+'</b></button>'+
+      (e.k===amxO?'<div class="amx-sp'+(amxA?' an':'')+'">'+e.body+'</div>':'')).join('')+'</div>';
     if(v.vnote) h+='<p class="arm-note">'+esc(LL(v.vnote))+'</p>'; else if(w.vnote) h+='<p class="arm-note">'+esc(LL(w.vnote))+'</p>';
     if(v.full) h+='<p class="arm-note arm-full"><b>'+L('Esta arma en servicio no admite más accesorios.','In service, this weapon takes no further accessories.')+'</b></p>';
-    ui.innerHTML=h;
+    ui.innerHTML=h; amxA=false;
+    if(amxO){ ui.querySelectorAll('.amx-sp .arm-chip').forEach((b,i)=>b.style.setProperty('--i',i)); }
   }
+  ui.addEventListener('click',e=>{ const t=e.target.closest('.amx-st'); if(!t) return; e.stopPropagation(); const k=t.dataset.amx; amxO=(amxO===k)?null:k; amxA=!!amxO; renderUI(); },true);
   ui.addEventListener('change',e=>{ if(e.target.id==='armca'){ st.ca=e.target.checked; camo(); } });
   ui.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||b.disabled) return;
     if(b.dataset.v!=null){ const i=+b.dataset.v; if(i!==st.v){ st.v=i; Object.keys(st.on).forEach(s=>{ if(!accs(cur(),s).includes(st.on[s])) delete st.on[s]; }); load(); } }
