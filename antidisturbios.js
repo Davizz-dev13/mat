@@ -306,7 +306,7 @@ function projectiles(){ G.imp=(G.imp||[]).filter(p=>G.t-p.t<4); G.proj=G.proj.fi
     else if(p.tg.v){ const v=p.tg.v; if(p.k===2&&!v.burn&&Math.hypot(v.x-p.x1,v.y-p.y1)<3.2){ v.burn=1; G.st.dmg+=2; lg(L('Arde un furgón policial ','A police van is on fire ')+nearName(v.x,v.y),'bad'); } }
     else if(p.tg.b){ const b=p.tg.b; if(b.on&&Math.hypot(b.x-p.x1,b.y-p.y1)<1.4&&dacc('pb',0.05)){ G.st.civ++; } }
     p.tl=G.t; (G.pland=G.pland||[]).push(p); return false; }); G.pland=(G.pland||[]).filter(p=>G.t-p.tl<0.6); }
-function end(){ if(G.phase!=='live') return; G.phase='result'; render(); }
+function end(){ if(G.phase!=='live') return; G.phase='result'; render(); try{ window.MAT_MED&&window.MAT_MED.event('ad.fin',{sc:G.v?G.v.sc:0,d:G.cfg.d,m:G.cfg.m}); }catch(_){} }
 /* ---------------- órdenes ---------------- */
 function nearestCrowd(u,maxD,pred){ let b=null,bd=maxD; G.ag.forEach((a,i)=>{ if(!a.on) return; if(pred&&!pred(a)) return; const d=Math.hypot(a.x-u.x,a.y-u.y); if(d<bd){bd=d;b=a;} }); return b; }
 function groupsNear(x,y,r,min){ const c={}; G.ag.forEach(a=>{ if(a.on&&Math.hypot(a.x-x,a.y-y)<r) c[a.g]=(c[a.g]||0)+1; }); return Object.keys(c).filter(k=>c[k]>=(min||1)).map(i=>G.groups[i]); }

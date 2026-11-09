@@ -231,7 +231,7 @@ function render(app,X){
   ys.addEventListener('change',function(){ upd('m'); });
   R0.querySelector('#nu-yc').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y]'); if(!b) return; S.y=+b.getAttribute('data-y'); S.yid=b.getAttribute('data-yid'); ys.value=y2s(S.y); upd('m'); });
   [].forEach.call(R0.querySelectorAll('[data-b]'),function(b){ b.addEventListener('click',function(){ S.b=b.getAttribute('data-b'); upd('m'); }); });
-  R0.querySelector('#nu-det').addEventListener('click',function(){ upd(true); try{ R0.querySelector('#nu-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} });
+  R0.querySelector('#nu-det').addEventListener('click',function(){ upd(true); try{ if(window.MAT_MED) window.MAT_MED.event('nuc.det',{c:CUR&&CUR.g&&CUR.g.n}); }catch(_){} try{ R0.querySelector('#nu-mw').scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){} });
   var ck=R0.querySelector('#nu-cmp'); ck.checked=!!S.y2; ck.addEventListener('change',function(){ S.y2=ck.checked?(S.y>=1000?S.y/10:Math.min(50000,S.y*10)):0; S.y2=snapY(S.y2); upd('m'); });
   R0.querySelector('#nu-cmpb').addEventListener('click',function(ev){ var b=ev.target.closest('[data-y2]'); if(!b) return; S.y2=+b.getAttribute('data-y2'); upd('m'); });
   R0.querySelector('#nu-fo').addEventListener('click',function(ev){ var b=ev.target.closest('[data-wd]'); if(b){ S.wd=+b.getAttribute('data-wd'); upd('m'); } });

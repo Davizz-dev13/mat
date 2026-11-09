@@ -135,6 +135,7 @@ window.MAT_RETO=function(app,X){
     play(); grow(lw.querySelector('.rt-row'),id);
     setNum('rtatt',G.g.length); setNum('rthn',G.h||0); }
   function finish(){
+    try{ window.MAT_MED&&window.MAT_MED.event('reto.fin',{w:!!G.w,gu:!!G.gu,n:G.g.length,num:num,h:G.h||0}); }catch(_){}
     var rt=app.querySelector('.rtx'), play=rt&&rt.querySelector('.rt-play'), lw=document.getElementById('rtlastw'), list=document.getElementById('rtlist');
     if(!rt||!lw||!list){ render(); return; }
     var inp=document.getElementById('rtq'); if(inp) try{ inp.blur(); }catch(e){}

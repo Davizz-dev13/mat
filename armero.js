@@ -619,6 +619,7 @@ function page(app,ctx,w){
     document.getElementById('armacc').innerHTML=a;
     credits();
     try{ localStorage.setItem('mat_armero_build',JSON.stringify({id:w.id,v:st.v,on:st.on,camo:st.camo,ca:st.ca})); }catch(e){}
+    try{ window.MAT_MED&&window.MAT_MED.event('armero.arma',{id:w.id,on:st.on?Object.keys(st.on).filter(function(k){ return st.on[k]; }).length:0}); }catch(_){}
   }
   function credits(){
     const used=allAcc(w), gb=used.filter(a=>!ACC[a].own), ow=used.filter(a=>ACC[a].own);

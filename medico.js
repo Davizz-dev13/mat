@@ -1097,6 +1097,7 @@ function debrief(){ stop(); if(!G) return intro();
   (G.gen?'<div class="mdrow"><button type="button" class="mdbtn" id="mdNew2">'+L('Nueva partida','New game')+'</button><button type="button" class="mdbtn sec" id="mdAgain">'+L('Repetir esta partida','Replay this game')+'</button><button type="button" class="mdbtn sec" id="mdOther">'+L('Volver','Back')+'</button></div>':'<div class="mdrow"><button type="button" class="mdbtn" id="mdAgain">'+L('Repetir','Play again')+'</button><button type="button" class="mdbtn sec" id="mdOther">'+L('Otro caso','Another case')+'</button></div>')+
   fuentesHTML(false)+DISC()+'</div>';
  X.set(h,L('Informe','Debrief')+' · '+L('Médico de Combate','Combat Medic'));
+ try{ if(window.MAT_MED&&!G.__mm){ G.__mm=1; const _o=G.pts.map(outcome); window.MAT_MED.event('medico.fin',{mode:G.mode,gen:!!G.gen,n:G.pts.length,ok:_o.filter(x=>x!=='dead').length,perf:_o.every(x=>x==='ok')&&G.pts.every(S=>S.hist.every(h=>h.ok))}); } }catch(_){}
  window.scrollTo(0,0);
  APP.querySelector('#mdAgain').onclick=()=>start(SPEC.gen!=null?{mode:SPEC.mode,gen:SPEC.gen}:{mode:SPEC.mode,cs:SPEC.cs,scen:SPEC.scen,seed:(Math.random()*1e9)>>>0});
  const n2=APP.querySelector('#mdNew2'); if(n2) n2.onclick=()=>start({mode:SPEC.mode,gen:newSeed()});

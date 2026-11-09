@@ -49,7 +49,7 @@ function arm(){ return ARM?Promise.resolve(ARM):import('./armero.js?v='+VER).the
 const KEY='mat_soldado';
 function loadSt(){ let s=null; try{ s=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
   return Object.assign({h:175,kg:80,role:null,lvl:0,q:{},arma:null,camo:'od',v:4,terr:0,g:0},s||{}); }
-function saveSt(st){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} }
+function saveSt(st){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} try{ window.MAT_MED&&window.MAT_MED.event('soldado.equipo',{role:st.role,arma:!!st.arma,lvl:st.lvl}); }catch(_){} }
 /* peso del arma: ficha M.A.T + accesorios con peso publicado (las culatas sustituyen a la de serie y no se suman, como en el Armero) */
 export function weaponInfo(M,b){ if(!M||!b) return null; const w=M.W.find(x=>x.id===b.id); if(!w) return null; const v=w.V[Math.min(b.v||0,w.V.length-1)];
   const acc=Object.entries(b.on||{}).map(([s,a])=>M.ACC[a]).filter(Boolean); const addG=acc.filter(x=>x.slot!=='stock').reduce((s,x)=>s+(x.g||0),0);

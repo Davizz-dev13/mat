@@ -983,6 +983,7 @@ function spotHTML(r){ const t=G.targets[r.i];
   return '<div class="frspot"><span class="tag">'+L('Ayuda · observador','Help · spotter')+'</span><p>'+tx+'</p>'+(a.length?'<button type="button" class="frbtn sec sm" id="frspa">'+L('Girar las torretas así','Dial that in')+'</button>':'')+'</div>'; }
 function missTxt(r){ const v=r.dym*100, h=r.dxm*100; return (Math.abs(v)>=1?nf(Math.abs(v),0)+' cm '+(v>0?L('alto','high'):L('bajo','low')):'')+(Math.abs(v)>=1&&Math.abs(h)>=1?' · ':'')+(Math.abs(h)>=1?nf(Math.abs(h),0)+' cm '+(h>0?L('a la derecha','right'):L('a la izquierda','left')):''); }
 function debrief(r){ if(!G||G.over&&!r) return; if(G.tut&&!r._tut){ r._tut=1; tutShot(r); } const t=G.targets[r.i], bd=r.bd; const row=(a,b)=>'<span>'+a+'</span><b>'+b+'</b>';
+ try{ if(window.MAT_MED&&!r.__mm){ r.__mm=1; window.MAT_MED.event('fr.disparo',{hit:!!r.hit,R:t.R,mode:G.mode,tut:!!G.tut,mv:!!t.mv,nt:!!(G.st&&G.st.night)}); } }catch(_){}
  const effE=r.dialE+r.holdE, effW=r.dialW+r.holdW; const dE=effE-bd.elev, dW=effW-bd.wdg-(r.lead||0);
  let h='<p class="frbig">'+(r.hit?'<b class="frok">'+L('IMPACTO','HIT')+'</b>':'<b class="frko">'+L('FALLO','MISS')+'</b>')+' · P'+(t.i+1)+' · '+ni(r.ground?t.R:r.R)+' m · '+(r.hit?'+'+r.pts+' '+L('puntos','points'):(r.ground?L('la bala ha dado en el suelo a unos ','the round hit the ground about ')+ni(Math.round(r.R/10)*10)+' m':L('impacto ','impact ')+missTxt(r)+' '+L('del centro','from centre')))+'</p>';
   if(r.hit&&t.rec) h+='<div class="frspot rec"><span class="tag">'+ni(t.rec.d)+' m · '+t.rec.y+'</span><p>'+L('Has tocado la placa a la distancia del disparo récord de ','You hit the plate at the distance of the record shot by ')+esc(L(t.rec.who[0],t.rec.who[1]))+' ('+esc(t.rec.gun)+'). '+L('La bala ha tardado ','The bullet took ')+nf(r.tof,1)+L(' s en llegar.',' s to arrive.')+'</p></div>';
@@ -1006,6 +1007,7 @@ function debrief(r){ if(!G||G.over&&!r) return; if(G.tut&&!r._tut){ r._tut=1; tu
 }
 function endGame(why){ if(G.over) return; G.over=true; closeSheet(); stopLoop(); const B=bests(); const k=G.mode+'|'+G.st.id+'|'+G.rf.id; const rec=!B[k]||G.score>B[k]; if(rec&&G.score>0){ B[k]=G.score; try{ localStorage.setItem('mat_fr_best',JSON.stringify(B)); }catch(e){} }
  const hits=G.targets.filter(t=>t.res==='hit').length; const shots=G.shots.length;
+ try{ window.MAT_MED&&window.MAT_MED.event('fr.serie',{mode:G.mode,hits:hits,n:G.targets.length,score:G.score,tut:!!G.tut}); }catch(_){}
  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],['Francotirador','#/francotirador'],[L('Resultado','Result')]])+'<h1 style="font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.02em;margin:14px 0 4px">'+(why?esc(why):L('Fin de la serie','End of the string'))+'</h1>'+
   '<p style="color:#bfc2b8">'+esc(G.rf.n)+' · '+esc(L(G.st.n[0],G.st.n[1]))+' · '+L(MODES[G.mode].n[0],MODES[G.mode].n[1])+'</p>'+
   '<div class="frsum"><div><b>'+G.score+'</b><span>'+L('puntos','points')+'</span></div><div><b>'+hits+'/'+G.targets.length+'</b><span>'+L('placas','plates')+'</span></div><div><b>'+shots+'</b><span>'+L('disparos','rounds')+'</span></div></div>'+

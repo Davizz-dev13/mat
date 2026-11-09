@@ -294,6 +294,7 @@ function hit(tp,s){ const g=G; tp.done=true; tp.wire=false; tp.res=s.tgt?'hit':'
 
 function endGame(why){ const g=G; if(g.over) return; g.over=why; g.tEnd=g.t; stopLoop(); const sc=score(); g.sc=sc;
  const B=bests(); const k=g.pt.id+'|'+g.mode+'|'+g.sub.id+(g.seed!==g.pt.seed?'|'+g.seed:''); g.newBest=false; if(!B[k]||sc.total>B[k]){ B[k]=sc.total; g.newBest=true; saveBests(B); } g.best=B[k];
+ try{ window.MAT_MED&&window.MAT_MED.event('sub.fin',{why:why,hits:g.hits,neutral:g.neutral,mode:g.mode,total:sc.total}); }catch(_){}
  if(APP) setTimeout(g.mode==='aprende'?lnAfterEnd:debrief,10); }
 function score(){ const g=G; const avg=g.noiseN?g.noiseSum/g.noiseN:0; let pts=0; const items=[];
  const add=(es,en,v)=>{ items.push([es,en,Math.round(v)]); pts+=v; };

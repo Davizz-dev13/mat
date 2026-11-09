@@ -1309,7 +1309,7 @@ window.MAT_DUELO=function(app,X){
     window.MAT_DUELO_DBG={S:S,V:V,setSpeed:function(v){speed=v;},LOS:LOS,loA:loA,loB:WB.lo,AIP:AIP};
     try{ box.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
     raf=requestAnimationFrame(frame);
-    function result(){ var w=S.over.w, U=S.U, win=U[w], los_=U[1-w], st=S.st; var R_=[]; if(S.reasons){ R_=S.reasons.slice(); } else {
+    function result(){ try{ window.MAT_MED&&window.MAT_MED.event('duelo.fin',{win:S.over.w===0,m:MODE,night:!!NIGHT}); }catch(_){} var w=S.over.w, U=S.U, win=U[w], los_=U[1-w], st=S.st; var R_=[]; if(S.reasons){ R_=S.reasons.slice(); } else {
       if(S.first!=null){ var f=U[S.first], fw=S.firstW; R_.push(LL2(f.a.n+' dispara primero, a '+fmtD(S.firstD)+', con '+(fw.w.arm?fw.w.arm.n:fw.w.n)+' ('+fw.km.toLocaleString('es-ES')+' km de alcance'+(fw.src==='ficha'?' según su ficha':', estimación')+')',f.a.n+' fires first, at '+fmtD(S.firstD)+', with '+(fw.w.arm?fw.w.arm.n:fw.w.n)+' ('+fw.km.toLocaleString('en-GB')+' km range'+(fw.src==='ficha'?' from its data sheet':', estimate')+')')); }
       [0,1].forEach(function(i){ var x=st[i], u=U[i]; if(!x.sh) { R_.push(LL2(u.a.n+' no llega a disparar: nunca tuvo al rival a su alcance o a la vista',u.a.n+' never fires: the rival was never in range or in sight')); return; }
         R_.push(LL2(u.a.n+': '+x.hit+' de '+x.sh+(x.sh===1?' disparo alcanza':' disparos alcanzan'),u.a.n+': '+x.hit+' of '+x.sh+' shots hit')+(MODE==='suelo'&&x.hit?LL2(', '+(x.pen===0?'ninguno perfora':x.pen===1?'1 perfora':x.pen+' perforan'),', '+x.pen+' penetrate')+(x.zones.lateral||x.zones.trasera?LL2(' (por el lateral o la trasera, de blindaje menor)',' (through the side or rear, thinner armour)'):''):''));

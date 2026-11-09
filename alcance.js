@@ -264,6 +264,7 @@ function Map(cv,wrap,onTap){
 // ---------- página ----------
 function render(app,X){
   var M=sel(), lp=launch();
+  try{ window.MAT_MED&&window.MAT_MED.event('alc.ver',{m:ST.m.slice()}); }catch(_){}
   var h='<div class="alc" data-noi18n>'+
    '<p class="lead">'+(EN()?'<b>Step 1.</b> Pick up to three missiles and a launch point: the map draws each one’s range as a true geodesic circle and shows which cities it reaches, how far and roughly how fast. Then tap <b>💥 Simulate impact here</b> on any city to go to step 2.':'<b>Paso 1.</b> Elige hasta tres misiles y un punto de lanzamiento: el mapa dibuja su alcance como un círculo geodésico real y te dice a qué ciudades llega, a qué distancia y en cuánto tiempo aproximado. Después toca <b>💥 Simular impacto aquí</b> en cualquier ciudad para pasar al paso 2.')+'</p>'+
    '<div class="tgt" id="alc-tgt" hidden></div>'+'<div class="selbar" id="alc-sel"></div>'+
