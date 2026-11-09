@@ -107,9 +107,9 @@ const STAGES=[
  {id:'noche',n:['Campo de tiro nocturno','Night range'],d:['La meseta de noche y sin luna: visor de visión nocturna o térmico','The plateau on a moonless night: night-vision or thermal scope'],alt:700,T:[2,9],rh:[60,85],lat:40.4,az:[270,90,0,180],ter:'campo',night:true,
   sky:['#06090f','#142030'],far:'#1d242c',near:'#171c13',mid:'#20261a',hz:'#26303a'}
 ];
-const MODES={aprende:{n:['Aprende a disparar','Learn to shoot']},facil:{n:['Fácil','Easy']},veterano:{n:['Veterano','Veteran']},desafio:{n:['Desafío','Challenge']},movil:{n:['Blancos en movimiento','Moving targets']},record:{n:['Distancias récord','Record distances']}};
+const MODES={aprende:{n:['Aprende a disparar','Learn to shoot']},facil:{n:['Fácil','Easy']},veterano:{n:['Veterano','Veteran']},desafio:{n:['Desafío','Challenge']},movil:{n:['Blancos en movimiento','Moving targets']},rehen:{n:['Rescate de rehén','Hostage rescue']},record:{n:['Distancias récord','Record distances']}};
 /* modos con computadora balística (reglas de Fácil) */
-const EZ=m=>{ m=m||(G&&G.mode); return m==='facil'||m==='movil'||m==='record'; };
+const EZ=m=>{ m=m||(G&&G.mode); return m==='facil'||m==='movil'||m==='record'||m==='rehen'; };
 /* el observador ayuda en todos los modos menos en Desafío (el más difícil) y en las lecciones */
 const SPOT=()=>!!G&&!G.tut&&G.mode!=='desafio'&&CFG.spot!==false;
 const RM=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
@@ -424,17 +424,18 @@ function intro(){ stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } cons
  const opt=(on,attr,b,s)=>'<button type="button" class="fropt'+(on?' on':'')+'" '+attr+'><b>'+b+'</b><span>'+s+'</span></button>';
  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],['Francotirador']])+
  '<div class="frhero"><img src="img/juegos/francotirador.webp" width="640" height="400" alt="'+esc(L('Tirador con un Barrett M107 en un campo de tiro de Yibuti','Marksman with a Barrett M107 on a range in Djibouti'))+'"><div class="ht"><b>'+L('FRANCOTIRADOR','SNIPER')+'</b><span>'+L('Siluetas de acero de 300 a 2.000 m. Mide la distancia, lee el viento y gira las torretas: la bala sigue la física de verdad, incluida la rotación de la Tierra. Si fallas, ves el impacto, corriges y vuelves a tirar hasta vaciar el cargador.','Steel silhouettes from 300 to 2,000 m. Range it, read the wind and dial the turrets: the bullet follows real physics, including the Earth’s rotation. Miss, and you see the impact, correct and fire again until the magazine is empty.')+'</span></div></div>';
-  h+='<div class="frsec">'+L('¿Nunca has disparado?','Never fired a shot?')+'</div><div class="frgrid">'+opt(CFG.mode==='aprende','data-m="aprende"',L('Aprende a disparar','Learn to shoot'),L('Clase guiada paso a paso: te explico cada medida y cada cuenta, tú las haces y yo las compruebo. Dos lecciones: 480 m y 1.540 m.','A step-by-step guided class: I explain each reading and each sum, you do them and I check them. Two lessons: 480 m and 1,540 m.'))+'</div>';
+  h+='<div class="frsec">'+L('¿Nunca has disparado?','Never fired a shot?')+'</div><div class="frgrid">'+opt(CFG.mode==='aprende','data-m="aprende"',L('Aprende a disparar','Learn to shoot'),L('Clase guiada paso a paso: te explico cada medida y cada cuenta, tú las haces y yo las compruebo. Tres lecciones: 480 m, 1.540 m y un rescate de rehén a 75 m.','A step-by-step guided class: I explain each reading and each sum, you do them and I check them. Three lessons: 480 m, 1,540 m and a hostage rescue at 75 m.'))+'</div>';
  h+='<div class="frsec">'+L('Modo','Mode')+'</div><div class="frgrid c3">'+
   opt(CFG.mode==='facil','data-m="facil"',L('Fácil','Easy'),L('Mides tú y la computadora balística te da la solución desglosada. 300–800 m.','You measure and the ballistic computer gives you the broken-down solution. 300–800 m.'))+
   opt(CFG.mode==='veterano','data-m="veterano"',L('Veterano','Veteran'),L('Sin computadora: instrumentos, tarjeta, fórmulas y tu cabeza. Coriolis, giro y densidad los calculas tú. 600–2.000 m.','No computer: instruments, data card, formulas and your head. You work out Coriolis, spin and density. 600–2,000 m.'))+
   opt(CFG.mode==='desafio','data-m="desafio"',L('Desafío','Challenge'),L('Reglas de Veterano con condiciones fijas para batir tu récord. Sin observador.','Veteran rules with fixed conditions to beat your record. No spotter.'))+'</div>';
   h+='<div class="frsec">'+L('Retos especiales','Special challenges')+'</div><div class="frgrid c2">'+
    opt(CFG.mode==='movil','data-m="movil"',L('Blancos en movimiento','Moving targets'),L('Cinco siluetas cruzan un claro entre dos protecciones, de 1 a 2,6 m/s. El adelanto sale del tiempo de vuelo real. 300–700 m.','Five targets cross a gap between two covers at 1 to 2.6 m/s. The lead comes from the real time of flight. 300–700 m.'))+
-   opt(CFG.mode==='record','data-m="record"',L('Distancias récord','Record distances'),L('Cuatro siluetas a las distancias de los disparos más largos confirmados: 2.430, 2.475, 2.815 y 3.540 m. Con el .50 BMG.','Four targets at the distances of the longest confirmed shots: 2,430, 2,475, 2,815 and 3,540 m. With the .50 BMG.'))+'</div>';
-  if(CFG.mode==='aprende'){ const ls=CFG.lesson?1:0;
+   opt(CFG.mode==='record','data-m="record"',L('Distancias récord','Record distances'),L('Cuatro siluetas a las distancias de los disparos más largos confirmados: 2.430, 2.475, 2.815 y 3.540 m. Con el .50 BMG.','Four targets at the distances of the longest confirmed shots: 2,430, 2,475, 2,815 and 3,540 m. With the .50 BMG.'))+
+   opt(CFG.mode==='rehen','data-m="rehen"',L('Rescate de rehén','Hostage rescue'),L('Simulacro policial: el atracador se cubre con el rehén. Elige dónde y cuándo disparar sin tocar al rehén. 75–250 m, cinco escenarios y lección guiada.','Police drill: the hostage-taker hides behind the hostage. Choose where and when to fire without touching the hostage. 75–250 m, five scenarios and a guided lesson.'))+'</div>';
+  if(CFG.mode==='rehen'){ h+=rhIntro(rf,B); } else if(CFG.mode==='aprende'){ const ls=CFG.lesson===2?2:(CFG.lesson?1:0);
   h+='<div class="frsec">'+L('Lección','Lesson')+'</div><div class="frgrid c2">'+opt(ls===0,'data-l="0"',L('Lección 1 · 480 m','Lesson 1 · 480 m'),L('M24 (.308) en terreno llano, a 700 m de altitud. Aprendes el método completo: distancia, aire, caída, viento, giro y Tierra.','M24 (.308) on flat ground at 700 m altitude. You learn the whole method: distance, air, drop, wind, spin and the Earth.'))+
-   opt(ls===1,'data-l="1"',L('Lección 2 · 1.540 m','Lesson 2 · 1,540 m'),L('Sako TRG-42 (.338 Lapua) con frío ártico (−12 °C) y tiro al este a 69° de latitud: aquí el Coriolis y el Eötvös ya cuentan.','Sako TRG-42 (.338 Lapua) in Arctic cold (−12 °C), firing east at 69° north: here Coriolis and Eötvös matter.'))+'</div>';
+   opt(ls===1,'data-l="1"',L('Lección 2 · 1.540 m','Lesson 2 · 1,540 m'),L('Sako TRG-42 (.338 Lapua) con frío ártico (−12 °C) y tiro al este a 69° de latitud: aquí el Coriolis y el Eötvös ya cuentan.','Sako TRG-42 (.338 Lapua) in Arctic cold (−12 °C), firing east at 69° north: here Coriolis and Eötvös matter.'))+'</div><div class="frgrid">'+opt(ls===2,'data-l="2"',L('Lección 3 · Rescate de rehén','Lesson 3 · Hostage rescue'),L('M24 a 75 m: el atracador se cubre con el rehén. Aprendes la zona expuesta, cuándo disparar y la sujeción.','M24 at 75 m: the hostage-taker hides behind the hostage. You learn the exposed area, when to fire and holdover.'))+'</div>';
   h+='<div class="frrow"><button type="button" class="frbtn" id="frgo">'+L('Empezar la lección ','Start lesson ')+(ls+1)+'</button></div>';
   h+='<p style="font-size:13.5px;color:#bfc2b8">'+L('Siluetas de acero de campo de tiro, como las de competición: solo el contorno, sin rasgos ni sangre.','Steel range silhouettes, as used in competition: just the outline, no features, no blood.')+'</p>';
  } else {
@@ -452,10 +453,11 @@ function intro(){ stopLoop(); if(CFG._u){ CFG.unit=CFG._u; delete CFG._u; } cons
  root.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ CFG.mode=b.getAttribute('data-m'); saveCfg(); intro(); });
  root.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ CFG.rifle=b.getAttribute('data-r'); saveCfg(); intro(); });
  root.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ CFG.stage=b.getAttribute('data-s'); saveCfg(); intro(); });
+ root.querySelectorAll('[data-rs]').forEach(b=>b.onclick=()=>{ const v=b.getAttribute('data-rs'); CFG.rscn=v==='L'?'L':+v; saveCfg(); intro(); });
  root.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ CFG.lesson=+b.getAttribute('data-l'); saveCfg(); intro(); });
  root.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{ CFG.unit=b.getAttribute('data-u'); saveCfg(); intro(); });
  root.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ CFG.spot=b.getAttribute('data-sp')==='1'; saveCfg(); intro(); });
- const go=document.getElementById('frgo'); if(go) go.onclick=()=>{ if(CFG.mode==='aprende') newLesson(CFG.lesson||0); else newGame(); game(); window.scrollTo(0,0); };
+ const go=document.getElementById('frgo'); if(go) go.onclick=()=>{ if(CFG.mode==='aprende'){ if(CFG.lesson===2) rhNew(true); else newLesson(CFG.lesson||0); } else if(CFG.mode==='rehen') rhNew(CFG.rscn==='L'); else newGame(); game(); window.scrollTo(0,0); };
 }
 
 /* ===== Dibujo del mundo ===== */
@@ -549,6 +551,7 @@ function drawSky(c,P,st){ const W=P.W, H=P.H, yh=PY(P,0);
     c.save(); c.globalAlpha=E.cl*(0.55+0.45*hash(i,14)); const spr=spriteCv('cloud'); for(let j=0;j<5;j++){ const ox=(hash(i,20+j)-0.5)*wpx*1.2, oy=-hash(i,30+j)*hpx*0.9, rr_=wpx*(0.22+0.18*hash(i,40+j)); c.drawImage(spr,x+ox-rr_,y+oy-rr_*0.55,rr_*2,rr_*1.1); } c.restore(); } } }
 /* distancia a lo que hay bajo la cruz de la retícula: placa (distancia exacta) o terreno (aprox.) */
 function aimDist(P){ if(!P||!P.scope||!G) return null; const st=G.st;
+  if(G.rq){ const t=G.targets[0], k=t.R/1000, dx=(P.cu-t.u)*k, dy=(P.ce-t.e)*k, p=rhPose(now()); if(silIn(RHT,dx-p.hx,dy-p.hy)||silIn(RHT,dx-p.ax,dy-p.ay)) return {m:t.R,t:t}; if(rhPropIn(dx,dy)) return {m:t.R+1.5,ground:true}; }
   for(const t of G.targets){ if(t.mv&&!mvVis(t,now())) continue; const k=t.R/1000, dx=(P.cu-t.u)*k, dy=(P.ce-t.e)*k, sl=0.15*k; if(Math.abs(dx)<=t.w/2+sl&&Math.abs(dy)<=t.h/2+sl&&(silIn(t,dx,dy)||silIn(t,dx+sl,dy)||silIn(t,dx-sl,dy)||silIn(t,dx,dy+sl)||silIn(t,dx,dy-sl))) return {m:t.R,t:t}; }
   for(let d=8;d<=12000;d*=1.012){ if(eOf(terrain(st,d,P.cu),d)>=P.ce) return {m:d,ground:true}; }
   return {sky:true}; }
@@ -560,7 +563,7 @@ function renderWorld(c,P){ const st=palSt(), W=P.W, H=P.H;
   c.beginPath(); c.moveTo(-5,H+5); for(let x=-5;x<=W+5;x+=step*2){ const u=P.cu+(x-P.cx)/P.s; c.lineTo(x,PY(P,farRidge(st,u)*(P.scope?1:0.5))); } c.lineTo(W+5,H+5); c.closePath(); c.fillStyle=rgb(mix(far,hz,0.45)); c.fill();
   if(st.ter==='montana'||st.ter==='artico'){ c.save(); c.clip(); c.beginPath(); for(let x=-5;x<=W+5;x+=step*2){ const u=P.cu+(x-P.cx)/P.s; const e=farRidge(st,u)*(P.scope?1:0.5); const y=PY(P,e); const y2=PY(P,e*0.78); if(x===-5) c.moveTo(x,y2); c.lineTo(x,y2); } c.lineTo(W+5,-5); c.lineTo(-5,-5); c.closePath(); c.fillStyle='rgba(245,248,252,.75)'; c.fill(); c.restore(); }
   /* objetos ordenados por distancia (de lejos a cerca) */
-  const objs=[]; G.targets.forEach(t=>{ objs.push({d:t.d+9,k:'berm',t:t}); if(!t.mv) objs.push({d:t.d,k:'plate',t:t}); }); G.flags.forEach(f=>objs.push({d:f.d,k:'flag',f:f})); objs.sort((a,b)=>b.d-a.d); let oi=0;
+  const objs=[]; G.targets.forEach(t=>{ if(t.rq){ objs.push({d:t.d+1.5,k:'rqprop',t:t}); return; } objs.push({d:t.d+9,k:'berm',t:t}); if(!t.mv) objs.push({d:t.d,k:'plate',t:t}); }); G.flags.forEach(f=>objs.push({d:f.d,k:'flag',f:f})); objs.sort((a,b)=>b.d-a.d); let oi=0;
   for(let k=0;k<NB;k++){ const d=BANDS[k];
     while(oi<objs.length && objs[oi].d>=d){ drawObj(c,P,objs[oi]); oi++; }
     const lt=Math.log(d/6)/Math.log(2000); let col; if(d>1500) col=mix(mix(mid,far,0.35),hz,clamp((d-1500)/9000,0,0.75)); else col=mix(near,mid,clamp(Math.log(d/40)/Math.log(1500/40),0,1));
@@ -583,7 +586,7 @@ function renderWorld(c,P){ const st=palSt(), W=P.W, H=P.H;
   if(!st.night){ const yh=PY(P,0); const vx=P.scope?1:P.vx; const hzc=hex2rgb(st.hz); const hb_=Math.min(14*vx*P.s,36); const hg=c.createLinearGradient(0,yh-hb_,0,yh+hb_*0.7); hg.addColorStop(0,'rgba('+hzc.map(Math.round).join(',')+',0)'); hg.addColorStop(0.55,'rgba('+hzc.map(Math.round).join(',')+','+(0.22*ENVs.hzk)+')'); hg.addColorStop(1,'rgba('+hzc.map(Math.round).join(',')+',0)'); c.fillStyle=hg; if(yh+hb_>0&&yh-hb_<H) c.fillRect(0,yh-hb_,W,hb_*1.7); }
   while(oi<objs.length){ drawObj(c,P,objs[oi]); oi++; }
 }
-function drawObj(c,P,o){ if(o.k==='flag') return; const t=o.t; const st=palSt();
+function drawObj(c,P,o){ if(o.k==='flag') return; if(o.k==='rqprop') return rhProp(c,P); const t=o.t; const st=palSt();
   if(o.k==='berm'){ const d=t.d+9; const x=PX(P,t.u); const yg=PZ(P,d,t.gy); const wpx=Math.max(P.scope?3:6,(t.mv?t.mv.open+6:t.w*4.5)/d*1000*P.s*(P.scope?1:2.2)); const hpx=Math.max(P.scope?2:3,(t.post+t.h*1.6)/d*1000*P.s*(P.scope?1:2.2));
     c.beginPath(); c.ellipse(x,yg,wpx/2,hpx,0,Math.PI,2*Math.PI); c.fillStyle=st.berm||(st.ter==='artico'?'#c9d3dc':(st.ter==='desierto'?'#b58a57':'#7a6a48')); c.fill(); return; }
   const d=t.d; const x=PX(P,t.u); const yg=PZ(P,d,t.gy); const yc=P.scope?PY(P,t.e):Math.min(yg-5,PZ(P,d,t.zc));
@@ -656,7 +659,7 @@ function drawTrace(c,P){ const A=G.anim; if(!A||!A.track) return; const a=(perfo
   if(a>A.tof&&A.hit){ const b=(a-A.tof); if(b<0.25){ const x=PX(P,A.iu), y=PY(P,A.ie); c.fillStyle='rgba(255,250,220,'+(1-b/0.25)+')'; c.beginPath(); c.arc(x,y,Math.max(4,P.s*0.3),0,2*Math.PI); c.fill(); } }
   c.restore(); }
 function drawPanoMarks(c,P){ G.targets.forEach((t,i)=>{ const x=PX(P,t.u), y=Math.min(PZ(P,t.d,t.gy)-5,PZ(P,t.d,t.zc)); const on=i===G.cur; c.strokeStyle=on?'#ffd23a':'rgba(255,255,255,.75)'; c.lineWidth=on?2:1;
-   c.beginPath(); c.moveTo(x,y-6); c.lineTo(x,y-22); c.stroke(); const lab='S'+(i+1)+(t.lased?' · '+ni(t.lased)+' m':''); c.font='700 12px system-ui,sans-serif'; c.textAlign='center';
+   c.beginPath(); c.moveTo(x,y-6); c.lineTo(x,y-22); c.stroke(); const lab=(t.rq?L('Atracador y rehén','Hostage-taker + hostage'):'S'+(i+1))+(t.lased?' · '+ni(t.lased)+' m':''); c.font='700 12px system-ui,sans-serif'; c.textAlign='center';
    const w=c.measureText(lab).width+10; c.fillStyle=on?'rgba(60,48,0,.85)':'rgba(0,0,0,.6)'; c.fillRect(x-w/2,y-38,w,17); c.fillStyle=t.res==='hit'?'#d8f0a0':(t.res==='miss'?'#f2b19e':(on?'#ffe38a':'#fff')); c.fillText(lab,x,y-25);
    if(on){ c.beginPath(); c.arc(x,y,9,0,2*Math.PI); c.stroke(); } });
   /* rosa de rumbo */
@@ -672,7 +675,7 @@ function draw(){ if(!CV||!G) return; const dpr=Math.min(2,window.devicePixelRati
   if(P.scope) drawShimmer(c,P,tm,dpr);
   c.setTransform(dpr,0,0,dpr,0,0);
   if(P.scope) drawGrass(c,P,tm);
-  drawMovers(c,P,tm);
+  drawMovers(c,P,tm); drawRehen(c,P,tm);
   drawFlags(c,P,tm);
   if(P.scope){ drawMirage(c,P,tm); drawMarks(c,P); drawTrace(c,P); }
   drawFx(c,P);
@@ -786,7 +789,7 @@ function hudScope(c,P,W,H,tm){ c.save(); c.font='600 12px system-ui,sans-serif';
   /* distancia bajo la cruz, pequeña, arriba a la derecha (no tapa la retícula) */
   { const k=[P.cu.toFixed(2),P.ce.toFixed(2),G.cur,G.zoom].join('|'); if(!G.adK||G.adK!==k||(G.mode==='movil')){ G.adK=k; G.adV=aimDist(P); } const a=G.adV;
     const txt=!a||a.sky?'⌖ —':(a.ground&&a.m>6000?'⌖ > 6 km':('⌖ '+(a.ground?'≈ '+ni(Math.round(a.m/5)*5):ni(a.m))+' m')); c.save(); c.font='700 11px system-ui,sans-serif'; const w=c.measureText(txt).width+10; c.fillStyle='rgba(0,0,0,.5)'; c.beginPath(); if(c.roundRect) c.roundRect(W-8-w,30,w,16,8); else c.rect(W-8-w,30,w,16); c.fill(); c.fillStyle=a&&a.t?'#d8f0a0':'rgba(235,240,225,.9)'; c.textAlign='left'; c.textBaseline='alphabetic'; c.fillText(txt,W-8-w+5,42); c.restore(); }
-  const t=G.targets[G.cur]; if(t){ let lab='S'+(t.i+1)+(t.lased?' · '+ni(t.lased)+' m':''); if(t.mv) lab+=' · '+nf(t.mv.v,1)+' m/s '+(t.mv.dir>0?'→':'←'); pill(lab,8,yb,'left'); }
+  const t=G.targets[G.cur]; if(t){ let lab=(t.rq?L('Atracador y rehén','Hostage-taker + hostage'):'S'+(t.i+1))+(t.lased?' · '+ni(t.lased)+' m':''); if(t.mv) lab+=' · '+nf(t.mv.v,1)+' m/s '+(t.mv.dir>0?'→':'←'); pill(lab,8,yb,'left'); }
   if(G.st.night) pill(G.sensor==='nv'?L('VISIÓN NOCTURNA','NIGHT VISION'):L('TÉRMICO','THERMAL'),W-8,yb,'right',G.sensor==='nv'?'#9dff9d':'#f2f2f2');
   if(G.breath){ const hb=(performance.now()-G.breath)/1000; pill(L('Respiración contenida ','Breath held ')+nf(hb,1)+' s',W/2,yb-24,'center',hb>6?'#ffb08a':'#d8f0a0'); }
   if(G.mode==='movil'&&t&&t.mv&&!t.res){ if(t.tofE==null) t.tofE=shotFlight({R:t.R,u:t.u0,e:t.e,t:0,alpha:0,beta:0,nowind:true,nocor:true,nospin:true}).t; const ok=mvOK(t,now(),t.tofE+0.05); if(!ok) pill(L('Silueta tapada a la llegada: espera','Target behind cover on arrival: wait'),W/2,yb-24,'center','#ffcf8a'); }
@@ -806,8 +809,8 @@ function fmtE(mil){ return (mil>=0?L('Arriba ','Up '):L('Abajo ','Down '))+fmtAn
 function fmtW(mil){ return Math.abs(mil)<0.005?fmtAng(0):((mil>=0?L('D ','R '):L('I ','L '))+fmtAng(mil)); }
 function game(){ stopLoop(); const rf=G.rf, st=G.st;
  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],['Francotirador','#/francotirador'],[L(MODES[G.mode].n[0],MODES[G.mode].n[1])]])+
-  '<div class="frtop"><span><b>'+esc(rf.n)+'</b> · '+esc(L(rf.cal[0],rf.cal[1]))+' · '+esc(L(st.n[0],st.n[1]))+'</span><span id="frstat"></span><button type="button" class="frbtn sec sm" id="frquit">'+L('Salir','Quit')+'</button></div>'+
-  '<div class="frg"><div><div class="frview" id="frview"><canvas id="frc" aria-label="'+L('Vista del campo de tiro','Range view')+'"></canvas><div class="frmsg" id="frmsg" hidden></div><div class="frhint" id="frhint"></div></div>'+(G.tut?'<div class="frcoach" id="frcoach" aria-live="polite"></div>':'')+'</div>'+
+  '<div class="frtop"><span><b>'+esc(rf.n)+'</b> · '+esc(L(rf.cal[0],rf.cal[1]))+' · '+esc(G.rq?L(G.rq.s.n[0],G.rq.s.n[1]):L(st.n[0],st.n[1]))+'</span><span id="frstat"></span><button type="button" class="frbtn sec sm" id="frquit">'+L('Salir','Quit')+'</button></div>'+
+  '<div class="frg"><div><div class="frview" id="frview"><canvas id="frc" aria-label="'+L('Vista del campo de tiro','Range view')+'"></canvas><div class="frmsg" id="frmsg" hidden></div><div class="frhint" id="frhint"></div></div>'+(G.tut||(G.rq&&G.rq.les)?'<div class="frcoach" id="frcoach" aria-live="polite"></div>':'')+'</div>'+
   '<div class="frside" id="frside"></div></div></div>';
  X.set(h,'Francotirador');
  CV=document.getElementById('frc'); CTX=CV.getContext('2d'); CACHE=null;
@@ -815,11 +818,11 @@ function game(){ stopLoop(); const rf=G.rf, st=G.st;
  bindView(); side(); status(); coach();
  G.timer=setInterval(()=>{ if(!document.getElementById('frstat')){ clearInterval(G.timer); return; } status(); if(G.timeLimit&&timeLeft()<=0&&!G.over){ endGame(L('Se acabó el tiempo','Time is up')); } },500);
  RAF=requestAnimationFrame(loop);
- msg(G.tut?L('Sigue la lección paso a paso, debajo de la vista','Follow the lesson step by step, below the view'):G.mode==='movil'?L('Las siluetas cruzan entre dos protecciones: mide, pide la solución con el adelanto y dispara cuando quieras','The targets cross between two covers: measure, get the solution with the lead and fire whenever you like'):G.mode==='record'?L('Cuatro siluetas a las distancias de los tiros récord. Mide y pide la solución: la bala tarda segundos en llegar','Four targets at the record-shot distances. Measure and get the solution: the bullet takes seconds to arrive'):EZ()?L('Mide con el telémetro y el anemómetro, y pide la solución','Use the rangefinder and the wind meter, then get the solution'):L('Mide, calcula y dispara. Toca una silueta para elegirla','Measure, compute and fire. Tap a target to pick it'));
+ msg(G.rq?(G.rq.les?L('Sigue la lección paso a paso, debajo de la vista','Follow the lesson step by step, below the view'):L('Mide, pide la solución y espera a que el atracador asome: el rehén está delante','Measure, get the solution and wait for the hostage-taker to show: the hostage is in front')):G.tut?L('Sigue la lección paso a paso, debajo de la vista','Follow the lesson step by step, below the view'):G.mode==='movil'?L('Las siluetas cruzan entre dos protecciones: mide, pide la solución con el adelanto y dispara cuando quieras','The targets cross between two covers: measure, get the solution with the lead and fire whenever you like'):G.mode==='record'?L('Cuatro siluetas a las distancias de los tiros récord. Mide y pide la solución: la bala tarda segundos en llegar','Four targets at the record-shot distances. Measure and get the solution: the bullet takes seconds to arrive'):EZ()?L('Mide con el telémetro y el anemómetro, y pide la solución','Use the rangefinder and the wind meter, then get the solution'):L('Mide, calcula y dispara. Toca una silueta para elegirla','Measure, compute and fire. Tap a target to pick it'));
 }
-function status(){ const s=document.getElementById('frstat'); if(!s) return; const t=G.targets[G.cur]; const tl=timeLeft();
+function status(){ const s=document.getElementById('frstat'); if(!s) return; if(G.rq){ s.innerHTML=rhStatus(); if(G.rq.les){ const sg=[G.rq.step,!!G.readL,!!G.readK,G.dialE,G.dialW,G.view,G.targets[0].res].join('|'); if(sg!==G.rq.sig){ G.rq.sig=sg; rhCoach(); } } return; } const t=G.targets[G.cur]; const tl=timeLeft();
  s.innerHTML='S'+(G.cur+1)+'/'+G.targets.length+' · '+L('cargador','magazine')+' '+Math.max(0,G.rounds-t.shots)+'/'+G.rounds+' · '+L('puntos','score')+' <b>'+G.score+'</b>'+(isFinite(tl)?' · '+Math.floor(tl/60)+':'+String(Math.floor(tl%60)).padStart(2,'0'):''); }
-function chipsHTML(){ return '<div class="frchips">'+G.targets.map((t,i)=>'<button type="button" class="frchip'+(i===G.cur?' on':'')+(t.res==='hit'?' ok':(t.res==='miss'?' ko':''))+'" data-t="'+i+'">S'+(i+1)+' · '+silName(t)+' '+Math.round(t.w*100)+'×'+Math.round(t.h*100)+' cm'+(t.res==='hit'?' · '+L('tocada','hit'):(t.res==='miss'?' · '+L('fallada','missed'):''))+'</button>').join('')+'</div>'; }
+function chipsHTML(){ if(G.rq) return rhChips(); return '<div class="frchips">'+G.targets.map((t,i)=>'<button type="button" class="frchip'+(i===G.cur?' on':'')+(t.res==='hit'?' ok':(t.res==='miss'?' ko':''))+'" data-t="'+i+'">S'+(i+1)+' · '+silName(t)+' '+Math.round(t.w*100)+'×'+Math.round(t.h*100)+' cm'+(t.res==='hit'?' · '+L('tocada','hit'):(t.res==='miss'?' · '+L('fallada','missed'):''))+'</button>').join('')+'</div>'; }
 function toolsHTML(){ const T_=[['kestrel',L('Anemómetro','Wind meter')],['lrf',L('Telémetro','Rangefinder')],['comp',L('Brújula y GPS','Compass & GPS')],['card',L('Tarjeta','Data card')],['notes',L('Notas y calculadora','Notes & calculator')]];
  if(EZ()) T_.push(['pc',L('Computadora balística','Ballistic computer')]); else T_.push(['flags',L('Prismáticos: banderas','Binoculars: flags')]);
  T_.push(['form',L('Fórmulas','Formulas')]);
@@ -835,7 +838,7 @@ function side(){ const sd=document.getElementById('frside'); if(!sd) return; con
    '<div class="frtur"><div class="bt"><button type="button" data-d="e" data-v="-10">−'+(U()?'2,5':'1')+'</button><button type="button" data-d="e" data-v="-1">−</button></div><div class="val" id="frve"><small>'+L('Elevación','Elevation')+'</small>'+fmtE(G.dialE)+'</div><div class="bt"><button type="button" data-d="e" data-v="1">+</button><button type="button" data-d="e" data-v="10">+'+(U()?'2,5':'1')+'</button></div></div>'+
    '<div class="frtur"><div class="bt"><button type="button" data-d="w" data-v="-10">'+L('I','L')+(U()?'2,5':'1')+'</button><button type="button" data-d="w" data-v="-1">'+L('I','L')+'</button></div><div class="val" id="frvw"><small>'+L('Deriva','Windage')+'</small>'+fmtW(G.dialW)+'</div><div class="bt"><button type="button" data-d="w" data-v="1">'+L('D','R')+'</button><button type="button" data-d="w" data-v="10">'+L('D','R')+(U()?'2,5':'1')+'</button></div></div>'+
    '<div class="frtur"><div class="bt"><button type="button" data-z="-1">−</button></div><div class="val"><small>'+L('Aumentos','Magnification')+'</small>'+G.zoom+'×</div><div class="bt"><button type="button" data-z="1">+</button></div></div>'+
-   '<div class="frrow" style="margin:6px 0 0"><button type="button" class="frbtn sec sm" id="frctr">'+L('Centrar en S','Center on S')+(G.cur+1)+'</button><button type="button" class="frbtn sec sm" id="fr0">'+L('Torretas a cero','Zero turrets')+'</button>'+
+   '<div class="frrow" style="margin:6px 0 0"><button type="button" class="frbtn sec sm" id="frctr">'+(G.rq?L('Centrar','Center'):L('Centrar en S','Center on S')+(G.cur+1))+'</button><button type="button" class="frbtn sec sm" id="fr0">'+L('Torretas a cero','Zero turrets')+'</button>'+
     (G.mode==='movil'?'<button type="button" class="frbtn sec sm'+(G.track?' on':'')+'" id="frtk">'+L('Seguir la silueta: ','Track the target: ')+(G.track?L('sí','on'):L('no','off'))+'</button>':'')+
     (G.st.night?'<button type="button" class="frbtn sec sm on" id="frsn">'+L('Visor: ','Scope: ')+(G.sensor==='nv'?L('visión nocturna','night vision'):L('térmico','thermal'))+'</button>':'')+'</div></div>'+
    '<div class="frpanel"><h4>'+L('Silueta','Target')+'</h4>'+chipsHTML()+'</div><div class="frpanel"><h4>'+L('Instrumentos','Instruments')+'</h4>'+toolsHTML()+'</div>';
@@ -971,7 +974,7 @@ function shoot(t,tg,aimU,aimE,dialE,dialW,held,tm){ let R=t.R; if(!tg){ const d=
  const dxm=(iu-uA)*R/1000, dym=(ie-t.e)*R/1000; const hit=!!tg&&mvOK(t,tm,fl.t)&&silIn(t,dxm,dym);
  return {R:R,fl:fl,iu:iu,ie:ie,dxm:dxm,dym:dym,hit:hit,mvAdj:mvAdj,ea:ea,wa:wa,tsg:tsg,uA:uA}; }
 /* ===== Disparo ===== */
-function fire(){ if(G.busy||G.over) return; let t=G.targets[G.cur]; const tm=now(); movUpd(tm); trackUpd(0); /* la retícula, donde está la placa en este instante */
+function fire(){ if(G.rq) return fireRehen(); if(G.busy||G.over) return; let t=G.targets[G.cur]; const tm=now(); movUpd(tm); trackUpd(0); /* la retícula, donde está la placa en este instante */
  if(G.mode==='movil'&&G.track&&G.trackLag>0.05){ msg(L('Espera: la retícula aún está volviendo a la silueta','Wait: the reticle is still swinging back onto the target')); return; }
  const aimU=G.aim.u+G.shake.x, aimE=G.aim.e+G.shake.y; const tg=aimedTarget(aimU,aimE); if(tg){ t=tg; G.cur=tg.i; }
  if(t.res==='hit'||t.shots>=G.rounds){ msg(L('Esa silueta ya está resuelta: elige otra','That target is done: pick another')); return; }
@@ -1208,7 +1211,7 @@ function tutSteps(){ const tu=G.tut, S=tu.sol, Ls=LESSONS[tu.n], rf=G.rf, n=tu.n
    p(n===0?L('Ya sabes el método completo. En la lección 2 lo repites a 1.540 m, con frío ártico y una rotación de la Tierra que ya se nota.','You now know the whole method. In lesson 2 you repeat it at 1,540 m, with Arctic cold and an Earth’s rotation you can actually feel.'):L('Este es exactamente el método de Veterano. En Fácil la computadora balística hace las cuentas por ti; en Veterano las haces tú.','This is exactly the Veteran method. In Easy the ballistic computer does the sums for you; in Veteran you do them.')); })()});
  return steps; }
 
-function coach(){ const el=document.getElementById('frcoach'); if(!el||!G||!G.tut) return; const tu=G.tut, S=tutSteps(); tu.s=clamp(tu.s,0,S.length-1); const st=S[tu.s];
+function coach(){ if(G&&G.rq) return rhCoach(); const el=document.getElementById('frcoach'); if(!el||!G||!G.tut) return; const tu=G.tut, S=tutSteps(); tu.s=clamp(tu.s,0,S.length-1); const st=S[tu.s];
  const okStep=(!st.inputs&&!st.turret)||tu.ok[st.id];
  let h='<div class="frco-hd"><span>'+L('Aprende a disparar','Learn to shoot')+' · '+L('lección ','lesson ')+(tu.n+1)+' · '+L('paso ','step ')+(tu.s+1)+' '+L('de','of')+' '+S.length+'</span><div class="frco-bar"><i style="width:'+Math.round(100*(tu.s+1)/S.length)+'%"></i></div></div>';
  h+='<h3>'+st.h+'</h3><div class="frco-bd">'+st.body+'</div>';
@@ -1264,6 +1267,191 @@ export function route(app,x){ APP=app; X=x; css(); CFG=loadCfg();
  const q=(location.hash.split('?')[1]||''); const P_={}; q.split('&').forEach(kv=>{ const [k,v]=kv.split('='); if(k) P_[k]=decodeURIComponent(v||''); });
  if(P_.m&&MODES[P_.m]) CFG.mode=P_.m; if(P_.r&&RIFLES.some(r=>r.id===P_.r)) CFG.rifle=P_.r; if(P_.s&&STAGES.some(s=>s.id===P_.s)) CFG.stage=P_.s; if(P_.u==='moa'||P_.u==='mil') CFG.unit=P_.u;
  intro(); }
+/* ===== Rescate de rehén: simulacro de tirador policial en el campo de tiro =====
+   Dos siluetas de acero tipo E (50 × 100 cm, las mismas medidas que la «figura 11») sobre un carril de blancos móviles: delante el rehén
+   (claro, X blanca, banda «NO DISPARAR», manos abiertas) y detrás el atracador (gris oscuro, pistola dibujada). Solo asoma parte del atracador.
+   El carril repite un ciclo fijo por escenario (sin azar): en el mismo segundo de cada partida están en el mismo sitio.
+   El impacto se decide con el MISMO contorno que se dibuja, en el instante en que llega la bala: primero el rehén (está delante), luego el atracador. */
+const RH_W=0.5, RHT={shape:'e',w:RH_W};
+const RH_SCN=[
+ {id:'banco',st:'campo',d:75,seed:11,prop:'banco',n:['Puerta de banco','Bank door'],
+  dsc:['75 m. Sale del banco caminando con el rehén delante y se para dos veces: 2,8 s y 2,2 s. En cada parada asoman media cabeza y un hombro.','75 m. He walks out of the bank behind the hostage and stops twice: 2.8 s and 2.2 s. At each stop half his head and a shoulder show.'],
+  P:{C0:{px:-0.2},W0:{px:-0.2,hx:-0.06,ax:0.04},W1:{px:0.8,hx:-0.06,ax:0.04},E1:{px:0.8,hx:-0.08,ax:0.05,x:1},V1:{px:0.8,hx:0.06,ax:-0.04},V0:{px:-0.2,hx:0.06,ax:-0.04},E0:{px:-0.2,hx:0.08,ax:-0.05,x:1}},
+  cyc:[[0,'C0'],[1,'C0'],[1.4,'W0'],[3.8,'W1',1],[4.3,'E1'],[7.1,'E1'],[7.6,'V1'],[10,'V0',1],[10.5,'E0'],[12.7,'E0'],[13.2,'C0']],ph:0.6},
+ {id:'tienda',st:'desierto',d:130,seed:23,prop:'tienda',n:['Tienda','Shop'],
+  dsc:['130 m. Va y viene delante del escaparate moviendo al rehén de lado a lado; se para 2 s a un lado y 1,6 s al otro.','130 m. He paces in front of the shop window swinging the hostage side to side; he stops 2 s on one side and 1.6 s on the other.'],
+  P:{A:{px:-0.6,hx:-0.14,x:1},Ma:{px:-0.6,hx:0.07},Mb:{px:0.5,hx:0.07},B:{px:0.5,hx:0.14,x:1},Nb:{px:0.5,hx:-0.07},Na:{px:-0.6,hx:-0.07}},
+  cyc:[[0,'A'],[2,'A'],[2.5,'Ma'],[5,'Mb',1],[5.5,'B'],[7.1,'B'],[7.6,'Nb'],[10.1,'Na',1],[10.6,'A']],ph:0.4},
+ {id:'parada',st:'artico',d:190,seed:37,prop:'parada',n:['Parada de autobús','Bus stop'],
+  dsc:['190 m, en invierno. Camina agachando al rehén y se para dos veces (2 s y 1,5 s): ahí la cabeza del atracador asoma por encima de la del rehén.','190 m, in winter. He walks pushing the hostage down and stops twice (2 s and 1.5 s): then his head shows above the hostage’s.'],
+  P:{S0:{px:0.6},K0:{px:0.6,hy:-0.17,ay:0.01,x:1},V0:{px:0.6,hy:-0.04},V1:{px:-0.6,hy:-0.04},K1:{px:-0.6,hy:-0.17,ay:0.01,x:1}},
+  cyc:[[0,'S0'],[1,'S0'],[1.5,'K0'],[3.5,'K0'],[4,'V0'],[6.5,'V1',1],[7,'K1'],[8.5,'K1'],[9,'V1'],[11.5,'V0',1],[12,'S0']],ph:0.3},
+ {id:'azotea',st:'montana',d:250,seed:41,prop:'azotea',roof:10,n:['Azotea','Rooftop'],
+  dsc:['250 m, en una azotea a 10 m, cuesta arriba y con aire fino. Recorre el borde y se para muy poco: 1,8 s y 1,2 s. La bala tarda más de 0,3 s.','250 m, on a rooftop 10 m up, uphill in thin air. He walks the edge and barely stops: 1.8 s and 1.2 s. The bullet takes over 0.3 s.'],
+  P:{H0:{px:-0.7},E0:{px:-0.7,hx:0.09,ax:-0.04,x:1},W0:{px:-0.7,hx:-0.05,ax:0.03},W1:{px:0.7,hx:-0.05,ax:0.03},E1:{px:0.7,hx:-0.09,ax:0.04,x:1},H1:{px:0.7}},
+  cyc:[[0,'H0'],[1.5,'H0'],[1.9,'E0'],[3.7,'E0'],[4.1,'W0'],[7.1,'W1',1],[7.5,'E1'],[8.7,'E1'],[9.1,'H1'],[10.6,'H1'],[11.1,'H0',1]],ph:0},
+ {id:'noche',st:'noche',d:160,seed:53,prop:'noche',n:['Noche','Night'],
+  dsc:['160 m, de noche, con visión nocturna o térmico. Camina de un lado a otro y se para 2,4 s asomando por un lado y 1,6 s por el otro.','160 m, at night, with night vision or thermal. He walks back and forth and stops 2.4 s showing on one side and 1.6 s on the other.'],
+  P:{C0:{px:0.9},A:{px:0.9,hx:-0.08,ax:0.05,x:1},M0:{px:0.9,hx:0.05,ax:-0.03},M1:{px:-0.9,hx:0.05,ax:-0.03},B:{px:-0.9,hx:0.08,ax:-0.05,x:1},C1:{px:-0.9}},
+  cyc:[[0,'C0'],[1.5,'C0'],[2,'A'],[4.4,'A'],[4.9,'M0'],[8.1,'M1',1],[8.6,'B'],[10.2,'B'],[10.7,'C1'],[12,'C1'],[13.5,'C0',1]],ph:0.8}];
+/* posición de las dos siluetas (m, respecto al centro del carril) en el segundo tm de la partida */
+function rhPose(tm,S){ S=S||G.rq.s; const cy=S.cyc, C=cy[cy.length-1][0]; const s=((tm+S.ph)%C+C)%C; let i=0; while(i<cy.length-2&&s>=cy[i+1][0]) i++;
+  const a=S.P[cy[i][1]], b=S.P[cy[i+1][1]]; let f=(s-cy[i][0])/((cy[i+1][0]-cy[i][0])||1); if(!cy[i+1][2]) f=f*f*(3-2*f); /* andar: velocidad constante; giros y paradas: suaves */
+  const v=k=>(a[k]||0)+((b[k]||0)-(a[k]||0))*f, px=v('px'); return {hx:px+v('hx'),hy:v('hy'),ax:px+v('ax'),ay:v('ay'),px:px,s:s,C:C,open:a===b&&!!a.x,walk:!!cy[i+1][2],key:a===b?cy[i][1]:''}; }
+/* ¿a quién da un impacto en (dx, dy) m desde el centro del carril? el rehén está delante: en el solape gana él */
+function rhWho(dx,dy,tm,S){ const p=rhPose(tm,S); if(silIn(RHT,dx-p.hx,dy-p.hy)) return 'hos'; if(silIn(RHT,dx-p.ax,dy-p.ay)) return 'atr'; return null; }
+/* ventanas del ciclo (s) en las que el atracador queda quieto y asomado */
+function rhWins(S){ S=S||G.rq.s; const cy=S.cyc, w=[]; for(let i=0;i<cy.length-1;i++){ if(cy[i][1]===cy[i+1][1]&&S.P[cy[i][1]].x) w.push({a:cy[i][0],b:cy[i+1][0],key:cy[i][1]}); } return w; }
+/* centro de la parte que asoma de la cabeza y del tronco del atracador, en cada postura asomada (muestreo fino del contorno) */
+function rhExposed(S,key){ S=S||G.rq.s; const p=Object.assign({hx:0,hy:0,ax:0,ay:0,px:0},S.P[key]); p.hx+=p.px; p.ax+=p.px; const o={head:[0,0,0],torso:[0,0,0]};
+  const tl=[0,0,0], tr=[0,0,0]; for(let x=-0.3;x<=0.3;x+=0.004) for(let y=-0.5;y<=0.5;y+=0.004){ const X=x+p.ax, Y=y+p.ay; if(!silIn(RHT,x,y)||silIn(RHT,X-p.hx,Y-p.hy)) continue; const z=y>0.22?o.head:(x<0?tl:tr); z[0]+=X; z[1]+=Y; z[2]++; }
+  o.torso=tl[2]>tr[2]?tl:tr; [o.head,o.torso].forEach(z=>{ if(z[2]){ z[0]/=z[2]; z[1]/=z[2]; z[2]*=0.004*0.004; } }); return o; }
+const RH_PROP={banco:{w:2.6,top:3.2,col:'#b9a98d',dk:'#3d3833',door:[1.0,2.2,2.3],sign:['BANCO','BANK']},tienda:{w:2.8,top:3.1,col:'#c2b08a',dk:'#4a4339',win:[-2.3,-0.5,0.8,2.1],door:[0.3,1.3,2.2],sign:['TIENDA','SHOP'],awn:1},
+  parada:{w:2.2,top:2.6,shelter:1,col:'#8f9aa3',dk:'#3a4248',sign:['BUS','BUS']},azotea:{w:4,top:2.4,roof:10,col:'#a9a39a',dk:'#46423d',door:[1.3,2.3,2.0]},noche:{w:2.6,top:3.2,col:'#8c8577',dk:'#2a2723',door:[1.0,2.2,2.3],lamp:1,sign:['ESTANCO','KIOSK']}};
+/* ¿el punto cae en el decorado de madera que hay detrás? (solo para la lectura de distancia) */
+function rhPropIn(dx,dy){ const S=G.rq.s, pr=RH_PROP[S.prop], z=dy+1.25; return Math.abs(dx)<=pr.w&&z<=pr.top&&z>=-(pr.roof||0); }
+function rhGeo(P){ const t=G.targets[0]; if(P.scope){ const k=1000/t.R*P.s; return {t:t,k:k,x0:PX(P,t.u),yc:PY(P,t.e)}; }
+  const k=1000/t.d*P.s*2.2; return {t:t,k:k,x0:PX(P,t.u),yc:PZ(P,t.d,t.gy)-1.25*k}; }
+function rhPistol(c,x,y,k,sg){ const u=0.012*k; c.beginPath(); c.moveTo(x-5*u*sg,y-3*u); c.lineTo(x+6*u*sg,y-3*u); c.lineTo(x+6*u*sg,y-0.6*u); c.lineTo(x-1*u*sg,y-0.6*u); c.lineTo(x-1.6*u*sg,y+4.5*u); c.lineTo(x-4.4*u*sg,y+4.5*u); c.lineTo(x-3.6*u*sg,y-0.6*u); c.lineTo(x-5*u*sg,y-0.6*u); c.closePath(); }
+function rhHand(c,x,y,k){ const u=0.01*k; c.beginPath(); c.arc(x,y,2.4*u,0,2*Math.PI); for(let f=-1.5;f<=1.5;f++){ c.moveTo(x+f*1.3*u,y-2*u); c.lineTo(x+f*1.5*u,y-5.6*u); } c.moveTo(x-2.2*u,y+0.4*u); c.lineTo(x-4.4*u,y-1.6*u); }
+/* decorado de madera detrás del carril: estático, se pinta con el resto del paisaje (en la caché del mundo) */
+function rhProp(c,P){ if(!G.rq) return; const g=rhGeo(P), k=g.k, S=G.rq.s, pr=RH_PROP[S.prop]; if(Math.abs(g.x0-P.W/2)>P.W+8*k) return;
+  const th=!!G.st.night&&G.sensor==='th'; const X=m=>g.x0+m*k, Y=z=>g.yc-z*k;
+  /* decorado de madera (detrás) */
+  const wc=th?'#2b2b2a':pr.col, dk=th?'#1a1a19':pr.dk;
+  if(pr.roof){ c.fillStyle=th?'#262625':'#8f8a80'; c.fillRect(X(-pr.w-2),Y(-1.25),(pr.w+2)*2*k,(pr.roof)*k); c.fillStyle=th?'#151515':'#5b6672'; for(let fy=0;fy<3;fy++) for(let fx=-2;fx<=2;fx++){ c.fillRect(X(fx*1.5-0.4),Y(-1.25-1.6-fy*3.1),0.8*k,1.2*k); }
+    c.fillStyle=th?'#333':'#7d786f'; c.fillRect(X(-pr.w-2),Y(-1.25+0.45),(pr.w+2)*2*k,0.45*k); }
+  if(pr.shelter){ c.fillStyle=th?'#222':'#3c4247'; c.fillRect(X(-pr.w),Y(pr.top-1.25),0.08*k,pr.top*k); c.fillRect(X(pr.w-0.08),Y(pr.top-1.25),0.08*k,pr.top*k); c.fillRect(X(-pr.w-0.2),Y(pr.top-1.25),(pr.w+0.2)*2*k,0.14*k);
+    c.fillStyle=th?'rgba(60,60,60,.5)':'rgba(170,200,215,.45)'; c.fillRect(X(-pr.w+0.08),Y(pr.top-1.25-0.3),(pr.w-0.08)*2*k,(pr.top-0.6)*k); c.fillStyle=th?'#333':'#2f6f9f'; c.fillRect(X(pr.w+0.25),Y(2.3-1.25),0.06*k,2.3*k); c.beginPath(); c.arc(X(pr.w+0.28),Y(2.45-1.25),0.22*k,0,2*Math.PI); c.fill(); }
+  else { c.fillStyle=wc; c.fillRect(X(-pr.w),Y(pr.top-1.25),pr.w*2*k,pr.top*k); c.fillStyle='rgba(0,0,0,.12)'; for(let j=-Math.floor(pr.w);j<=Math.floor(pr.w);j++) c.fillRect(X(j*1.0),Y(pr.top-1.25),Math.max(1,0.02*k),pr.top*k); }
+  if(pr.door){ c.fillStyle=dk; c.fillRect(X(pr.door[0]),Y(pr.door[2]-1.25),(pr.door[1]-pr.door[0])*k,pr.door[2]*k); }
+  if(pr.win){ c.fillStyle=th?'#1d1d1d':'#4f6470'; c.fillRect(X(pr.win[0]),Y(pr.win[3]-1.25),(pr.win[1]-pr.win[0])*k,(pr.win[3]-pr.win[2])*k); }
+  if(pr.awn){ for(let j=0;j<8;j++){ c.fillStyle=th?(j%2?'#3a3a3a':'#2a2a2a'):(j%2?'#e8e2d0':'#8e3b2e'); c.fillRect(X(-pr.w+j*pr.w/4),Y(2.75-1.25),pr.w/4*k+0.5,0.35*k); } }
+  if(pr.lamp){ c.fillStyle=th?'#bbb':'rgba(255,226,150,.95)'; c.beginPath(); c.arc(X(-1.1),Y(2.6-1.25),0.1*k,0,2*Math.PI); c.fill(); }
+  if(pr.sign&&!pr.shelter&&k>=14){ const sw=Math.min(pr.w*1.2,2.4); c.fillStyle=th?'#2f2f2f':'#24323d'; c.fillRect(X(-sw/2),Y(pr.top-1.25-0.12),sw*k,0.42*k); c.fillStyle=th?'#555':'#f1ead6'; c.font='800 '+Math.max(6,0.28*k)+'px system-ui,sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(L(pr.sign[0],pr.sign[1]),X(0),Y(pr.top-1.25-0.33)); }
+}
+function drawRehen(c,P,tm){ if(!G.rq) return; const g=rhGeo(P), k=g.k, t=g.t, S=G.rq.s, pr=RH_PROP[S.prop]; if(Math.abs(g.x0-P.W/2)>P.W+6*k) return;
+  const night=!!G.st.night, th=night&&G.sensor==='th'; const p=rhPose(tm); const X=m=>g.x0+m*k, Y=z=>g.yc-z*k, yg=Y(-1.25);
+  c.save();
+  /* carril y postes */
+  c.fillStyle=th?'#3a3a3a':'#2c2b28'; c.fillRect(X(-1.9),yg-0.12*k,3.8*k,0.12*k); [p.ax,p.hx].forEach((x,j)=>{ c.fillRect(X(x)-Math.max(0.6,0.02*k),Y(-0.5+(j?p.hy:p.ay)),Math.max(1.2,0.04*k),(0.75+(j?p.hy:p.ay))*k); });
+  const sx=RH_W*k, sy=2*RH_W*k; const ax=X(p.ax), ay=Y(p.ay), hx=X(p.hx), hy=Y(p.hy);
+  /* atracador: gris oscuro y pistola dibujada en el lado que asoma */
+  c.fillStyle=th?'#f4f4f4':'#3d4144'; c.strokeStyle=th?'#fff':'rgba(214,218,220,.75)'; c.lineWidth=Math.max(0.8,sx*0.022); silPath(c,RHT,sx,sy,ax,ay); c.fill(); c.stroke();
+  const sg=(p.ax-p.hx)>=0?1:-1; if(k*0.12>=5){ rhPistol(c,X(p.ax+sg*0.15),Y(p.ay+0.02),k,sg); c.fillStyle=th?'rgba(0,0,0,.35)':'rgba(255,178,74,.28)'; c.fill(); c.strokeStyle=th?'#333':'#ffb24a'; c.lineWidth=Math.max(1,0.012*k); c.stroke(); }
+  t.hits.forEach(h=>{ c.fillStyle='rgba(236,233,220,.95)'; c.beginPath(); c.arc(ax+h[0]*k,ay-h[1]*k,Math.max(1.2,0.03*k),0,2*Math.PI); c.fill(); });
+  /* rehén: claro, X blanca, banda «NO DISPARAR» y manos abiertas */
+  c.fillStyle=th?'#8d8d89':'#d3cdbc'; c.strokeStyle=th?'#d0d0d0':'#6d6758'; c.lineWidth=Math.max(0.6,sx*0.02); silPath(c,RHT,sx,sy,hx,hy); c.fill(); c.stroke();
+  const xc=th?'#2a2a2a':'#ffffff';
+  c.strokeStyle=xc; c.lineWidth=Math.max(1,0.05*k); c.beginPath(); c.moveTo(hx-0.2*k,hy+0.45*k); c.lineTo(hx+0.2*k,hy-0.08*k); c.moveTo(hx+0.2*k,hy+0.45*k); c.lineTo(hx-0.2*k,hy-0.08*k); c.stroke();
+  c.fillStyle=th?'#3a3a3a':'#b3261e'; c.fillRect(hx-sx/2,hy+0.09*k,sx,0.1*k);
+  if(k>=60){ c.fillStyle='#fff'; c.font='800 '+(0.062*k)+'px system-ui,sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(L('NO DISPARAR','NO SHOOT'),hx,hy+0.142*k); }
+  if(k>=70){ c.strokeStyle=xc; c.lineWidth=Math.max(1,0.012*k); [-1,1].forEach(s_=>{ rhHand(c,hx+s_*0.16*k,hy-0.0*k,k); c.stroke(); }); }
+  if(G.rq.hos){ const h=G.rq.hos; c.fillStyle='rgba(60,60,58,.9)'; c.beginPath(); c.arc(hx+h[0]*k,hy-h[1]*k,Math.max(1.4,0.03*k),0,2*Math.PI); c.fill(); }
+  /* en la lección: barra del ciclo con las ventanas en verde */
+  if(P.scope&&G.rq.les){ const bw=Math.min(P.r*1.15,260), bx=P.cx-bw/2, by=P.cy-P.r*0.72; c.fillStyle='rgba(0,0,0,.6)'; c.fillRect(bx-4,by-15,bw+8,26); c.fillStyle='rgba(160,60,50,.85)'; c.fillRect(bx,by,bw,7); c.fillStyle='rgba(110,200,90,.95)'; rhWins().forEach(w=>{ c.fillRect(bx+w.a/p.C*bw,by,(w.b-w.a)/p.C*bw,7); });
+    c.fillStyle='#fff'; c.fillRect(bx+p.s/p.C*bw-1,by-3,2,13); c.font='700 10px system-ui,sans-serif'; c.textAlign='left'; c.textBaseline='alphabetic'; c.fillStyle=p.open?'#bff0a0':'#ffd0c8'; c.fillText(p.open?L('ASOMA · ventana','EXPOSED · window'):L('TAPADO por el rehén','COVERED by the hostage'),bx,by-4); }
+  c.restore(); }
+const RH_PTS=[100,60,40,25];
+function rhBonus(ta){ return Math.max(0,60-Math.floor(ta/5)); }
+function rhNew(les){ const i=les?0:clamp(CFG.rscn|0,0,RH_SCN.length-1); const S=RH_SCN[i]; const keep={mode:CFG.mode,rifle:CFG.rifle,stage:CFG.stage};
+  if(les&&CFG.unit!=='mil'){ CFG._u=CFG.unit; CFG.unit='mil'; }
+  CFG.mode='facil'; CFG.stage=S.st; if(les) CFG.rifle='m24'; newGame(); Object.assign(CFG,keep);
+  const st=G.st; RND=rng(20261109+S.seed*7919); G.mode='rehen'; G.zone=S.d+220;
+  G.T=Math.round(rr(st.T[0],st.T[1])); G.rh=Math.round(rr(st.rh[0],st.rh[1])); G.dp=Math.round(rr(-8,8)); G.az=st.az[Math.floor(RND()*st.az.length)]; G.env=stageEnv(st,G.T,G.rh,G.dp);
+  const d=S.d, gy=terrain(st,d,0)+(S.roof||0);
+  const t={i:0,d:d,u:0,w:RH_W,h:2*RH_W,shape:'e',post:0.75,gy:gy,hits:[],res:null,shots:0,pts:0,lased:null,rq:1,marks:[]};
+  t.zc=gy+t.post+t.h/2; t.e=Math.atan2(t.zc-EYE,d)*1000; t.R=Math.hypot(d,t.zc-EYE); G.targets=[t];
+  const s0=Math.round(rr(1,3.5)*10)/10, dir0=Math.round(rr(0,360))%360; G.wind={b:[{s:s0,dir:dir0},{s:s0,dir:dir0},{s:s0,dir:dir0}],e1:Math.round(t.R/3),e2:Math.round(2*t.R/3)};
+  G.flags=[{d:Math.max(30,Math.round(t.R/6)),u:-190,band:0},{d:Math.round(t.R/2),u:-150,band:1},{d:Math.round(5*t.R/6),u:-120,band:2}]; G.flags.forEach(f=>{ f.gy=terrain(st,f.d,f.u); });
+  G.timeLimit=0; G.rounds=G.rf.mag||5; G.cur=0; G.view='pano'; G.aim={u:0,e:t.e}; G.aimSet=false; G.pano={u:0}; G.dialE=0; G.dialW=0; G.readK=null; G.readL=null; G.score=0; G.shots=[];
+  G.rq={i:i,s:S,les:!!les,step:0,hos:null,res:''}; G.t0=performance.now(); CACHE=null; return G; }
+/* disparo en el modo rehén: misma balística (shotFlight), mismo punto de impacto que en el resto del juego; se mira quién está ahí al llegar la bala */
+function rhShot(tm,aimU,aimE,dialE,dialW){ const t=G.targets[0], R=t.R; const fl=shotFlight({R:R,u:aimU,e:aimE,t:tm,alpha:dialE,beta:dialW,track:true});
+  const iu=aimU+fl.z/R*1000, ie=aimE+fl.y/R*1000, dx=(iu-t.u)*R/1000, dy=(ie-t.e)*R/1000, ta=tm+fl.t;
+  return {fl:fl,iu:iu,ie:ie,dx:dx,dy:dy,ta:ta,who:rhWho(dx,dy,ta),w0:rhWho(dx,dy,tm),pose:rhPose(ta)}; }
+function fireRehen(){ if(G.busy||G.over) return; const t=G.targets[0]; if(t.res||t.shots>=G.rounds){ msg(L('El ejercicio ha terminado: repite o cambia de escenario','The drill is over: repeat or change scenario')); return; }
+  const tm=now(); const aimU=G.aim.u+G.shake.x, aimE=G.aim.e+G.shake.y; const sh=rhShot(tm,aimU,aimE,G.dialE,G.dialW); const {fl,iu,ie,dx,dy,ta,who,w0}=sh, pa=sh.pose;
+  t.shots++; G.breath=0;
+  const rec={rq:1,i:0,R:t.R,tm:tm,ta:ta,tof:fl.t,v:fl.v,mach:fl.mach,minMach:fl.minMach,dialE:G.dialE,dialW:G.dialW,holdE:aimE-t.e,holdW:aimU-t.u,iu:iu,ie:ie,dx:dx,dy:dy,who:who,w0:w0,shot:t.shots,pose:pa,pts:0,bonus:0,
+    ov:silIn(RHT,dx-pa.hx,dy-pa.hy)&&silIn(RHT,dx-pa.ax,dy-pa.ay),zone:(dy-pa.ay)>0.22?'head':'torso',shk:Math.hypot(G.shake.x,G.shake.y)};
+  if(who==='atr'){ rec.bonus=rhBonus(ta); rec.pts=RH_PTS[Math.min(t.shots,RH_PTS.length)-1]+rec.bonus; G.score=rec.pts; t.pts=rec.pts; t.res='hit'; t.hitShot=t.shots; t.hits.push([dx-pa.ax,dy-pa.ay]); t.marks=[]; }
+  else if(who==='hos'){ t.res='fail'; G.rq.hos=[dx-pa.hx,dy-pa.hy]; t.marks=[]; }
+  else { (t.marks=t.marks||[]).push({iu:iu,ie:ie,n:t.shots}); if(t.shots>=G.rounds){ if(G.rq.les){ t.shots=0; t.marks=[]; rec.reload=1; } else { t.res='miss'; t.marks=[]; } } }
+  G.shots.push(rec); G.last=rec;
+  G.anim={fired:performance.now(),track:fl.track,u:aimU,e:aimE,tof:fl.t,iu:iu,ie:ie,hit:who==='atr',t:t}; G.busy=true; side(); status();
+  const fx=document.getElementById('frview'); if(fx){ fx.style.transform='translateY(2px)'; setTimeout(()=>{ fx.style.transform=''; },90); }
+  const g0=G; const alive=()=>G===g0&&!G.over&&!!document.getElementById('frside');
+  setTimeout(()=>{ if(!alive()) return; if(who==='atr'){ hitFx(t,{dxm:dx,dym:dy}); G.hitVer=(G.hitVer||0)+1; msg(L('ATRACADOR NEUTRALIZADO · rehén a salvo','HOSTAGE-TAKER DOWN · hostage safe'),'hit'); }
+    else if(who==='hos') msg(L('Has alcanzado al rehén','You hit the hostage'),'miss'); else msg(L('Fallo','Miss')+' · '+(t.res==='miss'?L('cargador vacío','magazine empty'):(rec.reload?L('cargador nuevo','new magazine'):L('quedan ','')+(G.rounds-t.shots)+L('',' left'))),'miss'); },fl.t*1000+60);
+  setTimeout(()=>{ if(!alive()) return; G.busy=false; side(); rhDebrief(rec); },fl.t*1000+(who?1300:1000));
+  if(window.MAT_FR) window.MAT_FR.lastShot=rec; return rec; }
+const rhCm=m=>ni(Math.abs(m)*100)+' cm';
+function rhDebrief(r){ if(!G||G.over) return; const t=G.targets[0], S=G.rq.s, row=(a,b)=>'<span>'+a+'</span><b>'+b+'</b>'; const pa=r.pose;
+  const bd=breakdown(t.R,t.u,t.e,r.tm); let h='', why='';
+  if(r.who==='atr') h+='<p class="frbig"><b class="frok">'+L('RESCATE','RESCUE')+'</b> · '+L('atracador neutralizado, rehén a salvo','hostage-taker down, hostage safe')+' · '+ordShot(r.shot)+' · '+(r.zone==='head'?L('cabeza','head'):L('hombro','shoulder'))+'</p><p>'+L('Puntos: ','Points: ')+RH_PTS[Math.min(r.shot,RH_PTS.length)-1]+' + '+L('bono de tiempo ','time bonus ')+r.bonus+' = <b>'+r.pts+'</b></p>';
+  else if(r.who==='hos'){ h+='<p class="frbig"><b class="frko">'+L('HAS ALCANZADO AL REHÉN','YOU HIT THE HOSTAGE')+'</b> · '+L('misión fallida','mission failed')+'</p>';
+    why=(r.ov&&pa.open?L('El impacto cayó donde se solapan las dos siluetas: ahí el rehén está delante. Apunta solo a la parte del atracador que asoma.','The impact landed where the two silhouettes overlap: there the hostage is in front. Aim only at the part of the hostage-taker that is exposed.'):
+      (r.w0==='atr'&&!pa.open?L('Al apretar el gatillo apuntabas bien, pero la bala tarda ','When you pressed the trigger your aim was right, but the bullet takes ')+nf(r.tof,2)+L(' s y en ese tiempo el rehén volvió a tapar esa zona. Dispara al principio de la ventana, no al final.',' s and in that time the hostage covered that spot again. Fire at the start of the window, not at the end.'):
+      L('En ese momento el rehén tapaba ese punto. Espera a que el atracador asome y la postura quede quieta.','At that moment the hostage covered that spot. Wait for the hostage-taker to show and hold still.')));
+    h+='<div class="frspot"><span class="tag">'+L('Por qué','Why')+'</span><p>'+why+'</p></div>'; }
+  else { const hd=[r.dx-pa.ax,r.dy-(pa.ay+0.36)]; why=L('Fallo: ','Miss: ')+rhCm(hd[0])+' '+(hd[0]>=0?L('a la derecha','right'):L('a la izquierda','left'))+', '+rhCm(hd[1])+' '+(hd[1]>=0?L('por encima','high'):L('por debajo','low'))+'.'; h+='<p class="frbig"><b class="frko">'+L('FALLO','MISS')+'</b> · '+ordShot(r.shot)+' · '+L('la bala dio en el decorado, a ','the round hit the backdrop, ')+rhCm(hd[0])+' '+(hd[0]>=0?L('a la derecha','right'):L('a la izquierda','left'))+' '+L('y ','and ')+rhCm(hd[1])+' '+(hd[1]>=0?L('por encima','above'):L('por debajo','below'))+L(' del centro de la cabeza del atracador',' the centre of the hostage-taker’s head')+' · '+(t.res==='miss'?'<b class="frko">'+L('cargador vacío: misión fallida','magazine empty: mission failed')+'</b>':(r.reload?L('cargador nuevo (en la lección no se acaba)','new magazine (unlimited in the lesson)'):L('quedan ','')+(G.rounds-t.shots)+L(' en el cargador',' left in the magazine')))+'</p>'; }
+  h+='<div class="frkv">'+row(L('Distancia','Distance'),ni(t.R)+' m')+row(L('Tiempo de vuelo','Time of flight'),nf(r.tof,2)+' s')+row(L('Disparo · llegada','Fired · arrived'),nf(r.tm,1)+' s · '+nf(r.ta,1)+' s')+
+    row(L('Torretas','Turrets'),fmtE(r.dialE)+' · '+fmtW(r.dialW))+row(L('Solución de la computadora','Ballistic computer'),fmtE(bd.elev)+' · '+fmtW(bd.wdg))+row(L('Postura al llegar la bala','Pose when the bullet arrived'),pa.open?L('asomado y quieto','exposed and still'):L('en movimiento o tapado','moving or covered'))+'</div>';
+  const more=!t.res&&t.shots<G.rounds;
+  G.rq.why=why; if(G.rq.les){ G.rq.res=r.who==='atr'?'':(r.who==='hos'?'<b class="frko">'+L('Has alcanzado al rehén.','You hit the hostage.')+'</b> ':'')+why; if(r.who==='atr') G.rq.step=5; h+='<div class="frrow"><button type="button" class="frbtn" id="frcon">'+L('Seguir con la lección','Back to the lesson')+'</button>'+(t.res?'<button type="button" class="frbtn sec" id="frrep">'+L('Repetir la lección','Repeat the lesson')+'</button>':'')+'</div>'; }
+  else h+='<div class="frrow">'+(more?'<button type="button" class="frbtn" id="frag">'+L('Corregir y disparar','Correct and fire')+' ('+(G.rounds-t.shots)+')</button>':'<button type="button" class="frbtn" id="frend">'+L('Ver resultado','See result')+'</button>')+'</div>';
+  sheet(L('Informe del disparo','Shot debrief'),h,s=>{ const a=s.querySelector('#frag'); if(a) a.onclick=()=>closeSheet(); const e=s.querySelector('#frend'); if(e) e.onclick=()=>{ closeSheet(); rhEnd(); };
+    const cn=s.querySelector('#frcon'); if(cn) cn.onclick=()=>{ closeSheet(); coach(); const c=document.getElementById('frcoach'); if(c) c.scrollIntoView({block:'start',behavior:'smooth'}); };
+    const rp=s.querySelector('#frrep'); if(rp) rp.onclick=()=>{ closeSheet(); rhNew(true); game(); window.scrollTo(0,0); }; },'debrief');
+  coach(); }
+function rhEnd(){ if(G.over) return; G.over=true; closeSheet(); stopLoop(); const t=G.targets[0], S=G.rq.s, ok=t.res==='hit'; const B=bests(); const k='rehen|'+S.id+'|'+G.rf.id; const rec=ok&&(!B[k]||G.score>B[k]);
+  if(rec){ B[k]=G.score; try{ localStorage.setItem('mat_fr_best',JSON.stringify(B)); }catch(e){} }
+  const last=G.last||{};
+  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],['Francotirador','#/francotirador'],[L('Resultado','Result')]])+'<h1 style="font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.02em;margin:14px 0 4px">'+(ok?(t.hitShot===1?L('Rescate limpio','Clean rescue'):L('Rehén rescatado','Hostage rescued')):(t.res==='fail'?L('Has alcanzado al rehén','You hit the hostage'):L('Misión fallida: cargador vacío','Mission failed: magazine empty')))+'</h1>'+
+   '<p style="color:#bfc2b8">'+esc(G.rf.n)+' · '+esc(L(S.n[0],S.n[1]))+' · '+ni(t.R)+' m · '+L('Rescate de rehén','Hostage rescue')+'</p>'+
+   '<div class="frsum"><div><b>'+(ok?G.score:0)+'</b><span>'+L('puntos','points')+'</span></div><div><b>'+t.shots+'</b><span>'+L('disparos','rounds')+'</span></div><div><b>'+(last.ta!=null?nf(last.ta,1)+' s':'—')+'</b><span>'+L('tiempo','time')+'</span></div></div>'+
+   (ok?'<p>'+ordShot(t.hitShot)+': '+RH_PTS[Math.min(t.hitShot,RH_PTS.length)-1]+' + '+L('bono de tiempo ','time bonus ')+last.bonus+'</p>':'<p class="frko">'+L('Sin puntos: la misión no termina con el rehén a salvo.','No points: the mission does not end with the hostage safe.')+'</p>'+(G.rq.why?'<p>'+G.rq.why+'</p>':''))+
+   (rec?'<p class="frok frbig">'+L('Nuevo récord en este escenario con este fusil','New best for this scenario and rifle')+'</p>':(B[k]?'<p>'+L('Récord','Best')+': '+B[k]+'</p>':''))+
+   '<div class="frrow"><button type="button" class="frbtn" id="frre">'+L('Repetir el escenario','Repeat the scenario')+'</button><button type="button" class="frbtn sec" id="frmenu">'+L('Otro escenario o fusil','Another scenario or rifle')+'</button></div></div>';
+  X.set(h,'Francotirador'); document.getElementById('frre').onclick=()=>{ rhNew(false); game(); window.scrollTo(0,0); }; document.getElementById('frmenu').onclick=()=>{ intro(); window.scrollTo(0,0); }; }
+function rhStatus(){ const t=G.targets[0], ta=now(); return ni(t.R)+' m · '+L('cargador','magazine')+' '+Math.max(0,G.rounds-t.shots)+'/'+G.rounds+' · '+Math.floor(ta/60)+':'+String(Math.floor(ta%60)).padStart(2,'0')+(t.res?'':' · '+L('bono','bonus')+' '+rhBonus(ta)); }
+function rhChips(){ const t=G.targets[0]; return '<div class="frchips"><span class="frchip on">'+L('Atracador + rehén','Hostage-taker + hostage')+' · '+L('siluetas tipo E','E-type silhouettes')+' 50×100 cm'+(t.lased?' · '+ni(t.lased)+' m':'')+(t.res==='hit'?' · '+L('rescatado','rescued'):(t.res?' · '+L('fallido','failed'):''))+'</span></div>'; }
+const RH_DOC=()=>L('En la realidad el disparo es el último recurso: primero se negocia, y la orden la da el mando de la unidad especial (GEO de la Policía Nacional o UEI de la Guardia Civil).','In reality the shot is the last resort: negotiation comes first, and the order comes from the special unit’s commander (Spain’s GEO police unit or the Guardia Civil’s UEI).');
+function rhIntro(rf,B){ const opt=(on,attr,b,s)=>'<button type="button" class="fropt'+(on?' on':'')+'" '+attr+'><b>'+b+'</b><span>'+s+'</span></button>';
+  let h='<div class="frsec">'+L('Rescate de rehén','Hostage rescue')+'</div><div class="frpanel" style="font-size:14px;line-height:1.45"><p style="margin:0 0 6px">'+L('Simulacro de tirador policial en el campo de tiro: dos siluetas de acero sobre un carril que se mueve siempre igual. Delante, el <b>rehén</b> (claro, con X blanca, banda «NO DISPARAR» y manos abiertas); detrás, el <b>atracador</b> (gris oscuro, con una pistola dibujada). Solo asoma una parte del atracador.','A police marksman drill on the range: two steel silhouettes on a carrier that always moves the same way. In front, the <b>hostage</b> (light, white X, «NO SHOOT» band and open hands); behind, the <b>hostage-taker</b> (dark grey, with a pistol drawn on). Only part of the hostage-taker is exposed.')+'</p><ul style="margin:0 0 6px 18px;padding:0">'+
+   '<li>'+L('<b>Dónde:</b> dispara solo a lo que asoma. Si la bala cae donde se solapan, da al que está delante: el rehén.','<b>Where:</b> shoot only what is exposed. Where they overlap, the round hits whoever is in front: the hostage.')+'</li>'+
+   '<li>'+L('<b>Cuándo:</b> el carril repite el mismo ciclo. Espera a que asome y cuenta con el tiempo de vuelo de la bala.','<b>When:</b> the carrier repeats the same cycle. Wait until he shows, and allow for the bullet’s time of flight.')+'</li>'+
+   '<li>'+L('Si das al rehén, la misión termina. Si la bala va al decorado, corriges y vuelves a tirar hasta vaciar el cargador.','Hit the hostage and the mission ends. If the round goes into the backdrop, correct and fire again until the magazine is empty.')+'</li>'+
+   '<li>'+L('Puntos: rescate al 1.er disparo 100, al 2.º 60, al 3.º 40, después 25, más un bono de tiempo de hasta 60 (uno menos cada 5 s).','Points: rescue with the 1st shot 100, 2nd 60, 3rd 40, then 25, plus a time bonus of up to 60 (one less every 5 s).')+'</li></ul>'+
+   '<p style="margin:0;font-size:13px;color:#bfc2b8">'+RH_DOC()+'</p></div>';
+  h+='<div class="frsec">'+L('Escenario','Scenario')+'</div><div class="frgrid c2">'+opt(CFG.rscn==='L','data-rs="L"',L('Aprende: rescate guiado','Learn: guided rescue'),L('Puerta de banco a 75 m, paso a paso: zona expuesta, cuándo disparar y sujeción. Con barra de ritmo.','Bank door at 75 m, step by step: exposed area, when to fire and holdover. With a timing bar.'))+
+   RH_SCN.map((s,i)=>{ const b=B['rehen|'+s.id+'|'+rf.id]; return opt(CFG.rscn!=='L'&&(CFG.rscn|0)===i,'data-rs="'+i+'"',esc(L(s.n[0],s.n[1])),esc(L(s.dsc[0],s.dsc[1]))+(b?' · '+L('récord','best')+' '+b:'')); }).join('')+'</div>';
+  if(CFG.rscn!=='L') h+='<div class="frsec">'+L('Fusil y cartucho','Rifle and cartridge')+'</div><div class="frgrid c2">'+RIFLES.map(r=>opt(CFG.rifle===r.id,'data-r="'+r.id+'"',esc(r.n)+' · '+esc(L(r.cal[0],r.cal[1])),esc(L(r.bul[0],r.bul[1]))+' · '+L('cargador de ','magazine of ')+(r.mag||5))).join('')+'</div>';
+  h+='<div class="frrow"><span style="color:#bfc2b8">'+L('Unidades del visor','Scope units')+'</span><span class="frseg"><button type="button" data-u="mil" class="'+(CFG.unit==='mil'?'on':'')+'">MIL</button><button type="button" data-u="moa" class="'+(CFG.unit==='moa'?'on':'')+'">MOA</button></span></div>';
+  h+='<div class="frrow"><button type="button" class="frbtn" id="frgo">'+(CFG.rscn==='L'?L('Empezar la lección','Start the lesson'):L('Ir al puesto de tiro','Go to the firing position'))+'</button></div>';
+  return h; }
+/* lección guiada del modo rehén */
+function rhCoach(){ const el=document.getElementById('frcoach'); if(!el||!G||!G.rq||!G.rq.les) return; const q=G.rq, t=G.targets[0], S=q.s; const N=6;
+  let bd=null; if(G.readL&&G.readK) bd=breakdown(G.readL.R,t.u,t.e,now()); const W=rhWins(S)[0], ex=rhExposed(S,W.key);
+  const solOK=bd&&Math.abs(G.dialE-Math.round(bd.elev/CLICK())*CLICK())<1e-6&&Math.abs(G.dialW-Math.round(bd.wdg/CLICK())*CLICK())<1e-6;
+  const ST=[
+   {h:L('Lección 3: rescate de rehén','Lesson 3: hostage rescue'),b:'<p>'+L('Mira el decorado a 75 m: el <b>rehén</b> es la silueta clara con la X blanca y la banda «NO DISPARAR»; el <b>atracador</b> es la gris oscura de detrás, con la pistola dibujada. Solo asoma parte de él.','Look at the set at 75 m: the <b>hostage</b> is the light silhouette with the white X and the «NO SHOOT» band; the <b>hostage-taker</b> is the dark grey one behind, with the pistol drawn on. Only part of him shows.')+'</p><p>'+L('Si la bala toca al rehén, la misión termina. ','If the round touches the hostage, the mission ends. ')+RH_DOC()+'</p>',ok:true},
+   {h:L('Mide distancia y aire','Measure range and air'),b:'<p>'+L('Igual que en el resto del juego: telémetro sobre las siluetas y anemómetro en tu puesto.','Same as in the rest of the game: rangefinder on the silhouettes and wind meter at your position.')+'</p>',tools:[['lrf',L('Telémetro','Rangefinder')],['kestrel',L('Anemómetro','Wind meter')]],ok:!!(G.readL&&G.readK)},
+   {h:L('Solución y sujeción','Solution and holdover'),b:bd?'<p>'+L('A ','At ')+ni(G.readL.R)+L(' m la computadora pide ',' m the computer asks for ')+fmtE(bd.elev)+' · '+fmtW(bd.wdg)+L(': casi nada, porque el fusil está a cero a 100 m. Si giras las torretas, el centro de la cruz es el punto de impacto. Si no, sujeta esa misma cantidad con las marcas de la retícula (1 mil a 75 m son 7,5 cm). Aquí, gira las torretas.','. Almost nothing, because the rifle is zeroed at 100 m. Dial it and the centre of the crosshair is the point of impact; otherwise hold the same amount with the reticle marks (1 mil at 75 m is 7.5 cm). Here, dial it.')+'</p>':'<p>'+L('Primero mide (paso 1).','Measure first (step 1).')+'</p>',tools:[['pc',L('Computadora balística','Ballistic computer')]],ok:!!solOK},
+   {h:L('Dónde: la zona expuesta','Where: the exposed area'),b:'<p>'+L('Mira por el visor un ciclo entero (','Watch one full cycle through the scope (')+nf(rhPose(0,S).C,1)+L(' s; luego se repite igual). La pareja camina por el carril y se para ',' s; then it repeats exactly). The pair walks along the carrier and stops ')+rhWins(S).length+L(' veces: ',' times: ')+rhWins(S).map(w=>nf(w.b-w.a,1)+' s').join(L(' y ',' and '))+L('. En cada parada el rehén se aparta y asoman media cabeza del atracador (unos ','. At each stop the hostage shifts and half the hostage-taker’s head (about ')+ni(ex.head[2]*10000)+L(' cm²) y un hombro. La barra de arriba marca las paradas en verde. Pon la cruz en el centro de lo que asoma de la cabeza, nunca en el borde que toca al rehén: donde se solapan, la bala da al rehén.',' cm²) and a shoulder show. The bar at the top marks the stops in green. Put the crosshair in the middle of the exposed part of the head, never on the edge next to the hostage: where they overlap, the round hits the hostage.')+'</p><p>'+L('Mientras caminan también asoma un poco, pero se mueve: necesitarías adelanto y te juegas el rehén.','While they walk a little shows too, but it moves: you would need lead and you risk the hostage.')+'</p>',tools:[['scope',L('Mirar por la mira','Look through the scope')]],ok:G.view==='scope'},
+   {h:L('Cuándo disparar','When to fire'),b:'<p>'+L('La bala tarda ','The bullet takes ')+(bd?nf(bd.t,2):'≈0,1')+L(' s en llegar. Dispara al principio de la ventana, con la postura ya quieta: la ventana tiene que seguir abierta cuando llegue la bala. A 250 m tarda más de 0,3 s, y si el rehén ya se está moviendo puede tapar el punto. Con las torretas bien, la cruz en la cabeza y la ventana abierta hasta que llega, el impacto es seguro.',' s to arrive. Fire at the start of the window, once the pose is still: the window must still be open when the bullet arrives. At 250 m it takes over 0.3 s, and if the hostage is already moving he can cover the spot. Turrets right, crosshair on the head and the window open until it arrives: the hit is certain.')+'</p>'+(q.res?'<div class="frco-res">'+q.res+'</div>':''),ok:false},
+   {h:L('¡Rescate limpio!','Clean rescue!'),b:'<p>'+L('Has visto las tres decisiones del tirador policial: qué parte asoma, cuándo está quieta y cuánto tarda la bala. Ahora prueba los cinco escenarios: cada uno tiene su propio ritmo, siempre el mismo.','You have seen the police marksman’s three decisions: what is exposed, when it is still and how long the bullet takes. Now try the five scenarios: each has its own rhythm, always the same.')+'</p>',end:true}];
+  q.step=clamp(q.step,0,N-1); if(t.res==='hit') q.step=5; const st=ST[q.step];
+  let h='<div class="frco-hd"><span>'+L('Aprende','Learn')+' · '+L('rescate de rehén','hostage rescue')+' · '+L('paso ','step ')+(q.step+1)+' '+L('de','of')+' '+N+'</span><div class="frco-bar"><i style="width:'+Math.round(100*(q.step+1)/N)+'%"></i></div></div><h3>'+st.h+'</h3><div class="frco-bd">'+st.b+'</div>';
+  if(st.tools) h+='<div class="frrow">'+st.tools.map(x=>'<button type="button" class="frbtn sec sm" data-ct="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
+  if(st.end) h+='<div class="frrow"><button type="button" class="frbtn" id="frcsc">'+L('Ir a los escenarios','Go to the scenarios')+'</button><button type="button" class="frbtn sec" id="frcrp">'+L('Repetir la lección','Repeat the lesson')+'</button></div>';
+  else h+='<div class="frrow frco-nav">'+(q.step>0?'<button type="button" class="frbtn sec sm" id="frcprev">'+L('Paso anterior','Previous step')+'</button>':'')+(q.step<4?'<button type="button" class="frbtn sm" id="frcnext"'+(st.ok?'':' disabled')+'>'+(q.step===0?L('Empezar','Start'):L('Siguiente','Next'))+'</button>':'')+(t.res?'<button type="button" class="frbtn sm" id="frcrp">'+L('Repetir la lección','Repeat the lesson')+'</button>':'')+'</div>';
+  el.innerHTML=h; const g=s=>el.querySelector(s);
+  el.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{ const k=b.getAttribute('data-ct'); if(k==='scope'){ closeSheet(); G.cur=0; G.view='scope'; G.aim={u:t.u,e:t.e}; G.aimSet=true; CACHE=null; G.iris=performance.now(); side(); rhCoach(); const vw=document.getElementById('frview'); if(vw) vw.scrollIntoView({block:'start',behavior:'smooth'}); } else tool(k); });
+  if(g('#frcnext')) g('#frcnext').onclick=()=>{ q.step++; rhCoach(); }; if(g('#frcprev')) g('#frcprev').onclick=()=>{ q.step--; rhCoach(); };
+  if(g('#frcrp')) g('#frcrp').onclick=()=>{ closeSheet(); rhNew(true); game(); window.scrollTo(0,0); };
+  if(g('#frcsc')) g('#frcsc').onclick=()=>{ closeSheet(); stopLoop(); CFG.mode='rehen'; CFG.rscn=0; saveCfg(); intro(); window.scrollTo(0,0); }; }
 /* para QA automática */
 window.MAT_FR={G:()=>G,aimDist:()=>{ const W=CV?CV.clientWidth:390,H=CV?CV.clientHeight:844; return aimDist(viewParams(W,H)); },cfg:o=>{ Object.assign(CFG,o||{}); saveCfg(); return CFG; },cam:()=>G.bcam,camSkip:()=>{ if(G.bcam) G.bcam.skip=true; },start:()=>{ newGame(); game(); return G; },lase:lase,kestrel:kestrel,tool:tool,fire:fire,manual:manualSolve,breakdown:breakdown,
  dial:(e,w)=>{ G.dialE=e; G.dialW=w; side(); },aimAt:(i,he,hw)=>{ const t=G.targets[i]; G.cur=i; G.view='scope'; G.aimSet=true; movUpd(now()); G.aim={u:t.u+(hw||0),e:t.e+(he||0)}; G.trackOff=hw||0; G.trackLag=0; G.trackErr=0; G.trackPrev={i:i,u:t.u}; CACHE=null; side(); },
@@ -1272,4 +1460,4 @@ window.MAT_FR={G:()=>G,aimDist:()=>{ const W=CV?CV.clientWidth:390,H=CV?CV.clien
  sim:(i,e,w,held)=>{ const t=G.targets[i]; const s=shoot(t,t,t.u,t.e,e,w,held!==false,now()); return {hit:s.hit,dx:s.dxm,dy:s.dym,minMach:s.fl.minMach,t:s.fl.t}; },
  newGame:()=>newGame(),now:()=>now(),mv:{x:mvX,vis:mvVis,u:mvU,lead:leadMil,upd:movUpd},spot:spotCorr,
   testShot:(i,E,W_,hu,he,tm)=>{ const t=G.targets[i]; movUpd(tm); const aimU=t.u+(hu||0), aimE=t.e+(he||0); const sh=shoot(t,t,aimU,aimE,E,W_,true,tm); const bd=breakdown(t.R,t.mv?t.u0:t.u,t.e,tm);
-    const r={i:i,R:t.R,dxm:sh.dxm,dym:sh.dym,dialE:E,dialW:W_,holdE:aimE-t.e,holdW:aimU-t.u,bd:bd,lead:t.mv?leadMil(t,bd.t):0,hit:sh.hit,tof:sh.fl.t,vis:mvOK(t,tm,sh.fl.t)}; r.c=spotCorr(r); return r; },tut:{start:n=>{ newLesson(n); game(); return G; },sol:()=>G.tut.sol,steps:()=>tutSteps().map(s=>s.id),go:s=>tutGo(s),state:()=>G.tut,check:()=>tutCheck()}};
+    const r={i:i,R:t.R,dxm:sh.dxm,dym:sh.dym,dialE:E,dialW:W_,holdE:aimE-t.e,holdW:aimU-t.u,bd:bd,lead:t.mv?leadMil(t,bd.t):0,hit:sh.hit,tof:sh.fl.t,vis:mvOK(t,tm,sh.fl.t)}; r.c=spotCorr(r); return r; },rehen:{scn:RH_SCN,start:(i,les)=>{ CFG.rscn=les?'L':i; rhNew(!!les); game(); return G; },pose:(tm,i)=>rhPose(tm,i==null?null:RH_SCN[i]),who:(dx,dy,tm,i)=>rhWho(dx,dy,tm,i==null?null:RH_SCN[i]),wins:i=>rhWins(i==null?null:RH_SCN[i]),exposed:(i,k)=>rhExposed(RH_SCN[i],k),sil:(dx,dy)=>silIn(RHT,dx,dy),clock:tm=>{ G.t0=performance.now()-tm*1000; },shot:(tm,au,ae,E,W_)=>{ const r=rhShot(tm,au,ae,E,W_); return {who:r.who,w0:r.w0,dx:r.dx,dy:r.dy,tof:r.fl.t,ta:r.ta,open:r.pose.open}; },sol:()=>{ const t=G.targets[0]; const b=breakdown(t.R,t.u,t.e,now()); return {elev:b.elev,wdg:b.wdg,t:b.t,R:t.R,u:t.u,e:t.e}; },coach:()=>rhCoach(),step:n=>{ if(n!=null){ G.rq.step=n; rhCoach(); } return G.rq.step; },end:()=>rhEnd()},tut:{start:n=>{ newLesson(n); game(); return G; },sol:()=>G.tut.sol,steps:()=>tutSteps().map(s=>s.id),go:s=>tutGo(s),state:()=>G.tut,check:()=>tutCheck()}};
