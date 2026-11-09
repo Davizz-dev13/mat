@@ -316,6 +316,205 @@ const RG=[[S2("...Vale. Te escucho. Pero no me la juegues.","...OK. I’m listen
  [S2("Vale, {yo}. Contigo se puede hablar.","OK, {yo}. You I can talk to."),S2("No soy mala persona, ¿sabes? No quería esto.","I’m not a bad person, you know? I didn’t want this."),S2("(Se le oye respirar más despacio.)","(You hear slower breathing on the line.)")]];
 const RM=[S2("Ya... ¿Y qué?","Yeah... so what?"),S2("No sé si creerte.","Not sure I believe you."),S2("Hmm. Sigue.","Hmm. Go on."),S2("Eso dices tú.","So you say.")];
 const RB=[S2("¡No me digas lo que tengo que hacer!","Don’t tell me what to do!"),S2("¡Así no vamos a ningún lado!","This is going nowhere!"),S2("¡Te estás riendo de mí!","You’re laughing at me!"),S2("(Cuelga. Tardas varios minutos en recuperar la línea.)","(The line goes dead. It takes several minutes to get it back.)"),S2("¡Estoy hart{o} de que me habléis así!","I’m sick of being spoken to like that!")];
+/* ---------------- variedad de diálogo (M.A.T, nov. 2026) ----------------
+   Solo cambia las palabras, nunca la mecánica: todo sale de un generador aparte (FRND), sembrado con la
+   semilla del caso, y se aplica DESPUÉS de que el juego haya decidido el momento, las opciones y su efecto.
+   La técnica correcta funciona igual que antes en todas las partidas; RND no se toca.
+   Los diálogos y los sucesos son ficción de la simulación (Estimación), no casos reales. */
+let FRND=Math.random, FLU={};
+function flvInit(){ FRND=rng((P.seed^0x5bd1e995)>>>0); FLU={}; G.lastAmb=-9; G.amb0=fpickU(AMB0[P.rural?'rural':P.sit]||AMB0.banco,'amb0'); }
+const fpick=a=>a[Math.floor(FRND()*a.length)];
+function fpickU(a,tag){ const f=a.filter(x=>!FLU[tag+'|'+x[0]]); const r=fpick(f.length?f:a); FLU[tag+'|'+r[0]]=1; return r; }
+/* aperturas y frases del sujeto: más formas de decir lo mismo (la clave es la frase original en español) */
+const SAYV={
+ "¡¿Quién eres?! ¡Como entre alguien aquí, no respondo! ¡¿Me oyes?!":[S2("¡¿Diga?! ¡¿Quién es?! ¡Que no entre nadie, que no entre nadie!","Hello?! Who is this?! Nobody comes in, nobody comes in!"),S2("(Respira muy deprisa) ¡¿Eres poli?! ¡Diles que se aparten de la puerta!","(Breathing very fast) Are you a cop?! Tell them to get away from the door!"),S2("¡No me llaméis más! ¡Bueno, sí, vale! ¡¿Qué queréis?!","Stop calling me! No, wait, OK! What do you want?!"),S2("¡Veo las luces azules por la ventana! ¡¿Cuántos sois ahí fuera?!","I can see the blue lights through the window! How many of you are out there?!")],
+ "¡Ya era hora! ¡Quiero hablar con alguien que mande, no con un mandado!":[S2("¡Por fin! ¡Llevo media hora gritando por la ventana! ¡¿Tú quién eres?!","Finally! I’ve been shouting out the window for half an hour! Who are you?!"),S2("Mira, no tengo nada que hablar con el poli de turno. ¡Que se ponga tu jefe!","Look, I’ve got nothing to say to some duty cop. Put your boss on!"),S2("¡Si me vas a soltar un sermón, cuelga ya!","If you’re going to lecture me, hang up now!"),S2("¡¿Ahora sí os importa?! ¡Ahora que hay gente aquí dentro sí, ¿no?!","Oh, now you care?! Now there are people in here you care, right?!")],
+ "(Tarda en contestar) ...¿Sí? No sé ni qué estoy haciendo.":[S2("(Contesta al quinto tono) ...Hola. Supongo que tenía que pasar.","(Answers on the fifth ring)... Hello. I guess this had to happen."),S2("...¿Eres de la policía? Vale. Vale. Perdona, no me salen las palabras.","...Are you the police? OK. OK. Sorry, I can’t find the words."),S2("(Voz muy baja) Yo no soy así. Te lo juro, yo no soy así.","(Very quietly) I’m not like this. I swear, I’m not like this.")],
+ "Ya sé cómo va esto. Tú hablas, yo escucho. ¿Qué ofrecéis?":[S2("Negociador, ¿no? Bien. Vamos a ahorrarnos el teatro: ¿qué hay encima de la mesa?","Negotiator, right? Good. Let’s skip the theatre: what’s on the table?"),S2("(Tono tranquilo, casi aburrido) Te escucho. Pero no me hables como a un crío.","(Calm, almost bored) I’m listening. But don’t talk to me like a kid."),S2("Sé lo que vas a hacer: hablar despacio y ganar tiempo. Vale. ¿Qué me ofreces?","I know what you’re going to do: talk slowly and buy time. Fine. What are you offering?")],
+ "...¿Y ahora qué? Da igual lo que digas.":[S2("(Largo silencio) ...Ah. Eres tú. Pues ya está, ¿no?","(Long silence)... Oh. It’s you. So that’s it, then?"),S2("No hace falta que me convenzas de nada. Ya no importa.","You don’t need to talk me into anything. It doesn’t matter now."),S2("...Hola. No sé ni por qué he cogido el teléfono.","...Hi. I don’t even know why I picked up.")],
+ "Quiero un coche en la puerta. Depósito lleno. Tienes una hora.":[S2("Un coche aquí delante, con el depósito lleno y nadie detrás. Una hora.","A car out front, full tank, nobody behind me. One hour."),S2("Lo que quiero es fácil: un coche y vía libre. ¿Tan difícil es?","What I want is simple: a car and a clear road. Is that so hard?")],
+ "Quiero cincuenta mil euros en una bolsa y que nadie me siga.":[S2("Cincuenta mil. En billetes usados. Y ni se os ocurra seguirme.","Fifty thousand. Used notes. And don’t even think about following me."),S2("Dinero. Cincuenta mil, en una bolsa, en la puerta. Y luego me dejáis en paz.","Money. Fifty thousand, in a bag, at the door. Then you leave me alone.")],
+ "Quiero que venga el director general y me pida perdón delante de todos.":[S2("Que baje aquí el que firmó lo mío. Que me lo explique a la cara.","I want whoever signed off on my case down here. Explain it to my face.")],
+ "Quiero que venga el director de la aseguradora y me pida perdón delante de todos.":[S2("Que venga el que rechazó lo mío. Que me lo explique a la cara.","I want whoever turned my claim down to come here. Explain it to my face.")],
+ "Quiero que venga la tele. Que todo el mundo sepa lo que me han hecho.":[S2("¡Llamad a la tele! ¡Quiero que se sepa todo, con nombres y apellidos!","Call the TV! I want it all known, names and all!")],
+ "Quiero hablar con mi ex. ¡Ponla al teléfono! ¡Ahora!":[S2("¡Quiero hablar con mi ex! ¡Me debe una explicación! ¡Ahora!","I want to talk to my ex! I’m owed an explanation! Now!")],
+ "Te doy treinta minutos. Si no tengo lo que he pedido, esto se pone feo.":[S2("Tienes veinte minutos para traerme lo mío. Ni uno más.","You’ve got twenty minutes to bring me what’s mine. Not one more.")],
+ "A la hora en punto se me acaba la paciencia. Tú verás.":[S2("Mira el reloj. Cuando den las en punto, se acabó la charla.","Watch the clock. When it hits the hour, the chat’s over.")],
+ "¿Hay francotiradores ahí fuera? Y no me mientas.":[S2("¿Cuántos tiradores tenéis apuntando a la ventana? Dime la verdad.","How many snipers have you got on the window? Tell me the truth.")],
+ "¿Me estáis grabando? ¿Cuántos sois?":[S2("¿Esta llamada la está oyendo más gente? ¿Quién más hay ahí?","Are other people listening to this call? Who else is there?")],
+ "He oído pasos en la escalera. ¿Vais a entrar?":[S2("Hay alguien al otro lado de la puerta. Lo oigo. ¿Vais a entrar o qué?","There’s someone on the other side of the door. I can hear them. Are you coming in or what?")],
+ "¿Sabes qué? Me da igual cómo acabe. Igual lo mejor es que acabe todo hoy.":[S2("Llevo todo el día pensando que esto solo acaba de una manera.","I’ve been thinking all day that this only ends one way.")],
+ "Ya no tengo nada que perder. Nada. Eso es lo que no entendéis.":[S2("¿Para qué voy a salir? Dímelo tú. ¿Para qué?","What would I come out for? You tell me. What for?")],
+ "¿Y qué me pasa si salgo? Dímelo claro.":[S2("Venga, dímelo tú: si salgo, ¿qué me espera ahí fuera?","Go on, you tell me: if I come out, what’s waiting for me out there?")],
+ "Si salgo, ¿cuánto me cae? No me dores la píldora.":[S2("No me vendas humo. ¿Cuántos años son por esto?","Don’t give me hot air. How many years is this?")],
+ "¡He visto a uno en el tejado de enfrente! ¡Me dijiste que no había nadie!":[S2("¡Hay alguien en el tejado de enfrente! ¡Lo estoy viendo! ¡Me mentiste!","There’s someone on the roof opposite! I can see them! You lied to me!")],
+ "¡¿Dónde está lo que me prometiste?! ¡Me has mentido!":[S2("¡Ha pasado el tiempo y aquí no ha llegado nada! ¡Nada!","Time’s up and nothing’s arrived! Nothing!")],
+ "¡Estoy saliendo en la tele! ¡Hay un helicóptero! ¿Lo estáis viendo todos?":[S2("¡Estoy en todas las cadenas! ¡Mi cara, en directo!","I’m on every channel! My face, live!"),S2("¡Me lo están enseñando en el móvil! ¡Hay un helicóptero encima!","They’re showing it on my phone! There’s a helicopter overhead!")],
+ "¡¿Qué ha sido ese ruido?! ¡¿Estáis entrando?!":[S2("¡¿Qué ha sido eso?! ¡Ha sonado como un golpe en la puerta!","What was that?! It sounded like a bang on the door!"),S2("¡He oído algo detrás! ¡¿Qué estáis haciendo?!","I heard something out the back! What are you doing?!")],
+ "Vale... ¿Y cómo lo hago? No quiero que me disparen al salir.":[S2("Si salgo... ¿me vas a estar esperando tú?","If I come out... will you be the one waiting for me?")],
+ "Estoy cansad{o}, {yo}. ¿Cómo salgo de esta?":[S2("No puedo más, {yo}. Dime qué tengo que hacer para salir.","I can’t take any more, {yo}. Tell me what I have to do to come out.")],
+ "Eso es. Eso es justo lo que me pasa... Vale. ¿Cómo lo hago?":[S2("Eso es... eso es exactamente lo que me pasa. Vale. Dime cómo salgo.","That’s right... that’s exactly what’s happening to me. OK. Tell me how I come out.")]
+};
+/* desahogo: más historias por motivo, cada una con su espejo */
+const DESX={
+ deudas:[["Cada vez que suena el móvil se me para el corazón. Cada vez.","Every time my phone rings my heart stops. Every time.","¿Se te para el corazón?","Your heart stops?"],["Le pedí a uno para pagar a otro, y luego a otro... Y ya no hay salida.","I borrowed from one to pay another, then another... And now there’s no way out.","¿Ya no hay salida?","No way out?"]],
+ golpe:[["Esto lo había hecho cien veces en mi cabeza. Cien. Ninguna salía así.","I’d done this a hundred times in my head. A hundred. None went like this.","¿Ninguna salía así?","None went like this?"],["El que tenía que esperar fuera con el coche se ha largado. Me ha dejado tirad{o}.","The one meant to wait outside with the car has gone. Left me stranded.","¿Te ha dejado tirad{o}?","Left you stranded?"]],
+ adiccion:[["Llevo años intentando dejarlo. Años. Y siempre vuelvo.","I’ve been trying to quit for years. Years. And I always go back.","¿Siempre vuelves?","You always go back?"],["Mi familia ya no me abre la puerta. Y lo entiendo, ¿eh? Lo entiendo.","My family won’t open the door to me any more. And I get it, eh? I get it.","¿Ya no te abren la puerta?","They won’t open the door any more?"]],
+ paro:[["Me levanto, miro ofertas, nada. Me acuesto. Así cada día.","I get up, check the job ads, nothing. Go to bed. Every single day.","¿Así cada día?","Every single day?"],["En la oficina de empleo ya me conocen por el nombre. Imagínate.","At the job centre they know me by name now. Imagine.","¿Te conocen por el nombre?","They know you by name?"]],
+ desahucio:[["Vino la comisión judicial un martes a las nueve. Yo aún tenía el café en la mesa.","The court officials came on a Tuesday at nine. My coffee was still on the table.","¿Aún tenías el café en la mesa?","Your coffee was still on the table?"],["Aquí dentro tienen mi expediente. Lo he visto en una pantalla. Un número, eso soy.","They’ve got my file in here. I saw it on a screen. A number, that’s what I am.","¿Un número?","A number?"]],
+ despido:[["Les enseñé el oficio a la mitad de los que siguen aquí. A la mitad.","I taught half the people still working here the job. Half.","¿A la mitad?","Half?"],["Me enteré por un correo a las ocho de la mañana. Ni una llamada.","I found out from an email at eight in the morning. Not even a call.","¿Ni una llamada?","Not even a call?"]],
+ seguro:[["Tres peritos, cuatro informes, y todos dicen que la culpa es mía.","Three loss adjusters, four reports, and they all say it’s my fault.","¿Que la culpa es tuya?","That it’s your fault?"],["Las herramientas de mi padre estaban en ese taller. Ardieron todas.","My father’s tools were in that workshop. They all burned.","¿Ardieron todas?","They all burned?"]],
+ huida:[["Ahí dentro cuentas los días con rayas en la pared. Yo ya no quería contar más.","Inside you count the days with marks on the wall. I didn’t want to count any more.","¿No querías contar más?","You didn’t want to count any more?"],["Cuando vi a la patrulla, no pensé. Corrí. Y mira dónde he acabado.","When I saw the patrol I didn’t think. I ran. And look where I ended up.","¿No pensaste?","You didn’t think?"]]};
+/* gancho: otra forma de sacar lo que le importa */
+function gnchV(sub){ const kid=P.kids[0];
+ if(sub==='hijos'&&kid) return [S2(`El sábado es el cumpleaños de ${kid.n}. Ya tenía el regalo escondido en el armario.`,`Saturday is ${kid.n}’s birthday. I already had the present hidden in the wardrobe.`)];
+ if(sub==='madre') return [S2("Mi madre me llama todos los días a las nueve. Hoy no se lo voy a coger.","My mother calls me every day at nine. Today I won’t pick up.")];
+ if(sub==='nieta'&&P.nieta) return [S2(`Yo recojo a ${P.nieta.n} del colegio todos los días. A las cinco. Mañana, ¿quién va a ir?`,`I pick ${P.nieta.n} up from school every day. At five. Tomorrow, who’s going to go?`)];
+ if(sub==='perro'&&P.dog) return [S2(`¿Sabes quién me espera en casa? ${P.dog}. Ese no me ha fallado nunca.`,`Know who’s waiting for me at home? ${P.dog}. Never once let me down.`)];
+ if(sub==='oficio') return [S2("Toda la vida madrugando para trabajar. Toda. ¿Y para qué?","My whole life getting up early for work. All of it. And what for?")];
+ if(sub==='lejos') return [P.kids.length===1?S2("Hace años que no hablo con {k}. Ni sé si me cogería el teléfono.","I haven’t spoken to {k} in years. I don’t even know if they’d pick up."):S2("Hace años que no hablo con mis hijos. Ni sé si me cogerían el teléfono.","I haven’t spoken to my kids in years. I don’t even know if they’d pick up.")];
+ return [S2("Si me pasa algo, nadie va a venir a buscarme. Nadie.","If something happens to me, nobody’s going to come looking. Nobody.")];
+}
+const RHT=[S2(" No quiero líos con eso."," I don’t want trouble over that."),S2(" ¿Qué hago?"," What do I do?"),S2(" Esto no estaba en el plan."," This wasn’t part of the plan.")];
+/* cómo suena el sujeto según su estado de ánimo y la tensión de ese momento (sale del estado real de la partida) */
+const CUE={hi:{panico:[S2("(Grita; se le oye ir de un lado a otro.)","(Shouting; you hear pacing back and forth.)"),S2("(Respira muy deprisa.)","(Breathing very fast.)")],ira:[S2("(Golpea algo.)","(Bangs on something.)"),S2("(A gritos.)","(Yelling.)")],triste:[S2("(Llora.)","(Crying.)"),S2("(Se le quiebra la voz.)","(The voice breaks.)")],frio:[S2("(Seco, cortante.)","(Curt, sharp.)")],apatia:[S2("(Voz plana, sin fuerza.)","(Flat voice, no energy.)")]},
+ mid:{panico:[S2("(Habla atropelladamente.)","(Words tumbling out.)")],ira:[S2("(Tono duro.)","(Hard tone.)")],triste:[S2("(Con la voz tomada.)","(Voice thick.)")],frio:[S2("(Sin prisa.)","(Unhurried.)")],apatia:[S2("(Tarda en hablar.)","(Slow to speak.)")]},
+ lo:[S2("(Más tranquil{o}.)","(Calmer.)"),S2("(Se le oye sentarse.)","(You hear a chair; sitting down.)"),S2("(Habla bajo, sin gritar.)","(Speaking low, not shouting.)")]};
+function flvSay(type,m){
+ if(!m||!Array.isArray(m.say)) return;
+ let alts=SAYV[m.say[0]];
+ if(type==='gancho') alts=gnchV(m.sub);
+ if(alts&&FRND()<(type==='contacto'?0.8:0.5)) m.say=fpickU(alts,'say');
+ if(type==='rehen'&&FRND()<0.5){ const t=fpick(RHT); m.say=[m.say[0]+t[0],m.say[1]+t[1]]; }
+ if(!m.cmd&&type!=='contacto'&&!/^\(/.test(m.say[0])&&FRND()<0.35){ const b=G.tension>=70?'hi':G.tension>=45?'mid':'lo';
+  if(b==='lo'&&/¡/.test(m.say[0])) return;
+  const pool=b==='lo'?CUE.lo:(CUE[b][P.mood]||CUE.lo); const c=fpick(pool); m.say=[c[0]+' '+m.say[0],c[1]+' '+m.say[1]]; }
+}
+/* tus frases: otra forma de decir lo mismo con la MISMA técnica (o.t0 guarda la original para no repetirla) */
+const OPTV={
+ "Me llamo {yo}, de la {cuerpo}. No me voy a ningún sitio: estoy aquí para hablar contigo. ¿Qué está pasando ahí dentro?":[S2("Soy {yo}, de la {cuerpo}. Estoy aquí para hablar contigo, sin prisas. Cuéntame, ¿qué está pasando?","I’m {yo}, from the {cuerpo}. I’m here to talk with you, no rush. Tell me, what’s going on?"),S2("Me llamo {yo}. Soy de la {cuerpo} y mi trabajo ahora mismo es hablar contigo. ¿Qué ha pasado ahí dentro?","My name’s {yo}. I’m with the {cuerpo}, and my job right now is to talk with you. What’s happened in there?")],
+ "Te escucho, {n}. Cuéntame qué necesitas que sepa.":[S2("Aquí estoy, {n}. Te escucho. ¿Qué necesitas que sepa?","I’m here, {n}. I’m listening. What do you need me to know?")],
+ "Cálmate. Suelta a todo el mundo y sal con las manos en alto.":[S2("Tranquilízate. Deja salir a todos y sal tú con las manos a la vista.","Calm down. Let everyone out and come out with your hands where we can see them.")],
+ "Escúchame bien: el edificio está rodeado y no tienes salida.":[S2("Que te quede claro: estás rodead{o} y no hay forma de salir.","Get this straight: you’re surrounded and there’s no way out.")],
+ "(Le dejas terminar y guardas unos segundos de silencio.)":[S2("(No le interrumpes. Cuando termina, esperas en silencio.)","(You don’t interrupt. When he’s done, you wait in silence.)")],
+ "(Dejas unos segundos de silencio.) ...Sigo aquí, {n}.":[S2("(Respiras y dejas pasar unos segundos.) ...Aquí sigo, {n}.","(You breathe and let a few seconds pass.)... Still here, {n}.")],
+ "Te oigo. No hace falta poner relojes: estamos hablando tú y yo, y no me voy. ¿Qué es lo que más te preocupa ahora mismo?":[S2("Te he oído. Pero aquí nadie mira el reloj: tú y yo seguimos hablando. ¿Qué es lo que más te preocupa?","I heard you. But nobody’s watching the clock here: you and I keep talking. What worries you most?")],
+ "No te voy a mentir: hay agentes fuera, es su trabajo. El mío es que esto acabe sin que nadie salga herido, y por eso hablo contigo.":[S2("No te voy a engañar: fuera hay agentes, como en cualquier caso así. Yo estoy para que esto termine sin heridos, y por eso hablo contigo.","I won’t fool you: there are officers outside, as in any case like this. I’m here so this ends with nobody hurt, and that’s why I’m talking to you.")],
+ "No sé qué ha sido; lo compruebo y te lo digo enseguida. Sigo aquí contigo.":[S2("No lo sé, y no te voy a inventar nada. Lo pregunto ahora y te lo cuento. No me voy.","I don’t know, and I won’t make something up. I’ll ask now and tell you. I’m not going anywhere.")]
+};
+/* sus respuestas buenas: más formas de reaccionar a la misma técnica */
+const OKV={
+ "...Lo que pasa es que todo se ha torcido. Eso pasa.":[S2("...¿Que qué pasa? Que se me ha ido de las manos. Eso pasa.","...What’s going on? It got out of hand. That’s what."),S2("(Suspira) Pasa que no tenía que haber nadie aquí. Nadie.","(Sighs) What’s going on is nobody was meant to be here. Nobody."),S2("...{yo}, ¿no? Vale, {yo}. Esto no era el plan. Nada de esto.","...{yo}, right? OK, {yo}. This wasn’t the plan. None of it.")],
+ "...¿Cómo sabes mi nombre? Da igual. Necesito que nadie entre.":[S2("...¿Sabes cómo me llamo? Vale. Lo primero: que no entre nadie.","...You know my name? OK. First thing: nobody comes in."),S2("(Pausa) Necesito que me dejéis pensar. Eso necesito.","(Pause) I need you to let me think. That’s what I need.")],
+ "...Sí. Eso. Es exactamente eso.":[S2("...Sí. Nadie lo había dicho así.","...Yes. Nobody’s ever put it like that."),S2("(Silencio) ...Eso es. Eso es lo que me pasa.","(Silence)... That’s right. That’s what’s happening to me.")],
+ "...¿Sigues ahí? Vale. Es que nunca se lo había contado a nadie.":[S2("(Un silencio largo, y acaba hablando) ...Perdona. Es que no sé por dónde empezar.","(A long silence, then the words come)... Sorry. I just don’t know where to start.")],
+ "Eso. Y lo peor es que nadie te pregunta cómo estás.":[S2("Sí. Eso mismo. Y nadie se ha parado a escucharlo.","Yes. Exactly that. And nobody’s stopped to listen."),S2("Eso. ¿Tú sabes lo que es eso? (Y sigue hablando un buen rato.)","Yes. Do you know what that’s like? (And keeps talking for a good while.)")],
+ "...Sí. Lo he pensado. Nadie me lo había preguntado nunca así.":[S2("(Tarda mucho) ...Sí. Esta mañana lo tenía claro. Ahora no lo sé.","(A long wait)... Yes. This morning I was sure. Now I don’t know.")],
+ "Cansad{o} no. Agotad{o}. Años así.":[S2("...Sí. Muy cansad{o}. De todo y de todos.","...Yes. Very tired. Of everything and everyone.")],
+ "Lo que me preocupa... es cómo salgo de esta.":[S2("(Silencio) ...Me preocupa no volver a ver la calle.","(Silence)... I’m worried I’ll never see the street again.")],
+ "...Ya. Ya sé que sigues ahí.":[S2("...Vale. No te vas. Ya lo he pillado.","...OK. You’re not leaving. I get it.")],
+ "...Por lo menos no me mientes. Eso ya es algo.":[S2("...Vale. Gracias por no tratarme de idiota.","...OK. Thanks for not treating me like an idiot."),S2("(Pausa) Al menos eres legal conmigo.","(Pause) At least you’re straight with me.")],
+ "...Vale. Dímelo. Pero dímelo de verdad.":[S2("Vale. Te espero. No me cuelgues.","OK. I’ll wait. Don’t hang up on me.")],
+ "...Por lo menos lo reconoces.":[S2("(Respira) ...Vale. Nadie me había pedido perdón en todo el día.","(Breathes)... OK. Nobody’s said sorry to me all day.")],
+ "...Mal. Hace calor y nadie ha comido.":[S2("...Fatal, la verdad. Aquí dentro hace un calor horrible y tenemos sed.","...Awful, honestly. It’s horribly hot in here and we’re thirsty.")],
+ "...Vale. Vale. Dime cuándo.":[S2("...Despacio. Vale. Tú me dices y yo lo hago.","...Slowly. OK. You tell me and I do it."),S2("(Larga pausa) Vale. Pero no me sueltes, ¿eh? Quédate al teléfono.","(Long pause) OK. But don’t let go of me, eh? Stay on the line.")],
+ "...Eso es. Eso es.":[S2("(Se le quiebra la voz) ...Eso es. Justo eso.","(Voice breaking)... That’s right. Exactly that.")],
+ "Yo no quería hacer daño a nadie. Nunca.":[S2("...No. No le he hecho daño a nadie. Eso tiene que contar.","...No. I haven’t hurt anyone. That has to count.")],
+ "...Vale. Que salga {hc}. Pero manda el agua.":[S2("...Bueno. Que salga {hc}. Y tú cumple con el agua.","...Fine. {hc} can go. And you deliver the water.")],
+ "...Mejor que salga. No quiero problemas con eso.":[S2("...No quiero que le pase nada a nadie. Que salga {hc}.","...I don’t want anything happening to anyone. {hc} can go.")],
+ "...No sé. No lo había pensado así.":[S2("(Silencio) ...Pues no sé cómo. No lo sé.","(Silence)... I don’t know how. I don’t know.")],
+ "Pues... aquí estamos. Hace un calor horrible.":[S2("Mal. Esto parece un horno y nadie habla.","Bad. It’s like an oven in here and nobody’s talking.")],
+ "(Silencio largo.) ...¿En serio?":[S2("...Hacía mucho que nadie me decía algo así.","...It’s been a long time since anyone said that to me.")],
+ "¿De verdad quieres oírlo? Vale. Te lo cuento.":[S2("Vale. Te lo cuento. Pero no me interrumpas.","OK. I’ll tell you. But don’t interrupt.")],
+ "...Mucho. Más de lo que crees.":[S2("(Tarda en contestar) ...Sí. Me pesa. Mucho.","(Takes a while)... Yes. It weighs on me. A lot.")]
+};
+function flvOpt(o){
+ const a=OPTV[o.t[0]]; if(a&&FRND()<0.5){ o.t0=o.t; o.t=fpickU(a,'opt'); }
+ if(Array.isArray(o.ok)){ const b=OKV[o.ok[0]]; if(b&&FRND()<0.55) o.ok=fpickU(b,'ok'); }
+ return o;
+}
+/* reacciones del sujeto a cada técnica, según cómo haya caído (good / mid / bad); la clave «momento:técnica» manda */
+const REAC={
+ etiq:{m:[S2("Ya. Muy bonito todo, pero eso no me arregla nada.","Yeah. Very nice, but it doesn’t fix anything."),S2("No necesito un psicólogo. Necesito una salida.","I don’t need a shrink. I need a way out.")]},
+ espejo:{m:[S2("(Silencio frío) ...¿Has terminado?","(Cold silence)... Are you done?"),S2("¿Vas a repetir todo lo que digo?","Are you going to repeat everything I say?")]},
+ parafr:{m:[S2("Más o menos. No es exactamente eso.","More or less. That’s not quite it."),S2("Te oigo. Sigue, a ver adónde quieres llegar.","I hear you. Go on, let’s see where you’re going with this.")]},
+ resumen:{m:[S2("Casi. Pero no. No es eso.","Almost. But no. That’s not it.")]},
+ pausa:{m:[S2("¿Hola? ¿Sigues ahí o qué?","Hello? Are you still there or what?"),S2("(Silencio también al otro lado.)","(Silence on the other end too.)")]},
+ mini:{m:[S2("Ya, ya. «Te escucho». Eso lo dice todo el mundo.","Yeah, yeah. “I’m listening.” Everyone says that.")]},
+ pres:{m:[S2("Vale, {yo}. ¿Y qué vas a hacer tú por mí?","OK, {yo}. And what are you going to do for me?")]},
+ yo:{m:[S2("¿A ti? Si ni me conoces.","You? You don’t even know me.")]},
+ calib:{m:[S2("No lo sé. Dímelo tú, que para eso estás.","I don’t know. You tell me, that’s what you’re there for.")]},
+ tiempo:{m:[S2("¿Tiempo? Tiempo es lo único que tengo aquí dentro.","Time? Time’s the only thing I’ve got in here.")]},
+ autor:{g:[S2("...Vale. Consúltalo. Pero no te olvides de mí aquí dentro.","...OK. Check it. But don’t forget about me in here.")],m:[S2("Consulta lo que quieras. Pero yo de aquí no me muevo.","Check all you like. But I’m not moving from here."),S2("Siempre hay un jefe. Siempre hay alguien más arriba.","There’s always a boss. Always someone higher up.")]},
+ gancho:{m:[S2("No metas a mi familia en esto. Todavía no.","Leave my family out of this. Not yet."),S2("(Silencio) ...No me hables de eso ahora.","(Silence)... Don’t talk to me about that now.")]},
+ digna:{m:[S2("Ya. Eso lo dices para que salga.","Sure. You’re only saying that so I come out.")]},
+ honest:{m:[S2("Ya veremos. Las palabras me las conozco.","We’ll see. I know all about words.")]},
+ qpq:{m:[S2("Primero el agua. Luego hablamos.","Water first. Then we talk.")]},
+ promesa:{g:[S2("...Vale. Más te vale cumplirlo.","...OK. You’d better keep it.")],m:[S2("¿Me lo prometes? Lo apunto, ¿eh?","You promise? I’m holding you to that, eh?"),S2("...Vale. Más te vale cumplirlo.","...OK. You’d better keep it.")],b:[S2("¿Tú puedes prometer eso? No me hagas reír.","You can promise that? Don’t make me laugh."),S2("Las promesas me las conozco. Ninguna se cumple.","I know all about promises. None of them come true.")]},
+ mentira:{g:[S2("...¿Seguro? Vale. Te voy a creer. De momento.","...Sure? OK. I’ll believe you. For now.")],m:[S2("...¿Seguro? Vale. Te voy a creer. De momento.","...Sure? OK. I’ll believe you. For now.")],b:[S2("¿Me tomas por tont{o}? Sé perfectamente cómo trabajáis.","Do you take me for an idiot? I know exactly how you lot work."),S2("Eso no te lo crees ni tú.","Even you don’t believe that.")]},
+ calma:{b:[S2("¡No me digas que me calme! ¡¿En serio me has dicho eso?!","Don’t tell me to calm down! Did you really just say that?!"),S2("¡Estoy calmad{o}! ¡¿Vale?! ¡Estoy calmad{o}!","I am calm! OK?! I AM calm!"),S2("(Golpea algo contra la mesa) ¿Así de calmad{o} me quieres?","(Bangs something on the table) Calm enough for you?")]},
+ amenaza:{b:[S2("¡¿Me estás amenazando?! ¡Pues entrad, a ver qué pasa!","Are you threatening me?! Come in then, see what happens!"),S2("¡Eso, apretad! ¡Apretad más, que ya veréis!","That’s it, push! Push harder and you’ll see!"),S2("(Grita a alguien de dentro) ¡Todos al suelo! ¡Ya!","(Shouts at someone inside) Everyone on the floor! Now!")]},
+ juicio:{b:[S2("¡¿Y tú quién eres para juzgarme?!","And who are you to judge me?!"),S2("¡Claro, el malo soy yo! ¡Siempre soy yo!","Sure, I’m the bad one! It’s always me!"),S2("(Silencio tenso) ...Ya sé lo que piensas de mí. Lo mismo que todos.","(Tense silence)... I know what you think of me. Same as everyone.")]},
+ minim:{b:[S2("¡¿Que no es para tanto?! ¡Tú no tienes ni idea!","Not that bad?! You have no idea!"),S2("Para ti es fácil decirlo. Tú esta noche duermes en tu casa.","Easy for you to say. You’ll sleep in your own bed tonight."),S2("¡Eso es lo que me dice todo el mundo! ¡Todo el mundo!","That’s what everyone tells me! Everyone!")]},
+ nono:{b:[S2("¡Pues entonces no tenemos nada de qué hablar!","Then we’ve got nothing to talk about!"),S2("¿Imposible? Ya verás tú lo que es imposible.","Impossible? I’ll show you impossible."),S2("(Cuelga. Vuelve a coger al cabo de unos minutos.)","(Hangs up. Picks up again a few minutes later.)")]},
+ tpi:{b:[S2("¿Ahora me pasas a otro? ¿No eras tú el que hablaba conmigo?","Now you’re passing me to someone else? Weren’t you the one talking to me?")]},
+ precoz:{b:[S2("¿Ahora me ofreces cosas? Si ni siquiera sabes lo que me pasa.","Now you’re offering me things? You don’t even know what’s wrong."),S2("Eso se lo dices a todos, ¿verdad?","You say that to everyone, right?"),S2("No me vendas nada. No soy idiota.","Don’t sell me anything. I’m not stupid.")]},
+ cargada:{b:[S2("No me pongas palabras en la boca.","Don’t put words in my mouth.")]},
+ prisa:{b:[S2("¡No me metas prisa! ¡Así es como pasan las desgracias!","Don’t rush me! That’s how bad things happen!"),S2("¿Ya? ¿Así, sin más? ¿Y si salgo y me disparan?","Now? Just like that? And if I come out and get shot?")]},
+ medios:{b:[S2("¡Que lo vean! ¡Que vean todos lo que me han hecho!","Let them watch! Let everyone see what they did to me!"),S2("(Se le oye subir el volumen de la tele) ¡Mira, mira, salgo yo!","(You hear the TV turned up) Look, look, that’s me!")]},
+ evasiva:{b:[S2("¿Que no importa? ¡A mí sí me importa!","Doesn’t matter? It matters to me!"),S2("Ya estás escurriendo el bulto.","Now you’re dodging."),S2("Contéstame a lo que te pregunto.","Answer what I asked you.")]},
+ 'rehen:cargada':{b:[S2("¿Que no me sirven de nada? ¡Pues son lo único que tengo!","No use to me? They’re the only thing I’ve got!")]},
+ 'salida:cargada':{b:[S2("¿Rendirme? Yo no he dicho eso. No me pongas palabras en la boca.","Surrender? I never said that. Don’t put words in my mouth.")]},
+ 'exigencia:tpi':{b:[S2("¡Más te vale! ¡Y que venga a pedirme perdón aquí, delante de todos!","You’d better! And they come and apologise right here, in front of everyone!")]},
+ 'familiar:tpi':{b:[S2("¡No quiero hablar con nadie más! ¡Quítame eso de la oreja!","I don’t want to talk to anyone else! Get that away from my ear!")]},
+ 'familiar:gancho':{g:[S2("(Silencio largo) ...¿De verdad ha venido?","(Long silence)... They really came?")],m:[S2("¿Que está aquí? ¿Y viene ahora? ¿Ahora?","They’re here? And they turn up now? Now?")]},
+ 'exigencia:medios':{b:[S2("¡Eso! ¡Que vengan las cámaras! ¡Que lo vea todo el mundo!","Yes! Bring the cameras! Let everyone see!")]},
+ 'reclamo:evasiva':{b:[S2("¡¿Que da igual?! ¡Me has mentido y te da igual!","Doesn’t matter?! You lied to me and you don’t care!")]},
+ 'reclamo:mentira':{m:[S2("...Diez minutos. Ni uno más. Te los estoy contando.","...Ten minutes. Not one more. I’m counting.")],b:[S2("¡Otra vez! ¡Me estás mintiendo otra vez!","Again! You’re lying to me again!")]}
+};
+/* un gesto antes de su respuesta buena (no si la respuesta ya trae uno) */
+const BEAT={etiq:[S2("(Un silencio largo.)","(A long silence.)"),S2("(Se le oye tragar saliva.)","(You hear a swallow.)")],espejo:[S2("(Se queda un segundo callad{o} y sigue.)","(A second’s pause, then on.)")],parafr:[S2("(Tarda en contestar.)","(Takes a while to answer.)")],pausa:[S2("(Diez segundos de silencio.)","(Ten seconds of silence.)")],mini:[S2("(Más despacio que antes.)","(More slowly than before.)")],calib:[S2("(Se le oye pensar.)","(You can hear the thinking.)"),S2("(Una pausa larga.)","(A long pause.)")],honest:[S2("(Un suspiro.)","(A sigh.)")],asksui:[S2("(Un silencio muy largo.)","(A very long silence.)")],yo:[S2("(Silencio.)","(Silence.)")],plan:[S2("(Respira hondo.)","(A deep breath.)")],qpq:[S2("(Se le oye hablar con alguien de dentro.)","(You hear a word with someone inside.)")],noplazo:[S2("(La voz suena más tranquila.)","(The voice sounds calmer.)")],tiempo:[S2("(La voz suena más tranquila.)","(The voice sounds calmer.)")],autor:[S2("(Un resoplido.)","(A snort.)")],foco:[S2("(Se oye cómo baja el volumen de la tele.)","(You hear the TV turned down.)")]};
+const RGX=[[S2("(Se oye arrastrar una silla.) ...Vale.","(You hear a chair scrape.)... OK."),S2("...No cuelgues, ¿vale?","...Don’t hang up, OK?")],[S2("No sé por qué te cuento esto. Pero sigue.","Don’t know why I’m telling you this. But go on."),S2("(Respira hondo) ...Vale. Vale.","(A deep breath)... OK. OK.")],[S2("Eres la primera persona que me escucha en meses.","You’re the first person who’s listened to me in months."),S2("Vale. Confío en ti. Un poco.","OK. I trust you. A bit.")]];
+const RMX=[S2("(Silencio) ...Ya veremos.","(Silence)... We’ll see."),S2("Eso suena a manual.","That sounds like a textbook."),S2("Mmm. No sé, no sé.","Mm. I don’t know, I don’t know.")];
+const RBX=[S2("¡Cállate un momento! ¡Déjame pensar!","Shut up a second! Let me think!"),S2("(Se le oye dar un golpe) ¡¿Ves lo que consigues?!","(You hear something hit) See what you’re doing?!")];
+function flvReply(m,o,e,reply,gen,ph0,ph1){
+ const q=e.q, g=q==='good'?'g':q==='mid'?'m':'b';
+ const R_=REAC[m.type+':'+o.k]||REAC[o.k];
+ if(gen){ const pool=(R_&&R_[g])||[]; const ext=(g==='g'?RGX[ph1>=3?2:ph1>=1?1:0]:g==='m'?RMX:RBX);
+  const all=pool.concat(ext); if(all.length&&FRND()<(pool.length?0.75:0.4)) reply=fpickU(pool.length&&FRND()<0.8?pool:all,'rep'); }
+ else if(q==='good'&&Array.isArray(reply)&&!/\(/.test(reply[0])&&BEAT[o.k]&&FRND()<0.4){ const b=fpick(BEAT[o.k]); reply=[b[0]+' '+reply[0],b[1]+' '+reply[1]]; }
+ /* «eso es»: un buen parafraseo que le sube de peldaño (Voss y Raz) */
+ if(q==='good'&&o.k==='parafr'&&ph1>ph0&&Array.isArray(reply)&&!/Eso es/.test(reply[0])&&FRND()<0.6) reply=["Eso es. "+reply[0],"That’s right. "+reply[1]];
+ return reply;
+}
+/* sucesos pequeños que cambian cada partida: ambiente, el equipo, la gente de dentro. Solo ambientan; no cambian nada del juego */
+const AMB0={banco:[S2("De fondo se oye la alarma de la sucursal.","The branch alarm is ringing in the background."),S2("Por la línea se oye un teléfono que nadie coge.","On the line, a phone rings and nobody answers.")],
+ tienda:[S2("De fondo zumban las neveras del local.","The fridges hum in the background."),S2("Por la línea se oye el pitido de una caja registradora.","A till beeps somewhere on the line.")],
+ agravio:[S2("Por la línea se oyen teléfonos de oficina sonando.","Office phones ring on the line."),S2("Se oye el aire acondicionado de la oficina a tope.","You hear the office air conditioning running flat out.")],
+ fugado:[S2("Se oye una tele encendida de fondo.","A TV is on in the background."),S2("De fondo se oye a los vecinos en la escalera.","You can hear neighbours on the stairs in the background.")],
+ rural:[S2("A lo lejos ladra un perro.","A dog barks somewhere far off."),S2("Por la línea se oye el viento.","You can hear the wind on the line.")]};
+const AMBS={banco:[S2("La alarma de la sucursal deja por fin de sonar.","The branch alarm finally stops ringing."),S2("Suena el teléfono fijo de la sucursal. Nadie lo coge.","The branch landline rings. Nobody picks up."),S2("Dentro, alguien baja la persiana de la sucursal hasta la mitad.","Inside, someone lowers the branch shutter halfway."),S2("Un responsable del banco llega al puesto de mando con los planos de la sucursal.","A bank manager arrives at the command post with the branch floor plans.")],
+ tienda:[S2("Dentro sigue sonando el hilo musical del local.","The background music is still playing inside."),S2("Llega una furgoneta de reparto; la patrulla la desvía.","A delivery van turns up; the patrol sends it away."),S2("El dueño del local llega al cordón y entrega las llaves de la puerta trasera.","The owner arrives at the cordon and hands over the back-door keys.")],
+ agravio:[S2("En las oficinas suenan teléfonos sin parar. Nadie contesta.","Phones keep ringing in the offices. Nobody answers."),S2("Al otro lado del cordón, varios compañeros de trabajo esperan noticias.","Beyond the cordon, several co-workers wait for news."),S2("Un responsable de la empresa llega al puesto de mando y pide que nadie hable con la prensa.","A company manager arrives at the command post and asks that nobody talk to the press.")],
+ fugado:[S2("Los vecinos del bloque salen evacuados por la escalera de atrás.","Residents of the block are evacuated down the back stairs."),S2("En el piso de al lado ladra un perro sin parar.","Next door, a dog won’t stop barking."),S2("Un vecino le cuenta a un agente que oyó gritos hace una hora.","A neighbour tells an officer about shouting an hour ago.")],
+ rural:[S2("A lo lejos ladran los perros de una finca.","Far off, dogs bark on a farm."),S2("Dos patrullas cierran el camino de tierra.","Two patrol cars block the dirt track."),S2("Se levanta viento; algo de chapa cruje fuera.","The wind picks up; sheet metal creaks outside.")]};
+function flvAmb(rec,e){
+ if(G.end||G.turn-G.lastAmb<2||FRND()>=0.5) return [];
+ const c=[], ins=inside(), h=ins.length?ins[Math.floor(FRND()*ins.length)].n:null, n=P.name, hr=((scnHour()%24)+24)%24;
+ (AMBS[P.rural?'rural':P.sit]||[]).forEach(x=>c.push(x));
+ if(hr>=20.5||hr<6.5) c.push(S2("Es de noche. Encienden los focos del perímetro.","It’s night. The perimeter floodlights come on."));
+ else c.push(S2("Tras la cinta se juntan curiosos; los agentes amplían el cordón.","Onlookers gather behind the tape; officers widen the cordon."));
+ if(G.mins>=70) c.push(S2("Llevas más de una hora al teléfono. Alguien te deja un vaso de agua al lado.","You’ve been on the phone over an hour. Someone leaves a glass of water by you."));
+ if(G.turn>=4&&!G.media) c.push(S2("Una unidad móvil de televisión aparca al final de la calle.","A TV van parks at the end of the street."));
+ if(e.q==='good') c.push(S2("Tu compañero de equipo te pasa una nota: «Bien. Por ahí.»","Your teammate passes you a note: “Good. Keep going.”"),S2("En el puesto de mando alguien asiente en silencio.","At the command post, someone nods in silence."));
+ else if(e.q==='bad') c.push(S2("Tu compañero te pasa una nota: «Cuidado. Eso le ha encendido.»","Your teammate passes you a note: “Careful. That wound him up.”"));
+ else c.push(S2("Tu compañero apunta algo y te mira: «Ni frío ni calor.»","Your teammate jots something down and looks at you: “Neither here nor there.”"));
+ if(h&&G.tension>=70) c.push(S2(`Por la línea se oye llorar a ${h}.`,`On the line you hear ${h} crying.`),S2(`${n} le grita a alguien que se siente y se calle.`,`${n} shouts at someone to sit down and be quiet.`));
+ if(h&&G.tension<55) c.push(S2(`Por la línea se oye a ${h} preguntar si puede sentarse. ${n} le dice que sí.`,`On the line you hear ${h} ask to sit down. ${n} says yes.`));
+ if(h&&G.trust>=50) c.push(S2(`${n} le dice a ${h} que no se preocupe, que esto se va a acabar.`,`${n} tells ${h} not to worry, this is going to end.`));
+ const f=c.filter(x=>!FLU['amb|'+x[0]]); if(!f.length) return [];
+ const r=f[Math.floor(FRND()*f.length)]; FLU['amb|'+r[0]]=1; G.lastAmb=G.turn; return [r];
+}
 function hookOpt(h){
  const T_={hijos:P.estranged?(P.kids.length===1?S2("Piensa en {k}, {n}. No querría verte así.","Think of {k}, {n}. They wouldn’t want to see you like this."):S2("Piensa en tus hijos, {n}. Ellos no querrían verte así.","Think of your children, {n}. They wouldn’t want to see you like this.")):((G.saidO||{})[L("{k} quiere verte el sábado. Eso todavía está en tu mano.","{k} wants to see you on Saturday. That’s still in your hands.")]?S2("{k} cumple años el sábado y te está esperando. Todavía puedes estar ahí.","{k} has a birthday on Saturday and is waiting for you. You can still be there."):S2("{k} quiere verte el sábado. Eso todavía está en tu mano.","{k} wants to see you on Saturday. That’s still in your hands.")),
   madre:P.hook==='madre'?S2("Tu madre está aquí fuera, {n}. Quiere verte salir bien. Hazlo por ella.","Your mother is out here, {n}. She wants to see you come out OK. Do it for her."):S2("Piensa en tu madre, {n}. Seguro que quiere verte salir bien de esta.","Think of your mother, {n}. She’d surely want to see you come out of this OK."),
@@ -351,15 +550,15 @@ const DES={
 const LAB={deudas:S2("Parece que llevas mucho tiempo con miedo, sin poder respirar.","It sounds like you’ve been scared for a long time, unable to breathe."),golpe:S2("Suena a que te sientes traicionad{o}: lo tenías todo pensado y alguien lo ha estropeado.","It sounds like you feel betrayed: you had it all planned and someone ruined it."),adiccion:S2("Parece que estás agotad{o} y que ya no puedes más.","It sounds like you’re exhausted and can’t take any more."),paro:S2("Suena a que sientes que nadie te da una oportunidad.","It sounds like you feel nobody gives you a chance."),desahucio:S2("Parece que te sientes humillad{o}: te quitaron tu casa y encima nadie te contesta.","It sounds like you feel humiliated: they took your home and nobody even answers you."),despido:S2("Suena a que lo que más te duele no es el despido, sino cómo lo hicieron.","It sounds like what hurts most isn’t being fired, it’s how they did it."),seguro:S2("Parece que sientes que te han robado toda una vida de trabajo.","It sounds like you feel a lifetime of work has been stolen from you."),huida:S2("Suena a que lo que te da miedo es volver a lo que viviste allí.","It sounds like what scares you is going back to what you lived through there.")};
 const PRE={deudas:S2("Si sales ahora, te ayudamos con lo de la deuda.","If you come out now, we’ll help you with the debt."),golpe:S2("Si sales ahora, esto se queda en un intento.","If you come out now, this stays an attempt."),adiccion:S2("Si sales ahora, te buscamos un centro y lo arreglamos.","If you come out now, we’ll find you a clinic and sort it out."),paro:S2("Si sales ahora, te ayudamos a buscar trabajo.","If you come out now, we’ll help you find work."),desahucio:S2("Si sales ahora, hablamos con el banco lo de tu casa.","If you come out now, we’ll talk to the bank about your house."),despido:S2("Si sales ahora, hablamos con la empresa para que te readmitan.","If you come out now, we’ll talk to the company about taking you back."),seguro:S2("Si sales ahora, hacemos que el seguro te pague.","If you come out now, we’ll make the insurer pay."),huida:S2("Si sales ahora, hablamos con el juez para que no vuelvas dentro.","If you come out now, we’ll talk to the judge so you don’t go back inside.")};
 function M_desahogo(){
- const v=pick(DES[P.motive]);
+ const v0=pick(DES[P.motive]); const v=FRND()<0.5?fpickU(DESX[P.motive],'des'):v0;
  const o=[O('etiq',LAB[P.motive][0],LAB[P.motive][1],{ok:S2("...Sí. Eso. Es exactamente eso.","...Yes. That. That’s exactly it.")}),
   O('minim',"Hombre, tampoco es para tanto. Todo tiene solución.","Come on, it’s not that bad. Everything can be sorted."),
   O('juicio',"Eso no justifica lo que estás haciendo, y lo sabes.","That doesn’t justify what you’re doing, and you know it."),
   O('precoz',PRE[P.motive][0],PRE[P.motive][1])];
  if(RND()<0.5) o.push(O('pausa',"(Le dejas terminar y guardas unos segundos de silencio.)","(You let him finish and stay silent for a few seconds.)",{ok:S2("...¿Sigues ahí? Vale. Es que nunca se lo había contado a nadie.","...You still there? OK. It’s just I’ve never told anyone this.")}));
- if(RND()<0.6) o.push(O('espejo',v[2],v[3],{ok:S2("Eso. Y lo peor es que nadie te pregunta cómo estás.","Yes. And the worst part is nobody asks how you are.")}));
+ if(RND()<0.6) o.push(O('espejo',v[2],v[3],{t0:S2(v0[2],v0[3]),ok:S2("Eso. Y lo peor es que nadie te pregunta cómo estás.","Yes. And the worst part is nobody asks how you are.")}));
  if(P.trigger==='loco'||RND()<0.25) o.push(O('juicio',"¿Estás tomando tu medicación, {n}?","Are you taking your medication, {n}?",{trig:'loco',trigRep:S2("¡¿Ves?! ¡Ya estamos! ¡Para vosotros soy {un} loc{o} y punto!","See?! There we go! To you lot I’m just a nutcase!")}));
- return {say:S2(v[0],v[1]),o:o,n:4,need:['etiq','espejo']};
+ return {say:S2(v[0],v[1]),key:S2(v0[0],v0[1]),o:o,n:4,need:['etiq','espejo']};
 }
 function M_exigencia(){
  const t=P.trigger==='expareja'&&RND()<0.6?'ex':P.heard?pick(['jefe','medios']):pick(['coche','dinero']);
@@ -400,19 +599,19 @@ function M_plazo(){
 }
 
 function M_gancho(){
- let say, h=P.hook; const o=[]; const kid=P.kids[0];
+ let say, h=P.hook, sub=h||'nadie'; const o=[]; const kid=P.kids[0];
  if(h==='hijos') say=S2(`Mi ${kid.n}... el sábado cumple ${kid.age+1}. Vaya regalo le voy a dar, ¿eh?`,`My ${kid.n}... turns ${kid.age+1} on Saturday. Some present I’m giving, eh?`);
  else if(h==='madre') say=S2("Mi madre estará viendo esto en la tele. No se lo merece.","My mother will be watching this on TV. She doesn’t deserve this.");
  else if(h==='nieta') say=S2(`Mañana tenía que recoger a ${P.nieta.n} del colegio. A las cinco.`,`Tomorrow I was supposed to pick ${P.nieta.n} up from school. At five.`);
  else if(h==='perro') say=S2(`${P.dog} lleva solo desde esta mañana. No ha comido.`,`${P.dog} has been alone since this morning. He hasn’t eaten.`);
  else if(h==='oficio') say=S2("Cuarenta años trabajando con las manos, y mira cómo acabo.","Forty years working with my hands, and look how I end up.");
- else if(P.estranged&&RND()<0.5) say=P.kids.length===1?S2("{k} ni se va a enterar. Hace años que no sabe nada de mí.","{k} won’t even find out. Hasn’t heard from me in years."):S2("Mis hijos ni se van a enterar. Hace años que no saben nada de mí.","My kids won’t even find out. They haven’t heard from me in years.");
+ else if(P.estranged&&RND()<0.5) sub='lejos', say=P.kids.length===1?S2("{k} ni se va a enterar. Hace años que no sabe nada de mí.","{k} won’t even find out. Hasn’t heard from me in years."):S2("Mis hijos ni se van a enterar. Hace años que no saben nada de mí.","My kids won’t even find out. They haven’t heard from me in years.");
  else say=S2("No tengo a nadie. A nadie le va a importar lo que me pase.","I’ve got nobody. Nobody will care what happens to me.");
  if(h) o.push(hookOpt(h)); else if(P.estranged) o.push(hookOpt('hijos')); else if(P.keys.includes('sinmadre')) o.push(hookOpt('madre'));
  o.push(O('etiq',h?"Suena a que te pesa mucho pensar en eso ahora mismo.":"Suena a que te sientes muy sol{o}.",h?"It sounds like thinking about that weighs on you a lot right now.":"It sounds like you feel very alone.",{ok:S2("...Mucho. Más de lo que crees.","...A lot. More than you think.")}));
  if(!h){ o.push(O('yo',"A mí me importa, {n}. Por eso sigo aquí.","It matters to me, {n}. That’s why I’m still here.",{ok:S2("(Silencio largo.) ...¿En serio?","(Long silence.)... Seriously?")})); o.push(O('minim',"Eso no es verdad, seguro que hay alguien.","That’s not true, there must be someone.")); }
  o.push(O('juicio',"Pues haberlo pensado antes de meterte ahí.","Well, you should have thought of that before going in there."));
- return {say:say,o:o,n:3,need:['gancho','digna','etiq','yo']};
+ return {say:say,sub:sub,o:o,n:3,need:['gancho','digna','etiq','yo']};
 }
 function M_rehen(){
  const hc=P.hc, c=hc.cond, a=hc.f?'a':'o', he='{hche}', his='{hchis}';
@@ -521,20 +720,21 @@ function nextType(ex){
 function buildTurn(){
  G.saids=G.saids||{}; const ex={}; let type, m;
  const SO0=G.saidO||{};
- for(let k=0;k<7;k++){ type=nextType(ex); m=MOM[type](); const key=T(m.say); const gd=m.o.filter(o=>evalOpt(Object.assign({},o)).q==='good'); const stale=gd.length&&gd.every(o=>SO0[T(o.t)]); /* si la única buena ya la dijiste, mejor otro momento */ if(((!G.saids[key]&&!stale)||type==='salida'||type==='reclamo'||k===6)) break; ex[type]=1; }
- G.saids[T(m.say)]=1; G.lastType=type; G.used[type]=(G.used[type]||0)+1;
+ for(let k=0;k<7;k++){ type=nextType(ex); m=MOM[type](); const key=T(m.key||m.say); const gd=m.o.filter(o=>evalOpt(Object.assign({},o)).q==='good'); const stale=gd.length&&gd.every(o=>SO0[T(o.t0||o.t)]); /* si la única buena ya la dijiste, mejor otro momento */ if(((!G.saids[key]&&!stale)||type==='salida'||type==='reclamo'||k===6)) break; ex[type]=1; }
+ G.saids[T(m.key||m.say)]=1; G.lastType=type; G.used[type]=(G.used[type]||0)+1;
+ flvSay(type,m);
  let ev=m.o.map(o=>({o:o,e:evalOpt(Object.assign({},o))}));
- /* no ofrecer otra vez una frase que ya dijiste (si quedan opciones de sobra y alguna buena) */ { const SO=G.saidO||{}; const fr=ev.filter(x=>!SO[T(x.o.t)]); if(fr.length>=Math.min(2,ev.length)&&(fr.some(x=>x.e.q==='good')||!ev.some(x=>x.e.q==='good'))) ev=fr; }
+ /* no ofrecer otra vez una frase que ya dijiste (si quedan opciones de sobra y alguna buena) */ { const SO=G.saidO||{}; const fr=ev.filter(x=>!SO[T(x.o.t0||x.o.t)]); if(fr.length>=Math.min(2,ev.length)&&(fr.some(x=>x.e.q==='good')||!ev.some(x=>x.e.q==='good'))) ev=fr; }
  let goods=shuf(ev.filter(x=>x.e.q==='good')), rest=shuf(ev.filter(x=>x.e.q!=='good'));
  const n=Math.min(m.n,ev.length); const sel=[];
  if(goods.length) sel.push(goods.shift()); else { const nd=rest.find(x=>m.need&&m.need.includes(x.o.k)); if(nd){ sel.push(nd); rest=rest.filter(x=>x!==nd); } }
  const traps=rest.filter(x=>TECH[x.o.k][3]===1&&x.e.q!=='good'); if(traps.length&&sel.length<n){ sel.push(traps[0]); rest=rest.filter(x=>x!==traps[0]); }
  const bads=rest.filter(x=>x.e.q==='bad'); if(bads.length&&sel.length<n){ sel.push(bads[0]); rest=rest.filter(x=>x!==bads[0]); }
  const pool=shuf(goods.concat(rest)); while(sel.length<n&&pool.length) sel.push(pool.shift());
- m.opts=shuf(sel.map(x=>x.o)); m.type=type; G.cur=m;
+ m.opts=shuf(sel.map(x=>x.o)); m.opts.forEach(flvOpt); m.type=type; G.cur=m;
 }
 function choose(i){
- const m=G.cur, o=m.opts[i]; const e=evalOpt(o); const ph0=phase(); G.saidO=G.saidO||{}; G.saidO[T(o.t)]=1;
+ const m=G.cur, o=m.opts[i]; const e=evalOpt(o); const ph0=phase(); G.saidO=G.saidO||{}; G.saidO[T(o.t0||o.t)]=1;
  const rank=x=>{ const v=evalOpt(Object.assign({},x)); return v.dr-v.dt; };
  const best=m.opts.slice().sort((a,b)=>rank(b)-rank(a))[0];
  let dt=e.dt, dr=e.dr, reply=e.rep;
@@ -548,7 +748,8 @@ function choose(i){
  if(G.trust>50) G.tension=clamp(G.tension-2,0,100);
  if(G.trust<15) G.tension=clamp(G.tension+2,0,100);
  const ph1=phase();
- if(!reply){ /* respuesta genérica sin repetir la misma en la partida si hay otras */ const pk=L_=>{ G.usedR=G.usedR||{}; const f=L_.filter(x=>!G.usedR[T(x)]); const r=pick(f.length?f:L_); G.usedR[T(r)]=1; return r; }; if(e.q==='good'&&o.ok) reply=o.ok; else if(e.q==='good') reply=pk(RG[ph1>=3?2:ph1>=1?1:0]); else if(e.q==='mid') reply=pk(RM); else reply=pk(RB); }
+ const gen=!reply&&!(e.q==='good'&&o.ok); if(!reply){ /* respuesta genérica sin repetir la misma en la partida si hay otras */ const pk=L_=>{ G.usedR=G.usedR||{}; const f=L_.filter(x=>!G.usedR[T(x)]); const r=pick(f.length?f:L_); G.usedR[T(r)]=1; return r; }; if(e.q==='good'&&o.ok) reply=o.ok; else if(e.q==='good') reply=pk(RG[ph1>=3?2:ph1>=1?1:0]); else if(e.q==='mid') reply=pk(RM); else reply=pk(RB); }
+ reply=flvReply(m,o,e,reply,gen,ph0,ph1);
  if(o.sum&&e.q!=='bad') G.sumDone=1;
  if(o.tip) reply=S2("(Hablas aparte con la familia; la línea con {n} sigue abierta.)","(You talk to the family separately; the line to {n} stays open.)");
  const rec={turn:G.turn,mins:G.mins,type:m.type,say:fill(m.say),cmd:!!m.cmd,said:fill(o.t),k:o.k,q:e.q,dt:dt,dr:dr,why:e.why,det:!!o.det,
@@ -565,6 +766,7 @@ function choose(i){
  else if(o.exit&&e.q==='good'&&G.tension<70){ P.host.forEach(h=>{ if(!h.out){ h.out=true; G.rel.push(h.n); } }); G.end='rendicion'; }
  else if(G.turn>=(phase()>=3&&G.tension<60?17:14)) G.end=inside().length?'tiempo':'liberados';
  tacUpd(rec);
+ rec.amb=flvAmb(rec,e);
  return rec;
 }
 function score(){
@@ -703,6 +905,7 @@ function css(){ if(document.getElementById('ng-css')) return; const s=document.c
  '.ngb.c{align-self:center;max-width:96%;background:#1b1f24;border:1px dashed #3a4450;font-size:14px}',
  '.ngb.y{align-self:flex-end;background:#232a1d;border:1px solid #3f4c31;border-bottom-right-radius:3px}',
  '.ngev{align-self:center;text-align:center;font-size:13px;color:var(--ac2);padding:2px 10px;animation:ngin .45s}',
+ '.ngev.ngamb{color:var(--mut,#9aa3ab);font-style:italic}',
  '@keyframes ngin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}',
  '@media(prefers-reduced-motion:reduce){.ngb,.ngev{animation:none}.ngm .fi{transition:none}}',
  '.ngopts{margin:12px 0 4px}',
@@ -784,7 +987,7 @@ function startCase(seed){
  const s=seed!=null?seed:((window.crypto&&crypto.getRandomValues)?crypto.getRandomValues(new Uint32Array(1))[0]:Math.floor(Math.random()*4294967296))>>>0;
  P=newProfile(s>>>0);
  G={ap:null,tension:P.tension0,trust:5,turn:0,mins:0,used:{},log:[],rel:[],end:null,lastType:null,pend:null,apFit:0};
- RND=rng((P.seed^0x9e3779b9)>>>0);
+ RND=rng((P.seed^0x9e3779b9)>>>0); flvInit();
  const h='<div class="ngw" data-noi18n>'+crumbs()+'<h1>'+L('Expediente','Dossier')+'</h1><p class="sub">'+L('Léelo con calma: lo que hay aquí decide qué respuestas funcionan. Podrás volver a abrirlo durante la llamada.','Read it carefully: what’s here decides which replies work. You can reopen it during the call.')+'</p>'+dossierHTML()+
   '<div class="ngsec">'+L('Elige tu enfoque','Choose your approach')+'</div><div class="ngaps">'+Object.keys(APS).map(k=>'<button type="button" class="ngap" data-ap="'+k+'"><b>'+esc(T(APS[k][0]))+'</b><span>'+esc(T(APS[k][1]))+'</span></button>').join('')+'</div>'+
   '<div class="ngrow"><button type="button" class="ngbtn" id="ngCall" disabled>'+L('Llamar al sujeto ›','Call the subject ›')+'</button><button type="button" class="ngbtn sec" id="ngNew">'+L('Otro expediente','Another dossier')+'</button></div></div>';
@@ -824,6 +1027,7 @@ function recHTML(r){
  h+='<div class="ngb y"><small>'+L('Tú','You')+'</small>'+TXT(r.saidT)+'</div>';
  h+='<div class="ngb '+(r.rcmd?'c':'s')+'"><small>'+(r.rcmd?L('Mando','Command'):esc(P.name))+'</small>'+TXT(r.reply)+'</div>';
  r.events.forEach(e=>{ h+='<div class="ngev">'+TXT(e)+'</div>'; });
+ (r.amb||[]).forEach(e=>{ h+='<div class="ngev ngamb">'+TXT(e)+'</div>'; });
  return h;
 }
 function curHTML(){
@@ -831,7 +1035,7 @@ function curHTML(){
  return '<div class="ngb '+(m.cmd?'c':'s')+'" id="ngCur"><small>'+(m.cmd?L('Mando','Command'):esc(P.name))+'</small>'+TXT(m.say)+'</div><div class="ngopts" id="ngOpts"><div class="q">'+L('¿Qué respondes?','What do you say?')+'</div>'+m.opts.map((o,i)=>'<button type="button" class="ngopt" data-i="'+i+'">'+TXT(o.t)+'</button>').join('')+tacHTML()+'</div>';
 }
 function play(){
- const h='<div class="ngw" data-noi18n>'+crumbs()+barHTML()+'<div class="nglog" id="ngLog"><div class="ngev">'+esc(L('Llamada en curso con ','Call in progress with ')+P.name+' · '+T(P.place))+'</div>'+G.log.map(recHTML).join('')+curHTML()+'</div></div>';
+ const h='<div class="ngw" data-noi18n>'+crumbs()+barHTML()+'<div class="nglog" id="ngLog"><div class="ngev">'+esc(L('Llamada en curso con ','Call in progress with ')+P.name+' · '+T(P.place))+'</div>'+(G.amb0?'<div class="ngev ngamb">'+TXT(G.amb0)+'</div>':'')+G.log.map(recHTML).join('')+curHTML()+'</div></div>';
  X.set(h,L('Negociador','Negotiator'));
  setTop(); watchTop(); wire(); scnInit();
 }
@@ -866,8 +1070,8 @@ function pickOpt(i){
    while(rep.firstChild) log.appendChild(rep.firstChild);
    barUpd(G.tension-t0,G.trust-c0);
    scnOnReply(r);
-   const evs=r.events.slice(); let k=0;
-   const nextEv=()=>{ if(k<evs.length){ const d=document.createElement('div'); d.className='ngev'; d.innerHTML=TXT(evs[k++]); log.appendChild(d); after(260,nextEv); return; } finish(); };
+   const evs=r.events.slice(), na=evs.length; (r.amb||[]).forEach(a=>evs.push(a)); let k=0;
+   const nextEv=()=>{ if(k<evs.length){ const d=document.createElement('div'); d.className=k>=na?'ngev ngamb':'ngev'; d.innerHTML=TXT(evs[k++]); log.appendChild(d); after(260,nextEv); return; } finish(); };
    const finish=()=>{
     if(G.end){ endBlock(log); G.busy=0; return; }
     buildTurn();
