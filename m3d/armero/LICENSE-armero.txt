@@ -69,3 +69,20 @@ Pistolas (tanda 3b), modified by M.A.T (loose parts removed, rescaled to real le
 Añadido por M.A.T el 4 nov 2026 (sin modelos nuevos de terceros):
 - Raíl Picatinny del G36E (España) y del FAMAS F1 «Infanterie»: modelo aproximado hecho por MAT a partir de medidas oficiales (MIL-STD-1913: ranura 5,23 mm, paso 10,01 mm, fondo 3,00 mm; Wikipedia «Picatinny rail»), construido en código (armero_kit.js, prail). Largo y altura ajustados al asa de los modelos g36.glb y famas.glb, que no se modifican.
 - Glock 18C: linternas SureFire X300U-A y Streamlight TLR-1 HL (las mismas piezas ya usadas en la Glock 17) colocadas en el raíl Glock del modelo g18c.glb.
+
+Añadido por M.A.T el 9 nov 2026 (tanda de 15 armas; modelos de GoldbergR, CC BY 4.0; cambios: escala a la longitud real publicada (Wikipedia), centrado, compresión meshopt, materiales sin metalizado):
+- ak47.glb: "AK-47 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/ak-47-low-poly-94ba11de59ba452d99309e2e78a0ed5b, CC BY 4.0
+- svd.glb: "Dragunov SVD (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/dragunov-svd-low-poly-e85fdaac4562407aa2efc9a2d0ecdcd2, CC BY 4.0
+- g3.glb: "HK G3 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/hk-g3-low-poly-dd71a244835f4f6bbbf8149472116498, CC BY 4.0
+- m60.glb: "M60 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/m60-low-poly-64bea21d61fa4352bcf4306328e546cb, CC BY 4.0
+- m2.glb: "M2 Browning (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/m2-browning-low-poly-b3ccf9641d474e7fa928cce6dcfc30ae, CC BY 4.0
+- garand.glb: "M1 Garand (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/m1-garand-low-poly-c8d2483db7764a81b22d8806d29b748a, CC BY 4.0
+- mg3.glb: "MG 3 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/mg-3-low-poly-0c49e4b85901428b972023a40e8fee99, CC BY 4.0
+- asval.glb: "AS Val (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/as-val-low-poly-e20a2eced1ec4f50ae45891ad039ea8b, CC BY 4.0
+- ump45.glb: "HK UMP-45 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/hk-ump-45-low-poly-9fb280461c2d41b48a0e057b6ce8cd8b, CC BY 4.0
+- mp9.glb: "B&T MP9 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/bt-mp9-low-poly-18ea203c57b5477c8dcb8ef2768423b2, CC BY 4.0
+- m1014.glb: "Benelli M4 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/benelli-m4-low-poly-cf1616c17626429b99cfbdd3d42a713e, CC BY 4.0
+- spas12.glb: "Franchi SPAS-12 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/franchi-spas-12-low-poly-5c709e2f7f494c0eba780fd1333c611e, CC BY 4.0
+- aw.glb: "Accuracy International Arctic Warfare (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/accuracy-international-arctic-warfare-low-poly-e375b08500bb4f8786753c200b323b7c, CC BY 4.0
+- qbz95.glb: "QBZ-95 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/qbz-95-low-poly-64897225cfcd4d58955abae594b2919c, CC BY 4.0
+- arx160.glb: "Beretta ARX160 (Low-Poly)" by GoldbergR (https://sketchfab.com/GoldbergR), https://sketchfab.com/3d-models/beretta-arx160-low-poly-dd39083d28af4e0cb28acb097fc483d1, CC BY 4.0

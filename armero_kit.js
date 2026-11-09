@@ -485,5 +485,47 @@ function prail(d,P){ const G=new THREE.Group(); const L=d.L, H=d.H||8, Wd=d.W||2
   for(let i=0;i<n;i++) bx(G,P.body,Wd,dp,sp-sw,0,H-dp/2,z0+i*sp,0.5);    // dientes entre ranuras
   return G; }
 B.prail=prail;
+
+/* ===== Tanda 6 (M.A.T, 9 nov 2026): cargadores, trípodes, lanzagranadas de bocacha y visores de tubo.
+   Medidas oficiales en ACC (armero.js) con su fuente; donde el fabricante no publica una cota la forma es aproximada (se dice en cada accesorio). ===== */
+// Cargador recto o curvo. Origen = boca del cargador (arriba, centro); baja en -Y y se curva hacia +Z. d={L (largo por la curva), W (ancho), D (fondo), cv (curva total, grados), st:'steel'|'poly'}
+function boxmag(d,P){ const G=new THREE.Group(); const N=10, seg=d.L/N, m=d.st==='steel'?P.body:P.poly; let y=0,z=0,a=0; const da=(d.cv||0)*D2R/N;
+  for(let i=0;i<N;i++){ const s=new THREE.Group(); s.position.set(0,y,z); s.rotation.x=-a; bx(s,m,d.W,seg+0.6,d.D,0,-seg/2,0,1.2);
+    if(i%3===1) bx(s,P.dark,d.W+0.8,1.6,d.D*0.7,0,-seg/2,0,0.4); G.add(s);
+    y-=Math.cos(a+da/2)*seg; z+=Math.sin(a+da/2)*seg; a+=da; }
+  const f=new THREE.Group(); f.position.set(0,y,z); f.rotation.x=-a; bx(f,P.dark,d.W+2,5,d.D+4,0,-2,0,1.5); G.add(f);   // tapa del fondo
+  bx(G,P.dark,d.W*0.7,6,d.D*0.6,0,-1,0,0.6);                                                                     // labios
+  return G; }
+// Tambor. Origen = boca (arriba, centro). d={T (alto de la torre), tw, td (sección de la torre), Dd (diámetro del tambor), Wd (grosor), twin (1 = doble tambor tipo C-Mag), dz (desplazamiento del tambor hacia +Z)}
+function drum(d,P){ const G=new THREE.Group(); const m=P.poly, R=d.Dd/2, cy=-d.T-R*0.55, dz=d.dz||0;
+  bx(G,m,d.tw,d.T+4,d.td,0,-d.T/2,0,1.2);
+  const one=(x,w)=>{ xcyl(G,m,R,w,x,cy,dz,28); xcyl(G,P.dark,R*0.42,w+1.2,x,cy,dz,18); xcyl(G,P.steel,R*0.12,w+2.6,x,cy,dz,10); };
+  if(d.twin){ const w=d.Wd; one(-(d.tw/2+w/2),w); one(d.tw/2+w/2,w); bx(G,m,d.tw,R*1.2,R*1.3,0,cy,dz,2); }
+  else { one(0,d.Wd); xcyl(G,P.dark,6,d.Wd+3,0,cy+R*0.62,dz-R*0.5,10); }       // tambor único con su llave de carga
+  return G; }
+// Trípode de ametralladora. Origen = punto de anclaje del arma (pivote delantero, bajo el cajón). d={H (alto del pivote), fl (pata delantera), rl (patas traseras), sp (separación trasera), tl (largo de la cuna)}
+function tripod(d,P){ const G=new THREE.Group(); const H=d.H, m=P.body;
+  bx(G,P.dark,40,24,d.tl||120,0,-12,-(d.tl||120)*0.3,2);                       // cuna / cabeza con el pivote
+  vcyl(G,P.steel,6,30,0,-30,0,10);                                             // pivote
+  bx(G,P.steel,10,10,d.tl?d.tl*1.3:160,0,-30,-(d.tl||120)*0.9,1);              // mecanismo de elevación y dirección (T&E)
+  rod4(G,m,d.rr||9,[0,-40,0],[0,-H,d.fl*0.82],8);  rod4(G,P.rubber,(d.rr||9)+2,[0,-H+8,d.fl*0.82],[0,-H-4,d.fl*0.86],8);
+  for(const s of [-1,1]){ rod4(G,m,d.rr||9,[0,-40,-30],[s*d.sp/2,-H,-d.rl*0.86],8); rod4(G,P.rubber,(d.rr||9)+2,[s*d.sp/2,-H+6,-d.rl*0.86],[s*d.sp/2,-H-4,-d.rl*0.88],8); }
+  rod4(G,P.dark,5,[-d.sp*0.42,-H*0.8,-d.rl*0.7],[d.sp*0.42,-H*0.8,-d.rl*0.7],6);  // barra de travesaño
+  return G; }
+// Lanzagranadas de bocacha (tubo que envuelve la boca). Origen = boca del arma, el tubo sigue en +Z. d={L (largo total con la abrazadera), r (radio), cl (largo de la abrazadera)}
+function muzgl(d,P){ const G=new THREE.Group(); const L=d.L, r=d.r, cl=d.cl||40;
+  cyl(G,P.steel,r,r,L-cl,cl-L*0.35,0,0,18); add(G,new THREE.RingGeometry(r*0.55,r,18),P.dark,0,0,L*0.65+0.3);
+  bx(G,P.steel,r*1.4,r*2.2,cl,0,-r*0.6,-L*0.35+cl/2,2); xcyl(G,P.dark,3,r*1.8,0,-r*1.2,-L*0.35+cl/2,8);   // abrazadera al tetón de la bayoneta
+  for(let i=0;i<3;i++) cyl(G,P.dark,r+0.5,r+0.5,2,cl-L*0.35+16+i*14,0,0,18);
+  return G; }
+// Visor de tubo con anillas sobre raíl. Origen = cara superior del raíl. d={len, tube (Ø del tubo), ro (radio exterior del objetivo), ay (eje óptico), zs (anillas, mm)}
+function tscope(d,P){ const G=new THREE.Group(); const L=d.len, r=d.tube/2, ro=d.ro, ay=d.ay, z0=-L/2, re=Math.max(r+5,21);
+  rings(G,P.dark,ay,r,d.zs||[-L*0.18,L*0.14],16); bx(G,P.dark,r*2+8,6,L*0.62,0,3,-L*0.02,1.5);
+  lathe(G,P.body,[[0,z0],[re-1,z0],[re,z0+4],[re,z0+L*0.16],[r+1.5,z0+L*0.26],[r,z0+L*0.3],[r,z0+L*0.6],[ro-2,z0+L*0.78],[ro,z0+L*0.84],[ro,z0+L-2],[ro-1,z0+L],[0,z0+L]],22,ay);
+  bx(G,P.body,r*2+8,r*2+6,L*0.14,0,ay,-L*0.02,4); vcyl(G,P.body,13,13,0,ay+r+9,-L*0.02,16); xcyl(G,P.body,13,13,r+9,ay,-L*0.02,16); xcyl(G,P.body,9,9,-(r+7),ay,-L*0.04,14);
+  lens(G,P,ro-3,z0+L,ay,false); lens(G,P,re-3,z0,ay,true);
+  return G; }
+B.boxmag=boxmag; B.drum=drum; B.tripod=tripod; B.muzgl=muzgl; B.tscope=tscope;
+
 export function build(kind,dims,fde){ const P=marks(mats(fde)); const g=B[kind](dims,P); const root=new THREE.Group(); g.scale.setScalar(K); root.add(g);
   root.traverse(o=>{ if(o.isMesh){ o.castShadow=true; } }); root.userData.kit=kind; return root; }
