@@ -58,8 +58,13 @@ function customName(ll){ var best=null,bd=1e9; D.c.forEach(function(c){ var d=di
 function cn(c){ return EN()&&c[1]?c[1]:c[0]; }
 function sel(){ return ST.m.map(byId).filter(Boolean); }
 // ---------- CSS ----------
+/* plegables «Países» y «Fichas» (solo interfaz; en memoria) */
+var ALM={c:0,f:0};
 function css(){ if(document.getElementById('alc-css')) return; var s=document.createElement('style'); s.id='alc-css';
  s.textContent=
+ '.alc .alm-d{margin:18px 0 0;border:1px solid var(--line);border-radius:var(--r,10px);background:var(--s1);padding:0 12px}'+
+ '.alc .alm-d>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 0}.alc .alm-d>summary::-webkit-details-marker{display:none}'+
+ '.alc .alm-d>summary h2{margin:0;font-size:17px;flex:1}.alc .alm-d>summary::after{content:"▾";opacity:.7}.alc .alm-d[open]>summary::after{content:"▴"}.alc .alm-d[open]{padding-bottom:12px}'+
  '.alc .alc-nuk{display:inline-block;margin-top:4px;font-size:12.5px;color:#ff9c8a;border:1px solid #6a2a24;border-radius:999px;padding:3px 10px;text-decoration:none}.alc .alc-nuk:hover{background:#2a1311}'+
  '.alc .tgt{border:1px solid #6a2a24;background:rgba(162,64,47,.10);border-radius:var(--r);padding:10px 12px;margin:8px 0 10px}.alc .tgt h3{margin:0 0 2px;font-size:16px}.alc .tgt .tx{float:right;background:none;border:0;color:var(--mu);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}.alc .tgt .tl{display:flex;flex-direction:column;gap:4px;margin:8px 0 4px}.alc .tgt .tr{display:flex;align-items:center;gap:8px;text-align:left;width:100%;background:rgba(0,0,0,.25);border:1px solid #3a2a26;border-radius:8px;padding:7px 9px;color:inherit;font:inherit;font-size:13.5px;cursor:pointer}.alc .tgt .tr:hover{border-color:#a2402f}.alc .tgt .tr b{flex:1;min-width:0}.alc .tgt .tr small{color:var(--mu);white-space:nowrap}.alc .tgt .cur{font-size:13px;color:#e6d4cf;margin:6px 0 0}'+
  '.alc .nextc{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border:1px solid #a2402f;background:#2a1311;border-radius:var(--r);padding:12px 14px;margin:14px 0 6px;color:#ffd9cf}.alc .nextc .tx2{flex:1 1 240px;font-size:14px;line-height:1.45}.alc .nextc b{color:#fff}.alc .nextc a.btn{border-color:#a2402f;background:#3a1714;color:#ffd9cf;font-weight:700;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}'+
@@ -281,10 +286,11 @@ function render(app,X){
    '<div id="alc-cities"></div>'+
    '<div class="nextc" id="alc-next"></div>'+
    '<div id="alc-ctry"></div>'+
-   '<h2>'+(EN()?'Missile profiles':'Fichas de los misiles')+'</h2><div class="fichas" id="alc-fichas"></div>'+
+   '<details class="alm-d" data-alm="f"'+(ALM.f?' open':'')+'><summary><h2>'+(EN()?'Missile profiles':'Fichas de los misiles')+'</h2></summary><div class="fichas" id="alc-fichas"></div></details>'+
    '</div>';
   X.set(h,EN()?'Nuclear war: missile ranges':'Guerra nuclear: alcance de misiles');
   var root=app.querySelector('.alc');
+  root.addEventListener('toggle',function(ev){ var d=ev.target; if(d&&d.getAttribute&&d.getAttribute('data-alm')) ALM[d.getAttribute('data-alm')]=d.open?1:0; },true);
   // presets
   var s=root.querySelector('#alc-lp'); s.innerHTML=D.p.map(function(p){ return '<option value="'+p[0]+'">'+e(EN()?p[2]:p[1])+'</option>'; }).join('')+'<option value="_c">'+(EN()?'Point chosen on the map':'Punto elegido en el mapa')+'</option>';
   s.addEventListener('change',function(){ if(s.value==='_c') return; ST.p=s.value; ST.ll=null; recenter(true); });
@@ -437,7 +443,7 @@ function cities(){ var el=document.getElementById('alc-cities'); if(!el) return;
   var mx=0; M.forEach(function(m){ if(m.r[1]>mx) mx=m.r[1]; });
   if(tab!=='es') idx=idx.filter(function(i){ return CUR.dist[i]<=mx; });
   idx.sort(function(a,b){ return CUR.dist[a]-CUR.dist[b]; });
-  var tot=idx.length, lim=CUR.more?idx.length:(tab==='es'?60:40); var shown=idx.slice(0,lim);
+  var tot=idx.length, lim=CUR.more?idx.length:(tab==='es'?15:12); var shown=idx.slice(0,lim);
   var h='<div class="tabs"><button type="button" class="chip" data-tab="es" aria-pressed="'+(tab==='es')+'">🇪🇸 '+(EN()?'Spain (all)':'España (todas)')+'</button><button type="button" class="chip" data-tab="w" aria-pressed="'+(tab!=='es')+'">🌍 '+(EN()?'Rest of the world':'Resto del mundo')+'</button></div>';
   if(!tot) h+='<p class="sub">'+(EN()?'No major city falls within the selected ranges.':'Ninguna ciudad importante queda dentro de los alcances elegidos.')+'</p>';
   else h+='<table><thead><tr><th>'+(EN()?'City':'Ciudad')+'</th><th style="text-align:right">'+(EN()?'Distance':'Distancia')+'</th></tr></thead><tbody>'+shown.map(function(i){ var c=D.c[i], d=CUR.dist[i];
@@ -449,8 +455,8 @@ function cities(){ var el=document.getElementById('alc-cities'); if(!el) return;
 function countries(){ var el=document.getElementById('alc-ctry'); if(!el) return; var M=sel(), mx=0; M.forEach(function(m){ if(m.r[1]>mx) mx=m.r[1]; });
   var md=MAP.minD||{}, L2=[]; W.forEach(function(c){ if(L2.some(function(x){return x.i===c.i;})) return; var d=md[c.i]; if(d!=null&&d<=mx) L2.push({i:c.i,n:cname(c.i,c.n),d:d}); });
   L2.sort(function(a,b){ return a.d-b.d; });
-  el.innerHTML='<h2>'+(EN()?'Countries reached (fully or partly)':'Países al alcance (total o parcialmente)')+' · '+L2.length+'</h2>'+(L2.length?'<div class="ctry">'+L2.map(function(x){ return '<span>'+fl(x.i)+e(x.n)+'</span>'; }).join('')+'</div>':'<p class="sub">—</p>')+
-   '<p class="sub" style="font-size:12px;margin-top:8px">'+(EN()?'Based on the largest selected range. A country counts if any part of its territory (Natural Earth 1:50m outline) is within range.':'Según el mayor alcance elegido. Un país cuenta si alguna parte de su territorio (contorno Natural Earth 1:50m) queda dentro.')+'</p>'; }
+  el.innerHTML='<details class="alm-d" data-alm="c"'+(ALM.c?' open':'')+'><summary><h2>'+(EN()?'Countries reached (fully or partly)':'Países al alcance (total o parcialmente)')+' · '+L2.length+'</h2></summary>'+(L2.length?'<div class="ctry">'+L2.map(function(x){ return '<span>'+fl(x.i)+e(x.n)+'</span>'; }).join('')+'</div>':'<p class="sub">—</p>')+
+   '<p class="sub" style="font-size:12px;margin-top:8px">'+(EN()?'Based on the largest selected range. A country counts if any part of its territory (Natural Earth 1:50m outline) is within range.':'Según el mayor alcance elegido. Un país cuenta si alguna parte de su territorio (contorno Natural Earth 1:50m) queda dentro.')+'</p></details>'; }
 function ficha(m,i){ var lp=launch(), hp=preset(m.home);
   var fid=m.fid&&window.MAT_DATA&&(window.MAT_DATA.items||[]).some(function(a){return a.id===m.fid;})?m.fid:null;
   var tg=tags(m).map(function(t){ return '<span class="tag">'+e(L(GS[t]))+'</span>'; }).join('')+(m.wh!=='conv'?'<span class="tag nuc">'+(m.wh==='nuc'?(EN()?'Nuclear':'Nuclear'):(EN()?'Nuclear-capable':'Capacidad nuclear'))+'</span>':'')+(m.unc?'<span class="tag unc">⚠ '+(EN()?'Uncertain figures':'Cifras inciertas')+'</span>':'');
