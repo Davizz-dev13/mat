@@ -1040,7 +1040,7 @@ function debrief(r){ if(!G||G.over&&!r) return; if(G.tut&&!r._tut){ r._tut=1; tu
 }
 function endGame(why){ if(G.over) return; G.over=true; closeSheet(); stopLoop(); const B=bests(); const k=G.mode+'|'+G.st.id+'|'+G.rf.id; const rec=!B[k]||G.score>B[k]; if(rec&&G.score>0){ B[k]=G.score; try{ localStorage.setItem('mat_fr_best',JSON.stringify(B)); }catch(e){} }
  const hits=G.targets.filter(t=>t.res==='hit').length; const shots=G.shots.length;
- try{ window.MAT_MED&&window.MAT_MED.event('fr.serie',{mode:G.mode,hits:hits,n:G.targets.length,score:G.score,tut:!!G.tut}); }catch(_){}
+ try{ window.MAT_MED&&window.MAT_MED.event('fr.serie',{mode:G.mode,hits:hits,h1:G.targets.filter(t=>t.res==='hit'&&t.hitShot===1).length,n:G.targets.length,score:G.score,tut:!!G.tut}); }catch(_){}
  let h='<div class="frw" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],['Francotirador','#/francotirador'],[L('Resultado','Result')]])+'<h1 style="font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.02em;margin:14px 0 4px">'+(why?esc(why):L('Fin de la serie','End of the string'))+'</h1>'+
   '<p style="color:#bfc2b8">'+esc(G.rf.n)+' · '+esc(L(G.st.n[0],G.st.n[1]))+' · '+L(MODES[G.mode].n[0],MODES[G.mode].n[1])+'</p>'+
   '<div class="frsum"><div><b>'+G.score+'</b><span>'+L('puntos','points')+'</span></div><div><b>'+hits+'/'+G.targets.length+'</b><span>'+L('siluetas','targets')+'</span></div><div><b>'+shots+'</b><span>'+L('disparos','rounds')+'</span></div></div>'+

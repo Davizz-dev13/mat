@@ -91,7 +91,7 @@ var FAM=[
  ["fr", "frl", "Larga distancia", "Long range", "Toca una silueta a {n} m o más en Veterano o Desafío (sin computadora balística)", "Hit a target at {n} m or more in Veteran or Challenge (no ballistic computer)", "fr_farv", [1000, 1500, 1900]],
  ["fr", "frm", "Blancos en movimiento", "Moving targets", "Toca {n} siluetas en movimiento", "Hit {n} moving targets", "fr_mv", [10, 50, 150]],
  ["fr", "frn", "Tirador nocturno", "Night marksman", "Toca {n} siluetas en el campo de tiro nocturno", "Hit {n} targets on the night range", "fr_nt", [25], "p"],
- ["fr", "frs", "Serie perfecta", "Perfect string", "Toca todas las siluetas de una serie en Veterano o Desafío", "Hit every target of a string on Veteran or Challenge", "fr_ser", [1], "o"],
+ ["fr", "frs", "Serie perfecta", "Perfect string", "Toca todas las siluetas de una serie al primer disparo en Veterano o Desafío", "Hit every target of a string with first-round hits on Veteran or Challenge", "fr_ser", [1], "o"],
  ["sb", "sbc", "Curso de submarinista", "Submariner course", "Termina «Aprende» escapando de la escolta", "Finish “Learn” by escaping the escort", "sb_apr", [1], "b"],
  ["sb", "sbh", "Cazador de superficie", "Surface hunter", "Alcanza {n} blancos designados", "Hit {n} designated targets", "sb_hit", [5, 30, 100]],
  ["sb", "sbe", "Servicio silencioso", "Silent service", "Cumple {n} misi{on} (blanco alcanzado y escapas)", "Complete {n} mission{s} (target hit and you escape)", "sb_esc", [3, 15, 40]],
@@ -218,7 +218,7 @@ function ev(name,o){ o=o||{}; load(); touchDay(); var gx=0;
  switch(name){
  case 'medico.fin': { var sv=+o.ok||0; inc('md_ok',sv); if(o.mode==='r') inc('md_r',sv); if(o.perf) inc('md_perf'); if(o.perf&&o.mode==='r') inc('md_rp'); if(o.mode==='a'&&sv>0) setMax('md_apr',1); gx=10+Math.min(15,5*sv)+(o.perf?5:0); break; }
  case 'fr.disparo': { if(o.hit){ inc('fr_hit'); setMax('fr_far',Math.round(+o.R||0)); if(o.mode==='veterano'||o.mode==='desafio') setMax('fr_farv',Math.round(+o.R||0)); if(o.mode==='record') addSet('fr_rec',Math.round(+o.R||0)); if(o.mv) inc('fr_mv'); if(o.nt) inc('fr_nt'); if(o.tut) setMax('fr_apr',1); gx=3+((+o.R||0)>=1500?2:0); } break; }
- case 'fr.serie': { if((o.mode==='veterano'||o.mode==='desafio')&&o.n>0&&o.hits>=o.n) setMax('fr_ser',1); gx=10; break; }
+ case 'fr.serie': { if((o.mode==='veterano'||o.mode==='desafio')&&o.n>0&&(+o.h1||0)>=o.n) setMax('fr_ser',1); gx=10; break; }
  case 'combate.fin': { if(o.win){ inc('cb_win'); if(o.night) inc('cb_nt'); if(o.dif==='eli') inc('cb_eli'); if(o.mi) addSet('cb_mis',o.mi); if(o.dif==='eli'&&o.mi) addSet('cb_mise',o.mi); if(o.dif==='eli'&&o.night) inc('cb_en'); } gx=10+(o.win?15:0); break; }
  case 'ad.fin': { var sc=+o.sc||0; inc('ad_ops'); if(sc>=80) inc('ad_80'); if(o.d==='r'&&sc>=70) inc('ad_r70'); if(o.m) addSet('ad_map',o.m); if(o.m&&sc>=70) addSet('ad_m70',o.m); gx=10+Math.round(sc/10); break; }
  case 'duelo.fin': { if(o.win){ var mk=o.m==='cielo'?'du_air':o.m==='suelo'?'du_gnd':o.m==='mar'?'du_sea':''; if(mk){ inc(mk); addSet('du_m',o.m); addSet('du_m5',o.m); if(o.night&&o.m!=='cielo') addSet('du_m5',o.m+'_n'); } } gx=8+(o.win?10:0); break; }
