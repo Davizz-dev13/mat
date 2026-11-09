@@ -1345,3 +1345,23 @@ html[lang=en] .rc.on .rt:after,html[lang=en] .ddfe.on .go:after{content:" · tap
  .mx-bd{padding-bottom:max(24px,env(safe-area-inset-bottom))}
 }
 @media (hover:none){ .mx-ft{display:none} }
+
+/* === M.A.T buscar por categoría (9 nov 2026): chips de categoría en #/buscar y en el panel (.mxk-*, .mx-kc) === */
+.mxk{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px}
+.mxk .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px}
+.mxk-n{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.mxk .chip[aria-pressed="true"] .mxk-n{color:inherit;opacity:.8}
+.mxk-x{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:2px;border-radius:999px;background:var(--s2);border:1px solid var(--line);font-size:10px;line-height:1}
+.mxp{margin:8px 0 0}
+.mxp .sel{max-width:100%}
+.mxk-go .nm{color:var(--ac2)}
+.mx-kc{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px 10px;border-bottom:1px solid var(--line)}
+.mx-kc .chip{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
+.mx-br .mx-n{color:var(--ac2)}
+@media (max-width:699px){
+ .mx-kc{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain;padding:8px 12px}
+ .mx-kc::-webkit-scrollbar{display:none}
+ .mxk{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain;margin-left:-16px;margin-right:-16px;padding:0 16px}
+ .mxk::-webkit-scrollbar{display:none}
+ .mxk .chip{flex:0 0 auto}
+}
