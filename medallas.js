@@ -49,6 +49,7 @@ var GL={
  du:'<path d="M3 8h12M11 4l4 4-4 4M21 16H9M13 12l-4 4 4 4" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
  ng:'<path d="M4 5h16v10H10l-5 4v-4H4z" fill="none" stroke-width="2.2" stroke-linejoin="round"/>',
  fr:'<circle cx="12" cy="12" r="7.5" fill="none" stroke-width="2"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6" stroke-width="2"/>',
+ at:'<path d="M3 19h9l1.5-3H6z" fill="none" stroke-width="2" stroke-linejoin="round"/><path d="M9 15.5L20 6" stroke-width="2.4" stroke-linecap="round"/><circle cx="7" cy="19.5" r="1.6" fill="none" stroke-width="1.6"/>',
  sb:'<path d="M3 14c0-2.5 4-4 9-4s9 1.5 9 4-4 4-9 4-9-1.5-9-4z" fill="none" stroke-width="2"/><path d="M10 10V7h4v3" fill="none" stroke-width="2"/>',
  nu:'<circle cx="12" cy="12" r="3" fill="none" stroke-width="2"/><circle cx="12" cy="12" r="8" fill="none" stroke-width="1.6" stroke-dasharray="3 2.4"/>',
  md:'<path d="M2 13h5l2-5 3 10 3-7 2 2h5" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -62,7 +63,7 @@ var GL={
  co:'<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="none" stroke-width="2" stroke-linejoin="round"/>'};
 /* [id, ES, EN, cinta (3 colores genéricos), forma] */
 var SEC=[['cb','Combate','Fight',['#3d4a2c','#9a3b2a','#3d4a2c'],'c'],['ad','Antidisturbios','Riot control',['#1f3a5f','#d7d2c4','#1f3a5f'],'c'],['du','Duelo','Duel',['#5a5f66','#c79a3a','#5a5f66'],'c'],
- ['ng','Negociador','Negotiator',['#2c4f63','#e3e0d6','#2c4f63'],'c'],['fr','Francotirador','Sniper',['#4a5233','#1d1f17','#4a5233'],'c'],['sb','Submarino','Submarine',['#13304a','#6a8fae','#13304a'],'c'],
+ ['ng','Negociador','Negotiator',['#2c4f63','#e3e0d6','#2c4f63'],'c'],['fr','Francotirador','Sniper',['#4a5233','#1d1f17','#4a5233'],'c'],['sb','Submarino','Submarine',['#13304a','#6a8fae','#13304a'],'c'],['at','Artillero','Artillery',['#4a3f2a','#c2a24e','#4a3f2a'],'c'],
  ['nu','Guerra nuclear','Nuclear war',['#3b3b3b','#e0b73c','#3b3b3b'],'c'],['md','Médico de Combate','Combat Medic',['#2f5d3a','#e6e6e6','#2f5d3a'],'c'],['rt','Reto M.A.T','M.A.T Challenge',['#5b4320','#d6b25e','#5b4320'],'c'],
  ['sa','Crea tu soldado y Armero','Soldier and Gunsmith',['#4b3a2a','#8e7d5c','#4b3a2a'],'c'],['fi','Fichas y modelos 3D','Data sheets and 3D models',['#2b3340','#b3bd8c','#2b3340'],'h'],['pa','Países, mapa y geopolítica','Countries, map and geopolitics',['#24402f','#c8c38e','#24402f'],'h'],
  ['nw','Noticias','News',['#40302a','#d0c9b8','#40302a'],'h'],['ra','Radar aéreo','Air radar',['#1d3a52','#c8f03c','#1d3a52'],'h'],['hi','Historia: batallas y operaciones','History: battles and operations',['#4d2b25','#c9a25a','#4d2b25'],'h'],
@@ -162,12 +163,25 @@ COM.forEach(function(c){ var m={id:c[0],f:c[0],sec:'co',n:[c[1],c[2]],tr:c[3],re
 FAM2.forEach(function(f){ f[7].forEach(function(n,i){ var tr=f[8]||TK[f[7].length===2?(i?1:0):i]; var m={id:f[1]+i,f:f[1],sec:f[0],n:[f[2],f[3]],d:[f[4],f[5]],k:f[6],t:n,tr:tr,lv:f[7].length>1?i+1:0}; MED.push(m); MBY[m.id]=m; }); });
 /* medalla secreta «Ghost»: la última de la lista para el código; en el panel sale la primera */
 var GHO={id:'gho',f:'gho',sec:'gh',n:['Ghost','Ghost'],d:['Medalla secreta','Secret medal'],k:'gh',t:1,tr:'o',lv:0,secret:1,xp:500}; MED.push(GHO); MBY.gho=GHO;
+/* v3 Artillero (10 nov 2026): añadidas DESPUÉS de Ghost para no mover ningún índice del código de progreso */
+var FAM3=[
+ ["at", "ata", "Curso de artillería", "Artillery course", "Termina una lección de «Aprende»", "Finish a “Learn” lesson", "at_apr", [1], "b"],
+ ["at", "ath", "Primer impacto", "First hit", "Destruye {n} objetivo{s}", "Destroy {n} target{s}", "at_hit", [1, 25, 100]],
+ ["at", "atf", "Diana a la primera", "First-round hit", "Destruye {n} objetivo{s} sin un disparo de más", "Destroy {n} target{s} without a single extra round", "at_fr", [1, 10, 40]],
+ ["at", "atb", "Puente caído", "Bridge down", "Destruye un puente", "Destroy a bridge", "at_br", [1], "p"],
+ ["at", "atd", "Decapitación", "Decapitation", "Destruye {n} puesto{s} de mando", "Destroy {n} command post{s}", "at_cp", [3, 15]],
+ ["at", "atc", "Contrabatería", "Counter-battery", "Destruye una batería enemiga antes de que os localice (Veterano)", "Destroy an enemy battery before it locates you (Veteran)", "at_cb", [1], "o"],
+ ["at", "atv", "Veterano de artillería", "Artillery veteran", "Cumple {n} misi{on} en Veterano", "Complete {n} mission{s} on Veteran", "at_vet", [1, 10, 25]],
+ ["at", "atm", "Artillero de montaña", "Mountain gunner", "Destruye un objetivo detrás de una sierra (mapa de montaña)", "Destroy a target behind a ridge (mountain map)", "at_mt", [1], "p"],
+ ["at", "atg", "Cien misiones", "A hundred missions", "Cumple {n} misiones generadas", "Complete {n} generated missions", "at_gen", [100], "o"]];
+FAM3.forEach(function(f){ f[7].forEach(function(n,i){ var tr=f[8]||TK[f[7].length===2?(i?1:0):i]; var m={id:f[1]+i,f:f[1],sec:f[0],n:[f[2],f[3]],d:[f[4],f[5]],k:f[6],t:n,tr:tr,lv:f[7].length>1?i+1:0}; MED.push(m); MBY[m.id]=m; }); });
 /* contadores (orden fijo para el código) */
 var CK=['cb_win','cb_nt','cb_eli','cb_mis','ad_ops','ad_80','ad_r70','ad_map','du_air','du_gnd','du_sea','du_m','ng_ok','ng_ren','ng_85','ng_n','fr_apr','fr_hit','fr_far','fr_mv','fr_nt','fr_ser',
  'sb_apr','sb_hit','sb_esc','sb_vet','nu_mis','nu_city','nu_def','nu_shield','md_ok','md_r','md_perf','md_apr','rt_win','rt_10','rt_str','rt_nh','sd_save','sd_role','ar_w','ar_acc',
  'f_all','f_av','f_he','f_ta','f_bl','f_bu','f_su','f_lo','f_ar','f_es','f_aw','m3_n','pa_n','mp_d','pa_sec','nw_d','ra_n','ra_ac','ra_mr','ra_tk','ra_aw','ra_fi','hb_v','ho_v','hs_c','hs_dd','gw_n','days','str','games',
- 'gh','cb_mise','ad_m70','du_m5','fr_farv','fr_rec','ra_ty','ra_isr','ra_hv','ra_rare','md_rp','ng_95','cb_en'];
-var GAMESEC=['cb','ad','du','ng','fr','sb','nu','md','rt','sa'];
+ 'gh','cb_mise','ad_m70','du_m5','fr_farv','fr_rec','ra_ty','ra_isr','ra_hv','ra_rare','md_rp','ng_95','cb_en',
+ 'at_apr','at_hit','at_fr','at_br','at_cp','at_cb','at_vet','at_mt','at_gen'];
+var GAMESEC=['cb','ad','du','ng','fr','sb','nu','md','rt','sa','at'];
 
 /* ---------- Estado ---------- */
 var ST=null, SS=null, mem=false;
@@ -223,6 +237,7 @@ function ev(name,o){ o=o||{}; load(); touchDay(); var gx=0;
  case 'ad.fin': { var sc=+o.sc||0; inc('ad_ops'); if(sc>=80) inc('ad_80'); if(o.d==='r'&&sc>=70) inc('ad_r70'); if(o.m) addSet('ad_map',o.m); if(o.m&&sc>=70) addSet('ad_m70',o.m); gx=10+Math.round(sc/10); break; }
  case 'duelo.fin': { if(o.win){ var mk=o.m==='cielo'?'du_air':o.m==='suelo'?'du_gnd':o.m==='mar'?'du_sea':''; if(mk){ inc(mk); addSet('du_m',o.m); addSet('du_m5',o.m); if(o.night&&o.m!=='cielo') addSet('du_m5',o.m+'_n'); } } gx=8+(o.win?10:0); break; }
  case 'neg.fin': { inc('ng_n'); var ok=o.end==='rendicion'||o.end==='liberados'; if(ok) inc('ng_ok'); if(o.end==='rendicion') inc('ng_ren'); if((+o.sc||0)>=85) inc('ng_85'); if(o.end==='rendicion'&&(+o.sc||0)>=95) inc('ng_95'); gx=10+(ok?10:0); break; }
+ case 'art.fin': { if(o.win){ inc('at_hit'); if(o.first) inc('at_fr'); if(o.kind==='pu') setMax('at_br',1); if(o.kind==='pc') inc('at_cp'); if(o.cb) setMax('at_cb',1); if(o.mode==='veterano') inc('at_vet'); if(o.crest) setMax('at_mt',1); if(o.gen) inc('at_gen'); if(o.mode==='aprende') setMax('at_apr',1); } gx=10+(o.win?15:0)+(o.first?5:0); break; }
  case 'sub.fin': { inc('sb_hit',+o.hits||0); var es=o.why==='escaped'; if(es&&o.mode==='aprende') setMax('sb_apr',1); if(es&&o.mode!=='aprende') inc('sb_esc'); if(es&&o.mode==='veterano') inc('sb_vet'); gx=10+Math.min(30,10*(+o.hits||0)); break; }
  case 'alc.ver': { (o.m||[]).forEach(function(id){ if(addSet('nu_mis',id)) addXP('ex',2); }); break; }
  case 'nuc.det': { if(o.c&&addSet('nu_city',o.c)) addXP('ex',3); break; }
