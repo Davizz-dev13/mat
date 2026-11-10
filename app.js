@@ -400,9 +400,10 @@ function sxBuild(){ if(SXI) return SXI; var t0=performance.now();
 var SXCW={avion:['aviones'],aviones:['aviones'],aeronave:['aviones'],aircraft:['aviones'],plane:['aviones'],airplane:['aviones'],jet:['aviones'],
   caza:['aviones','caza'],fighter:['aviones','caza'],bombardero:['aviones','bombardero'],bomber:['aviones','bombardero'],dron:['aviones','dron'],drone:['aviones','dron'],uav:['aviones','dron'],
   helicoptero:['helicopteros'],heli:['helicopteros'],helicopter:['helicopteros'],
-  tanque:['tanques'],carro:['tanques'],carrodecombate:['tanques'],tank:['tanques'],mbt:['tanques'],
+  tanque:['tanques'],carro:['tanques'],carrodecombate:['tanques'],tank:['tanques'],mbt:['tanques','t_principal'],
   blindado:['blindados'],apc:['blindados'],ifv:['blindados'],
   buque:['buques'],barco:['buques'],navio:['buques'],ship:['buques'],warship:['buques'],fragata:['buques','fragatas'],frigate:['buques','fragatas'],destructor:['buques','destructores'],destroyer:['buques','destructores'],
+  cazacarros:['tanques','t_caza'],cazaminas:['buques','minas'],dragaminas:['buques','minas'],minesweeper:['buques','minas'],minehunter:['buques','minas'],ssbn:['submarinos','s_balistico'],ssn:['submarinos','s_nuclear'],carabina:['armas','g_carabina'],carbine:['armas','g_carabina'],
   portaaviones:['buques','portaaviones'],carrier:['buques','portaaviones'],corbeta:['buques','corbetas'],corvette:['buques','corbetas'],acorazado:['buques','acorazados'],battleship:['buques','acorazados'],crucero:['buques','cruceros'],cruiser:['buques','cruceros'],
   submarino:['submarinos'],submarine:['submarinos'],sub:['submarinos'],
   misil:['armamento'],missile:['armamento'],bomba:['armamento','w_bomba'],bomb:['armamento','w_bomba'],
@@ -418,6 +419,23 @@ var SXDEM={ruso:['rusia','urss','imperio_ruso'],rusa:['rusia','urss','imperio_ru
   brasileno:['brasil'],brasilena:['brasil'],brazilian:['brasil'],argentino:['argentina'],argentina:['argentina'],canadiense:['canada'],canadian:['canada'],australiano:['australia'],australian:['australia'],
   surcoreano:['corea_sur'],norcoreano:['corea_norte'],holandes:['paises_bajos'],dutch:['paises_bajos'],noruego:['noruega'],norwegian:['noruega'],finlandes:['finlandia'],finnish:['finlandia']};
 var SXSTOP={de:1,del:1,la:1,el:1,los:1,las:1,y:1,the:1,of:1,and:1,un:1,una:1};
+/* M.A.T · 10 nov 2026: palabras de tipo que solo filtran dentro de una categoría («helicóptero de ataque», «aviones de transporte», «carros ligeros», «attack helicopter»). Solo tipos que existen en el campo «tipo» de los datos. */
+var SXTW={ataque:{aviones:['ataque'],helicopteros:['h_ataque']},attack:{aviones:['ataque'],helicopteros:['h_ataque']},
+  transporte:{aviones:['transporte'],helicopteros:['h_transporte']},transport:{aviones:['transporte'],helicopteros:['h_transporte']},utilitario:{aviones:['transporte'],helicopteros:['h_transporte']},utility:{aviones:['transporte'],helicopteros:['h_transporte']},
+  naval:{helicopteros:['h_naval']},antisubmarino:{helicopteros:['h_naval'],aviones:['patrulla']},asw:{helicopteros:['h_naval'],aviones:['patrulla']},
+  entrenamiento:{aviones:['entrenamiento'],helicopteros:['h_ligero']},entrenador:{aviones:['entrenamiento'],helicopteros:['h_ligero']},trainer:{aviones:['entrenamiento'],helicopteros:['h_ligero']},training:{aviones:['entrenamiento'],helicopteros:['h_ligero']},
+  ligero:{tanques:['t_ligero'],helicopteros:['h_ligero'],logistica:['l_ligero'],armas:['g_amet_ligera']},ligera:{tanques:['t_ligero'],helicopteros:['h_ligero'],logistica:['l_ligero'],armas:['g_amet_ligera']},light:{tanques:['t_ligero'],helicopteros:['h_ligero'],logistica:['l_ligero'],armas:['g_amet_ligera']},
+  pesado:{tanques:['t_pesado'],armas:['g_amet_media']},pesada:{tanques:['t_pesado'],armas:['g_amet_media']},heavy:{tanques:['t_pesado'],armas:['g_amet_media']},
+  medio:{tanques:['t_medio'],armas:['g_amet_media']},media:{tanques:['t_medio'],armas:['g_amet_media']},medium:{tanques:['t_medio'],armas:['g_amet_media']},
+  principal:{tanques:['t_principal']},
+  cisterna:{aviones:['cisterna'],logistica:['l_cisterna']},tanker:{aviones:['cisterna'],logistica:['l_cisterna']},
+  awacs:{aviones:['awacs']},aew:{aviones:['awacs']},patrulla:{aviones:['patrulla']},patrol:{aviones:['patrulla']},
+  reconocimiento:{aviones:['reconocimiento'],blindados:['b_recon']},recon:{aviones:['reconocimiento'],blindados:['b_recon']},reconnaissance:{aviones:['reconocimiento'],blindados:['b_recon']},
+  nuclear:{submarinos:['s_nuclear','s_balistico'],armamento:['w_nuclear']},convencional:{submarinos:['s_convencional']},conventional:{submarinos:['s_convencional']},diesel:{submarinos:['s_convencional']},
+  balistico:{submarinos:['s_balistico'],armamento:['w_bm']},ballistic:{submarinos:['s_balistico'],armamento:['w_bm']},
+  anfibio:{buques:['anfibios']},amphibious:{buques:['anfibios']},patrullero:{buques:['patrulleros']},
+  autopropulsado:{blindados:['b_art']},autopropulsada:{blindados:['b_art']},lanzacohetes:{blindados:['b_mlr']},
+  asalto:{armas:['g_asalto']},assault:{armas:['g_asalto']},cerrojo:{armas:['g_cerrojo']},francotirador:{armas:['g_franco']},sniper:{armas:['g_franco']},batalla:{armas:['g_batalla']},battle:{armas:['g_batalla']}};
 function sxLook(M,t){ if(M[t]) return M[t]; if(t.length>3&&/s$/.test(t)&&M[t.slice(0,-1)]) return M[t.slice(0,-1)]; if(t.length>4&&/es$/.test(t)&&M[t.slice(0,-2)]) return M[t.slice(0,-2)]; return null; }
 var SXPN=null;
 function sxCountry(t){ if(!SXPN){ SXPN={}; Object.keys(P).forEach(function(k){ if(k==='multi') return; var n=P[k].n.replace(/\s*\(.*\)\s*/g,''); SXPN[norm(n)]=[k]; var e=window.MAT_T?window.MAT_T(P[k].n):''; if(e&&e!==P[k].n) SXPN[norm(e.replace(/\s*\(.*\)\s*/g,''))]=[k]; }); SXPN.rusia=['rusia','urss','imperio_ruso']; SXPN.russia=['rusia','urss','imperio_ruso']; }
@@ -440,7 +458,7 @@ function sxSecs(){ if(SXS&&SXS.lang===window.MAT_LANG) return SXS.L; var EN_=win
   L.forEach(function(x){ x.f=norm(x.n); x.w=sxWords(x.n); });
   SXS={lang:window.MAT_LANG,L:L}; return L; }
 function sxSearch(raw,ctx){ var key=window.MAT_LANG+'|'+(ctx||'')+'|'+raw; if(SXC[key]) return SXC[key]; var t0=performance.now(), X=sxBuild();
-  var s=String(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/carros? de combate/g,'tanque').replace(/main battle tanks?/g,'tank').replace(/aircraft carriers?/g,'carrier');
+  var s=String(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/carros? de combate/g,'tanque').replace(/main battle tanks?/g,'mbt').replace(/tank destroyers?/g,'cazacarros').replace(/aircraft carriers?/g,'portaaviones');
   var eraF=''; SXERW.some(function(r){ if(r[1].test(s)){ eraF=r[0]; s=s.replace(r[1],' '); return true; } return false; });
   var sL=s; s=sxPhr(s);
   var toks0=s.split(/[\s,;]+/).map(norm).filter(function(t){return t&&!SXSTOP[t];});
@@ -449,10 +467,14 @@ function sxSearch(raw,ctx){ var key=window.MAT_LANG+'|'+(ctx||'')+'|'+raw; if(SX
     if(c&&toks0.length>0){ cats=cats||[]; if(cats.indexOf(c[0])<0) cats.push(c[0]); if(c[1]){ tipos=tipos||[]; tipos.push(c[1]); } used[t]=1; }
     else if(p&&(toks0.length>1||ctx)){ ctry=(ctry||[]).concat(p); used[t]=1; }
     else rest.push(t); });
+  /* palabras de tipo: filtran dentro de la categoría de la consulta o de la página (ctx) */
+  var tc=cats||(ctx&&CN[ctx]?[ctx]:null);
+  if(tc&&rest.length){ var r2=[]; rest.forEach(function(t){ var m=sxLook(SXTW,t), hit=[]; if(m) tc.forEach(function(c){ if(m[c]) hit=hit.concat(m[c]); });
+      if(hit.length){ tipos=(tipos||[]).concat(hit); if(!cats) cats=tc.slice(); used[t]=1; } else r2.push(t); }); rest=r2; }
   var rq=rest.join(''), out=[];
   function pass(rq){ var o=[], fh=0;
   for(var i=0;i<X.length;i++){ var x=X[i], a=x.a, sc=qn?sxTextScore(x,qn,toks0):0;
-    if(cats&&used[qn]) sc=sc*0.6;
+    if(cats&&used[qn]) sc=(x.ws.indexOf('|'+qn+'|')>=0)?sc*0.6:0;
     if(cats||ctry||eraF){ var okc=(!eraF||inEra(a,eraF))&&(!cats||cats.indexOf(a.cat)>=0)&&(!tipos||tipos.indexOf(a.tipo)>=0)&&(!ctry||x.c.some(function(k){return ctry.indexOf(k)>=0;}));
       if(okc){ var rs=rq?sxTextScore(x,rq,rest):55; if(rs){ fh++; sc=Math.max(sc,rq?rs+8:55); } } }
     if(sc>0) o.push([sc+x.pop*(sc>=60?1.5:0.6),x.pop,a]); }
@@ -478,7 +500,9 @@ function sxEmpty(raw,R){ var EN_=window.MAT_LANG==='en', near=sxNear(norm(raw));
     '<p class="mx-es">'+(EN_?'Tips: type the designation (F-35, T-90, AK-47), a family name (Leopard, Typhoon) or a category plus a country («Russian submarine»).':'Consejos: escribe la designación (F-35, T-90, AK-47), el nombre de la familia (Leopard, Typhoon) o una categoría con un país («submarino ruso»).')+'</p></div>'; }
 function sxSugBind(root,fn){ Array.prototype.forEach.call(root.querySelectorAll('.mx-sug'),function(b){ b.addEventListener('click',function(){ fn(b.getAttribute('data-v')); }); }); }
 function sxRow(a,i){ var EN_=window.MAT_LANG==='en';
-  return '<a class="mx-o" role="option" id="mxo'+i+'" href="#/a/'+esc(a.id)+'"><span class="mx-th">'+thumb(a)+'</span><span class="mx-m"><span class="mx-n" data-noi18n>'+esc(a.n)+'</span><span class="mx-d" data-noi18n><span class="mx-ty">'+esc(sxType(a))+'</span><span class="mx-pc">'+flag(a.pais,'mini')+esc(sxT(pname(a)))+'</span>'+(a.anio?'<span class="mx-yr">'+esc(a.anio)+'</span>':'')+'</span></span></a>'; }
+  return '<a class="mx-o" role="option" id="mxo'+i+'" href="#/a/'+esc(a.id)+'"><span class="mx-th">'+thumb(a)+'</span><span class="mx-m"><span class="mx-n" data-noi18n>'+esc(a.n)+'</span><span class="mx-d" data-noi18n><span class="mx-ty">'+esc(sxType(a))+'</span><span class="mx-pc">'+flag(a.pais,'mini')+esc(sxPN(a))+'</span>'+(a.anio?'<span class="mx-yr">'+esc(a.anio)+'</span>':'')+'</span></span></a>'; }
+/* país en la fila: en EN cada país de una coproducción se traduce por separado («Spain / Germany») */
+function sxPN(a){ if(window.MAT_LANG==='en'&&a.orig&&a.orig.length>1&&a.pais!=='multi') return a.orig.map(function(k){return P[k]?sxT(P[k].n):k;}).join(' / '); return sxT(pname(a)); }
 var SXOPEN=null;
 function sxOpen(init){ if(SXOPEN){ SXOPEN.q.focus(); return; } var EN_=window.MAT_LANG==='en';
   var ov=document.createElement('div'); ov.className='mx-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label',EN_?'Search':'Buscar'); ov.setAttribute('data-noi18n','');
