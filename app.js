@@ -16,7 +16,7 @@ window.MAT_VERFOTOS=function(a,k,extra){
   else if(c==='buques') w='ship';
   else if(c==='submarinos') w='submarine';
   else if(c==='logistica') w=/buque/.test(t)?'ship':/heli/.test(t)?'helicopter':/avion/.test(t)?'aircraft':'military truck';
-  else if(c==='armamento') w=t==='w_bomba'?'bomb':t==='w_nuclear'?'nuclear weapon':'missile';
+  else if(c==='armamento') w=t==='w_bomba'?'bomb':t==='w_nuclear'?'nuclear weapon':t==='w_torpedo'?'torpedo':t==='w_cohete'?'rocket':t==='w_lanz'?'launcher':t==='w_mina'?'naval mine':'missile';
   else if(c==='espacio') w=t==='e_lanz'?'rocket':t==='e_sat'?'satellite':t==='e_nave'?'spacecraft':t==='e_astro'?'astronaut':'';
   else if(k==='heli') w='helicopter'; else if(k==='ship') w='ship'; else if(k==='plane') w='aircraft'; else if(k==='moto') w='motorcycle'; else if(k==='truck') w='vehicle';
   var q=n; if(/^clase\s+/i.test(q)) q=q.replace(/^clase\s+/i,'')+' class'; if(extra) q+=' '+extra; else if(w&&q.toLowerCase().indexOf(w)<0) q+=' '+w;
@@ -92,6 +92,10 @@ var TIPOS=[
  {id:'w_icbm',c:'armamento',n:'Misiles intercontinentales y SLBM',d:'ICBM y misiles balísticos lanzados desde submarinos'},
  {id:'w_bomba',c:'armamento',n:'Bombas',d:'Bombas de aviación convencionales y guiadas'},
  {id:'w_nuclear',c:'armamento',n:'Armas nucleares',d:'Bombas atómicas y termonucleares, cabezas y proyectiles nucleares'},
+ {id:'w_torpedo',c:'armamento',n:'Torpedos',d:'Torpedos pesados y ligeros lanzados desde submarinos, buques y aviones'},
+ {id:'w_cohete',c:'armamento',n:'Cohetes no guiados',d:'Cohetes de aviación, de artillería y antisubmarinos sin guiado'},
+ {id:'w_lanz',c:'armamento',n:'Lanzacohetes portátiles (tipo RPG)',d:'Lanzagranadas contracarro y cañones sin retroceso de hombro, del Bazooka al RPG-7 y el Panzerfaust 3'},
+ {id:'w_mina',c:'armamento',n:'Minas navales',d:'Minas de fondo, de orinque y minas torpedo'},
  {id:'e_lanz',c:'espacio',n:'Lanzadores',d:'Cohetes lanzadores, de la R-7 a Starship y Miura'},
  {id:'e_nave',c:'espacio',n:'Naves y estaciones',d:'Naves tripuladas y de carga, estaciones espaciales, telescopios y vehículos de exploración'},
  {id:'e_sat',c:'espacio',n:'Satélites',d:'Primeros satélites de cada país, satélites españoles, cosmódromos e instalaciones'},
@@ -407,7 +411,7 @@ var SXCW={avion:['aviones'],aviones:['aviones'],aeronave:['aviones'],aircraft:['
   cazacarros:['tanques','t_caza'],cazaminas:['buques','minas'],dragaminas:['buques','minas'],minesweeper:['buques','minas'],minehunter:['buques','minas'],ssbn:['submarinos','s_balistico'],ssn:['submarinos','s_nuclear'],carabina:['armas','g_carabina'],carbine:['armas','g_carabina'],
   portaaviones:['buques','portaaviones'],carrier:['buques','portaaviones'],corbeta:['buques','corbetas'],corvette:['buques','corbetas'],acorazado:['buques','acorazados'],battleship:['buques','acorazados'],crucero:['buques','cruceros'],cruiser:['buques','cruceros'],
   submarino:['submarinos'],submarine:['submarinos'],sub:['submarinos'],
-  misil:['armamento'],missile:['armamento'],bomba:['armamento','w_bomba'],bomb:['armamento','w_bomba'],
+  misil:['armamento'],missile:['armamento'],torpedo:['armamento','w_torpedo'],lanzagranadas:['armamento','w_lanz'],bomba:['armamento','w_bomba'],bomb:['armamento','w_bomba'],
   camion:['logistica','l_camion'],truck:['logistica','l_camion'],
   fusil:['armas'],rifle:['armas'],pistola:['armas','g_pistola'],pistol:['armas','g_pistola'],escopeta:['armas','g_escopeta'],shotgun:['armas','g_escopeta'],subfusil:['armas','g_subfusil'],smg:['armas','g_subfusil'],ametralladora:['armas'],revolver:['armas','g_revolver'],arma:['armas'],
   satelite:['espacio','e_sat'],satellite:['espacio','e_sat'],cohete:['espacio','e_lanz'],rocket:['espacio','e_lanz'],astronauta:['espacio','e_astro'],astronaut:['espacio','e_astro']};
