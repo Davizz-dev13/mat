@@ -21,26 +21,27 @@ function hsh(a,b,c){ let h=(a*374761393+b*668265263+(c||0)*2147483647)|0; h=Math
 /* ===== Piezas: datos de las fichas de M.A.T (blindados_d, campo «alcance_tiro», «elevacion», «calibre», «cadencia») =====
    r = alcance que usa el juego (el de la munición estándar que cita la ficha). el = elevación máxima de la ficha en grados (null = la ficha no la da).
    v0 = velocidad en boca real con la carga máxima (fuente en fs). nz = número real de cargas/zonas; zl = sus nombres.
-   kf = factor de resistencia del aire AJUSTADO por el juego para que la carga máxima llegue al alcance r de la ficha. trav = sector sin
+   kf = factor de resistencia del aire AJUSTADO por el juego para que la carga máxima llegue al alcance r de la ficha. kf2 = lo mismo para el motor
+   del nivel Realista (resistencia según el número de Mach). trav = sector sin
    mover colas (mils a cada lado; 0 = 360°; null = sin dato). emp = [entrada, salida] en posición en s (fuente). sh = proyectil y masa (kg). */
 const GUNS=[
- {id:'sbs',rpm:10,sp:false,crew:null,ficha:'b-santa-b-rbara-sistemas-155-52',n:'SBS 155/52',full:'Santa Bárbara Sistemas 155/52',kc:155,cal:'155 mm L/52',r:30000,el:72,v0:945,nz:6,zl:null,trav:711,emp:null,sh:["M107 HE", 43.2],kf:0.8686,fs:["V0 945 m/s: cañón 155/52 con 6 módulos y proyectil L15A1 (Rheinmetall, folleto del sistema de cargas modulares; el fabricante del SBS no la publica). Sector de puntería ±40° (Wikipedia ES). Cadencia 10/min (ficha; el Ejército de Tierra da 8/min).", "V0 945 m/s: 155/52 gun with 6 modules and L15A1 shell (Rheinmetall modular charge brochure; the SBS maker does not publish it). Traverse ±40° (Spanish Wikipedia). Rate 10/min (data sheet; the Spanish Army gives 8/min)."],tipo:['Obús remolcado · España','Towed howitzer · Spain'],
+ {id:'sbs',kf2:0.6058,rpm:10,sp:false,crew:null,ficha:'b-santa-b-rbara-sistemas-155-52',n:'SBS 155/52',full:'Santa Bárbara Sistemas 155/52',kc:155,cal:'155 mm L/52',r:30000,el:72,v0:945,nz:6,zl:null,trav:711,emp:null,sh:["M107 HE", 43.2],kf:0.8686,fs:["V0 945 m/s: cañón 155/52 con 6 módulos y proyectil L15A1 (Rheinmetall, folleto del sistema de cargas modulares; el fabricante del SBS no la publica). Sector de puntería ±40° (Wikipedia ES). Cadencia 10/min (ficha; el Ejército de Tierra da 8/min).", "V0 945 m/s: 155/52 gun with 6 modules and L15A1 shell (Rheinmetall modular charge brochure; the SBS maker does not publish it). Traverse ±40° (Spanish Wikipedia). Rate 10/min (data sheet; the Spanish Army gives 8/min)."],tipo:['Obús remolcado · España','Towed howitzer · Spain'],
   src:['Alcance 30 km convencional (40 km con proyectil asistido por cohete); elevación −3° a +72°; 10 disparos/min','Range 30 km conventional (40 km rocket-assisted); elevation −3° to +72°; 10 rounds/min']},
- {id:'m109',rpm:4,sp:true,crew:'6 (A5)',ficha:'b-m109-howitzer',n:'M109A5',full:'M109 (A5–A7)',kc:155,cal:'155 mm L/39',r:21000,el:null,v0:810,nz:5,zl:['1L','2L','3H','4H','5H'],trav:0,emp:null,sh:["M107 HE", 43.2],kf:1.0816,fs:["V0 810 m/s: cañón 155/39 con 5 módulos (Rheinmetall, cita el M109). Cargas MACS M231 (zonas 1–2) y M232A1 (3–5) (General Dynamics OTS). Giro 360° (Wikipedia).", "V0 810 m/s: 155/39 gun with 5 modules (Rheinmetall, lists the M109). MACS charges M231 (zones 1–2) and M232A1 (3–5) (General Dynamics OTS). 360° traverse (Wikipedia)."],tipo:['Obús autopropulsado · EE. UU.','Self-propelled howitzer · USA'],
+ {id:'m109',kf2:0.7144,rpm:4,sp:true,crew:'6 (A5)',ficha:'b-m109-howitzer',n:'M109A5',full:'M109 (A5–A7)',kc:155,cal:'155 mm L/39',r:21000,el:null,v0:810,nz:5,zl:['1L','2L','3H','4H','5H'],trav:0,emp:null,sh:["M107 HE", 43.2],kf:1.0816,fs:["V0 810 m/s: cañón 155/39 con 5 módulos (Rheinmetall, cita el M109). Cargas MACS M231 (zonas 1–2) y M232A1 (3–5) (General Dynamics OTS). Giro 360° (Wikipedia).", "V0 810 m/s: 155/39 gun with 5 modules (Rheinmetall, lists the M109). MACS charges M231 (zones 1–2) and M232A1 (3–5) (General Dynamics OTS). 360° traverse (Wikipedia)."],tipo:['Obús autopropulsado · EE. UU.','Self-propelled howitzer · USA'],
   src:['M109A5–A7: HE 21 km; RAP 30 km; Excalibur 40 km; máx. 4 disparos/min durante 3 min','M109A5–A7: HE 21 km; RAP 30 km; Excalibur 40 km; max 4 rounds/min for 3 min']},
- {id:'m777',rpm:8,sp:false,crew:'7+1',ficha:'b-m777-howitzer',n:'M777',full:'M777',kc:155,cal:'155 mm',r:21000,el:71.7,v0:810,nz:5,zl:['1L','2L','3H','4H','5H'],trav:400,emp:null,sh:["M107 HE", 43.2],kf:1.0816,fs:["V0 810 m/s: cañón 155/39 con 5 módulos (Rheinmetall, cita el M777; Wikipedia da 827 m/s con la carga 8S de saquetes). Cargas MACS M231 (1–2) y M232A1 (3–5) (General Dynamics OTS). Sector sobre afuste: 400 mils a cada lado (BAE Systems).", "V0 810 m/s: 155/39 gun with 5 modules (Rheinmetall, lists the M777; Wikipedia gives 827 m/s with bagged charge 8S). MACS charges M231 (1–2) and M232A1 (3–5) (General Dynamics OTS). On-carriage traverse: 400 mils each side (BAE Systems)."],tipo:['Obús remolcado · Reino Unido','Towed howitzer · UK'],
+ {id:'m777',kf2:0.7144,rpm:8,sp:false,crew:'7+1',ficha:'b-m777-howitzer',n:'M777',full:'M777',kc:155,cal:'155 mm',r:21000,el:71.7,v0:810,nz:5,zl:['1L','2L','3H','4H','5H'],trav:400,emp:null,sh:["M107 HE", 43.2],kf:1.0816,fs:["V0 810 m/s: cañón 155/39 con 5 módulos (Rheinmetall, cita el M777; Wikipedia da 827 m/s con la carga 8S de saquetes). Cargas MACS M231 (1–2) y M232A1 (3–5) (General Dynamics OTS). Sector sobre afuste: 400 mils a cada lado (BAE Systems).", "V0 810 m/s: 155/39 gun with 5 modules (Rheinmetall, lists the M777; Wikipedia gives 827 m/s with bagged charge 8S). MACS charges M231 (1–2) and M232A1 (3–5) (General Dynamics OTS). On-carriage traverse: 400 mils each side (BAE Systems)."],tipo:['Obús remolcado · Reino Unido','Towed howitzer · UK'],
   src:['M107: 21 km; M795: 23,5 km; ERFB M795E1: 30 km; elevación 0° a +71,7°','M107: 21 km; M795: 23.5 km; ERFB M795E1: 30 km; elevation 0° to +71.7°']},
- {id:'pzh',rpm:10,sp:true,crew:'5',ficha:'b-panzerhaubitze-2000',n:'PzH 2000',full:'Panzerhaubitze 2000',kc:155,cal:'155 mm L52',r:30000,el:null,v0:945,nz:6,zl:null,trav:0,emp:null,sh:["M107 HE", 43.2],kf:0.8686,fs:["V0 945 m/s con 6 módulos y proyectil L15A1 (Rheinmetall). Seis cargas modulares (Wikipedia). Torre 360°.", "V0 945 m/s with 6 modules and L15A1 shell (Rheinmetall). Six modular charges (Wikipedia). 360° turret."],tipo:['Obús autopropulsado · Alemania','Self-propelled howitzer · Germany'],
+ {id:'pzh',kf2:0.6058,rpm:10,sp:true,crew:'5',ficha:'b-panzerhaubitze-2000',n:'PzH 2000',full:'Panzerhaubitze 2000',kc:155,cal:'155 mm L52',r:30000,el:null,v0:945,nz:6,zl:null,trav:0,emp:null,sh:["M107 HE", 43.2],kf:0.8686,fs:["V0 945 m/s con 6 módulos y proyectil L15A1 (Rheinmetall). Seis cargas modulares (Wikipedia). Torre 360°.", "V0 945 m/s with 6 modules and L15A1 shell (Rheinmetall). Six modular charges (Wikipedia). 360° turret."],tipo:['Obús autopropulsado · Alemania','Self-propelled howitzer · Germany'],
   src:['DM121 Boattail: 30 km; M1711 base bleed: 40 km; 3 disparos en 9 s','DM121 Boattail: 30 km; M1711 base bleed: 40 km; 3 rounds in 9 s']},
- {id:'caesar',rpm:6,sp:true,crew:'5-6',ficha:'b-caesar-self-propelled-howitzer',n:'CAESAR',full:'CAESAR',kc:155,cal:'155 mm L/52',r:40000,el:null,v0:945,nz:6,zl:null,trav:null,emp:[60, 40],sh:["M107 HE", 43.2],kf:0.5818,fs:["En posición en unos 60 s y fuera en 40 s (Wikipedia, cita a KNDS). KNDS no publica la V0: el juego usa la de un 155/52 con 6 módulos (945 m/s, Rheinmetall). Sin dato de sector: no se penaliza el giro.", "Into action in about 60 s and out in 40 s (Wikipedia, citing KNDS). KNDS does not publish the muzzle velocity: the game uses a 155/52 with 6 modules (945 m/s, Rheinmetall). No traverse figure: turning is not penalised."],tipo:['Cañón autopropulsado · Francia','Self-propelled gun · France'],
+ {id:'caesar',kf2:0.4358,rpm:6,sp:true,crew:'5-6',ficha:'b-caesar-self-propelled-howitzer',n:'CAESAR',full:'CAESAR',kc:155,cal:'155 mm L/52',r:40000,el:null,v0:945,nz:6,zl:null,trav:null,emp:[60, 40],sh:["M107 HE", 43.2],kf:0.5818,fs:["En posición en unos 60 s y fuera en 40 s (Wikipedia, cita a KNDS). KNDS no publica la V0: el juego usa la de un 155/52 con 6 módulos (945 m/s, Rheinmetall). Sin dato de sector: no se penaliza el giro.", "Into action in about 60 s and out in 40 s (Wikipedia, citing KNDS). KNDS does not publish the muzzle velocity: the game uses a 155/52 with 6 modules (945 m/s, Rheinmetall). No traverse figure: turning is not penalised."],tipo:['Cañón autopropulsado · Francia','Self-propelled gun · France'],
   src:['ERFB: 4,5 a 40 km; asistido por cohete: 55 km; 6 disparos/min','ERFB: 4.5 to 40 km; rocket-assisted: 55 km; 6 rounds/min']},
- {id:'k9',rpm:8,sp:true,crew:'5',ficha:'b-k9-thunder',n:'K9 Thunder',full:'K9 Thunder',kc:155,cal:'155 mm L/52',r:18000,el:null,v0:924,nz:6,zl:null,trav:0,emp:[30, 60],sh:["M107 HE", 43.2],kf:1.5569,fs:["V0 924 m/s con carga de seis zonas y proyectil K307 (Army Guide). Primer disparo en 30 s parado y 60 s en marcha (folleto de Hanwha). Torre 360°.", "V0 924 m/s with six-zone charge and K307 shell (Army Guide). First round within 30 s stationary and 60 s on the move (Hanwha brochure). 360° turret."],tipo:['Obús autopropulsado · Corea del Sur','Self-propelled howitzer · South Korea'],
+ {id:'k9',kf2:1.0971,rpm:8,sp:true,crew:'5',ficha:'b-k9-thunder',n:'K9 Thunder',full:'K9 Thunder',kc:155,cal:'155 mm L/52',r:18000,el:null,v0:924,nz:6,zl:null,trav:0,emp:[30, 60],sh:["M107 HE", 43.2],kf:1.5569,fs:["V0 924 m/s con carga de seis zonas y proyectil K307 (Army Guide). Primer disparo en 30 s parado y 60 s en marcha (folleto de Hanwha). Torre 360°.", "V0 924 m/s with six-zone charge and K307 shell (Army Guide). First round within 30 s stationary and 60 s on the move (Hanwha brochure). 360° turret."],tipo:['Obús autopropulsado · Corea del Sur','Self-propelled howitzer · South Korea'],
   src:['18 km (M107, HE); 30 km (M549A1, RAP); 54 km (K315); 6-8 disparos/min','18 km (M107, HE); 30 km (M549A1, RAP); 54 km (K315); 6-8 rounds/min']},
- {id:'msta',rpm:8,sp:true,crew:'5',ficha:'b-2s19-msta-s',n:'2S19 Msta-S',full:'2S19 Msta-S',kc:152,cal:'152 mm L47',r:24700,el:null,v0:864,nz:5,zl:null,trav:0,emp:null,sh:["OF-45", 43.56],kf:1.0046,fs:["V0 864 m/s y proyectil OF-45 de 43,56 kg (GlobalSecurity). Torre 360° (Wikipedia). Número de cargas sin fuente: el juego usa 5.", "V0 864 m/s and 43.56 kg OF-45 shell (GlobalSecurity). 360° turret (Wikipedia). Number of charges unsourced: the game uses 5."],tipo:['Obús autopropulsado · URSS','Self-propelled howitzer · USSR'],
+ {id:'msta',kf2:0.6702,rpm:8,sp:true,crew:'5',ficha:'b-2s19-msta-s',n:'2S19 Msta-S',full:'2S19 Msta-S',kc:152,cal:'152 mm L47',r:24700,el:null,v0:864,nz:5,zl:null,trav:0,emp:null,sh:["OF-45", 43.56],kf:1.0046,fs:["V0 864 m/s y proyectil OF-45 de 43,56 kg (GlobalSecurity). Torre 360° (Wikipedia). Número de cargas sin fuente: el juego usa 5.", "V0 864 m/s and 43.56 kg OF-45 shell (GlobalSecurity). 360° turret (Wikipedia). Number of charges unsourced: the game uses 5."],tipo:['Obús autopropulsado · URSS','Self-propelled howitzer · USSR'],
   src:['Proyectil estándar: 24,7 km; base bleed: 29 km; asistido por cohete: 36 km','Standard shell: 24.7 km; base bleed: 29 km; rocket-assisted: 36 km']},
- {id:'l118',rpm:12,sp:false,crew:'6',ficha:'b-l118-light-gun',n:'L118',full:'L118 Light Gun',kc:105,cal:'105 mm',r:17200,el:70,v0:708,nz:7,zl:['1','2','3','4','4½','5','S'],trav:100,emp:null,sh:["L31 HE", 16.1],kf:0.878,fs:["V0 máx. 708 m/s (Military History Wiki). Cargas 1, 2, 3, 4, 4½, 5 y «Super»; proyectil L31 HE de 16,1 kg; puntería fina 200 mils, 360° sobre la plataforma (Wikipedia, cita a Janes).", "Max V0 708 m/s (Military History Wiki). Charges 1, 2, 3, 4, 4½, 5 and Super; 16.1 kg L31 HE shell; 200 mils fine traverse, 360° on the platform (Wikipedia, citing Janes)."],tipo:['Cañón remolcado · Reino Unido','Towed gun · UK'],
+ {id:'l118',kf2:0.5643,rpm:12,sp:false,crew:'6',ficha:'b-l118-light-gun',n:'L118',full:'L118 Light Gun',kc:105,cal:'105 mm',r:17200,el:70,v0:708,nz:7,zl:['1','2','3','4','4½','5','S'],trav:100,emp:null,sh:["L31 HE", 16.1],kf:0.878,fs:["V0 máx. 708 m/s (Military History Wiki). Cargas 1, 2, 3, 4, 4½, 5 y «Super»; proyectil L31 HE de 16,1 kg; puntería fina 200 mils, 360° sobre la plataforma (Wikipedia, cita a Janes).", "Max V0 708 m/s (Military History Wiki). Charges 1, 2, 3, 4, 4½, 5 and Super; 16.1 kg L31 HE shell; 200 mils fine traverse, 360° on the platform (Wikipedia, citing Janes)."],tipo:['Cañón remolcado · Reino Unido','Towed gun · UK'],
   src:['17,2 km; 20,6 km con base bleed; elevación +70° / −5,5°; 12 disparos/min','17.2 km; 20.6 km base bleed; elevation +70° / −5.5°; 12 rounds/min']},
- {id:'d30',rpm:12,sp:false,crew:'1+7',ficha:'b-122-mm-howitzer-2a18-d-30',n:'D-30',full:'D-30 (2A18)',kc:122,cal:'122 mm',r:15400,el:70,v0:690,nz:5,zl:['B','B+1','B+2','B+3','B+4'],trav:0,emp:null,sh:["OF-462", 21.76],kf:1.0549,fs:["V0 690 m/s con la carga máxima y proyectil OF-462 de 21,76 kg; carga base más cuatro incrementos; giro 360° sobre el trípode (Wikipedia).", "V0 690 m/s at maximum charge and 21.76 kg OF-462 shell; base charge plus four increments; 360° traverse on the tripod (Wikipedia)."],tipo:['Obús remolcado · URSS','Towed howitzer · USSR'],
+ {id:'d30',kf2:0.683,rpm:12,sp:false,crew:'1+7',ficha:'b-122-mm-howitzer-2a18-d-30',n:'D-30',full:'D-30 (2A18)',kc:122,cal:'122 mm',r:15400,el:70,v0:690,nz:5,zl:['B','B+1','B+2','B+3','B+4'],trav:0,emp:null,sh:["OF-462", 21.76],kf:1.0549,fs:["V0 690 m/s con la carga máxima y proyectil OF-462 de 21,76 kg; carga base más cuatro incrementos; giro 360° sobre el trípode (Wikipedia).", "V0 690 m/s at maximum charge and 21.76 kg OF-462 shell; base charge plus four increments; 360° traverse on the tripod (Wikipedia)."],tipo:['Obús remolcado · URSS','Towed howitzer · USSR'],
   src:['15,4 km; 21,9 km con proyectil asistido por cohete; elevación −7° a 70°','15.4 km; 21.9 km rocket-assisted; elevation −7° to 70°']}
 ];
 const gunOf=id=>GUNS.find(g=>g.id===id)||GUNS[0];
@@ -121,11 +122,180 @@ function procedure(M,gun,ch,hi,pe,pn){ const dE=pe-M.bE, dN=pn-M.bN; const R=Mat
  const el=r1.el+dh/10*r0.h; const azf=az+wc.right*r0.x;
  return {R:R,az:az,dh:dh,Rc:Rc,tbl:r1.el,elh:dh/10*r0.h,head:wc.head,right:wc.right,cw:r0.w,cT:r0.T,ch_:r0.h,cx:r0.x,el:el,azf:n64(azf),t:r1.t,dR:r1.dR,wr:wc.head*r0.w,Tr:(M.met.T-15)*r0.T,xr:wc.right*r0.x}; }
 
+/* ===== Motor del nivel REALISTA (aparte: Aprende/Fácil/Veterano siguen con el motor de arriba) =====
+   Masa puntual con: resistencia que depende del número de Mach (curva tipo del juego), velocidad del sonido según la
+   temperatura balística del mensaje meteo, densidad balística en % de la estándar, viento balístico de la línea meteo que
+   corresponde a la flecha, variación de la velocidad en boca (calibración + temperatura de la carga), derivación por el giro
+   (estriado a derechas: el proyectil deriva a la DERECHA) y rotación de la Tierra (aceleración de Coriolis −2Ω×v exacta). */
+const OMEGA=7.292115e-5, KT=0.514444, MDP_LINES=[0,200,500,1000,1500,2000,3000,4000,5000,6000,8000,10000];
+const MACHF=m=>m<0.8?1:(m<1.0?1+1.1*Math.pow((m-0.8)/0.2,2):(m<1.15?2.1:2.1*Math.pow(1.15/m,0.75)));
+const KD_DRIFT=0.011;
+function simR(gun,ch,qe,o){ o=o||{}; const v0=gun.v0*chf(gun)[ch]+(o.dv||0); const k=KPROJ[gun.kc]*(gun.kf2||gun.kf||1);
+ const Tp=(o.Tp==null?100:o.Tp)/100, Dp=(o.Dp==null?100:o.Dp)/100; const wx=o.wx||0, wz=o.wz||0; /* aire en el marco de tiro (x alcance, z derecha) */
+ const lat=o.lat==null?null:o.lat*Math.PI/180, azr=(o.az||0)*M2R; let Ox=0,Oy=0,Oz=0;
+ if(lat!=null){ const oN=OMEGA*Math.cos(lat), oU=OMEGA*Math.sin(lat); const sa=Math.sin(azr), ca=Math.cos(azr); /* ENU→tiro: x=(sa,ca,0), z=(ca,−sa,0), y=U */ Ox=oN*ca; Oz=-oN*sa; Oy=oU; }
+ const drift=o.drift!==false; const a=qe*M2R; let x=0,y=0,z=0,vx=v0*Math.cos(a),vy=v0*Math.sin(a),vz=0,t=0; const gr=o.ground; const path=o.path?[]:null; let apex=0;
+ const fz=o.fz||'pd', fs=o.fs||0; if(path) path.push([0,0,0,0]);
+ const acc=(px,py,pz,qx,qy,qz,out)=>{ const ux=qx-wx, uz=qz-wz; const sp=Math.sqrt(ux*ux+qy*qy+uz*uz); const snd=20.0468*Math.sqrt(Math.max(150,(288.15-0.0065*Math.max(0,py)))*Tp);
+  const kk=k*Dp*Math.exp(-py/8500)*MACHF(sp/snd)*sp; let ax=-kk*ux, ay=-G0-kk*qy, az=-kk*uz;
+  if(drift){ const v=Math.sqrt(qx*qx+qy*qy+qz*qz)||1; const ct=Math.sqrt(qx*qx+qz*qz)/v; az+=KD_DRIFT*G0*ct*Math.pow(300/v,1.5); }
+  if(lat!=null){ /* a = −2 Ω × v; el marco (x alcance, y arriba, z derecha) es dextrógiro */
+   ax+=-2*(Oy*qz-Oz*qy); ay+=-2*(Oz*qx-Ox*qz); az+=-2*(Ox*qy-Oy*qx); }
+  out[0]=ax; out[1]=ay; out[2]=az; };
+ const A1=[0,0,0], A2=[0,0,0];
+ for(let i=0;i<30000;i++){
+  acc(x,y,z,vx,vy,vz,A1); const mx=vx+A1[0]*DT/2, my=vy+A1[1]*DT/2, mz=vz+A1[2]*DT/2; acc(x+vx*DT/2,y+vy*DT/2,z+vz*DT/2,mx,my,mz,A2);
+  const px=x,py=y,pz=z,pt=t; x+=mx*DT; y+=my*DT; z+=mz*DT; vx+=A2[0]*DT; vy+=A2[1]*DT; vz+=A2[2]*DT; t+=DT; if(y>apex) apex=y;
+  if(path&&(i%5===4)) path.push([x,y,z,t]);
+  const gh=gr?gr(x,z):(o.h||0);
+  if(fz==='ti'&&t>=fs&&pt<fs){ const f=(fs-pt)/DT; const X=px+(x-px)*f, Y=py+(y-py)*f, Z=pz+(z-pz)*f; const g2=gr?gr(X,Z):(o.h||0);
+   if(Y>g2){ if(path) path.push([X,Y,Z,fs]); return {x:X,y:Y,z:Z,t:fs,apex:apex,path:path,air:true,hob:Y-g2,asc:vy>0,vy:vy}; } }
+  const lim=fz==='vt'&&vy<0&&t>3?gh+7:gh; /* VT: armada a los 3 s (regla del juego) y solo en la rama descendente */
+  if(y<=lim&&(vy<0||(gr&&x>30))){ const gp=(gr?gr(px,pz):(o.h||0))+(lim-gh); const d0=py-gp, d1=y-lim; const f=clamp(d0/((d0-d1)||1e-9),0,1); const X=px+(x-px)*f, Z=pz+(z-pz)*f, Tt=t-DT+DT*f, Y=py+(y-py)*f;
+   if(path) path.push([X,Y,Z,Tt]); return {x:X,y:Y,z:Z,t:Tt,apex:apex,path:path,air:fz==='vt'&&lim>gh,hob:Y-(gr?gr(X,Z):(o.h||0)),asc:vy>0,vy:vy,desc:Math.atan2(-vy,Math.hypot(vx,vz))};
+  }
+  if(t>320) break; }
+ return {x:x,y:y,z:z,t:t,apex:apex,path:path,air:false,hob:0}; }
+
+/* Tabla de tiro REALISTA (estructura de una tabla tabular del FM 6-40: tablas A–H en una).
+   Filas cada 100 m. Correcciones unitarias calculadas cada 500 m con el modelo e interpoladas. Todas son «A SUMAR». */
+const TBR={};
+const lineOfApex=a=>{ for(let i=1;i<MDP_LINES.length;i++) if(a<=MDP_LINES[i]) return i; return MDP_LINES.length-1; };
+const fzBurst=s=>s.t; 
+function elForR(gun,ch,hi,R,o,S){ let i=0; for(i=0;i<S.length-1;i++){ const a=S[i][1],b=S[i+1][1]; if((R-a)*(R-b)<=0) break; } i=Math.min(i,S.length-2);
+ const d=(S[i+1][1]-S[i][1])/((S[i+1][0]-S[i][0])||1)||1e-6; let e=S[i][0]+(R-S[i][1])/d; let e0=null,r0=null;
+ for(let k=0;k<5;k++){ const r1=simR(gun,ch,e,o).x; if(Math.abs(R-r1)<0.3) break; let dd=d; if(e0!=null&&Math.abs(e-e0)>1e-4){ const s=(r1-r0)/(e-e0); if(Math.abs(s)>1e-3&&s*d>0) dd=s; } e0=e; r0=r1; e+=(R-r1)/dd; } return e; }
+function tableR(gun,ch,hi){ const key=gun.id+'|'+ch+'|'+(hi?1:0); if(TBR[key]) return TBR[key];
+ let best=0,be=0; for(let e=600;e<=1000;e+=8){ const r=simR(gun,ch,e).x; if(r>best){best=r;be=e;} } for(let e=be-8;e<=be+8;e+=1){ const r=simR(gun,ch,e).x; if(r>best){best=r;be=e;} }
+ const eA=hi?be:40, eB=hi?Math.min(elMaxMil(gun),1450):be; const S=[];
+ for(let e=eA;e<=eB+0.01;e+=2){ const s=simR(gun,ch,e); S.push([e,s.x,s.t,s.apex,s.z,(s.desc||0)/M2R]); }
+ const rmin=Math.min(S[0][1],S[S.length-1][1]), rmax=Math.max(S[0][1],S[S.length-1][1]);
+ /* alcance útil de la carga: se deja fuera la parte final (cerca del alcance máximo la tabla deja de ser lineal): REGLA DEL JUEGO */
+ const mg=Math.max(1000,0.11*best); const R0=Math.ceil((rmin+50)/100)*100, R1=Math.min(Math.floor((best-mg)/100)*100,40000); const rows=[]; const corr={};
+ for(let R=Math.ceil(R0/1000)*1000-1000;R<=R1+1000;R+=1000){ if(R<R0-1000) continue; const Rc=clamp(R,R0,R1); const e=elForR(gun,ch,hi,Rc,{},S); const b=simR(gun,ch,e);
+  const hw=simR(gun,ch,e,{wx:-10*KT}).x, tw=simR(gun,ch,e,{wx:10*KT}).x, cr=simR(gun,ch,e,{wz:-10*KT}), tp=simR(gun,ch,e,{Tp:102}).x, tm=simR(gun,ch,e,{Tp:98}).x, dp=simR(gun,ch,e,{Dp:102}).x, dm=simR(gun,ch,e,{Dp:98}).x, vp=simR(gun,ch,e,{dv:5}).x, vm=simR(gun,ch,e,{dv:-5}).x;
+  const VIp=150, VIn=-150; const ep=elForR(gun,ch,hi,Rc,{h:VIp},S), en=elForR(gun,ch,hi,Rc,{h:VIn},S); const ASp=1.0186*VIp/(Rc/1000), ASn=1.0186*VIn/(Rc/1000);
+  /* lateral: viento desde la derecha (aire hacia la izquierda: wz<0) empuja a la izquierda → corrección a la derecha (+) */
+  /* espoleta de tiempo: cambio del tiempo de vuelo hasta el objetivo cuando se corrige la elevación para llegar igual (s por unidad) */
+  const tAt=o=>simR(gun,ch,elForR(gun,ch,hi,Rc,o,S),o).t; const tp6=tAt({h:VIp}), tn6=tAt({h:VIn});
+  /* como en las tablas reales, dos columnas por efecto: cara/cola, aumento/disminución */
+  corr[R]={w:(b.x-hw)/10, wt:(b.x-tw)/10, x:-Math.atan2(cr.z-b.z,cr.x)/M2R/10, T:(b.x-tp)/2, Tm:(b.x-tm)/2, D:(b.x-dp)/2, Dm:(b.x-dm)/2, V:(b.x-vp)/5, Vm:(b.x-vm)/5, csp:(ep-e-ASp)/ASp, csn:(en-e-ASn)/ASn,
+   fw:(tAt({wx:-10*KT})-b.t)/10, fT:(tAt({Tp:101})-b.t), fD:(tAt({Dp:101})-b.t), fV:(tAt({dv:5})-b.t)/5, fh:(tp6-tn6)/30}; }
+ const cAt=(R,k)=>{ const a=Math.floor(R/1000)*1000, b=a+1000; const A=corr[a]||corr[b], B=corr[b]||corr[a]; if(!A) return 0; return A[k]+(B[k]-A[k])*(R-a)/1000; };
+ const sAt=R=>{ let i=0; for(i=0;i<S.length-1;i++){ const a=S[i][1],b=S[i+1][1]; if((R-a)*(R-b)<=0) break; } i=Math.min(i,S.length-2); const A=S[i],B=S[i+1]; const f=(R-A[1])/((B[1]-A[1])||1e-9);
+  const q=k=>A[k]+(B[k]-A[k])*f; return {el:q(0),t:q(2),apex:q(3),z:q(4),fa:q(5),dR:(B[1]-A[1])/(B[0]-A[0])}; };
+ for(let R=R0;R<=R1;R+=100){ const s=sAt(R);
+  rows.push({R:R,el:s.el,t:s.t,dR:s.dR,apex:s.apex,fa:s.fa,ln:lineOfApex(s.apex),dr:-Math.atan2(s.z,R)/M2R,w:cAt(R,'w'),wt:cAt(R,'wt'),x:cAt(R,'x'),T:cAt(R,'T'),Tm:cAt(R,'Tm'),D:cAt(R,'D'),Dm:cAt(R,'Dm'),V:cAt(R,'V'),Vm:cAt(R,'Vm'),csp:cAt(R,'csp'),csn:cAt(R,'csn'),fw:cAt(R,'fw'),fT:cAt(R,'fT'),fD:cAt(R,'fD'),fV:cAt(R,'fV'),fh:cAt(R,'fh')}); }
+ const T={gun:gun.id,ch:ch,hi:!!hi,rows:rows,R0:R0,R1:R1,rmax:best,emax:be,S:S}; TBR[key]=T; return T; }
+function tInterpR(T,R){ const rs=T.rows; if(!rs.length||R<T.R0-1e-6||R>T.R1+1e-6) return null; const i=clamp(Math.floor((R-T.R0)/100),0,rs.length-2); const a=rs[i], b=rs[Math.min(i+1,rs.length-1)]; const f=b===a?0:(R-a.R)/100; const o={}; ['el','t','dR','apex','fa','dr','w','wt','x','T','Tm','D','Dm','V','Vm','csp','csn','fw','fT','fD','fV','fh'].forEach(k=>{ o[k]=a[k]+(b[k]-a[k])*f; }); o.ln=(f<0.5?a:b).ln; o.lnA=a.ln; o.R=R; return o; }
+/* Rotación de la Tierra: corrección (a sumar) al alcance (m) y al azimut (mils), por alcance y azimut, para la latitud de la misión */
+const ROTAZ=[0,800,1600,2400,3200,4000,4800,5600]; const TROT={};
+function rotTable(gun,ch,hi,lat){ const T=tableR(gun,ch,hi); const key=gun.id+'|'+ch+'|'+(hi?1:0)+'|'+lat; if(TROT[key]) return TROT[key]; const rows=[];
+ const a=Math.ceil(T.R0/1000)*1000, b=Math.floor(T.R1/1000)*1000; const Rs=[]; if(T.R0<a) Rs.push(T.R0); for(let R=a;R<=b;R+=1000) Rs.push(R); if(T.R1>b) Rs.push(T.R1);
+ for(const R of Rs){ const e=elForR(gun,ch,hi,R,{drift:false},T.S); const s0=simR(gun,ch,e,{drift:false}); const r={R:R,dR:[],dz:[]};
+  for(const az of ROTAZ){ const s=simR(gun,ch,e,{drift:false,lat:lat,az:az}); r.dR.push(-(s.x-s0.x)); r.dz.push(-Math.atan2(s.z,s.x)/M2R); } rows.push(r); }
+ const o={lat:lat,rows:rows}; TROT[key]=o; return o; }
+function rotAt(RT,R,az){ const rs=RT.rows; let i=0; while(i<rs.length-2&&rs[i+1].R<R) i++; const A=rs[i], B=rs[Math.min(i+1,rs.length-1)]; const f=B.R>A.R?clamp((R-A.R)/(B.R-A.R),0,1):0;
+ const a=n64(az), j=Math.floor(a/800)%8, j2=(j+1)%8, g=(a-j*800)/800; const v=(rr,k)=>rr[k][j]+(rr[k][j2]-rr[k][j])*g; return {dR:v(A,'dR')+(v(B,'dR')-v(A,'dR'))*f, dz:v(A,'dz')+(v(B,'dz')-v(A,'dz'))*f}; }
+
+/* ===== Datos que la misión DA en el nivel Realista (nada oculto, nada al azar en el disparo) ===== */
+const PROP_STD=21; /* temperatura estándar de la carga: +70 °F = 21 °C (FM 6-40) */
+const pcoef=(g,c)=>Math.round(g.v0*chf(g)[c]*0.0009*100)/100; /* ΔV0 por °C de la carga: VALOR DEL JUEGO (≈0,09 % por °C) */
+function mvvOf(M,g,c){ const R=M.R; return Math.round((R.mvb*(0.6+0.4*c/Math.max(1,g.nz-1))+R.mvs*Math.sin(c*1.7))*10)/10; }
+function dvOf(M,g,c){ return mvvOf(M,g,c)+pcoef(g,c)*(M.R.tp-PROP_STD); }
+function realExtras(M,def){ const r=rng((def.seed||1)*104729+7); const x=def.rx||{};
+ const lat=x.lat!=null?x.lat:Math.round(28+r()*32);
+ const wd0=x.wd!=null?x.wd:Math.round(r()*64)*100, ws0=x.ws!=null?x.ws:3+Math.round(r()*9), veer=x.veer!=null?x.veer:Math.round(10+r()*30), gr=x.gr!=null?x.gr:0.4+r()*0.8;
+ const T0=x.T!=null?x.T:Math.round((95+r()*10)*10)/10, D0=x.D!=null?x.D:Math.round((96+r()*7)*10)/10, dT=-(0.1+r()*0.15), dD=(r()-0.5)*0.3;
+ const metb=[]; for(let i=0;i<MDP_LINES.length;i++){ metb.push({ln:i,h:MDP_LINES[i],wd:n64(Math.round((wd0+veer*i)/100)*100),ws:Math.min(30,Math.round(ws0+gr*i)),T:Math.round((T0+dT*i)*10)/10,D:Math.round((D0+dD*i)*10)/10}); }
+ const tp=x.tp!=null?x.tp:Math.round(-5+r()*45);
+ const mvb=x.mvb!=null?x.mvb:Math.round((-5+r()*7)*10)/10, mvs=x.mvs!=null?x.mvs:Math.round((r()-0.5)*20)/10;
+ const azT=n64(Math.atan2(M.T.e-M.bE,M.T.n-M.bN)/M2R); const aol=x.aol!=null?x.aol:n64(Math.round(azT/100)*100+(Math.floor(r()*5)-2)*100);
+ return {lat:lat,metb:metb,mdp:Math.round(M.bH/10)*10,tp:tp,mvb:mvb,mvs:mvs,aol:aol,night:M.T.kind==='ilu',hiOnly:M.biome==='ciudad'}; }
+/* Tabla de iluminación (proyectil iluminante de 155 mm): cuadrante y graduación para que se abra a 600 m sobre el nivel de la pieza */
+const TBI={};
+function tableIlu(gun,ch,hi){ const key=gun.id+'|'+ch+'|'+(hi?1:0); if(TBI[key]) return TBI[key]; const T=tableR(gun,ch,hi); const S6=[];
+ const eA=hi?T.emax:60, eB=hi?Math.min(elMaxMil(gun),1450):T.emax; for(let e=eA;e<=eB+0.01;e+=6){ const s=simR(gun,ch,e,{h:600}); S6.push([e,s.x,s.t]); }
+ const out={}; for(const rw of T.rows){ const okR=S6.some((q,i)=>i<S6.length-1&&(rw.R-q[1])*(rw.R-S6[i+1][1])<=0); if(!okR) continue; const e=elForR(gun,ch,hi,rw.R,{h:600},S6); const s=simR(gun,ch,e,{h:600}); if(Math.abs(s.x-rw.R)>15) continue; out[rw.R]={qe:e,fs:s.t}; }
+ TBI[key]=out; return out; }
+function iluAt(gun,ch,hi,R){ const t=tableIlu(gun,ch,hi); const a=Math.floor(R/100)*100, b=a+100; const A=t[a], B=t[b]; if(!A||!B) return null; const f=(R-a)/100; return {qe:A.qe+(B.qe-A.qe)*f,fs:A.fs+(B.fs-A.fs)*f}; }
+
+/* Máscara: puntos del perfil pieza→objetivo (terreno y edificios, de 100 m a 35 m antes del objetivo) */
+function crestOf(M,az,R){ const s=Math.sin(az*M2R), c=Math.cos(az*M2R); const pts=[]; for(let d=100;d<=R-35;d+=20){ const h=hAt(M,M.bE+d*s,M.bN+d*c,true); pts.push({d:d,h:h,a:(h-M.bH)/d}); } return pts; }
+const VCLR=5, VCLR_VT=15, QMARG=3; /* holgura vertical sobre la cresta: 5 m; con VT 15 m porque la espoleta funciona a unos 7 m (reglas del juego; el juego no tiene dispersión y no suma horquillas: en su lugar, margen fijo de 3 mils) */
+/* Cuadrante mínimo (FM 6-40, simplificado): para cada punto de la máscara, ángulo de situación a la cresta (+5 m) + su complementario + elevación
+   de la tabla para el alcance de la cresta. Manda el punto que da el mayor valor; la orden de tiro lo da como «cresta». */
+function minQE(M,gun,ch,hi,pts,fz){ if(!pts||!pts.length||hi) return null; const T=tableR(gun,ch,hi); let best=null; const clr=fz==='vt'?VCLR_VT:VCLR;
+ const r0=T.rows[0];
+ const RT=Math.hypot(M.T.e-M.bE,M.T.n-M.bN);
+ for(const p of pts){ if(p.d>RT*0.75) continue; /* máscara: la cresta entre la pieza y los 3/4 del alcance (cerca del objetivo la trayectoria ya baja: allí no es máscara) */
+  const near=false; const VI=p.h-M.bH+clr; const AS=1.0186*VI/(p.d/1000); let q,CS,el;
+  if(p.d<T.R0){ /* más cerca que la primera fila: trayectoria casi recta; elevación proporcional a la de la primera fila (juego) */ el=r0.el*p.d/T.R0; CS=0; }
+  else { const r=tInterpR(T,p.d); if(!r) continue; el=r.el; CS=AS*(AS>=0?r.csp:r.csn); }
+  q=AS+CS+el+(near?0.5:QMARG); if(!best||q>best.qe) best={qe:q,AS:AS,CS:CS,el:el,cr:p}; }
+ return best; }
+
+/* ===== Procedimiento de la Central de Tiro, nivel Realista (lo que hace el jugador a mano) ===== */
+const FZ=['sq','dl','vt','ti'];
+const FA_MIN=300; /* VT y tiempo: ángulo de caída mínimo 300 mils; con trayectorias más tendidas la explosión se adelanta (REGLA DEL JUEGO) */
+function procR(M,gun,ch,hi,pe,pn,fz,shell){ shell=shell||'he'; const dE=pe-M.bE, dN=pn-M.bN; const R=Math.hypot(dE,dN); const az=n64(Math.atan2(dE,dN)/M2R); const T=tableR(gun,ch,hi);
+ const VI=hAt(M,pe,pn,true)-M.bH; const r0=tInterpR(T,R); if(!r0) return {R:R,az:az,VI:VI,out:true};
+ const ln=r0.ln, Lm=M.R.metb[ln]; const rel=(Lm.wd-az)*M2R; const head=Lm.ws*Math.cos(rel), right=Lm.ws*Math.sin(rel);
+ const mvv=mvvOf(M,gun,ch), pc=pcoef(gun,ch), dvp=pc*(M.R.tp-PROP_STD), dv=mvv+dvp;
+ const rot=rotAt(rotTable(gun,ch,hi,M.R.lat),R,az);
+ /* columna según el signo: viento de cara (+) o de cola (−); aumento (+) o disminución (−) */
+ const cW=head>=0?head*r0.w:-head*r0.wt, cT=Lm.T>=100?(Lm.T-100)*r0.T:(100-Lm.T)*r0.Tm, cD=Lm.D>=100?(Lm.D-100)*r0.D:(100-Lm.D)*r0.Dm, cV=dv>=0?dv*r0.V:-dv*r0.Vm, cR=rot.dR; const Rc=R+cW+cT+cD+cV+cR;
+ const r1=tInterpR(T,Rc); if(!r1) return {R:R,az:az,VI:VI,out:true};
+ let alza=r1.el, fs=null, fs0=null, fsc=null; let hob=0; const VIe0=VI+(shell==='he'&&fz==='ti'?20:0);
+ if(fz==='ti'){ /* graduación = tiempo de vuelo de la tabla al alcance del plano + corrección de espoleta (meteo, V0 y cota) */
+  fsc={w:head*r0.fw,T:(Lm.T-100)*r0.fT,D:(Lm.D-100)*r0.fD,V:dv*r0.fV,h:VIe0/10*r0.fh}; }
+ if(shell==='ilu'){ const il=iluAt(gun,ch,hi,Rc), i0=iluAt(gun,ch,hi,R); if(!il||!i0) return {R:R,az:az,VI:VI,out:true}; alza=il.qe; fs0=i0.fs; }
+ else if(fz==='ti'){ hob=shell==='he'?20:0; fs0=shell==='hum'?r0.t-2:r0.t; }
+ if(fsc) fs=fs0+fsc.w+fsc.T+fsc.D+fsc.V+fsc.h;
+ const VIe=VI+hob; const AS=1.0186*VIe/(R/1000); const csf=AS>=0?r0.csp:r0.csn; const CS=AS*csf; const site=AS+CS; const qe=alza+site;
+ const cX=right*r0.x, cDr=r1.dr, cRz=rot.dz; const azf=az+cX+cDr+cRz; const df=n64(3200+M.R.aol-azf);
+ return {R:R,az:az,VI:VI,ln:ln,Lm:Lm,head:head,right:right,mvv:mvv,pc:pc,dvp:dvp,dv:dv,rot:rot,cW:cW,cT:cT,cD:cD,cV:cV,cR:cR,Rc:Rc,alza:alza,hob:hob,VIe:VIe,AS:AS,csf:csf,CS:CS,site:site,qe:qe,cX:cX,cDr:cDr,cRz:cRz,azf:n64(azf),df:df,fs:fs,fs0:fs0,fsc:fsc,t:r1.t,r0:r0,r1:r1,w:r0.w,x:r0.x}; }
+const APEXC={};
+function stdApex(gun,ch,qe){ const k=gun.id+'|'+ch+'|'+Math.round(qe); if(APEXC[k]==null) APEXC[k]=simR(gun,ch,Math.round(qe)).apex; return APEXC[k]; }
+function shootR(M,gun,ch,qe,df,o){ o=o||{}; const azf=n64(3200+M.R.aol-df); const ln=lineOfApex(stdApex(gun,ch,qe)); const Lm=M.R.metb[ln]; const rel=(Lm.wd-azf)*M2R;
+ const hum=o.shell==='hum'; const r=simR(gun,ch,qe,{ground:groundFn(M,azf),wx:-Lm.ws*Math.cos(rel)*KT,wz:-Lm.ws*Math.sin(rel)*KT,Tp:Lm.T,Dp:Lm.D,dv:dvOf(M,gun,ch),lat:M.R.lat,az:azf,fz:hum?'pd':o.fz,fs:o.fs,path:o.path});
+ if(hum){ r.lead=r.t-(o.fz==='ti'?o.fs:1e9); r.air=o.fz==='ti'&&o.fs<r.t; } /* humo de eyección por la base: los botes caen donde habría caído el proyectil (simplificación del juego) */
+ const s=Math.sin(azf*M2R), c=Math.cos(azf*M2R); r.E=M.bE+r.x*s+r.z*c; r.N=M.bN+r.x*c-r.z*s; r.azf=azf; r.ln=ln; return r; }
+/* Espoleta y proyectil contra cada objetivo (criterio doctrinal: VT/tiempo contra personal al descubierto, retardo para penetrar
+   cubiertas y tableros, instantánea o VT contra vehículos; FM 6-30 / FM 6-40). Ventanas de altura: REGLA DEL JUEGO. */
+const FXOK={inf:['vt','ti'],ba:['vt','ti'],pc:['dl'],pu:['dl'],co:['sq','vt'],ilu:['ti'],hum:['ti']};
+const SHOK={inf:'he',ba:'he',pc:'he',pu:'he',co:'he',ilu:'ilu',hum:'hum'};
+function evalR(M,r,shell,fz,tgt,fs){ const T=M.T; tgt=tgt||[T.e,T.n]; const d=Math.hypot(r.E-tgt[0],r.N-tgt[1]); const needS=SHOK[T.kind], okF=FXOK[T.kind]||['sq'];
+ const o={d:d,air:!!r.air,hob:r.hob,place:false,eff:false,why:''};
+ if(T.kind==='ilu'){ o.place=r.air&&Math.abs(r.hob-600-(M.tH-M.bH)+(M.tH-M.bH))<=1e9; const hobT=r.y+M.bH-M.tH; o.hobT=hobT; o.place=r.air&&d<=T.rad&&Math.abs(hobT-600)<=150; o.eff=shell==='ilu'&&fz==='ti'; o.hit=o.place&&o.eff; return o; }
+ if(T.kind==='hum'){ o.place=d<=T.rad; o.eff=shell==='hum'&&fz==='ti'&&r.air&&r.lead>=1.2&&r.lead<=2.8; o.hit=o.place&&o.eff; return o; }
+ o.place=d<=T.rad; const fzEff=(fz==='ti'&&!r.air)?'sq':fz; o.fzEff=fzEff;
+ if(fz==='ti'&&r.air){ o.place=o.place&&r.hob<=60; } /* explosión en el aire útil hasta 60 m (regla del juego; la buscada es 20 m) */
+ o.eff=shell===needS&&okF.indexOf(fzEff)>=0; o.hit=o.place&&o.eff; return o; }
+
+/* Reglas que comprueban el jefe de pieza y la central antes de disparar (las mismas que usa el guion de verificación) */
+function ruleR(M,gun,ch,hi,fz,shell,p,qe){ if(!p||p.out) return L('El objetivo queda fuera de la tabla de esta carga y ángulo.','The target is outside the table for this charge and angle.');
+ if(shell!=='he'&&gun.kc!==155) return L('Esta pieza no tiene ese proyectil en el juego (solo 155 mm: iluminante M485A2 y humo).','This gun has no such shell in the game (155 mm only: M485A2 illuminating and smoke).');
+ if((shell==='ilu'||shell==='hum')&&fz!=='ti') return L('El iluminante y el humo se disparan con espoleta de tiempo.','Illuminating and smoke shells are fired with a time fuze.');
+ if(fz==='ti'&&hi) return L('Espoleta de tiempo solo en ángulo bajo: en ángulo alto usa VT.','Time fuze in low angle only: in high angle use VT.');
+ if((fz==='vt'||fz==='ti')&&p.r1.fa<FA_MIN) return L('Ángulo de caída ','Angle of fall ')+Math.round(p.r1.fa)+L(' mils (menos de ',' mils (under ')+FA_MIN+L('): VT/tiempo funcionarían antes de llegar. Carga menor o ángulo alto.','): VT/time would function short. Lower charge or high angle.');
+ if(M.R.hiOnly&&!hi) return L('Zona urbana: la central ordena ángulo alto (las fachadas tapan el tiro tenso).','Built-up area: the FDC orders high angle (façades mask flat fire).');
+ if(qe>elMaxMil(gun)) return L('La pieza no eleva tanto: máximo ','The gun cannot elevate that far: maximum ')+ni(elMaxMil(gun))+' mils.';
+ if(!hi){ const mq=minQEof(M,gun,ch,hi,fz); if(mq&&qe<Math.ceil(mq.qe)) return L('Cuadrante por debajo del mínimo (','Quadrant below the minimum (')+Math.ceil(mq.qe)+L(' mils): no libra la máscara. Otra carga o ángulo alto.',' mils): it does not clear the mask. Another charge or high angle.'); }
+ return null; }
+const MQC={};
+function minQEof(M,gun,ch,hi,fz){ if(hi) return null; fz=fz==='vt'?'vt':'x'; const k=gun.id+'|'+ch+'|'+fz; if(M.MQC&&k in M.MQC) return M.MQC[k]; M.MQC=M.MQC||{}; const T=M.T; const R=Math.hypot(T.e-M.bE,T.n-M.bN), az=n64(Math.atan2(T.e-M.bE,T.n-M.bN)/M2R); if(!M.PTS) M.PTS=crestOf(M,az,R); return (M.MQC[k]=minQE(M,gun,ch,hi,M.PTS,fz)); }
+function needNr(T){ return T.kind==='pu'?T.need:({inf:2,ba:2,pc:2,co:1,ilu:1,hum:2}[T.kind]||1); }
+function recommendR(M,gun,pe,pn){ const T=M.T; const shell=SHOK[T.kind]||'he'; for(const hi of [false,true]) for(let c=0;c<gun.nz;c++) for(const fz of (FXOK[T.kind]||['sq'])){
+  const p=procR(M,gun,c,hi,pe,pn,fz,shell); const qe=p.out?0:Math.round(p.qe); if(ruleR(M,gun,c,hi,fz,shell,p,qe)) continue;
+  const fs=p.fs==null?null:Math.round(p.fs*10)/10; const r=shootR(M,gun,c,qe,Math.round(p.df)%6400,{fz:fz,fs:fs,shell:shell}); if(evalR(M,r,shell,fz,null,fs).hit) return {ch:c,hi:hi,fz:fz,shell:shell,p:p,qe:qe,df:Math.round(p.df)%6400,fs:fs}; }
+ return null; }
+
 /* ===== Mapa táctico generado (semilla) — solo la GENERACIÓN usa la semilla; el impacto no tiene azar ===== */
 const MAP=20000, GN=101, GS=200, E0=40000, N0=20000;
 const BIO=['llanura','bosque','montana','ciudad','costa'];
 const BION=b=>({llanura:L('Llanura','Plains'),bosque:L('Bosque','Forest'),montana:L('Montaña','Mountains'),ciudad:L('Ciudad','City'),costa:L('Costa','Coast')}[b]||b);
-const KN=k=>({pc:L('Puesto de mando','Command post'),pu:L('Puente','Bridge'),ba:L('Batería enemiga','Enemy battery'),co:L('Columna de vehículos','Vehicle column')}[k]||k);
+const KN=k=>({pc:L('Puesto de mando','Command post'),pu:L('Puente','Bridge'),ba:L('Batería enemiga','Enemy battery'),co:L('Columna de vehículos','Vehicle column'),inf:L('Infantería','Infantry'),ilu:L('Iluminación','Illumination'),hum:L('Humo','Smoke')}[k]||k);
 const VNAMES=['Valdecastro','Fuentelaguna','Peñarrubia','Torrealba','Navalcruz','Villaseca','Montejo','Robledal','Casarejo','Puertoviejo','Hontanar','Aldeanueva','Castrillo','Navahonda','Valmayor','Peñaflor','Quintanar','Sotoancho','Riofrío','Tablada'];
 function grid8(e,n){ return String(Math.floor((E0+e)/10)%10000).padStart(4,'0')+' '+String(Math.floor((N0+n)/10)%10000).padStart(4,'0'); }
 function sq(e,n){ const c=clamp(Math.floor(e/2000),0,9), r=clamp(9-Math.floor(n/2000),0,9); return 'ABCDEFGHIJ'[c]+(r+1); }
@@ -142,9 +312,10 @@ function plS(pl,e,n){ let s=0,best=1e9,bs=0; for(let i=0;i<pl.length-1;i++){ con
 
 /* misión: def = {seed, biome, kind, mode, dist, lesson, met, id} */
 function genMission(def){ const r=rng(def.seed*7919+13); const mode=def.mode; let biome=def.biome||BIO[Math.floor(r()*BIO.length)]; if(!BIO.includes(biome)) biome='llanura';
- let kinds=mode==='veterano'?['pc','pu','ba','co']:['pc','pu','ba']; if(biome==='ciudad') kinds=mode==='veterano'?['pc','pc','pu','co']:['pc','pc','pu'];
+ const RLm=mode==='realista'; const vet=mode==='veterano'||RLm;
+ let kinds=RLm?(def.k155?['pc','pu','ba','co','inf','inf','ilu','hum']:['pc','pu','ba','co','inf','inf']):vet?['pc','pu','ba','co']:['pc','pu','ba']; if(biome==='ciudad') kinds=RLm?['pc','pc','pu','co']:vet?['pc','pc','pu','co']:['pc','pc','pu'];
  const kind=def.kind||kinds[Math.floor(r()*kinds.length)];
- const dist=def.dist||Math.round((mode==='veterano'?5500+r()*11500:4500+r()*9500)/10)*10;
+ const dist=def.dist||Math.round((vet?5500+r()*11500:4500+r()*9500)/10)*10;
  let bE=0,bN=0,tE=0,tN=0,az=0; for(let k=0;k<80;k++){ bE=2500+r()*15000; bN=1200+r()*2200; az=(r()*2-1)*1150; tE=bE+dist*Math.sin(az*M2R); tN=bN+dist*Math.cos(az*M2R); if(tE>1600&&tE<MAP-1600&&tN>1600&&tN<MAP-1600) break; }
  if(def.bE!=null){ bE=def.bE; bN=def.bN; tE=def.tE; tN=def.tN; }
  const n1=lattice(r,4000), n2=lattice(r,1800), n3=lattice(r,800), nf_=lattice(r,900), nf2=lattice(r,350);
@@ -160,6 +331,7 @@ function genMission(def){ const r=rng(def.seed*7919+13); const mode=def.mode; le
  for(let j=0;j<GN;j++) for(let i=0;i<GN;i++) H[j*GN+i]=hRaw(i*GS,j*GS);
  { const slope=(e,n)=>Math.max(Math.abs(hRaw(e+100,n)-hRaw(e-100,n)),Math.abs(hRaw(e,n+100)-hRaw(e,n-100)))/200;
   for(const k of [0,1,-1,2,-2,3,-3,4,-4,5,-5,6,-6,8,-8,10,-10]){ const e=tE+ux*k*150, n=tN+uy*k*150; if(hRaw(e,n)>5&&slope(e,n)<0.07){ tE=e; tN=n; break; } } }
+ if(RLm||def.real){ tE=Math.floor((E0+tE)/10)*10-E0+5; tN=Math.floor((N0+tN)/10)*10-N0+5; } /* Realista: el objetivo en el centro de su cuadrado de 10 m (la cuadrícula de 8 cifras lo da exacto) */
  const M={def:def,seed:def.seed,mode:mode,biome:biome,kind:kind,H:H,bE:bE,bN:bN,ridge:ridge,sea:sea,forest:(e,n)=>(nf_(e,n)*0.75+nf2(e,n)*0.35)>P[2],roads:[],rivers:[],rails:[],villages:[],blocks:[],labels:[],city:null};
  /* ríos */
  const gtA=Math.atan2(ux,uy);
@@ -181,15 +353,19 @@ function genMission(def){ const r=rng(def.seed*7919+13); const mode=def.mode; le
  /* objetivo */
  const T={kind:kind,e:tE,n:tN};
  if(kind==='pc'){ T.rad=biome==='ciudad'?45:60; T.need=1; }
- if(kind==='pu'){ T.rad=40; T.need=2; T.dir=plAt(mainRoad,plS(mainRoad,tE,tN))[2]; }
- if(kind==='ba'){ T.rad=70; T.need=1; T.timer=mode==='veterano'?300:0; }
+ if(kind==='pu'){ T.rad=RLm?55:40; T.need=2; T.dir=plAt(mainRoad,plS(mainRoad,tE,tN))[2]; }
+ if(kind==='ba'){ T.rad=70; T.need=1; T.timer=RLm?600:vet?300:0; }
+ if(kind==='inf'){ T.rad=60; T.need=1; }
+ if(kind==='ilu'){ T.rad=300; T.need=1; }
+ if(kind==='hum'){ T.rad=70; T.need=1; }
  if(kind==='co'){ T.rad=70; T.need=1; T.road=mainRoad; T.sT=plS(mainRoad,tE,tN); T.v=8.3; T.tp=Math.round(170+r()*70); T.len=plLen(mainRoad); }
  M.T=T;
  /* observador avanzado */
  const oa=gtA+Math.PI+(r()<0.5?1:-1)*(0.5+r()*0.5), od=2200+r()*1300; M.OP={e:clamp(tE+Math.sin(oa)*od,600,MAP-600),n:clamp(tN+Math.cos(oa)*od,600,MAP-600)};
  /* meteo */
- const met=def.met?{ws:def.met.ws,wd:n64(Math.round((az+(def.met.rel||0))/100)*100),T:def.met.T}:(mode==='veterano'?{ws:Math.round(2+r()*7),wd:Math.round(r()*64)*100,T:Math.round(-4+r()*34)}:mode==='facil'?{ws:Math.round(r()*4),wd:Math.round(r()*64)*100,T:Math.round(8+r()*14)}:{ws:0,wd:0,T:15});
+ const met=def.met?{ws:def.met.ws,wd:n64(Math.round((az+(def.met.rel||0))/100)*100),T:def.met.T}:(RLm?{ws:0,wd:0,T:15}:mode==='veterano'?{ws:Math.round(2+r()*7),wd:Math.round(r()*64)*100,T:Math.round(-4+r()*34)}:mode==='facil'?{ws:Math.round(r()*4),wd:Math.round(r()*64)*100,T:Math.round(8+r()*14)}:{ws:0,wd:0,T:15});
  M.met=met; M.bH=Math.round(hAt(M,bE,bN,false)); M.tH=Math.round(hAt(M,tE,tN,true));
+ if(RLm||def.real) M.R=realExtras(M,def);
  /* rótulos */
  M.labels.push([tE+300,tN+380,'',0]);
  for(let k=0;k<4;k++){ const e=1200+r()*(MAP-2400), n=1200+r()*(MAP-2400); if(Math.hypot(e-tE,n-tN)<1200) continue; M.labels.push([e,n,(EN()?'Hill ':'Cota ')+Math.round(hAt(M,e,n,false)),1]); }
@@ -215,12 +391,25 @@ const CAMP=[
  {id:'v1',mode:'veterano',seed:815,biome:'montana',kind:'pc',dist:11000,n:['El valle','The valley'],d:['Detrás de la sierra, con viento y frío.','Behind the ridge, with wind and cold.']},
  {id:'v2',mode:'veterano',seed:916,biome:'ciudad',kind:'pc',dist:13000,n:['Centro urbano','City centre'],d:['Puesto de mando en una manzana: radio de acierto de 35 m.','Command post in a city block: 35 m hit radius.']},
  {id:'v3',mode:'veterano',seed:1017,biome:'bosque',kind:'ba',dist:12000,n:['Contrabatería','Counter-battery'],d:['Os han detectado: 5 minutos antes de que os localicen.','You have been detected: 5 minutes before they locate you.']},
- {id:'v4',mode:'veterano',seed:1118,biome:'llanura',kind:'co',dist:9500,n:['Columna en movimiento','Moving column'],d:['La columna pasará por el punto de paso: dispara a la hora justa.','The column will pass the checkpoint: fire at exactly the right time.']}
+ {id:'v4',mode:'veterano',seed:1118,biome:'llanura',kind:'co',dist:9500,n:['Columna en movimiento','Moving column'],d:['La columna pasará por el punto de paso: dispara a la hora justa.','The column will pass the checkpoint: fire at exactly the right time.']},
+ {id:'a4',mode:'aprende',lesson:4,real:true,seed:4404,biome:'llanura',kind:'pc',dist:12400,rx:{ws:12,gr:1.1,wd:1600,veer:20,T:96.5,D:101.5,tp:21,mvb:0,mvs:0,lat:40},n:['Lección 4 · Mensaje meteorológico','Lesson 4 · Met message'],d:['Lees un mensaje METB real: eliges la línea por la flecha y corriges viento, temperatura y densidad del aire.','You read a real METB message: pick the line from the maximum ordinate and correct for wind, air temperature and density.']},
+ {id:'a5',mode:'aprende',lesson:5,real:true,seed:5505,biome:'bosque',kind:'pu',dist:11800,rx:{ws:4,gr:0.4,tp:38,mvb:-3.5,mvs:0.6,lat:42},n:['Lección 5 · Velocidad en boca y carga','Lesson 5 · Muzzle velocity and propellant'],d:['La calibración de la pieza y una carga caliente al sol cambian la velocidad en boca: lo pasas a metros.','The gun’s calibration and a propellant charge warmed in the sun change the muzzle velocity: you turn it into metres.']},
+ {id:'a6',mode:'aprende',lesson:6,real:true,seed:6606,biome:'llanura',kind:'ba',dist:14800,rx:{ws:3,gr:0.4,tp:21,mvb:0,mvs:0,lat:60},n:['Lección 6 · Rotación de la Tierra y deriva','Lesson 6 · Earth rotation and deflection'],d:['A 60° N la Tierra gira bajo el proyectil y el estriado lo hace derivar. Pasas el azimut de tiro a la deriva de la pieza.','At 60° N the Earth turns under the shell and the rifling makes it drift. You turn the firing azimuth into the gun’s deflection.']},
+ {id:'a7',mode:'aprende',lesson:7,real:true,seed:7707,biome:'montana',kind:'inf',dist:9800,rx:{ws:5,gr:0.5,tp:21,mvb:0,mvs:0,lat:38},n:['Lección 7 · Espoleta y ángulo de situación','Lesson 7 · Fuze and angle of site'],d:['Infantería al descubierto en una ladera: espoleta, graduación, ángulo de situación y cuadrante mínimo.','Infantry in the open on a hillside: fuze, fuze setting, angle of site and minimum quadrant.']},
+ {id:'r1',mode:'realista',seed:9101,biome:'llanura',kind:'pc',dist:13400,n:['Primera misión completa','Full fire mission'],d:['Puesto de mando bajo cubierta: espoleta de retardo, METB, V0 y rotación. Todo lo que hace una central de tiro.','Command post under cover: delay fuze, METB, MV and rotation. Everything a fire direction centre does.']},
+ {id:'r2',mode:'realista',seed:9202,biome:'bosque',kind:'inf',dist:11200,n:['Infantería en el claro','Infantry in a clearing'],d:['Personal al descubierto: explosión en el aire con VT o con espoleta de tiempo graduada.','Personnel in the open: airburst with VT or a set time fuze.']},
+ {id:'r3',mode:'realista',seed:9303,biome:'bosque',kind:'pu',dist:14600,n:['El puente del río','The river bridge'],d:['Tablero de hormigón: retardo y varios disparos por pieza en el fuego por eficacia.','Concrete span: delay and several rounds per gun in fire for effect.']},
+ {id:'r4',mode:'realista',seed:9404,biome:'costa',kind:'ba',dist:14600,n:['Contrabatería en la costa','Coastal counter-battery'],d:['Os han detectado: calcula rápido, sirvientes al descubierto.','You have been detected: compute fast, crews in the open.']},
+ {id:'r5',mode:'realista',seed:9505,biome:'llanura',kind:'co',dist:12200,n:['Fuego a la hora sobre la columna','Time on target: column'],d:['Hora de fuego = paso por el punto de paso − tiempo de vuelo.','Fire time = time at the checkpoint − time of flight.']},
+ {id:'r6',mode:'realista',seed:9606,biome:'bosque',kind:'ilu',dist:9600,n:['Noche: iluminar el paso','Night illumination'],d:['Proyectil iluminante de 155 mm con espoleta de tiempo: la bengala se abre a 600 m.','155 mm illuminating shell with a time fuze: the flare opens at 600 m.']},
+ {id:'r7',mode:'realista',seed:9707,biome:'llanura',kind:'hum',dist:10400,n:['Cegar el observatorio','Blind the OP'],d:['Humo HC de 155 mm: graduación = tiempo de vuelo − 2,0 s.','155 mm HC smoke: setting = time of flight − 2.0 s.']},
+ {id:'r8',mode:'realista',seed:9808,biome:'montana',kind:'pc',dist:11600,n:['Detrás de la sierra','Behind the ridge'],d:['Cuadrante mínimo por la cresta: carga, ángulo alto o bajo y situación.','Minimum quadrant from the crest: charge, high or low angle and site.']}
 ];
-const MODES={aprende:[L('Aprende','Learn'),L('3 lecciones guiadas','3 guided lessons'),L('Te explico cada paso de una misión de tiro real con números del juego: plotear, medir, tabla de tiro, apuntar, corregir.','I explain each step of a real fire mission with the game’s numbers: plot, measure, firing table, lay, correct.')],
+const MODES={aprende:[L('Aprende','Learn'),L('7 lecciones guiadas','7 guided lessons'),L('Te explico cada paso de una misión de tiro real con números del juego: plotear, medir, tabla de tiro, apuntar, corregir.','I explain each step of a real fire mission with the game’s numbers: plot, measure, firing table, lay, correct.')],
  facil:[L('Fácil','Easy'),L('Con calculadora de tiro','With fire-direction calculator'),L('Ploteas tú y la calculadora te da los datos desglosados (tabla + viento + cota). Viento flojo.','You plot and the calculator gives you the broken-down data (table + wind + height). Light wind.')],
- veterano:[L('Veterano','Veteran'),L('Sin calculadora · 5–17 km','No calculator · 5–17 km'),L('Tabla de tiro y tu cabeza: viento, temperatura, cota, crestas, columnas en movimiento y contrabatería con reloj.','Firing table and your head: wind, temperature, height, crests, moving columns and counter-battery against the clock.')]};
-const MK={aprende:'aprende',facil:'facil',veterano:'veterano'};
+ veterano:[L('Veterano','Veteran'),L('Sin calculadora · 5–17 km','No calculator · 5–17 km'),L('Tabla de tiro y tu cabeza: viento, temperatura, cota, crestas, columnas en movimiento y contrabatería con reloj.','Firing table and your head: wind, temperature, height, crests, moving columns and counter-battery against the clock.')],
+ realista:[L('Realista','Realistic'),L('Central de tiro completa','Full fire direction'),L('Como en una central de tiro real (FM 6-40): mensaje METB por líneas, velocidad en boca calibrada y temperatura de la carga, rotación de la Tierra, derivación, ángulo de situación y complementario, cuadrante mínimo, espoleta y graduación, proyectil, deriva y cuadrante para el jefe de pieza, y disparos por pieza. Sin azar: si el cálculo está bien, entra.','Like a real fire direction centre (FM 6-40): line-by-line METB message, calibrated muzzle velocity and propellant temperature, Earth rotation, drift, angle of site and complementary site, minimum quadrant, fuze and setting, shell, deflection and quadrant for the section chief, and rounds per gun. No randomness: if the computation is right, it hits.')]};
+const MK={aprende:'aprende',facil:'facil',veterano:'veterano',realista:'realista'};
 function bests(){ let b={}; try{ b=JSON.parse(localStorage.getItem('mat_art_best')||'{}'); }catch(e){ b={}; } const o={}; if(b&&typeof b==='object'&&!Array.isArray(b)) for(const k in b){ const v=b[k]; if(v&&typeof v==='object'&&CAMP.some(c=>c.id===k)){ const s=Math.round(+v.s), p=Math.round(+v.p); if(s>=1&&s<=3) o[k]={s:s,p:p>0?p:0}; } } return o; }
 function saveBests(b){ try{ localStorage.setItem('mat_art_best',JSON.stringify(b)); }catch(e){} }
 function loadCfg(){ let c={mode:'aprende',gun:'sbs',biome:'',seed:null}; try{ Object.assign(c,JSON.parse(localStorage.getItem('mat_art_cfg')||'{}')); }catch(e){} if(!MODES[c.mode]) c.mode='aprende'; if(!GUNS.some(g=>g.id===c.gun)) c.gun='sbs'; if(typeof c.biome!=='string'||(c.biome&&BIO.indexOf(c.biome)<0)) c.biome=''; return c; }
@@ -247,7 +436,7 @@ function css(){ if(document.getElementById('art-css')) return; const s=document.
  '.art-tab.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset;background:#1a1d14}',
  '.art-pane{margin:0 0 10px}',
  '.art-pane .artgr.c2,.art-pane .artgr.c3{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}',
- '.art-pane .artgr.art-md{grid-template-columns:repeat(3,minmax(0,1fr))}',
+ '.art-pane .artgr.art-md{grid-template-columns:repeat(2,minmax(0,1fr))}',
  '.art-pane .artopt{min-height:0}',
  '.art-pane .artopt b{font-size:14.5px}',
  '@media(min-width:700px){.art-pane .artgr.c3{grid-template-columns:repeat(3,minmax(0,1fr))}}',
@@ -257,11 +446,11 @@ function css(){ if(document.getElementById('art-css')) return; const s=document.
  '.art-gen select{flex:1 1 40%;min-width:0;width:auto}',
  '.art-gen input{flex:1 1 30%;min-width:0;width:auto}',
  '.art-gen .artbtn{flex:none}',
- '.art-rc{display:grid;gap:8px}',
- '.art-rc>div{border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:7px 10px;display:grid;gap:2px;font-size:13px}',
- '.art-rc span{display:flex;justify-content:space-between;gap:8px;color:#bfc2b8}',
+ '.art-rc{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}',
+ '.art-rc>div{border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:6px 8px;display:grid;gap:1px;font-size:13px;align-content:start}',
+ '.art-rc span{display:flex;justify-content:space-between;gap:6px;color:#bfc2b8;font-size:11.5px;line-height:1.25}',
  '.art-rc i{font-style:normal;color:#e3c46a;white-space:nowrap}',
- '@media(min-width:900px){.art-rc{grid-template-columns:repeat(3,1fr)}}',
+ '@media(min-width:900px){.art-rc{grid-template-columns:repeat(4,1fr)}}',
  '.arthero{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);margin:10px 0 14px;background:#20211a}',
  '.arthero img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;filter:saturate(.75) brightness(.62)}',
  '@media(min-width:800px){.arthero img{aspect-ratio:21/8}}',
@@ -288,6 +477,7 @@ function css(){ if(document.getElementById('art-css')) return; const s=document.
  '.artnote b{color:#d6d8d2}',
  '.artest{display:inline-block;font-size:11px;border:1px solid #6b6a50;border-radius:5px;padding:0 5px;color:#cfd0b8}',
  '.artplay{display:grid;grid-template-columns:1fr;gap:10px}',
+ '.artplay>div{min-width:0}',
  '@media(min-width:1000px){.artplay{grid-template-columns:minmax(0,560px) minmax(0,1fr);align-items:start}}',
  '.artcard{border:1px solid var(--line);border-radius:var(--r);background:var(--s1);padding:10px 12px;min-width:0}',
  '.artord{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.5;color:#e0dccb;background:#14150f;border-left:3px solid #c2a24e;padding:8px 10px;border-radius:6px;white-space:pre-wrap;word-break:break-word}',
@@ -334,15 +524,15 @@ function intro(){ stopLoop(); G=null; const B=bests(); const M=CFG.mode; const g
  const opt=(on,attr,b,s)=>'<button type="button" class="artopt'+(on?' on':'')+'" '+attr+'><b>'+b+'</b><span>'+s+'</span></button>';
  const camp=CAMP.filter(c=>c.mode===M);
  const nStars=CAMP.reduce((a,c)=>a+(B[c.id]?B[c.id].s:0),0), nDone=CAMP.filter(c=>B[c.id]).length;
- let med=null; try{ const AT=/^at[ahfbdcvmg]\d/; const all=(window.MAT_MED&&window.MAT_MED.list)?window.MAT_MED.list().filter(x=>AT.test(x)):[]; const got=Object.keys((JSON.parse(localStorage.getItem('mat_med')||'{}').m)||{}).filter(x=>AT.test(x)); if(all.length) med=[got.length,all.length]; }catch(e){}
- const TABS=[['modo',L('Nivel','Level'),MODES[M][0]],['mis',M==='aprende'?L('Lección','Lesson'):L('Misión','Mission'),M==='aprende'?L('3 lecciones','3 lessons'):camp.length+L(' + infinitas',' + endless')],['gun',L('Obús','Gun'),gun.n],['rec',L('Récords','Records'),nStars+' ★']];
+ let med=null; try{ const AT=/^at[ahfbdcvmgrn]\d/; const all=(window.MAT_MED&&window.MAT_MED.list)?window.MAT_MED.list().filter(x=>AT.test(x)):[]; const got=Object.keys((JSON.parse(localStorage.getItem('mat_med')||'{}').m)||{}).filter(x=>AT.test(x)); if(all.length) med=[got.length,all.length]; }catch(e){}
+ const TABS=[['modo',L('Nivel','Level'),MODES[M][0]],['mis',M==='aprende'?L('Lección','Lesson'):L('Misión','Mission'),M==='aprende'?camp.length+L(' lecciones',' lessons'):camp.length+L(' + infinitas',' + endless')],['gun',L('Obús','Gun'),gun.n],['rec',L('Récords','Records'),nStars+' ★']];
  if(UIT&&!TABS.some(t=>t[0]===UIT)) UIT='mis';
  let h='<div class="artw art-mn" data-noi18n>';
  h+='<div class="art-hd"><img src="img/juegos/artillero.webp" width="640" height="400" alt="'+esc(L('Obús de 155 mm haciendo fuego','A 155 mm howitzer firing'))+'" onerror="this.style.display=\'none\'"><div class="ht"><b>'+L('ARTILLERO','ARTILLERY')+'</b><span>'+L('Obuses reales sobre un mapa táctico: ploteas, mides, lees la tabla, apuntas y corriges. Si el cálculo está bien, acierta.','Real howitzers on a tactical map: plot, measure, read the table, lay and correct. If the calculation is right, it hits.')+'</span></div></div>';
  h+='<div class="art-tabs" role="tablist">'+TABS.map(t=>'<button type="button" role="tab" class="art-tab'+(UIT===t[0]?' on':'')+'" data-tab="'+t[0]+'" aria-selected="'+(UIT===t[0])+'" aria-expanded="'+(UIT===t[0])+'"><small>'+t[1]+' '+(UIT===t[0]?'▴':'▾')+'</small><b>'+esc(t[2])+'</b></button>').join('')+'</div>';
  let p='';
  if(UIT==='modo'){
-  p+='<div class="artgr c3 art-md">'+Object.keys(MODES).map(k=>opt(M===k,'data-m="'+k+'"',MODES[k][0],MODES[k][1])).join('')+'</div><p class="artnote">'+MODES[M][2]+'</p>';
+  p+='<div class="artgr c2 art-md">'+Object.keys(MODES).map(k=>opt(M===k,'data-m="'+k+'"',MODES[k][0],MODES[k][1])).join('')+'</div><p class="artnote">'+MODES[M][2]+'</p>';
  } else if(UIT==='mis'){
   p+='<div class="artgr c2 art-ms">'+camp.map(c=>{ const b=B[c.id]; return opt(false,'data-c="'+c.id+'" title="'+esc(L(c.d[0],c.d[1]))+'"',L(c.n[0],c.n[1])+(b?' <i>'+stars(b.s)+'</i>':''),BION(c.biome)+' · '+KN(c.kind)+' · '+nf(c.dist/1000,1)+' km'); }).join('')+'</div>';
   if(M!=='aprende') p+='<div class="artsec">'+L('Misión generada (infinitas)','Generated mission (endless)')+'</div><div class="artrow art-gen"><select id="artbio" class="artin" aria-label="'+L('Terreno','Terrain')+'">'+['',...BIO].map(b=>'<option value="'+b+'"'+(CFG.biome===b?' selected':'')+'>'+(b?BION(b):L('Al azar','Random'))+'</option>').join('')+'</select>'+
@@ -361,6 +551,8 @@ function intro(){ stopLoop(); G=null; const B=bests(); const M=CFG.mode; const g
  h+='<details class="artmore"><summary>'+L('Cómo se calcula (y qué es real)','How it is calculated (and what is real)')+'</summary>'+
   '<p>'+L('El procedimiento es el de una batería real: el observador o el mando envían la cuadrícula del objetivo; en la central de tiro se plotea en el mapa, se miden el alcance (regla) y el azimut (transportador, en milésimas OTAN: 6.400 por vuelta), se entra en la tabla de tiro con el alcance corregido por el boletín meteorológico (viento y temperatura) y por la diferencia de cota, y se pasan los datos a la pieza. El observador corrige en metros: «alarga/acorta» y «derecha/izquierda».','The procedure is a real battery’s: the observer or headquarters sends the target grid; the fire direction centre plots it on the map, measures the range (ruler) and azimuth (protractor, in NATO mils: 6,400 per circle), enters the firing table with the range corrected for the met message (wind and temperature) and the height difference, and sends the data to the gun. The observer corrects in metres: “add/drop” and “right/left”.')+'</p>'+
   '<p>'+L('Real: las piezas, su calibre, alcance, elevación máxima y cadencia (fichas de M.A.T); y, con su fuente en cada pieza, la velocidad en boca máxima, el número y nombre de las cargas, el proyectil y su masa, el sector de puntería y los tiempos de entrada en posición publicados. Del juego: las velocidades de las cargas intermedias, la resistencia del aire (ajustada para que la carga máxima llegue al alcance de la ficha) y, con ellas, la tabla de tiro. Como en una central real, el observador corrige en metros sobre su línea observador-objetivo y la central lo pasa a la línea pieza-objetivo (ángulo T).','Real: the guns, their calibre, range, maximum elevation and rate of fire (M.A.T data sheets); and, with the source on each gun, the maximum muzzle velocity, the number and names of the charges, the shell and its mass, the traverse and the published emplacement times. From the game: the velocities of the intermediate charges, the air drag (fitted so the top charge reaches the data-sheet range) and, from them, the firing table. As in a real FDC, the observer corrects in metres on his observer-target line and the FDC converts it to the gun-target line (angle T).')+'</p>'+
+  '<p><b>'+L('Nivel Realista y lecciones 4–7','Realistic level and lessons 4–7')+'</b>. '+L('Real (FM 6-40): formato del mensaje METB (líneas 00–11 por altura, viento balístico en centenas de mils y nudos, temperatura y densidad en % del estándar ICAO) y elección de la línea por la flecha; temperatura estándar de la carga +70 °F (21 °C); ángulo de situación = 1,0186 × VI / R (km) y complementario por tabla; 20/R con espoleta de tiempo HE; deriva común 3200 y deriva = 3200 + orientación − azimut; derivación siempre a la izquierda; mensajes «disparo» y fin de misión; iluminante M485A2 de 155 mm con espoleta de tiempo y tabla para 600 m de altura; humo HC: graduación = tiempo − 2,0 s; VT y tiempo contra personal al descubierto, retardo contra cubiertas. Rotación de la Tierra calculada con la física real (Ω = 7,292×10⁻⁵ rad/s y la latitud). Del juego: la curva de resistencia según el Mach y su factor por pieza, la derivación, la variación de V0 por °C (0,09 % por °C), las VVB de cada carga, los valores del METB de cada misión, las ventanas de acierto (explosión en el aire hasta 60 m, iluminante 600 ± 150 m, humo 1,2–2,8 s antes del impacto), el ángulo de caída mínimo de 300 mils para VT y tiempo, la holgura de cresta (5 m, 15 m con VT) más 3 mils, la máscara hasta 3/4 del alcance, el margen de alcance de cada carga, tiempo solo en ángulo bajo y la ciudad solo en ángulo alto. No se modelan la dispersión, el peso del proyectil (cuadrados), el lote de pólvora ni la corrección de velocidad por desgaste.','Real (FM 6-40): METB message format (lines 00–11 by height, ballistic wind in hundreds of mils and knots, temperature and density in % of ICAO standard) and line selection by maximum ordinate; standard propellant temperature +70 °F (21 °C); angle of site = 1.0186 × VI / R (km) and complementary site from the table; 20/R with HE time fuze; common deflection 3200 and deflection = 3200 + azimuth of lay − azimuth; drift always corrected left; “shot” and end-of-mission messages; 155 mm M485A2 illuminating shell with time fuze and tables for 600 m height of burst; HC smoke: setting = time − 2.0 s; VT and time against personnel in the open, delay against overhead cover. Earth rotation computed with real physics (Ω = 7.292×10⁻⁵ rad/s and the latitude). Game values: the drag-vs-Mach curve and its per-gun factor, drift, MV change per °C (0.09 % per °C), each charge’s MVV, each mission’s METB values, hit windows (airburst up to 60 m, flare 600 ± 150 m, smoke 1.2–2.8 s before impact), 300 mils minimum angle of fall for VT and time, crest clearance (5 m, 15 m with VT) plus 3 mils, the mask up to 3/4 of the range, each charge’s range margin, time fuze in low angle only and the city in high angle only. Not modelled: dispersion, projectile weight (squares), propellant lot and wear velocity correction.')+'</p>'+
+  '<p>'+L('Fuente: Ejército de EE. UU., FM 6-40 «Field Artillery Manual Cannon Gunnery» (1984, de dominio público): mensaje METB, procedimiento met + V0, ángulo de situación, deriva, cuadrante mínimo, iluminante y humo; FM 6-30 «Observed Fire» (espoletas).','Source: US Army FM 6-40 “Field Artillery Manual Cannon Gunnery” (1984, public domain): METB message, met + MV procedure, site, deflection, minimum quadrant, illumination and smoke; FM 6-30 “Observed Fire” (fuzes).')+'</p>'+
   '<p>'+L('Fuentes del procedimiento: Ejército de EE. UU., FM 6-40 y TC 3-09.81 «Field Artillery Manual Cannon Gunnery»; ATP 3-09.30 «Observed Fires»; cuadrícula MGRS de 8 cifras = 10 m.','Procedure sources: US Army FM 6-40 and TC 3-09.81 “Field Artillery Manual Cannon Gunnery”; ATP 3-09.30 “Observed Fires”; 8-digit MGRS grid = 10 m.')+'</p></details>';
  h+='</div>';
  X.set(X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Artillero','Artillery')]])+h,L('Artillero','Artillery'));
@@ -376,15 +568,25 @@ function intro(){ stopLoop(); G=null; const B=bests(); const M=CFG.mode; const g
 /* ===== Partida ===== */
 const DPR=()=>Math.min(2,window.devicePixelRatio||1);
 function start(def){ stopLoop(); let gun=gunOf(CFG.gun); def=Object.assign({},def); if(!def.mode) def.mode=CFG.mode;
+ if(isReal(def)&&!def._rdy){ def._rdy=1; G=null; X.set('<div class="artw" data-noi18n><p class="artnote" style="padding:30px 0;text-align:center">'+L('La central de tiro prepara las tablas de tiro…','The fire direction centre is preparing the firing tables…')+'</p></div>',L('Artillero','Artillery')); setTimeout(()=>start(def),40); return; }
  let M=null, note='';
+ if(isReal(def)) def.k155=gun.kc===155;
  for(let k=0;k<12;k++){ M=genMission(def); const T=M.T; const R=Math.hypot(T.e-M.bE,T.n-M.bN);
-  let ok=R<=gun.r*0.97&&recommend(M,gun,T.e,T.n);
-  if(!ok&&!def.gen){ const alt=GUNS.find(g=>Math.hypot(T.e-M.bE,T.n-M.bN)<=g.r*0.97&&recommend(M,g,T.e,T.n)); if(alt){ note=L('Tu pieza no llega o no tiene solución limpia en esta misión: usas el ','Your gun cannot reach or has no clean solution here: you use the ')+alt.n+'.'; gun=alt; ok=true; } }
+  const RE=isReal(def); const rec=(m,g)=>RE?allOk(m,g):recommend(m,g,m.T.e,m.T.n);
+  let ok=R<=gun.r*0.97&&!(RE&&(T.kind==='ilu'||T.kind==='hum')&&gun.kc!==155)&&rec(M,gun);
+  if(!ok&&!def.gen){ const alt=GUNS.find(g=>Math.hypot(T.e-M.bE,T.n-M.bN)<=g.r*0.97&&!(RE&&(T.kind==='ilu'||T.kind==='hum')&&g.kc!==155)&&rec(M,g)); if(alt){ note=L('Tu pieza no llega o no tiene solución limpia en esta misión: usas el ','Your gun cannot reach or has no clean solution here: you use the ')+alt.n+'.'; gun=alt; ok=true; } }
   if(ok||!def.gen) break; def.seed=def.seed%999999+1; }
  const T=M.T; G={M:M,gun:gun,def:def,ch:0,hi:false,el:'',az:'',fat:'',plot:{e:M.bE+(T.e-M.bE)*0.45,n:M.bN+(T.n-M.bN)*0.45},plotted:false,rounds:[],hits:0,clock:0,speed:1,fly:null,done:false,log:[],zoom:1,tab:def.mode==='veterano'?'tiro':'calc',gstep:0,corr:null,armT:null,note:note,t0:performance.now(),last:performance.now(),dirty:true,flash:0};
  if(def.mode==='veterano') G.tab='tiro';
- G.ready=0; G.lastAz=null; if(T.kind==='pu') T.need=needPu(gun);
+ G.ready=0; G.lastAz=null; if(T.kind==='pu') T.need=needPu(gun); 
+ if(isReal(def)){ G.real=true; G.shell='he'; G.fz='sq'; G.fs=''; G.nr=1; G.df=''; G.qe=''; G.tab=def.mode==='aprende'?'hoja':'tiro'; T.need=needNr(T); if(T.kind==='pu') T.need=needPu(gun); }
  render(); }
+function isReal(def){ return def.mode==='realista'||!!def.real; }
+/* Misión generada en Realista: se acepta solo si TODAS las combinaciones válidas (carga × ángulo × espoleta) de tu pieza aciertan con el cálculo correcto */
+function allOk(M,gun){ const T=M.T; const shell=SHOK[T.kind]||'he'; let any=null;
+ for(const hi of [false,true]) for(let c=0;c<gun.nz;c++) for(const fz of (FXOK[T.kind]||['sq'])){ const p=procR(M,gun,c,hi,T.e,T.n,fz,shell); const qe=p.out?0:Math.round(p.qe); if(ruleR(M,gun,c,hi,fz,shell,p,qe)) continue;
+  const fs=p.fs==null?null:Math.round(p.fs*10)/10; const r=shootR(M,gun,c,qe,Math.round(p.df)%6400,{fz:fz,fs:fs,shell:shell}); if(!evalR(M,r,shell,fz,null,fs).hit) return null; any=any||{ch:c,hi:hi}; }
+ return any; }
 function nameOf(def){ if(def.gen) return L('Misión generada','Generated mission')+' nº '+def.seed; const c=CAMP.find(x=>x.id===def.id); return c?L(c.n[0],c.n[1]):''; }
 function fmtClock(s){ s=Math.max(0,Math.round(s)); return 'H+'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
 function orderText(){ const M=G.M, T=M.T; const g=grid8(T.e,T.n); const lines=[];
@@ -403,14 +605,15 @@ function orderText(){ const M=G.M, T=M.T; const g=grid8(T.e,T.n); const lines=[]
 function render(){ const M=G.M, T=M.T; const ve=G.def.mode==='veterano';
  let h='<div class="artw" data-noi18n><div class="arthud"><span><b>'+esc(nameOf(G.def))+'</b></span><span>'+BION(M.biome)+'</span><span>'+esc(G.gun.n)+'</span><span id="artclk"></span><span id="artrnd"></span><span id="arttmr"></span></div>';
  if(G.note) h+='<p class="artnote">'+esc(G.note)+'</p>';
- h+='<div class="artplay"><div><details class="art-dt" id="artordd" open><summary>'+L('Orden de tiro de la central','Fire order from FDC')+' · '+KN(T.kind)+'</summary><div class="artord" id="artord">'+esc(orderText())+'</div></details>';
+ h+='<div class="artplay"><div><details class="art-dt" id="artordd" open><summary>'+L('Orden de tiro de la central','Fire order from FDC')+' · '+KN(T.kind)+'</summary><div class="artord" id="artord">'+esc(G.real?orderTextR():orderText())+'</div></details>';
  h+='<div class="artmap" id="artmapw" style="margin-top:8px"><canvas id="artmap" width="600" height="600" aria-label="'+L('Mapa táctico','Tactical map')+'"></canvas></div>';
  h+='<div class="artrow"><button type="button" class="artbtn sm" id="artzoom">🔍 '+L('Zoom','Zoom')+'</button><input id="artgrid" class="artin" inputmode="numeric" placeholder="'+L('cuadrícula','grid')+' 8" style="width:9.5em"><button type="button" class="artbtn sm" id="artplot">'+L('Plotear','Plot')+'</button><button type="button" class="artbtn sm" id="artsnap">⌖ '+L('Al objetivo','On target')+'</button></div>';
  h+='<details class="art-dt"><summary>'+L('Leyenda del mapa','Map legend')+'</summary><div class="artnote" id="artleg"></div></details>';
  h+='<div class="artread" id="artread"></div><div class="artprof"><canvas id="artprof" width="600" height="170"></canvas></div><div class="artnote" id="artprofn"></div></div>';
  h+='<div><div id="artguide"></div><div id="artres"></div><div class="arttabs">'+
+  (G.real?'<button type="button" class="artbtn sm" data-t="tiro">'+L('Pieza','Gun')+'</button><button type="button" class="artbtn sm" data-t="tabla">'+L('Tablas','Tables')+'</button><button type="button" class="artbtn sm" data-t="met">'+L('Meteo y V0','Met and MV')+'</button><button type="button" class="artbtn sm" data-t="hoja">'+L('Hoja','Worksheet')+'</button></div>':
   '<button type="button" class="artbtn sm" data-t="tiro">'+L('Pieza','Gun')+'</button><button type="button" class="artbtn sm" data-t="tabla">'+L('Tabla de tiro','Firing table')+'</button>'+
-  '<button type="button" class="artbtn sm" data-t="calc">'+(ve?L('Fórmulas','Formulas'):L('Calculadora','Calculator'))+'</button></div><div class="artcard" id="artpanel"></div>'+
+  '<button type="button" class="artbtn sm" data-t="calc">'+(ve?L('Fórmulas','Formulas'):L('Calculadora','Calculator'))+'</button></div>')+'<div class="artcard" id="artpanel"></div>'+
   '<div class="artsec">'+L('Radio del observador','Observer radio')+'</div><div class="artlog artcard" id="artlog"></div>'+
   '<div class="artrow"><button type="button" class="artbtn" id="artmenu">‹ '+L('Menú','Menu')+'</button><button type="button" class="artbtn" id="artrst">↺ '+L('Reiniciar','Restart')+'</button></div></div></div></div>';
  X.set(X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Artillero','Artillery'),'#/artillero'],[nameOf(G.def)]])+h,L('Artillero','Artillery'));
@@ -493,6 +696,9 @@ function drawMap(now){ const cv=APP.querySelector('#artmap'); if(!cv) return; co
  if(T.kind==='pc'){ x.fillRect(tp[0]-7*s,tp[1]-5*s,14*s,10*s); x.strokeRect(tp[0]-7*s,tp[1]-5*s,14*s,10*s); x.fillStyle='#fff'; x.font='bold '+Math.round(7*s)+'px system-ui'; x.fillText('PC',tp[0],tp[1]+0.5); }
  else if(T.kind==='pu'){ x.save(); x.translate(tp[0],tp[1]); x.rotate(T.dir); x.fillRect(-4*s,-9*s,8*s,18*s); x.strokeRect(-4*s,-9*s,8*s,18*s); x.restore(); }
  else if(T.kind==='ba'){ for(let k=0;k<4;k++){ const q=[tp[0]+(k-1.5)*7*s,tp[1]+((k%2)?3:-3)*s]; x.beginPath(); x.arc(q[0],q[1],2.6*s,0,Math.PI*2); x.fill(); x.stroke(); } }
+ else if(T.kind==='inf'){ for(let k=0;k<5;k++){ const q=[tp[0]+(k-2)*5*s,tp[1]+((k%2)?3:-2)*s]; x.beginPath(); x.arc(q[0],q[1],2*s,0,Math.PI*2); x.fill(); } }
+ else if(T.kind==='ilu'){ x.beginPath(); for(let k=0;k<10;k++){ const a=k*Math.PI/5-Math.PI/2, rr2=(k%2?3:8)*s; x.lineTo(tp[0]+Math.cos(a)*rr2,tp[1]+Math.sin(a)*rr2); } x.closePath(); x.fill(); x.stroke(); }
+ else if(T.kind==='hum'){ x.beginPath(); x.moveTo(tp[0],tp[1]-7*s); x.lineTo(tp[0]+7*s,tp[1]+5*s); x.lineTo(tp[0]-7*s,tp[1]+5*s); x.closePath(); x.fill(); x.stroke(); x.fillStyle='#fff'; x.font='bold '+Math.round(6.5*s)+'px system-ui'; x.fillText('OB',tp[0],tp[1]+1.5*s); }
  else if(T.kind==='co'){ x.strokeStyle='#b33a2a'; x.lineWidth=2*s; x.beginPath(); x.moveTo(tp[0]-6*s,tp[1]-6*s); x.lineTo(tp[0]+6*s,tp[1]+6*s); x.moveTo(tp[0]+6*s,tp[1]-6*s); x.lineTo(tp[0]-6*s,tp[1]+6*s); x.stroke(); x.fillStyle='#7a1d12'; x.font='bold '+Math.round(8*s)+'px system-ui'; x.fillText('PP',tp[0]+12*s,tp[1]-8*s);
   colPos(G.clock).forEach((q,i)=>{ if(!q) return; const p=P(q[0],q[1]); x.save(); x.translate(p[0],p[1]); x.rotate(q[2]); x.fillStyle=i?'#9a3b2a':'#d0402a'; x.fillRect(-2.2*s,-3.4*s,4.4*s,6.8*s); x.restore(); }); }
  /* observador */
@@ -517,6 +723,8 @@ function drawMap(now){ const cv=APP.querySelector('#artmap'); if(!cv) return; co
   x.fillStyle=r.hit?'#d03a1f':'#222'; x.beginPath(); for(let k=0;k<10;k++){ const a=k*Math.PI/5, rr2=(k%2?2.2:5.4)*s; x.lineTo(q[0]+Math.cos(a)*rr2,q[1]+Math.sin(a)*rr2); } x.closePath(); x.fill(); x.fillStyle='#111'; x.font='bold '+Math.round(8*s)+'px system-ui'; x.fillText(String(i+1),q[0]+8*s,q[1]-7*s); });
  /* proyectil en vuelo */
  if(G.fly){ const f=G.fly; const pt=pathAt(f.path,f.tt); const sn=Math.sin(f.az*M2R), cs=Math.cos(f.az*M2R); const E=M.bE+pt[0]*sn+pt[2]*cs, N=M.bN+pt[0]*cs-pt[2]*sn; const q=P(E,N); x.strokeStyle='rgba(30,30,30,.6)'; x.lineWidth=1.4*s; x.beginPath(); x.moveTo(bp[0],bp[1]); x.lineTo(q[0],q[1]); x.stroke(); x.fillStyle='#111'; x.beginPath(); x.arc(q[0],q[1],3.2*s,0,Math.PI*2); x.fill(); }
+ if(G.real&&M.R&&M.R.night){ const lit=G.rounds.some(r=>r.hit); x.fillStyle=lit?'rgba(10,14,30,.12)':'rgba(10,14,30,.32)'; x.fillRect(0,0,W,W); if(lit){ const g2=x.createRadialGradient(tp[0],tp[1],0,tp[0],tp[1],300/v.span*W); g2.addColorStop(0,'rgba(255,250,210,.45)'); g2.addColorStop(1,'rgba(255,250,210,0)'); x.fillStyle=g2; x.fillRect(0,0,W,W); } }
+ G.rounds.forEach(r=>{ if(r.shell==='hum'&&r.hit){ const q=P(r.E,r.N); const g3=x.createRadialGradient(q[0],q[1],0,q[0],q[1],180/v.span*W+8*s); g3.addColorStop(0,'rgba(235,235,235,.8)'); g3.addColorStop(1,'rgba(235,235,235,0)'); x.fillStyle=g3; x.fillRect(0,0,W,W); } });
  if(G.flash>0){ x.fillStyle='rgba(255,220,150,'+G.flash*0.35+')'; x.fillRect(0,0,W,W); }
 }
 function pathAt(path,t){ if(!path.length) return [0,0,0,0]; let i=0; while(i<path.length-1&&path[i+1][3]<t) i++; const a=path[i], b=path[Math.min(i+1,path.length-1)]; const f=b[3]>a[3]?clamp((t-a[3])/(b[3]-a[3]),0,1):0; return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f,t]; }
@@ -533,7 +741,7 @@ function drawProf(now){ const cv=APP.querySelector('#artprof'); if(!cv) return; 
  x.fillStyle='#4d4a34'; x.beginPath(); x.moveTo(X_(0),H); prof.forEach((h,k)=>x.lineTo(X_(Rmax*k/N),Y_(h))); x.lineTo(X_(Rmax),H); x.closePath(); x.fill(); x.strokeStyle='#a39a6a'; x.lineWidth=1.2*s; x.stroke();
  const tx=X_(g.R); x.strokeStyle='#d0402a'; x.lineWidth=1.5*s; x.beginPath(); x.moveTo(tx,Y_(hAt(M,G.plot.e,G.plot.n,true))); x.lineTo(tx,Y_(hAt(M,G.plot.e,G.plot.n,true))-14*s); x.stroke(); x.fillStyle='#d0402a'; x.font='bold '+Math.round(9*s)+'px system-ui'; x.textAlign='center'; x.fillText(L('OBJ','TGT'),tx,Y_(hAt(M,G.plot.e,G.plot.n,true))-19*s);
  /* pieza */
- const bx=X_(0), by=Y_(M.bH); const elv=(+G.el||0)*M2R; const ex=Math.max(1,(W-24*s)/Rmax), ey=(H-26*s)/(top-bot); const ang=Math.atan2(Math.sin(elv)*ey,Math.cos(elv)*ex);
+ const bx=X_(0), by=Y_(M.bH); const elv=(+(G.real?G.qe:G.el)||0)*M2R; const ex=Math.max(1,(W-24*s)/Rmax), ey=(H-26*s)/(top-bot); const ang=Math.atan2(Math.sin(elv)*ey,Math.cos(elv)*ex);
  x.fillStyle='#b3bd8c'; x.fillRect(bx-6*s,by-6*s,12*s,6*s); x.strokeStyle='#b3bd8c'; x.lineWidth=3*s; x.beginPath(); x.moveTo(bx,by-5*s); x.lineTo(bx+Math.cos(ang)*16*s,by-5*s-Math.sin(ang)*16*s); x.stroke();
  if(path){ x.strokeStyle='rgba(214,178,94,.85)'; x.lineWidth=1.4*s; x.setLineDash([4*s,3*s]); x.beginPath(); const tt=G.fly?G.fly.tt:1e9; let started=false; for(const p of path){ if(p[3]>tt) break; const q=[X_(p[0]),Y_(p[1]+M.bH)]; started?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]); started=true; } x.stroke(); x.setLineDash([]);
   if(G.fly){ const p=pathAt(path,G.fly.tt); x.fillStyle='#fff'; x.beginPath(); x.arc(X_(p[0]),Y_(p[1]+M.bH),3*s,0,Math.PI*2); x.fill(); }
@@ -542,12 +750,16 @@ function drawProf(now){ const cv=APP.querySelector('#artprof'); if(!cv) return; 
 
 /* ---- paneles ---- */
 function panel(){ const el=APP.querySelector('#artpanel'); if(!el||!G) return; APP.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('pri',b.getAttribute('data-t')===G.tab));
- if(G.tab==='tiro') el.innerHTML=panTiro(); else if(G.tab==='tabla') el.innerHTML=panTabla(); else el.innerHTML=panCalc();
+ if(G.real){ if(G.tab==='tiro') el.innerHTML=panTiroR(); else if(G.tab==='tabla') el.innerHTML=panTablaR(); else if(G.tab==='met') el.innerHTML=panMetR(); else el.innerHTML=panHojaR(); }
+ else if(G.tab==='tiro') el.innerHTML=panTiro(); else if(G.tab==='tabla') el.innerHTML=panTabla(); else el.innerHTML=panCalc();
+ el.querySelectorAll('[data-sh]').forEach(b=>b.onclick=()=>{ G.shell=b.getAttribute('data-sh'); if(G.shell!=='he') G.fz='ti'; panel(); guide(); });
+ el.querySelectorAll('[data-fz]').forEach(b=>b.onclick=()=>{ G.fz=b.getAttribute('data-fz'); panel(); guide(); });
+ el.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>{ G.nr=+b.getAttribute('data-nr'); panel(); guide(); });
  const $=s=>el.querySelector(s);
  el.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{ G.ch=+b.getAttribute('data-ch'); panel(); guide(); });
  el.querySelectorAll('[data-hi]').forEach(b=>b.onclick=()=>{ G.hi=b.getAttribute('data-hi')==='1'; panel(); guide(); });
- el.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ const [k,d]=b.getAttribute('data-st').split(':'); const cur=parseFloat(G[k])||(k==='az'?Math.round(geo().az):0); G[k]=String(k==='az'?n64(cur+(+d)):Math.max(0,cur+(+d))); const i=$('#art_'+k); if(i) i.value=G[k]; G.dirty=true; guide(); });
- ['el','az','fat'].forEach(k=>{ const i=$('#art_'+k); if(i) i.oninput=()=>{ G[k]=i.value.replace(',','.'); G.dirty=true; guide(); }; });
+ el.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ const [k,d]=b.getAttribute('data-st').split(':'); const cur=parseFloat(G[k])||(k==='az'?Math.round(geo().az):k==='df'?3200:0); G[k]=String(k==='az'||k==='df'?n64(cur+(+d)):k==='fs'?Math.max(0,Math.round((cur+(+d))*10)/10):Math.max(0,cur+(+d))); const i=$('#art_'+k); if(i) i.value=G[k]; G.dirty=true; guide(); });
+ ['el','az','fat','df','qe','fs'].forEach(k=>{ const i=$('#art_'+k); if(i) i.oninput=()=>{ G[k]=i.value.replace(',','.'); G.dirty=true; guide(); }; });
  const f=$('#artfire'); if(f) f.onclick=()=>fire();
  const fa=$('#artarm'); if(fa) fa.onclick=()=>{ const t=parseFloat(G.fat); if(!(t>G.clock)){ say(L('La hora de fuego tiene que ser posterior a la hora actual.','The fire time must be later than now.'),'bad'); return; } G.armT=t; say(L('Fuego a la hora armado: ','Time-on-target armed: ')+fmtClock(t)+'.'); hud(); };
  const sp=$('#artfast'); if(sp) sp.onclick=()=>{ G.speed=G.speed===1?8:1; panel(); };
@@ -586,8 +798,158 @@ function panCalc(){ const ve=G.def.mode==='veterano'; let h=chBtns();
  if(G.M.T.kind==='co') h+='<p class="artnote">'+L('Hora de fuego = ','Fire time = ')+fmtClock(G.M.T.tp)+' − '+nf(p.t,1)+' s = <b>'+fmtClock(G.M.T.tp-p.t)+'</b></p>';
  return h; }
 
+/* ===== Interfaz del nivel Realista y de las lecciones 4–7 de Aprende ===== */
+const FZN=k=>({sq:L('Impacto, instantánea','Point detonating, superquick'),dl:L('Impacto, retardo','Point detonating, delay'),vt:L('Proximidad (VT)','Proximity (VT)'),ti:L('Tiempo (MTSQ)','Time (MTSQ)')}[k]||k);
+const FZS=k=>({sq:L('PD-I','PD-SQ'),dl:L('PD-R','PD-D'),vt:'VT',ti:L('TIEMPO','TIME')}[k]||k);
+const SHN=(k,g)=>({he:L('Rompedor ','High explosive ')+(g?g.sh[0]:'HE'),ilu:L('Iluminante M485A2','Illuminating M485A2'),hum:L('Humo HC','HC smoke')}[k]||k);
+const sgn=(v,d)=>(v>=0?'+':'−')+nf(Math.abs(v),d==null?1:d);
+function orderTextR(){ const M=G.M, T=M.T, R=M.R; const lines=[];
+ lines.push(L('OBSERVADOR AVANZADO → CENTRAL DE TIRO: «MISIÓN DE TIRO, CAMBIO»','FORWARD OBSERVER → FIRE DIRECTION: “FIRE MISSION, OVER”')+' · '+nameOf(G.def));
+ lines.push(L('CUADRÍCULA ','GRID ')+grid8(T.e,T.n)+' ('+sq(T.e,T.n)+') · '+L('COTA ','ALTITUDE ')+M.tH+' m');
+ const what={inf:L('SECCIÓN DE INFANTERÍA AL DESCUBIERTO','INFANTRY PLATOON IN THE OPEN'),ba:L('BATERÍA ENEMIGA EN POSICIÓN, SIRVIENTES AL DESCUBIERTO','ENEMY BATTERY IN POSITION, CREWS IN THE OPEN'),pc:L('PUESTO DE MANDO BAJO CUBIERTA DE TRONCOS Y TIERRA','COMMAND POST UNDER LOG-AND-EARTH OVERHEAD COVER'),pu:L('PUENTE DE HORMIGÓN','CONCRETE BRIDGE'),co:L('COLUMNA DE CAMIONES EN MARCHA','TRUCK COLUMN ON THE MOVE'),ilu:L('ILUMINAR EL PASO (NOCHE)','ILLUMINATE THE CROSSING (NIGHT)'),hum:L('CEGAR UN OBSERVATORIO ENEMIGO','BLIND AN ENEMY OBSERVATION POST')}[T.kind];
+ lines.push(L('OBJETIVO: ','TARGET: ')+what+' · '+L('EFICACIA: ','IN EFFECT: ')+T.need+L(' disparo'+(T.need>1?'s':'')+' por pieza',' round'+(T.need>1?'s':'')+' per gun'));
+ lines.push(L('BATERÍA: cuadrícula ','BATTERY: grid ')+grid8(M.bE,M.bN)+' · '+L('cota ','altitude ')+M.bH+' m · '+L('orientación (AOL) ','azimuth of lay (AOL) ')+m4(R.aol)+L(' · deriva común 3200',' · common deflection 3200'));
+ lines.push(L('LATITUD DE LA BATERÍA: ','BATTERY LATITUDE: ')+R.lat+'° N · '+L('TEMPERATURA DE LA CARGA: ','PROPELLANT TEMPERATURE: ')+R.tp+' °C');
+ if(R.hiOnly) lines.push(L('ZONA URBANA: TIRO DE ÁNGULO ALTO','BUILT-UP AREA: HIGH-ANGLE FIRE'));
+ if(T.kind==='co') lines.push(L('La cabeza de la columna pasará por el punto de paso (PP, la cuadrícula) a ','The head of the column will pass the checkpoint (PP, the grid) at ')+fmtClock(T.tp)+L(' a 30 km/h.',' at 30 km/h.'));
+ if(T.kind==='ba'&&T.timer) lines.push(L('Os han detectado: tenéis hasta ','You have been detected: you have until ')+fmtClock(T.timer)+L(' antes de que os localicen.',' before they locate you.'));
+ lines.push(L('ACIERTO: a menos de ','HIT: within ')+T.rad+' m'+(T.kind==='ilu'?L(' en planta y la bengala a 600 ± 150 m sobre el objetivo',' horizontally with the flare 600 ± 150 m above the target'):'')+' ('+L('valor del juego','game value')+')');
+ lines.push(L('OBSERVADOR en ','OBSERVER at ')+grid8(M.OP.e,M.OP.n)+' · '+L('corrige sobre la línea observador-objetivo (dirección OT ','corrects on the observer-target line (OT direction ')+n64(Math.round(Math.atan2(T.e-M.OP.e,T.n-M.OP.n)/M2R))+').');
+ lines.push(L('METEO: mensaje METB en la pestaña «Meteo».','MET: METB message in the “Met” tab.'));
+ return lines.join('\n'); }
+function metbHTML(){ const R=G.M.R; const c2=v=>String(Math.round(v)).padStart(2,'0'), c3=v=>String(Math.round(v*10)%1000).padStart(3,'0');
+ let h='<p class="artnote"><b>METB</b> · '+L('mensaje meteorológico balístico','ballistic met message')+' · MDP '+String(R.mdp/10).padStart(3,'0')+' ('+ni(R.mdp)+' m, '+L('estación en la batería','station at the battery')+') · '+L('lat. ','lat. ')+R.lat+'° N · '+L('válido 2 h','valid 2 h')+'</p>';
+ h+='<div class="artord" style="white-space:pre;overflow-x:auto">'+R.metb.map(l=>c2(l.ln)+c2(l.wd/100)+c2(l.ws)+' '+c3(l.T)+c3(l.D)).join('\n')+'</div>';
+ h+='<div class="arttbl" style="max-height:none;margin-top:6px"><table><thead><tr><th>'+L('Línea','Line')+'</th><th>'+L('Hasta m','To m')+'</th><th>'+L('Viento de','Wind from')+'</th><th>kt</th><th>T %</th><th>D %</th></tr></thead><tbody>'+
+  R.metb.map(l=>'<tr><td>'+c2(l.ln)+'</td><td>'+ni(l.h)+'</td><td>'+m4(l.wd)+'</td><td>'+l.ws+'</td><td>'+nf(l.T,1)+'</td><td>'+nf(l.D,1)+'</td></tr>').join('')+'</tbody></table></div>';
+ h+='<p class="artnote">'+L('Formato real del FM 6-40: línea, dirección del viento balístico en centenas de mils, velocidad en nudos; temperatura y densidad balísticas en % del estándar ICAO (sin el 1 inicial). La línea se elige con la flecha de la trayectoria (columna «Línea» de la tabla). Los valores son de la misión (juego).','Real FM 6-40 format: line, ballistic wind direction in hundreds of mils, speed in knots; ballistic temperature and density in % of ICAO standard (leading 1 dropped). The line is chosen from the trajectory’s maximum ordinate (table “Line” column). The values belong to the mission (game).')+'</p>';
+ return h; }
+function mvHTML(){ const M=G.M, g=G.gun, R=M.R; let h='<p class="artnote"><b>'+L('Pieza nº 1 · calibración de la velocidad en boca','Gun no. 1 · muzzle velocity calibration')+'</b> ('+L('radar de V0, como el M94: variación respecto a la tabla','MV radar, like the M94: variation from the table')+')</p><div class="arttbl" style="max-height:none"><table><thead><tr><th>'+L('Carga','Charge')+'</th><th>'+L('VVB m/s','MVV m/s')+'</th><th>'+L('ΔV0 por °C','ΔMV per °C')+'</th><th>ΔV0 ('+R.tp+' °C)</th><th>'+L('Total m/s','Total m/s')+'</th></tr></thead><tbody>';
+ for(let c=0;c<g.nz;c++){ const mv=mvvOf(M,g,c), pc=pcoef(g,c); h+='<tr'+(c===G.ch?' class="hl"':'')+'><td>'+zn(g,c)+'</td><td>'+sgn(mv,1)+'</td><td>'+nf(pc,2)+'</td><td>'+sgn(pc*(R.tp-PROP_STD),1)+'</td><td>'+sgn(mv+pc*(R.tp-PROP_STD),1)+'</td></tr>'; }
+ h+='</tbody></table></div><p class="artnote">'+L('Temperatura de la carga: ','Propellant temperature: ')+'<b>'+R.tp+' °C</b> ('+L('estándar +70 °F = 21 °C, FM 6-40; más caliente = más V0','standard +70 °F = 21 °C, FM 6-40; warmer = more MV')+'). ΔV0 = VVB + '+L('coef.','coef.')+' × (T − 21). <span class="artest">'+L('coeficientes y VVB: valores del juego','coefficients and MVV: game values')+'</span></p>'; return h; }
+function tdR(v,d){ return '<td>'+(d==null?ni(v):nf(v,d))+'</td>'; }
+function panTablaR(){ const TT=tableR(G.gun,G.ch,G.hi); const R=geo().R; const ti=G.fz==='ti', il=G.shell==='ilu'; let h=chBtns();
+ h+='<p class="artnote">'+L('Tabla de tiro del juego','Game firing table')+' · '+esc(G.gun.n)+' · '+L('carga ','charge ')+zn(G.gun,G.ch)+' · '+(G.hi?L('ángulo alto','high angle'):L('ángulo bajo','low angle'))+' · '+ni(TT.R0)+'–'+ni(TT.R1)+' m. '+L('Estructura de una tabla tabular (FM 6-40); los números salen del modelo del juego, no son de una tabla oficial. Todas las correcciones son «a sumar».','Structured like a tabular firing table (FM 6-40); the numbers come from the game model, not an official table. Every correction is “to add”.')+'</p>';
+ const th=a=>a.map(x=>'<th>'+x+'</th>').join('');
+ h+='<div class="arttbl"><table><thead><tr>'+th([L('Alcance m','Range m'),L('Alza mils','Elev. mils'),'m/mil',L('TdV s','ToF s'),L('Flecha m','Max ord m'),L('Línea','Line'),L('Caída mils','Fall mils'),L('Derivación mils','Drift corr mils'),'CS+','CS−',L('Cara m/kt','Head m/kt'),L('Cola m/kt','Tail m/kt'),L('Lateral mils/kt','Cross mils/kt'),'T+1%','T−1%','D+1%','D−1%','V0+1','V0−1'].concat(ti?[L('FS cara s/kt','FS head s/kt'),'FS T s/%','FS D s/%',L('FS V0 s/(m/s)','FS MV s/(m/s)'),L('FS VI s/10 m','FS VI s/10 m')]:[]).concat(il?[L('Cuadr. HOB 600','QE HOB 600'),'FS HOB 600']:[]))+'</tr></thead><tbody>';
+ TT.rows.forEach(r=>{ const hl=Math.abs(r.R-R)<50; let tr='<tr'+(hl?' class="hl"':'')+'>'+tdR(r.R)+tdR(r.el,1)+tdR(Math.abs(r.dR),1)+tdR(r.t,1)+tdR(r.apex)+'<td>'+String(r.ln).padStart(2,'0')+'</td>'+tdR(r.fa)+tdR(r.dr,1)+tdR(r.csp,3)+tdR(r.csn,3)+tdR(r.w,1)+tdR(r.wt,1)+tdR(r.x,2)+tdR(r.T,1)+tdR(r.Tm,1)+tdR(r.D,1)+tdR(r.Dm,1)+tdR(r.V,1)+tdR(r.Vm,1);
+  if(ti) tr+=tdR(r.fw,3)+tdR(r.fT,3)+tdR(r.fD,3)+tdR(r.fV,3)+tdR(r.fh,3);
+  if(il){ const q=tableIlu(G.gun,G.ch,G.hi)[r.R]; tr+=q?tdR(q.qe,1)+tdR(q.fs,1):'<td>—</td><td>—</td>'; }
+  h+=tr+'</tr>'; });
+ h+='</tbody></table></div>';
+ h+='<p class="artnote">'+L('Columnas: alza para el alcance (sin situación); m/mil; tiempo de vuelo (= graduación de tiempo al nivel de la pieza); flecha (máxima ordenada) y la línea del METB que le toca (tabla A); ángulo de caída; derivación (el proyectil deriva a la derecha por el giro del estriado: la corrección es a la izquierda, negativa en azimut); factor del ángulo complementario de situación para ángulo de situación positivo y negativo (CS = AS × factor); correcciones unitarias de alcance por viento de cara y de cola (nudos), de azimut por viento lateral desde la derecha, de alcance por temperatura y densidad del aire (+1 % y −1 %) y por velocidad en boca (+1 y −1 m/s).','Columns: elevation for the range (no site); m/mil; time of flight (= time fuze setting at gun level); maximum ordinate and its METB line (table A); angle of fall; drift correction (rifling spin drifts the shell right: the correction is left, negative in azimuth); complementary-site factor for positive and negative angle of site (CS = AS × factor); unit range corrections for head and tail wind (knots), azimuth for crosswind from the right, range for air temperature and density (+1 % and −1 %) and muzzle velocity (+1 and −1 m/s).')+(ti?' '+L('Espoleta de tiempo: correcciones de la graduación (s) por viento de cara, temperatura, densidad, V0 y cada 10 m de intervalo vertical hasta el punto de explosión.','Time fuze: fuze-setting corrections (s) for headwind, temperature, density, MV and per 10 m of vertical interval to the burst point.'):'')+(il?' '+L('Iluminante: cuadrante y graduación para que se abra a 600 m sobre el nivel de la pieza (las tablas del M485 se calculan para 600 m sobre el objetivo).','Illuminating: quadrant and fuze setting to open 600 m above gun level (M485 tables are built for 600 m above the target).'):'')+'</p>';
+ const RT=rotTable(G.gun,G.ch,G.hi,G.M.R.lat); const az=geo().az;
+ h+='<details class="art-dt"><summary>'+L('Rotación de la Tierra · latitud ','Earth rotation · latitude ')+G.M.R.lat+'° N</summary><p class="artnote">'+L('Corrección (a sumar) al alcance en metros y al azimut en mils, por alcance y azimut de tiro. Interpola. Calculada con la aceleración de Coriolis −2Ω×v (Ω = 7,292×10⁻⁵ rad/s): disparando al este el proyectil llega más lejos y en el hemisferio norte se desvía a la derecha.','Correction (to add) to range in metres and to azimuth in mils, by range and firing azimuth. Interpolate. Computed with the Coriolis acceleration −2Ω×v (Ω = 7.292×10⁻⁵ rad/s): firing east the shell goes longer and in the northern hemisphere it veers right.')+' '+L('Tu azimut: ','Your azimuth: ')+ni(az)+' mils.</p>';
+ ['dR','dz'].forEach(k=>{ h+='<div class="arttbl" style="max-height:220px;margin:4px 0"><table><thead><tr><th>'+(k==='dR'?L('Alcance (m)','Range (m)'):L('Azimut (mils)','Azimuth (mils)'))+'</th>'+ROTAZ.map(a=>'<th>'+m4(a)+'</th>').join('')+'</tr></thead><tbody>'+RT.rows.map(r=>'<tr><td>'+ni(r.R)+'</td>'+r[k].map(v=>'<td>'+(k==='dR'?ni(v):nf(v,1))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'; });
+ h+='</details>'; return h; }
+function btnRow(lab,items,cur,attr){ return '<div class="artrow"><span class="artnote">'+lab+'</span>'+items.map(it=>'<button type="button" class="artbtn sm'+(cur===it[0]?' pri':'')+'" '+attr+'="'+it[0]+'"'+(it[2]?' disabled':'')+'>'+it[1]+'</button>').join('')+'</div>'; }
+function panTiroR(){ const M=G.M, T=M.T, g=G.gun; let h='';
+ h+=btnRow(L('Proyectil','Shell'),[['he','HE'],['ilu',L('Ilum.','Illum.'),g.kc!==155],['hum',L('Humo','Smoke'),g.kc!==155]],G.shell,'data-sh');
+ h+=btnRow(L('Espoleta','Fuze'),FZ.map(k=>[k,FZS(k),(G.shell!=='he'&&k!=='ti')]),G.fz,'data-fz');
+ if(G.fz==='ti') h+='<div class="artlay"><label for="art_fs">'+L('Graduación','Fuze setting')+'<br><span class="artnote">s (0,1)</span></label><div class="artstep"><button type="button" class="artbtn sm" data-st="fs:-1">−1</button><button type="button" class="artbtn sm" data-st="fs:-0.1">−0,1</button><input id="art_fs" class="artin" inputmode="decimal" value="'+esc(G.fs)+'"><button type="button" class="artbtn sm" data-st="fs:0.1">+0,1</button><button type="button" class="artbtn sm" data-st="fs:1">+1</button></div></div>';
+ h+=chBtns();
+ h+='<div class="artlay">'+stepper('df',L('Deriva','Deflection'),'mils')+stepper('qe',L('Cuadrante','Quadrant'),'mils')+'</div>';
+ h+=btnRow(L('Disparos por pieza','Rounds per gun'),[[1,'1'],[2,'2'],[3,'3']],G.nr,'data-nr');
+ const mq=minQEof(M,g,G.ch,G.hi,G.fz); h+='<p class="artnote">'+L('Elevación máxima: ','Maximum elevation: ')+ni(elMaxMil(g))+' mils · '+(G.hi?L('ángulo alto: sin cuadrante mínimo','high angle: no minimum quadrant'):L('Cuadrante mínimo (lo da el jefe de la línea de piezas) con carga ','Minimum quadrant (from the firing-line officer) with charge ')+zn(g,G.ch)+': <b>'+(mq?Math.ceil(mq.qe):'—')+'</b> mils')+'. '+L('Deriva = 3200 + AOL − azimut de tiro (la deriva aumenta a la izquierda).','Deflection = 3200 + AOL − firing azimuth (deflection increases to the left).')+'</p>';
+ if(T.kind==='co'){ h+='<div class="artlay" style="margin-top:6px"><label for="art_fat">'+L('Hora de fuego','Fire time')+' H+</label><div class="artstep"><input id="art_fat" class="artin" inputmode="numeric" value="'+esc(G.fat)+'"> <span class="artnote">s</span> <button type="button" class="artbtn sm" id="artarm">'+L('Armar','Arm')+'</button></div></div>'; }
+ const cmd=L('Pieza nº 1 · ','Gun no. 1 · ')+SHN(G.shell,g)+' · '+FZS(G.fz)+(G.fz==='ti'&&G.fs!==''?' '+esc(G.fs)+' s':'')+' · '+L('carga ','charge ')+zn(g,G.ch)+' · '+L('deriva ','deflection ')+(G.df===''?'—':esc(G.df))+' · '+L('cuadrante ','quadrant ')+(G.qe===''?'—':esc(G.qe))+' · '+G.nr+L(' disp.',' rd');
+ h+='<div class="artord" style="margin-top:6px">'+L('ORDEN A LA PIEZA: ','FIRE COMMAND: ')+cmd+'</div>';
+ h+='<div class="artrow"><button type="button" class="artbtn fire" id="artfire"'+(G.fly||G.done?' disabled':'')+'>'+L('¡FUEGO!','FIRE!')+'</button>'+((T.kind==='co'||T.timer)?'<button type="button" class="artbtn sm" id="artfast">'+(G.speed>1?'⏸ ×1':'⏩ ×8')+'</button>':'')+(G.corr?'<button type="button" class="artbtn sm" id="artapply">'+L('Aplicar corrección al ploteo','Apply correction to the plot')+'</button>':'')+'</div>';
+ h+='<details class="art-dt"><summary>'+L('Datos de la pieza y fuentes','Gun data and sources')+' · '+esc(g.n)+'</summary>'+gunRules(g)+'</details>';
+ return h; }
+function panMetR(){ return metbHTML()+mvHTML(); }
+function rowsCalcR(p){ const tr=(a,b,c)=>'<tr'+(c?' class="fin"':'')+'><td>'+a+'</td><td>'+b+'</td></tr>'; const M=G.M; let t='<table>';
+ t+=tr(L('Alcance del plano (regla)','Chart range (ruler)'),ni(p.R)+' m')+tr(L('Azimut del plano','Chart azimuth'),nf(p.az,1)+' mils')+tr(L('Intervalo vertical (cota obj. − pieza)','Vertical interval (target − gun)'),sg(Math.round(p.VI))+' m');
+ t+=tr(L('Línea METB (flecha ','METB line (max ord ')+ni(p.r0.apex)+' m)',String(p.ln).padStart(2,'0')+': '+m4(p.Lm.wd)+' · '+p.Lm.ws+' kt · '+nf(p.Lm.T,1)+' % · '+nf(p.Lm.D,1)+' %');
+ t+=tr(L('Viento de cara / desde la dcha.','Head / from right wind'),sgn(p.head,1)+' / '+sgn(p.right,1)+' kt');
+ t+=tr(L('Corr. viento','Wind corr.'),sgn(p.cW,0)+' m')+tr(L('Corr. temperatura','Temperature corr.'),sgn(p.cT,0)+' m')+tr(L('Corr. densidad','Density corr.'),sgn(p.cD,0)+' m');
+ t+=tr('ΔV0 = '+sgn(p.mvv,1)+' + '+nf(p.pc,2)+' × ('+M.R.tp+' − 21)',sgn(p.dv,1)+' m/s')+tr(L('Corr. V0','MV corr.'),sgn(p.cV,0)+' m')+tr(L('Corr. rotación de la Tierra','Earth rotation corr.'),sgn(p.cR,0)+' m');
+ t+=tr(L('Alcance corregido','Corrected range'),ni(p.Rc)+' m')+tr(G.shell==='ilu'?L('Cuadrante HOB 600 (tabla)','QE HOB 600 (table)'):L('Alza (tabla)','Elevation (table)'),nf(p.alza,1)+' mils');
+ t+=tr(L('Ángulo de situación 1,0186 × ','Angle of site 1.0186 × ')+sg(Math.round(p.VIe))+' / '+nf(p.R/1000,2),sgn(p.AS,1)+' mils')+tr(L('Complementario (× ','Comp. site (× ')+nf(p.csf,3)+')',sgn(p.CS,1)+' mils')+tr(L('CUADRANTE','QUADRANT'),'<b>'+Math.round(p.qe)+'</b> mils',1);
+ t+=tr(L('Corr. viento lateral','Crosswind corr.'),sgn(p.cX,1)+' mils')+tr(L('Derivación','Drift'),sgn(p.cDr,1)+' mils')+tr(L('Rotación (azimut)','Rotation (azimuth)'),sgn(p.cRz,1)+' mils')+tr(L('Azimut de tiro','Firing azimuth'),nf(p.azf,1)+' mils');
+ t+=tr(L('DERIVA','DEFLECTION')+' 3200 + '+m4(M.R.aol)+' − '+nf(p.azf,1),'<b>'+m4(Math.round(p.df))+'</b>',1);
+ if(p.fs!=null){ const c=p.fsc; t+=tr(L('Graduación base (tabla)','Base fuze setting (table)'),nf(p.fs0,2)+' s')+tr(L('Corr. espoleta (viento, T, D, V0, VI)','Fuze corr. (wind, T, D, MV, VI)'),sgn(c.w,2)+' '+sgn(c.T,2)+' '+sgn(c.D,2)+' '+sgn(c.V,2)+' '+sgn(c.h,2))+tr(L('GRADUACIÓN','FUZE SETTING'),'<b>'+nf(Math.round(p.fs*10)/10,1)+'</b> s',1); }
+ t+=tr(L('Tiempo de vuelo','Time of flight'),nf(p.t,1)+' s'); return t+'</table>'; }
+function panHojaR(){ const ap=G.def.mode==='aprende'; let h=chBtns();
+ h+='<div class="artnote"><p><b>'+L('Hoja de la central (método met + V0, FM 6-40, simplificado)','FDC worksheet (met + MV method, FM 6-40, simplified)')+'</b></p><ol style="margin:4px 0;padding-left:20px">'+
+  [L('Regla y transportador: alcance R y azimut del plano. VI = cota objetivo − cota pieza (+20 m con espoleta de tiempo HE: «20/R»).','Ruler and protractor: chart range R and azimuth. VI = target − gun altitude (+20 m with HE time fuze: “20/R”).'),
+   L('Tabla en R: flecha → línea METB. Del mensaje: viento (de, kt), T %, D %.','Table at R: max ord → METB line. From the message: wind (from, kt), T %, D %.'),
+   L('Viento de cara = v·cos(viento − az); desde la derecha = v·sen(viento − az). Negativo de cara = de cola.','Headwind = v·cos(wind − az); from the right = v·sin(wind − az). Negative head = tail.'),
+   L('ΔV0 = VVB de la carga + coef. × (T carga − 21 °C).','ΔMV = charge MVV + coef. × (propellant T − 21 °C).'),
+   L('Alcance corregido = R + viento × (cara o cola) + (T−100) × (T+ o T−) + (D−100) × (D+ o D−) + ΔV0 × (V0+ o V0−) + rotación (tabla de la latitud). Usa la columna del signo y los valores en la fila de R.','Corrected range = R + wind × (head or tail) + (T−100) × (T+ or T−) + (D−100) × (D+ or D−) + ΔMV × (MV+ or MV−) + rotation (latitude table). Use the column for the sign, values at row R.'),
+   L('Alza = tabla(alcance corregido). Ángulo de situación AS = 1,0186 × VI / (R en km); CS = AS × factor (CS+ o CS−); cuadrante = alza + AS + CS. Comprueba el cuadrante mínimo.','Elevation = table(corrected range). Angle of site AS = 1.0186 × VI / (R in km); CS = AS × factor (CS+ or CS−); quadrant = elevation + AS + CS. Check the minimum quadrant.'),
+   L('Azimut de tiro = az + lateral × (col. lateral) + derivación (en el alcance corregido) + rotación (azimut). Deriva = 3200 + AOL − azimut de tiro.','Firing azimuth = az + crosswind × (cross col.) + drift (at corrected range) + rotation (azimuth). Deflection = 3200 + AOL − firing azimuth.'),
+   L('Espoleta: VT o tiempo contra personal al descubierto; retardo contra cubiertas y puentes; instantánea o VT contra vehículos. Tiempo: graduación = TdV(R) + correcciones de espoleta (humo: − 2,0 s; iluminante: columna HOB 600). VT y tiempo necesitan ángulo de caída ≥ 300 mils.','Fuze: VT or time against personnel in the open; delay against overhead cover and bridges; superquick or VT against vehicles. Time: setting = ToF(R) + fuze corrections (smoke: − 2.0 s; illuminating: HOB 600 columns). VT and time need angle of fall ≥ 300 mils.'),
+   L('Fuego por eficacia: los disparos por pieza que pide el observador. Columna: hora de fuego = paso por el PP − tiempo de vuelo.','Fire for effect: the rounds per gun the observer asks for. Column: fire time = time at PP − time of flight.')].map(x=>'<li>'+x+'</li>').join('')+'</ol></div>';
+ if(!ap) return h+'<p class="artnote">'+L('En Realista la hoja la haces tú: la central no te da los números.','In Realistic you fill in the worksheet yourself: the FDC gives you no numbers.')+'</p>';
+ if(!G.plotted) return h+'<p class="artnote">'+L('Plotea el objetivo para ver la hoja calculada.','Plot the target to see the computed worksheet.')+'</p>';
+ const p=procR(G.M,G.gun,G.ch,G.hi,G.plot.e,G.plot.n,G.fz,G.shell); if(p.out) return h+'<p class="artnote">'+L('Fuera de la tabla con esta carga y ángulo.','Outside the table with this charge and angle.')+'</p>';
+ h+='<div class="artcalc">'+rowsCalcR(p)+'</div>'; const why=ruleR(G.M,G.gun,G.ch,G.hi,G.fz,G.shell,p,Math.round(p.qe)); if(why) h+='<p class="artnote">⚠ '+why+'</p>';
+ if(G.M.T.kind==='co') h+='<p class="artnote">'+L('Hora de fuego = ','Fire time = ')+fmtClock(G.M.T.tp)+' − '+nf(p.t,1)+' s = <b>'+fmtClock(G.M.T.tp-p.t)+'</b></p>';
+ return h; }
+function fireR(){ if(G.fly||G.done) return; const M=G.M, T=M.T, g=G.gun; const df=parseFloat(G.df), qe=parseFloat(G.qe); const fs=parseFloat(G.fs);
+ if(!(qe>0)||!(df>=0)||df>=6400){ say(L('Pon la deriva y el cuadrante en milésimas antes de disparar.','Set the deflection and quadrant in mils before firing.'),'bad'); return; }
+ if(G.fz==='ti'&&!(fs>0)){ say(L('Con espoleta de tiempo hay que dar la graduación (segundos).','With a time fuze you must give the fuze setting (seconds).'),'bad'); return; }
+ const p=procR(M,g,G.ch,G.hi,G.plot.e,G.plot.n,G.fz,G.shell); const why=ruleR(M,g,G.ch,G.hi,G.fz,G.shell,p,qe);
+ if(why&&!(p.out&&qe<=elMaxMil(g))){ say(L('Jefe de pieza: «','Section chief: “')+why+L('»','”'),'bad'); return; }
+ if(p.out) say(L('Aviso: con esta carga y ángulo el objetivo ploteado queda fuera de la tabla.','Warning: with this charge and angle the plotted target is outside the table.'));
+ const az=n64(3200+M.R.aol-df); const wait=Math.max(0,(G.ready||0)-G.clock); let trail=0; if(g.trav&&G.lastAz!=null){ let dz=Math.abs(az-G.lastAz); dz=Math.min(dz,6400-dz); if(dz>g.trav) trail=TRAIL; }
+ if(wait>0.05) say(L('Recargando: el disparo sale ','Reloading: the round leaves ')+nf(wait,1)+L(' s más tarde.',' s later.'));
+ if(trail) say(L('Giras más de '+g.trav+' mils sobre la orientación: la dotación mueve las colas (+'+TRAIL+' s, valor del juego).','You traverse more than '+g.trav+' mils from the lay: the crew shifts the trails (+'+TRAIL+' s, game value).'));
+ G.clock+=wait+trail; G.ready=G.clock+reloadOf(g)*G.nr; G.lastAz=az;
+ if(!G.rounds.length){ const od=APP.querySelector('#artordd'); if(od&&innerWidth<900) od.open=false; }
+ const fsr=G.fz==='ti'?Math.round(fs*10)/10:null; const r=shootR(M,g,G.ch,qe,df,{fz:G.fz,fs:fsr,shell:G.shell,path:true}); r.az=az; r.el=qe; r.ch=G.ch; r.hi=G.hi; r.ft=G.clock; r.nr=G.nr; r.fz=G.fz; r.shell=G.shell; r.fs=fsr; r.df=df;
+ G.fly={path:r.path,res:r,az:az,tt:0,T:r.t,dur:(window.__ART&&window.__ART.fast)?0.2:clamp(r.t/14,2.2,3.8),t0:performance.now(),spl:false}; G.flash=1; G.armT=null;
+ say(L('Central → observador: «DISPARO» · ','FDC → observer: “SHOT” · ')+SHN(G.shell,g)+' · '+FZS(G.fz)+(fsr!=null?' '+nf(fsr,1)+' s':'')+' · '+L('carga ','charge ')+zn(g,G.ch)+' · '+L('deriva ','deflection ')+m4(df)+' · '+L('cuadrante ','quadrant ')+Math.round(qe)+' · '+G.nr+L(' disparo(s). Tiempo de vuelo ',' round(s). Time of flight ')+nf(r.t,1)+' s.'); panel(); }
+function landR(){ const f=G.fly; const r=f.res; G.fly=null; r.at=performance.now(); const M=G.M, T=M.T;
+ let tgt=[T.e,T.n]; if(T.kind==='co'){ const cp=colPos(G.clock); let best=1e9; cp.forEach(q=>{ if(!q) return; const d=Math.hypot(r.E-q[0],r.N-q[1]); if(d<best){ best=d; tgt=[q[0],q[1]]; } }); if(!cp[0]) tgt=[T.e,T.n]; }
+ const e=evalR(M,r,r.shell,r.fz,tgt,r.fs); r.hit=e.hit; G.rounds.push(r); const dx=r.E-tgt[0], dy=r.N-tgt[1];
+ const masked=!r.air&&r.x<Math.hypot(G.plot.e-M.bE,G.plot.n-M.bN)-400;
+ if(e.hit){ G.hits+=r.nr; G.corr=null; if(G.hits>=T.need){ say(L('Observador: «Objetivo batido. Fin de misión, cambio.» ','Observer: “Target neutralised. End of mission, over.” ')+(T.kind==='ilu'?L('La bengala se abre a ','Flare opens ')+ni(e.hobT)+L(' m sobre el objetivo.',' m above the target.'):ni(e.d)+L(' m del centro.',' m from the centre.')),'ok'); end(true); }
+  else say(L('Eficaz: ','Effective: ')+G.hits+'/'+T.need+L(' disparos en el objetivo. Repite los mismos datos.',' rounds on target. Repeat the same data.'),'ok'); }
+ else { let t=''; const RO=Math.hypot(tgt[0]-M.OP.e,tgt[1]-M.OP.n)||1, ox=(tgt[0]-M.OP.e)/RO, oy=(tgt[1]-M.OP.n)/RO; const oR=dx*ox+dy*oy, oL=dx*oy-dy*ox; const add=-Math.round(oR/10)*10, right=-Math.round(oL/10)*10; const otd=n64(Math.round(Math.atan2(ox,oy)/M2R));
+  const R=Math.hypot(tgt[0]-M.bE,tgt[1]-M.bN), ux=(tgt[0]-M.bE)/R, uy=(tgt[1]-M.bN)/R; const gtd=n64(Math.round(Math.atan2(ux,uy)/M2R)); let angT=Math.abs(otd-gtd); angT=Math.min(angT,6400-angT);
+  if(!e.place||T.kind==='ilu'&&!e.place){ G.corr={add:add,right:right,ot:otd,angT:angT,gAdd:-Math.round((dx*ux+dy*uy)/10)*10,gRight:-Math.round((dx*uy-dy*ux)/10)*10};
+   t=L('Observador (dirección OT ','Observer (OT direction ')+otd+'): '+(add?(add>0?L('alarga ','add ')+add:L('acorta ','drop ')+(-add)):'')+(add&&right?', ':'')+(right?(right>0?L('derecha ','right ')+right:L('izquierda ','left ')+(-right)):'')+(add||right?'':L('en línea','on line'))+'.';
+   if(r.fz==='ti'&&r.air&&r.shell==='he') t+=' '+L('Explosión en el aire a ','Airburst at ')+ni(r.hob)+L(' m: ',' m: ')+(r.hob>20?L('baja ','down ')+ni(r.hob-20):L('sube ','up ')+ni(20-r.hob))+'.';
+   if(T.kind==='ilu'&&r.air) t+=' '+L('La bengala se abre a ','The flare opens ')+ni(e.hobT)+L(' m sobre el objetivo: ',' m above the target: ')+(e.hobT>600?L('baja ','down ')+ni(e.hobT-600):L('sube ','up ')+ni(600-e.hobT))+'.';
+   if((T.kind==='ilu'||T.kind==='hum')&&!r.air) t+=' '+L('No ha funcionado en el aire: la graduación es mayor que el tiempo de vuelo.','It did not function in the air: the setting is longer than the time of flight.');
+   if(masked) t+=' '+L('Ha dado en el terreno o un edificio antes del objetivo: no libra la máscara.','It hit the ground or a building short of the target: it does not clear the mask.'); }
+  else { const k=T.kind; t=L('Observador: «Buena dirección y alcance, pero ','Observer: “Good line and range, but ');
+   if(k==='pc') t+=L('el puesto está bajo cubierta: sin retardo la explosión se queda en la tierra de encima.»','the post is under overhead cover: without delay the burst stays on the earth above.”');
+   else if(k==='pu') t+=L('en el tablero hace falta retardo para que el proyectil penetre antes de explotar.»','on the span you need delay so the shell penetrates before bursting.”');
+   else if(k==='inf'||k==='ba') t+=L('al impactar contra el suelo la metralla sale hacia arriba: contra personal al descubierto, VT o tiempo (explosión en el aire).»','bursting on the ground the fragments go upwards: against personnel in the open, VT or time (airburst).”');
+   else if(k==='co') t+=L('contra camiones: instantánea o VT.»','against trucks: superquick or VT.”');
+   else if(k==='ilu') t+=L('necesito proyectil iluminante con espoleta de tiempo.»','I need an illuminating shell with a time fuze.”');
+   else if(k==='hum') t+=r.shell==='hum'&&r.fz==='ti'?L('los botes se han abierto ','the canisters opened ')+nf(r.lead||0,1)+L(' s antes del impacto: tienen que abrirse unos 2 s antes (graduación = tiempo − 2,0 s).»',' s before impact: they must open about 2 s before (setting = time − 2.0 s).”'):L('necesito humo con espoleta de tiempo.»','I need smoke with a time fuze.”');
+   if(r.fz==='ti'&&r.air&&r.shell==='he'&&!(r.hob<=60)) t=L('Observador: explosión a ','Observer: burst at ')+ni(r.hob)+' m: '+(r.hob>20?L('baja ','down ')+ni(r.hob-20):L('sube ','up ')+ni(20-r.hob))+'.'; }
+  say(t,'bad'); }
+ G.dirty=true; panel(); guide(); hud(); }
+
+/* Lecciones 4–7 (Aprende con el motor Realista): la hoja calculada está en la pestaña «Hoja»; aquí, el porqué de cada corrección */
+function guideR(box){ const M=G.M, T=M.T, ls=G.def.lesson; const p=G.plotted?procR(M,G.gun,G.ch,G.hi,G.plot.e,G.plot.n,G.fz,G.shell):null; const ok=p&&!p.out;
+ const rc=recommendR(M,G.gun,T.e,T.n); const S_=[];
+ S_.push([G.plotted&&Math.hypot(G.plot.e-T.e,G.plot.n-T.n)<15, L('Plotea el objetivo (botón «Al objetivo» o la cuadrícula de la orden).','Plot the target (“On target” button or the grid in the order).')]);
+ const intro={4:L('Un mensaje METB da, por capas de altura, el viento balístico (de dónde sopla, en centenas de mils, y en nudos), la temperatura y la densidad del aire en % del estándar. No se usa la capa del objetivo: se usa la línea que corresponde a la flecha (altura máxima) de la trayectoria, que da la tabla.','A METB message gives, by height layer, the ballistic wind (where it blows from, in hundreds of mils, and in knots) and air temperature and density in % of standard. You do not use the target’s layer: you use the line matching the trajectory’s maximum ordinate, given by the table.'),
+  5:L('Cada tubo se calibra con un radar: su velocidad en boca difiere de la de la tabla (VVB). Además la carga caliente arde más rápido: más V0. Las dos cosas se suman en m/s y la tabla las pasa a metros de alcance (columnas V0+1 y V0−1).','Every tube is calibrated with a radar: its muzzle velocity differs from the table (MVV). And a warm charge burns faster: more MV. Both add up in m/s and the table turns them into metres of range (MV+1 and MV−1 columns).'),
+  6:L('Mientras el proyectil vuela, la Tierra gira debajo: a 60° N y disparando hacia el este cae más lejos y siempre algo a la derecha. Y el giro del estriado lo hace derivar a la derecha: la derivación se corrige siempre a la izquierda. El jefe de pieza no recibe un azimut sino la deriva: 3200 + orientación (AOL) − azimut de tiro.','While the shell flies, the Earth turns underneath: at 60° N firing east it lands longer and always somewhat right. And rifling spin drifts it right: drift is always corrected left. The section chief does not get an azimuth but a deflection: 3200 + azimuth of lay (AOL) − firing azimuth.'),
+  7:L('Contra personal al descubierto el impacto en el suelo desperdicia la metralla: espoleta VT (se activa a unos 7 m) o de tiempo graduada para explotar a 20 m. El objetivo está más alto que la pieza: ángulo de situación (1,0186 × VI / R km) y su complementario. Con espoleta de tiempo se suman 20 m al VI.','Against personnel in the open a ground burst wastes the fragments: VT fuze (functions at about 7 m) or a time fuze set to burst at 20 m. The target is higher than the gun: angle of site (1.0186 × VI / R km) and its complement. With a time fuze add 20 m to the VI.')}[ls]||'';
+ if(ls===4) S_.push([ok&&G.tab==='met',L('Abre «Meteo y V0»: mira la línea ','Open “Met and MV”: look at line ')+(ok?String(p.ln).padStart(2,'0')+L(' (flecha ',' (max ord ')+ni(p.r0.apex)+' m) → '+m4(p.Lm.wd)+' · '+p.Lm.ws+' kt · T '+nf(p.Lm.T,1)+' % · D '+nf(p.Lm.D,1)+' %':'…')]);
+ if(ls===4&&ok) S_.push([true,L('Viento de cara ','Headwind ')+nf(p.head,1)+' kt → '+sgn(p.cW,0)+' m · '+L('temperatura → ','temperature → ')+sgn(p.cT,0)+' m · '+L('densidad → ','density → ')+sgn(p.cD,0)+' m. '+L('La hoja suma todo.','The worksheet adds it all.')]);
+ if(ls===5&&ok) S_.push([G.tab==='met',L('ΔV0 = VVB ','ΔMV = MVV ')+sgn(p.mvv,1)+' + '+nf(p.pc,2)+' × ('+M.R.tp+' − 21) = '+sgn(p.dv,1)+' m/s → '+sgn(p.cV,0)+' m '+L('de alcance (más V0 = más lejos: se corrige acortando).','of range (more MV = longer: you correct by shortening).')]);
+ if(ls===6&&ok) S_.push([G.tab==='tabla',L('Rotación (tabla de la latitud en «Tablas»): ','Rotation (latitude table in “Tables”): ')+sgn(p.cR,0)+' m, '+sgn(p.cRz,1)+' mils · '+L('derivación ','drift ')+sgn(p.cDr,1)+' mils → '+L('azimut de tiro ','firing azimuth ')+nf(p.azf,1)+' → '+L('deriva ','deflection ')+m4(Math.round(p.df))]);
+ if(ls===7&&ok) S_.push([G.fz==='vt'||G.fz==='ti',L('Elige espoleta VT o TIEMPO en «Pieza». AS = ','Choose VT or TIME fuze in “Gun”. AS = ')+sgn(p.AS,1)+' · CS = '+sgn(p.CS,1)+' mils'+(p.fs!=null?' · '+L('graduación ','fuze setting ')+nf(Math.round(p.fs*10)/10,1)+' s':'')]);
+ if(rc) S_.push([G.ch===rc.ch&&G.hi===rc.hi,L('Carga y ángulo con solución: ','A charge and angle that work: ')+zn(G.gun,rc.ch)+' · '+(rc.hi?L('alto','high'):L('bajo','low'))+' ('+L('o cualquier otra que no rechace la hoja','or any other the worksheet does not reject')+').']);
+ S_.push([G.tab==='hoja'&&ok,L('Abre «Hoja»: está calculada paso a paso con tus datos.','Open “Worksheet”: it is computed step by step with your data.')]);
+ S_.push([ok&&String(Math.round(p.df))===String(G.df)&&String(Math.round(p.qe))===String(G.qe),L('En «Pieza», pon deriva ','In “Gun”, set deflection ')+(ok?m4(Math.round(p.df)):'…')+L(' y cuadrante ',' and quadrant ')+(ok?Math.round(p.qe):'…')+(G.fz==='ti'&&ok&&p.fs!=null?L(' y graduación ',' and setting ')+nf(Math.round(p.fs*10)/10,1)+' s':'')+L(', disparos por pieza ',', rounds per gun ')+T.need+L(' y ¡FUEGO!',' and FIRE!')]);
+ let h='<div class="artcard artguide"><b>'+esc(nameOf(G.def))+'</b><p class="artnote">'+intro+'</p><ol style="margin:4px 0;padding-left:20px">'+S_.map(s=>'<li class="artnote"'+(s[0]?' style="opacity:.6"':'')+'>'+(s[0]?'✔ ':'')+s[1]+'</li>').join('')+'</ol>'+
+  '<div class="artrow"><button type="button" class="artbtn sm" id="artgfill">'+L('Copiar la hoja a la pieza','Copy the worksheet to the gun')+'</button></div></div>';
+ box.innerHTML=h; const b=box.querySelector('#artgfill'); if(b) b.onclick=()=>{ if(!G.plotted){ const T2=G.M.T; setPlot(T2.e,T2.n,true); } let pp=procR(G.M,G.gun,G.ch,G.hi,G.plot.e,G.plot.n,G.fz,G.shell);
+  if(pp.out||ruleR(G.M,G.gun,G.ch,G.hi,G.fz,G.shell,pp,Math.round(pp.qe))){ const r2=recommendR(G.M,G.gun,G.plot.e,G.plot.n); if(!r2){ say(L('Sin solución con esta pieza.','No solution with this gun.'),'bad'); return; } G.ch=r2.ch; G.hi=r2.hi; G.fz=r2.fz; G.shell=r2.shell; pp=procR(G.M,G.gun,G.ch,G.hi,G.plot.e,G.plot.n,G.fz,G.shell); say(L('La hoja elige carga ','The worksheet picks charge ')+zn(G.gun,G.ch)+' · '+(G.hi?L('ángulo alto','high angle'):L('ángulo bajo','low angle'))+' · '+FZS(G.fz)+'.'); }
+  G.df=String(Math.round(pp.df)%6400); G.qe=String(Math.round(pp.qe)); if(pp.fs!=null) G.fs=String(Math.round(pp.fs*10)/10); G.nr=Math.min(3,G.M.T.need); G.tab='tiro'; panel(); guideR(box); }; }
+
 /* ---- disparo ---- */
-function fire(){ if(G.fly||G.done) return; const el=parseFloat(G.el), az=parseFloat(G.az);
+function fire(){ if(G.real) return fireR(); if(G.fly||G.done) return; const el=parseFloat(G.el), az=parseFloat(G.az);
  if(!(el>0)||!(az>=0)||az>=6400){ say(L('Pon la elevación y el azimut en milésimas antes de disparar.','Set the elevation and the azimuth in mils before firing.'),'bad'); return; }
  if(el>elMaxMil(G.gun)){ say(L('La pieza no eleva tanto: máximo ','The gun cannot elevate that far: maximum ')+ni(elMaxMil(G.gun))+' mils.','bad'); return; }
  const wait=Math.max(0,(G.ready||0)-G.clock); let trail=0; if(G.gun.trav&&G.lastAz!=null){ let dz=Math.abs(az-G.lastAz); dz=Math.min(dz,6400-dz); if(dz>G.gun.trav) trail=TRAIL; }
@@ -598,7 +960,7 @@ function fire(){ if(G.fly||G.done) return; const el=parseFloat(G.el), az=parseFl
  const r=shoot(G.M,G.gun,G.ch,el,az,true); r.az=az; r.el=el; r.ch=G.ch; r.hi=G.hi; r.ft=G.clock;
  G.fly={path:r.path,res:r,az:az,tt:0,T:r.t,dur:(window.__ART&&window.__ART.fast)?0.2:clamp(r.t/14,2.2,3.8),t0:performance.now()}; G.flash=1; G.armT=null;
  say(L('Disparo ','Round ')+(G.rounds.length+1)+': '+L('carga ','charge ')+zn(G.gun,G.ch)+', '+L('elevación ','elevation ')+nf(el,1)+', '+L('azimut ','azimuth ')+nf(az,1)+' mils. '+L('Tiempo de vuelo ','Time of flight ')+nf(r.t,1)+' s.'); panel(); }
-function land(){ const f=G.fly; const r=f.res; G.fly=null; r.at=performance.now(); const M=G.M, T=M.T;
+function land(){ if(G.real) return landR(); const f=G.fly; const r=f.res; G.fly=null; r.at=performance.now(); const M=G.M, T=M.T;
  let tgt=[T.e,T.n]; if(T.kind==='co'){ const cp=colPos(G.clock); let best=1e9; cp.forEach(q=>{ if(!q) return; const d=Math.hypot(r.E-q[0],r.N-q[1]); if(d<best){ best=d; tgt=[q[0],q[1]]; } }); if(!cp[0]) tgt=[T.e,T.n]; }
  const R=Math.hypot(tgt[0]-M.bE,tgt[1]-M.bN), ux=(tgt[0]-M.bE)/R, uy=(tgt[1]-M.bN)/R; const dx=r.E-tgt[0], dy=r.N-tgt[1]; const dR=dx*ux+dy*uy, dL=dx*uy-dy*ux; const d=Math.hypot(dx,dy);
  r.hit=d<=T.rad; G.rounds.push(r);
@@ -616,10 +978,10 @@ function land(){ const f=G.fly; const r=f.res; G.fly=null; r.at=performance.now(
  G.dirty=true; panel(); guide(); hud(); }
 function applyCorr(){ if(!G.corr) return; const ux=Math.sin(G.corr.ot*M2R), uy=Math.cos(G.corr.ot*M2R);
  setPlot(G.plot.e+ux*G.corr.add+uy*G.corr.right,G.plot.n+uy*G.corr.add-ux*G.corr.right,true); say(L('Ploteo corregido: ','Plot corrected: ')+grid8(G.plot.e,G.plot.n)+L('. Vuelve a calcular los datos.','. Work out the data again.')); G.corr=null; panel(); }
-function end(win,why){ if(G.done) return; G.done=true; const M=G.M, T=M.T, n=G.rounds.length; const st=!win?0:(n<=T.need?3:n<=T.need+2?2:1); const sc=win?Math.max(100,1000-150*(n-T.need)-Math.floor(G.clock/10)):0;
+function end(win,why){ if(G.done) return; G.done=true; const M=G.M, T=M.T, n=G.rounds.length; const nb=G.real?Math.ceil(T.need/3):T.need; const st=!win?0:(n<=nb?3:n<=nb+2?2:1); const sc=win?Math.max(100,1000-150*Math.max(0,n-nb)-Math.floor(G.clock/10)):0;
  const id=G.def.gen?'g':G.def.id; if(win&&id!=='g'){ const B=bests(); if(!B[id]||B[id].s<st||(B[id].s===st&&B[id].p<sc)) B[id]={s:st,p:sc}; saveBests(B); }
- const first=win&&n===T.need;
- try{ window.MAT_MED&&window.MAT_MED.event('art.fin',{mode:G.def.mode,kind:T.kind,win:!!win,rounds:n,first:first,gen:!!G.def.gen,crest:!!(win&&M.biome==='montana'),cb:!!(win&&T.kind==='ba'&&T.timer>0),lesson:G.def.lesson||0}); }catch(_){}
+ const base=G.real?Math.ceil(T.need/3):T.need; const first=win&&(G.real?n<=base:n===T.need);
+ try{ window.MAT_MED&&window.MAT_MED.event('art.fin',{mode:G.def.mode,kind:T.kind,win:!!win,rounds:n,first:first,gen:!!G.def.gen,crest:!!(win&&M.biome==='montana'),cb:!!(win&&T.kind==='ba'&&T.timer>0),lesson:G.def.lesson||0,real:!!G.real,fz:G.rounds.length?G.rounds[G.rounds.length-1].fz:''}); }catch(_){}
  const box=APP.querySelector('#artres'); if(box){ box.innerHTML='<div class="artcard artend"><div class="st">'+(win?stars(st):'✖')+'</div><h3>'+(win?L('MISIÓN CUMPLIDA','MISSION ACCOMPLISHED'):L('MISIÓN FALLIDA','MISSION FAILED'))+'</h3><p class="artnote">'+(win?L('Disparos: ','Rounds: ')+n+' · '+L('tiempo ','time ')+fmtClock(G.clock)+' · '+L('puntos ','points ')+sc:esc(why||''))+'</p><div class="artrow" style="justify-content:center"><button type="button" class="artbtn" id="artagain">↺ '+L('Repetir','Replay')+'</button>'+(G.def.gen?'<button type="button" class="artbtn pri" id="artnext">'+L('Nueva misión','New mission')+'</button>':nextCamp()?'<button type="button" class="artbtn pri" id="artnext">'+L('Siguiente misión','Next mission')+' ›</button>':'')+'<button type="button" class="artbtn" id="artmenu2">'+L('Menú','Menu')+'</button></div></div>';
   box.querySelector('#artagain').onclick=()=>start(G.def); box.querySelector('#artmenu2').onclick=()=>intro(); const nx=box.querySelector('#artnext'); if(nx) nx.onclick=()=>{ if(G.def.gen) start({id:'g',gen:true,mode:G.def.mode,seed:1+Math.floor(Math.random()*999998),biome:CFG.biome||null}); else start(Object.assign({},nextCamp())); };
   try{ box.scrollIntoView({block:'nearest'}); }catch(e){} }
@@ -633,7 +995,7 @@ function hud(){ const c=APP.querySelector('#artclk'); if(c) c.innerHTML='⏱ <b>
 /* ---- Aprende: guía paso a paso ---- */
 function lessonData(){ const M=G.M, T=M.T, gun=G.gun; const rc=recommend(M,gun,T.e,T.n); const ch=rc?rc.ch:0, hi=rc?rc.hi:false; const p=procedure(M,gun,ch,hi,T.e,T.n); const TT=tableOf(gun,ch,hi); const row=tInterp(TT,p.R);
  const i=clamp(Math.floor((p.R-TT.R0)/100),0,TT.rows.length-2); return {ch:ch,hi:hi,p:p,row:row,a:TT.rows[i],b:TT.rows[i+1],TT:TT}; }
-function guide(){ const box=APP.querySelector('#artguide'); if(!box||!G) return; if(G.def.mode!=='aprende'){ box.innerHTML=''; return; }
+function guide(){ const box=APP.querySelector('#artguide'); if(!box||!G) return; if(G.def.mode!=='aprende'){ box.innerHTML=''; return; } if(G.real) return guideR(box);
  const M=G.M, T=M.T, ls=G.def.lesson||1, D=G.LD||(G.LD=lessonData()); const p=D.p; const g=geo(); const onT=Math.hypot(G.plot.e-T.e,G.plot.n-T.n)<40;
  const near=(v,t)=>Math.abs(parseFloat(v)-t)<=1.01;
  const base1={el:Math.round(D.row.el),az:Math.round(p.az)};
@@ -673,6 +1035,6 @@ function loop(){ stopLoop(); const step=()=>{ RAF=0; if(!G||!APP.querySelector('
   RAF=requestAnimationFrame(step); }; RAF=requestAnimationFrame(step); }
 
 /* QA / vídeo: acceso de solo lectura al estado y a la solución de la Central de Tiro */
-if(typeof window!=='undefined') window.__ART={state:()=>G,solve:()=>{ if(!G) return null; const T=G.M.T; const rc=recommend(G.M,G.gun,T.e,T.n); if(!rc) return null; const raw=tInterp(tableOf(G.gun,rc.ch,rc.hi),rc.p.R); return {ch:rc.ch,hi:rc.hi,el:Math.round(rc.p.el),az:Math.round(rc.p.azf)%6400,t:rc.p.t,tp:T.tp,rawEl:raw?Math.round(raw.el):null,rawAz:Math.round(rc.p.az)%6400}; },start:d=>start(d),camp:CAMP,guns:GUNS};
+if(typeof window!=='undefined') window.__ART={state:()=>G,solveR:()=>{ if(!G||!G.real) return null; const T=G.M.T; const rc=recommendR(G.M,G.gun,T.e,T.n); if(!rc) return null; return {ch:rc.ch,hi:rc.hi,fz:rc.fz,shell:rc.shell,qe:rc.qe,df:rc.df,fs:rc.fs,t:rc.p.t,tp:T.tp,need:T.need}; },allR:()=>{ if(!G||!G.real) return null; const M=G.M,T=M.T,g=G.gun,out=[]; for(const hi of [false,true]) for(let c=0;c<g.nz;c++) for(const fz of FZ) for(const sh of ['he','ilu','hum']){ const p=procR(M,g,c,hi,T.e,T.n,fz,sh); const qe=p.out?0:Math.round(p.qe); if(ruleR(M,g,c,hi,fz,sh,p,qe)) continue; out.push({ch:c,hi:hi,fz:fz,shell:sh,qe:qe,df:Math.round(p.df)%6400,fs:p.fs==null?null:Math.round(p.fs*10)/10,t:p.t,ok:sh===SHOK[T.kind]&&(FXOK[T.kind]||[]).indexOf(fz)>=0}); } return out; },solve:()=>{ if(!G) return null; const T=G.M.T; const rc=recommend(G.M,G.gun,T.e,T.n); if(!rc) return null; const raw=tInterp(tableOf(G.gun,rc.ch,rc.hi),rc.p.R); return {ch:rc.ch,hi:rc.hi,el:Math.round(rc.p.el),az:Math.round(rc.p.azf)%6400,t:rc.p.t,tp:T.tp,rawEl:raw?Math.round(raw.el):null,rawAz:Math.round(rc.p.az)%6400}; },start:d=>start(d),camp:CAMP,guns:GUNS};
 
 export function route(app,x){ APP=app; X=x; css(); CFG=loadCfg(); stopLoop(); intro(); window.scrollTo(0,0); }

@@ -173,14 +173,17 @@ var FAM3=[
  ["at", "atc", "Contrabatería", "Counter-battery", "Destruye una batería enemiga antes de que os localice (Veterano)", "Destroy an enemy battery before it locates you (Veteran)", "at_cb", [1], "o"],
  ["at", "atv", "Veterano de artillería", "Artillery veteran", "Cumple {n} misi{on} en Veterano", "Complete {n} mission{s} on Veteran", "at_vet", [1, 10, 25]],
  ["at", "atm", "Artillero de montaña", "Mountain gunner", "Destruye un objetivo detrás de una sierra (mapa de montaña)", "Destroy a target behind a ridge (mountain map)", "at_mt", [1], "p"],
- ["at", "atg", "Cien misiones", "A hundred missions", "Cumple {n} misiones generadas", "Complete {n} generated missions", "at_gen", [100], "o"]];
+ ["at", "atg", "Cien misiones", "A hundred missions", "Cumple {n} misiones generadas", "Complete {n} generated missions", "at_gen", [100], "o"],
+ /* v4 Artillero Realista (10 nov 2026): al FINAL para no mover índices */
+ ["at", "atr", "Central de tiro", "Fire direction centre", "Cumple {n} misi{on} en Realista", "Complete {n} mission{s} on Realistic", "at_real", [1, 10, 25]],
+ ["at", "atn", "Noche iluminada", "Night lit up", "Ilumina un objetivo de noche con proyectil iluminante (Realista)", "Light up a target at night with an illuminating shell (Realistic)", "at_ilu", [1], "p"]];
 FAM3.forEach(function(f){ f[7].forEach(function(n,i){ var tr=f[8]||TK[f[7].length===2?(i?1:0):i]; var m={id:f[1]+i,f:f[1],sec:f[0],n:[f[2],f[3]],d:[f[4],f[5]],k:f[6],t:n,tr:tr,lv:f[7].length>1?i+1:0}; MED.push(m); MBY[m.id]=m; }); });
 /* contadores (orden fijo para el código) */
 var CK=['cb_win','cb_nt','cb_eli','cb_mis','ad_ops','ad_80','ad_r70','ad_map','du_air','du_gnd','du_sea','du_m','ng_ok','ng_ren','ng_85','ng_n','fr_apr','fr_hit','fr_far','fr_mv','fr_nt','fr_ser',
  'sb_apr','sb_hit','sb_esc','sb_vet','nu_mis','nu_city','nu_def','nu_shield','md_ok','md_r','md_perf','md_apr','rt_win','rt_10','rt_str','rt_nh','sd_save','sd_role','ar_w','ar_acc',
  'f_all','f_av','f_he','f_ta','f_bl','f_bu','f_su','f_lo','f_ar','f_es','f_aw','m3_n','pa_n','mp_d','pa_sec','nw_d','ra_n','ra_ac','ra_mr','ra_tk','ra_aw','ra_fi','hb_v','ho_v','hs_c','hs_dd','gw_n','days','str','games',
  'gh','cb_mise','ad_m70','du_m5','fr_farv','fr_rec','ra_ty','ra_isr','ra_hv','ra_rare','md_rp','ng_95','cb_en',
- 'at_apr','at_hit','at_fr','at_br','at_cp','at_cb','at_vet','at_mt','at_gen'];
+ 'at_apr','at_hit','at_fr','at_br','at_cp','at_cb','at_vet','at_mt','at_gen','at_real','at_ilu'];
 var GAMESEC=['cb','ad','du','ng','fr','sb','nu','md','rt','sa','at'];
 
 /* ---------- Estado ---------- */
@@ -237,7 +240,7 @@ function ev(name,o){ o=o||{}; load(); touchDay(); var gx=0;
  case 'ad.fin': { var sc=+o.sc||0; inc('ad_ops'); if(sc>=80) inc('ad_80'); if(o.d==='r'&&sc>=70) inc('ad_r70'); if(o.m) addSet('ad_map',o.m); if(o.m&&sc>=70) addSet('ad_m70',o.m); gx=10+Math.round(sc/10); break; }
  case 'duelo.fin': { if(o.win){ var mk=o.m==='cielo'?'du_air':o.m==='suelo'?'du_gnd':o.m==='mar'?'du_sea':''; if(mk){ inc(mk); addSet('du_m',o.m); addSet('du_m5',o.m); if(o.night&&o.m!=='cielo') addSet('du_m5',o.m+'_n'); } } gx=8+(o.win?10:0); break; }
  case 'neg.fin': { inc('ng_n'); var ok=o.end==='rendicion'||o.end==='liberados'; if(ok) inc('ng_ok'); if(o.end==='rendicion') inc('ng_ren'); if((+o.sc||0)>=85) inc('ng_85'); if(o.end==='rendicion'&&(+o.sc||0)>=95) inc('ng_95'); gx=10+(ok?10:0); break; }
- case 'art.fin': { if(o.win){ inc('at_hit'); if(o.first) inc('at_fr'); if(o.kind==='pu') setMax('at_br',1); if(o.kind==='pc') inc('at_cp'); if(o.cb) setMax('at_cb',1); if(o.mode==='veterano') inc('at_vet'); if(o.crest) setMax('at_mt',1); if(o.gen) inc('at_gen'); if(o.mode==='aprende') setMax('at_apr',1); } gx=10+(o.win?15:0)+(o.first?5:0); break; }
+ case 'art.fin': { if(o.win){ inc('at_hit'); if(o.first) inc('at_fr'); if(o.kind==='pu') setMax('at_br',1); if(o.kind==='pc') inc('at_cp'); if(o.cb) setMax('at_cb',1); if(o.mode==='veterano') inc('at_vet'); if(o.mode==='realista') inc('at_real'); if(o.real&&o.kind==='ilu') setMax('at_ilu',1); if(o.crest) setMax('at_mt',1); if(o.gen) inc('at_gen'); if(o.mode==='aprende') setMax('at_apr',1); } gx=10+(o.win?15:0)+(o.first?5:0); break; }
  case 'sub.fin': { inc('sb_hit',+o.hits||0); var es=o.why==='escaped'; if(es&&o.mode==='aprende') setMax('sb_apr',1); if(es&&o.mode!=='aprende') inc('sb_esc'); if(es&&o.mode==='veterano') inc('sb_vet'); gx=10+Math.min(30,10*(+o.hits||0)); break; }
  case 'alc.ver': { (o.m||[]).forEach(function(id){ if(addSet('nu_mis',id)) addXP('ex',2); }); break; }
  case 'nuc.det': { if(o.c&&addSet('nu_city',o.c)) addXP('ex',3); break; }
