@@ -96,6 +96,8 @@ function armFig(a){ if(a._af) return a._af; var F=a.F||{}, s=esN(F.blindaje||'')
       var an=c.match(/(\d{1,3}(?:[.,]\d+)?)\s*mm\s*(?:\/|a|at)\s*(\d{1,2})\s*°/), ef=mx; if(an&&!/LdV|LoS/i.test(c)) ef=Math.max(ef,NUM(an[1])*Math.min(2,1/Math.cos(+an[2]*Math.PI/180))); ef=Math.round(ef); if(ef>bf){ bf=ef; bq=c.trim(); } });
     if(!bf&&anyMx&&/\d\s*(?:mm\s*)?(?:[–-]|a|to)\s*(?:≈\s*)?\d/.test(s)&&!/lateral|trasera|frontal|variante|side|rear|front|variant/i.test(s)){ bf=Math.round(anyMx); bq=short(s,90); }
     if(bf>=5){ r.ke=bf; r.q=short(bq,90); r.src='ficha'; } }
+  /* Estimación de M.A.T: un carro de combate principal cuya ficha dice que lleva blindaje compuesto pero no da la cifra recibe 570 mm frente a APFSDS, la mediana de las 9 fichas de carros con blindaje compuesto que sí la dan (T-72 500, Pokpung-ho 500, Obiekt 490 500, M-84 560, T-72M4 CZ 570, TR-85 580, M1 Abrams 600, K1 600, T-90 800 mm). Antes salía la estimación genérica de su época (300 mm para un carro de 1966-1980) */
+  if(!r.ke&&a.cat==='tanques'&&a.tipo==='t_principal'&&era(a)>=1965&&/compuest|chobham|cer[aá]mic|composite|ceramic|dorchester/i.test(s)){ r.src='est'; r.q=null; r.ke=570; r.ce=Math.round(r.ke*1.5); r.comp=true; }
   if(!r.ke){ var e=era(a), t=a.cat==='tanques'; r.src='est'; r.q=null; r.ke=t?(e>1990?550:e>1980?450:e>1965?300:e>1950?150:e>1940?80:30):(e>1990?40:20); r.ce=t&&e>1975?Math.round(r.ke*1.5):r.ke; }
   if(!r.ce){ r.ce=era(a)>1975?Math.round(r.ke*1.5):r.ke; r.ceest=true; }
   a._af=r; return r; }
@@ -418,6 +420,10 @@ var MSPD=[[/AIM-54|Phoenix/i,5],[/AIM-120|AMRAAM/i,4],[/AIM-7|Sparrow/i,4],[/AIM
 /* Munición del cañón (Wikipedia, ficha de cada avión) y cadencia del arma. */
 var GUNT=[[/F-14/i,675,6000,'M61A1 20 mm'],[/F\/A-18|CF-18|Hornet/i,578,6000,'M61A1 20 mm'],[/F-15/i,940,6000,'M61A1 20 mm'],[/F-16/i,511,6000,'M61A1 20 mm'],[/F-4\b|Phantom/i,640,6000,'M61A1 20 mm'],[/Su-27|Su-30|Su-33|Su-35|MiG-29|MiG-35/i,150,1500,'GSh-30-1 30 mm'],[/Rafale/i,125,2500,'GIAT 30 30 mm'],[/Eurofighter|Typhoon/i,150,1700,'Mauser BK-27 27 mm'],[/Gripen|Tornado/i,120,1700,'Mauser BK-27 27 mm'],[/Mirage 2000/i,250,1800,'DEFA 554 30 mm']];
 var ALLASP=/R-73|Python|IRIS-T|ASRAAM|MICA|AAM-5|PL-10|AIM-9X/i;
+/* misil de infrarrojos de todo aspecto: por su nombre, por la época del avión (1978 en adelante) o porque la ficha lo clasifica como caza de 4.ª generación o posterior (categoría de Wikipedia): esos cazas (F-14, F-15…) entraron en servicio con Sidewinder de todo aspecto (AIM-9L, 1977). Estimación de M.A.T */
+/* generación de aviónica: la de la ficha; si no la trae, la de su época (estimación de M.A.T) */
+function avG(a){ var g=parseFloat(a&&a.gen); if(!isNaN(g)) return g; var y=era(a); return y<1953?1:y<1965?2:y<1975?3:y<1995?4:4.5; }
+function allAsp(tok,a){ return ALLASP.test(tok)||era(a)>=1978||(parseFloat(a&&a.gen)||0)>=4; }
 function shortN(a){ var n=String(a.n||''); var m=n.match(/\b(?:[A-Z]{1,3}\/)?[A-Z]{1,4}-\d{1,3}[A-Z]{0,2}(?:\/[A-Z])?\b/); if(m) return m[0]; m=n.match(/Rafale|Typhoon|Gripen|Tornado|Mirage \d+|Harrier|Tomcat|Hornet/i); return m?m[0]:short(n,14); }
 function airKit(a,W){
   var k={bvr:null,ir:null,gun:null}, nm=a.n||'';
@@ -425,7 +431,7 @@ function airKit(a,W){
     MSPD.forEach(function(q){ if(!sp&&q[0].test(tok)) sp=q[1]; });
     var m={w:w,n:(w.arm?w.arm.n:(w.tok||w.n)),km:r.km,src:r.src,mach:sp||3,msrc:sp?'wiki':'est',arm:w.arm||null};
     if(w.k==='bvr'&&!k.bvr){ m.left=2; m.cnt='est'; k.bvr=m; }
-    else if(w.k==='wvr'&&!k.ir){ m.left=2; m.cnt='est'; m.all=ALLASP.test(tok)||era(a)>=1978; k.ir=m; }
+    else if(w.k==='wvr'&&!k.ir){ m.left=2; m.cnt='est'; m.all=allAsp(tok,a); k.ir=m; }
     else if(w.k==='gun_air'&&!k.gun){ var g=null; GUNT.forEach(function(q){ if(!g&&q[0].test(nm)) g=q; }); k.gun={w:w,n:g?g[3]:w.n,rounds:g?g[1]:300,rate:g?g[2]:2000,src:g?'wiki':'est',km:0.9}; }
   });
   k.cm=era(a)>1965&&a.cat==='aviones'?{fl:30,ch:30}:(a.cat==='helicopteros'&&era(a)>1975?{fl:24,ch:0}:{fl:0,ch:0});
@@ -450,8 +456,8 @@ function AIRsim(A,B,WA,WB,seed){
   function mk(i,a,W){ var K=airKit(a,W), SP=airSpd(a), vmax=SP.vmax;
     var heli=a.cat==='helicopteros';
     return {i:i,a:a,K:K,sn:shortN(a),x:0,y:0,hd:0,vmax:vmax,vsrc:SP.src,rwr:airRWR(a),en:false,vB:SP.vB/3.6,vT:SP.vT/3.6,v:0,om:airTurn(a),hp:1,alive:true,fuel:1,fl:K.cm.fl,ch:K.cm.ch,cd:2+rnd()*2,gcd:0,trail:[],ab:false,def:null,bingo:false,phase:'bvr',passT:-99,lf:(K.bvr&&K.bvr.km>100?0.42:0.52)+rnd()*0.16,w:0,
-      /* percepción y pericia: el azul (tu elección) vuela con tripulación nominal; el rojo (la máquina) cambia en cada partida */
-      rt:i?0.4+prs()*0.8:0.8, sk:i?0.8+prs()*0.45:1, nerr:i?(prs()<0.5?-1:1)*(prs()*0.07):0.03}; }
+      /* percepción y pericia (estimación de M.A.T): las dos tripulaciones salen del mismo reparto y cambian en cada partida; salen de la serie de la semilla uno detrás de otro, así que el duelo es simétrico y el enlace con semilla repite el mismo duelo */
+      rt:0.4+prs()*0.8, sk:0.8+prs()*0.45, nerr:(prs()<0.5?-1:1)*(prs()*0.07)}; }
   var prs=mkRng(((seed*7919)+13)>>>0);
   var a=mk(0,A,WA), b=mk(1,B,WB); S.U=[a,b];
   /* ventaja de velocidad (fichas): el que es al menos 1,5 veces más rápido pelea en energía — no se mete en el giro, ataca de pasada y se aleja cuando quiere (umbral: estimación de M.A.T) */
@@ -463,18 +469,20 @@ function AIRsim(A,B,WA,WB,seed){
   log('Vuelan al encuentro: '+a.sn+' (azul) y '+b.sn+' (rojo), separados '+fmtD(D0)+(maxB?'':' (ninguno lleva misiles de largo alcance)'),'Heading for each other: '+a.sn+' (blue) and '+b.sn+' (red), '+fmtD(D0)+' apart'+(maxB?'':' (neither carries long-range missiles)'),'');
   function dist(p,q){ return Math.hypot(q.x-p.x,q.y-p.y); }
   function brg(p,q){ return Math.atan2(q.y-p.y,q.x-p.x); }
-  function steer(u,want,dt,k){ var dd=ang(want-u.hd), wm=u.om*(k||1), wd=Math.max(-wm,Math.min(wm,dd*3)), ac=u.om*3.5*dt; /* alabeo: el giro entra y sale de forma progresiva */
+  function steer(u,want,dt,k){ var dd=ang(want-u.hd), wm=u.om*(k||1), wd=Math.max(-wm,Math.min(wm,dd*3*(k>=2?k:1))), ac=u.om*3.5*dt; /* alabeo: el giro entra y sale de forma progresiva */
     u.w+=Math.max(-ac,Math.min(ac,wd-u.w)); u.hd+=u.w*dt; u.str=1; return Math.abs(dd); }
   function relax(u,dt){ var ac=u.om*3.5*dt; u.w-=Math.max(-ac,Math.min(ac,u.w)); u.hd+=u.w*dt; }
   function modern(m){ return /AIM-120|AMRAAM|Meteor|R-77|RVV-AE|PL-1[25]|PL-21|MICA|Derby|Astra|AAM-4|K-100|R-37|AIM-9X|IRIS-T|ASRAAM|Python[- ]?[45]|PL-10|AAM-5|R-74/i.test(m.n||'')||!!(m.arm&&m.arm.anio>=1990); }
+  /* aviso del misil radar (estimación de M.A.T): normalmente el RWR avisa al lanzar (unos 22 km). Si el que dispara es furtivo según su ficha, el blanco no le ve lanzar y solo se entera cuando el radar del propio misil se enciende (unos 6 km); si el que dispara es de una generación más moderna (generación de su ficha o, si no la tiene, la de su época) y el misil es de guía activa, avisa a unos 10 km */
+  function warnR(p,u){ var o=p.own.a; if(stealthy(o)&&!stealthy(u.a)) return 6000; if(p.mod&&avG(o)-avG(u.a)>=0.5) return 10000; return 22000; }
   function aspect(sh,tg){ return Math.abs(ang(brg(tg,sh)-tg.hd)); } /* 0 = el tirador está delante del blanco; PI = está detrás */
   function launch(u,t,m,kind){ var d=dist(u,t); m.left--; S.st[u.i].sh++; u.cd=kind==='bvr'?14+rnd()*6:7+rnd()*4;
     var v=m.mach*300, P={x:u.x,y:u.y,hd:u.hd,v:v,own:u,tgt:t,kind:kind,m:m,life:m.km*1000/v*1.15,d0:d,trail:[],aspect:aspect(u,t),lam:brg(u,t),nt:0,mod:modern(m),pt:null};
     S.P.push(P); if(S.first==null){ S.first=u.i; S.firstD=d; S.firstW={w:{n:m.n,arm:m.arm},km:m.km,src:m.src}; }
     log(u.sn+' lanza un '+m.n+' a '+fmtD(d)+(kind==='bvr'?' (guiado por radar)':' (guiado por infrarrojos)'),u.sn+' fires an '+m.n+' at '+fmtD(d)+(kind==='bvr'?' (radar-guided)':' (infrared-guided)'),u.i?'r':'b'); }
   function gunLead(u,t){ var d=dist(u,t), bt=brg(u,t), tof=d/(1000+u.v), vp=t.v*Math.sin(t.hd-bt); return bt+Math.atan2(vp*tof,d); }
-  function gunErr(u,t){ var bt0=brg(u,t), lr=Math.abs(ang(bt0-(u.plos!=null?u.plos:bt0)))/0.05; return Math.abs(ang(gunLead(u,t)-u.hd))+lr*0.05*u.sk; }
-  function gunOK(u,t){ var d=dist(u,t), tol=(6+0.004*d)/d, e=gunErr(u,t); return u.i? e<=tol*(1+2.2*(u.sk-0.8)) : e<=tol; } /* el azul solo dispara con la solución buena; la máquina a veces se precipita */
+  function gunErr(u,t){ var bt0=brg(u,t), lr=Math.abs(ang(bt0-(u.plos!=null?u.plos:bt0)))/0.05; return Math.abs(ang(gunLead(u,t)-u.hd))+lr*0.05*u.sk*(u.slash&&era(u.a)>=1945?0.3:1); } /* en la pasada del reactor, el visor de tiro calculador (giroscópico o con radar, desde 1945) corrige casi todo el giro de la línea de mira: estimación de M.A.T */
+  function gunOK(u,t){ var d=dist(u,t), tol=(6+0.004*d)/d, e=gunErr(u,t); return e<=tol*(1+2.2*(u.sk-0.8)); } /* la misma regla para los dos: según la pericia de su tripulación, a veces se precipita */
   function gunBurst(u,t){ var g=u.K.gun, d=dist(u,t), n=Math.min(g.rounds,Math.round(g.rate/60*0.8)); if(n<=0) return; g.rounds-=n; u.gcd=1.6; S.st[u.i].gunsh++;
     /* puntería sin dados: error = lo que el morro está fuera de la línea + lo que se mueve el blanco durante el retardo de seguimiento del piloto */
     var bt0=brg(u,t), er=gunErr(u,t), miss=d*er, tol=6+0.004*d;
@@ -482,18 +490,23 @@ function AIRsim(A,B,WA,WB,seed){
     S.FX.push({k:'gun',x:u.x,y:u.y,tx:t.x+mx,ty:t.y+my,t:0,life:0.6,c:u.i,hd:u.hd}); S.FX.push({k:'mflash',x:u.x,y:u.y,hd:u.hd,t:0,life:0.25,c:u.i});
     if(hitG){ S.st[u.i].gunhit++; t.hp-=gunDmg(g,u.a); S.FX.push({k:'hit',x:t.x,y:t.y,t:0,life:0.8}); log(u.sn+': ráfaga de cañón a '+fmtD(d)+', impacta en el '+t.sn,u.sn+': gun burst at '+fmtD(d)+', hits the '+t.sn,u.i?'r':'b'); if(t.hp<=0) kill(t,u,'gun',d); }
     else log(u.sn+': ráfaga de cañón a '+fmtD(d)+', falla',u.sn+': gun burst at '+fmtD(d)+', misses',u.i?'r':'b'); }
-  function kill(t,u,how,d){ t.hp=0; t.alive=false; S.FX.push({k:'boom',x:t.x,y:t.y,t:0,life:1.6}); S.over={w:u.i,how:'ko'}; S.kill={how:how,d:d,by:u.i};
-    log(t.sn+' queda fuera de combate','The '+t.sn+' is shot down','end'); }
+  function kill(t,u,how,d){ t.hp=0; t.alive=false; S.FX.push({k:'boom',x:t.x,y:t.y,t:0,life:1.6});
+    if(S.pend){ S.over={w:S.pend.w,how:'mutuo'}; S.mutual={by:u.i,how:how}; log(t.sn+' también cae: el misil que el '+u.sn+' había lanzado antes de caer le alcanza. Derribo mutuo','The '+t.sn+' goes down too: the missile the '+u.sn+' fired before going down hits it. Mutual kill','end'); return; }
+    S.kill={how:how,d:d,by:u.i};
+    /* un misil de infrarrojos o de guía activa que el derribado ya había lanzado sigue volando hacia su blanco: el duelo no acaba hasta que acierta o falla (en un cruce de frente pueden caer los dos) */
+    if(S.P.some(function(p){return p.own===t&&p.tgt===u&&p.life>0&&!p.lost&&!p.dec&&(p.kind!=='bvr'||p.mod);})){ S.pend={w:u.i}; log(t.sn+' queda fuera de combate, pero su misil ya va en el aire hacia el '+u.sn,'The '+t.sn+' is shot down, but its missile is already in the air towards the '+u.sn,'end'); return; }
+    S.over={w:u.i,how:'ko'}; log(t.sn+' queda fuera de combate','The '+t.sn+' is shot down','end'); }
   function cm(u,kind){ if(kind==='bvr'){ if(u.ch>0){ u.ch-=2; S.FX.push({k:'chaff',x:u.x,y:u.y,t:0,life:3}); return true; } return false; } if(u.fl>0){ u.fl-=2; S.FX.push({k:'flare',x:u.x,y:u.y,hd:u.hd,t:0,life:2.2}); return true; } return false; }
-  S.step=function(dt){ if(S.over) return; S.T+=dt;
-    S.U.forEach(function(u){ var t=S.U[1-u.i]; if(!u.alive) return; var d=dist(u,t), bt=brg(u,t);
+  S.step=function(dt){ if(S.over) return; S.T+=dt; S.k=(S.k||0)+1;
+    /* orden de turno alterno en cada paso: ninguno de los dos dispara siempre primero en un cruce de frente (antes el azul siempre actuaba antes) */
+    (S.k%2?[S.U[0],S.U[1]]:[S.U[1],S.U[0]]).forEach(function(u){ var t=S.U[1-u.i]; if(!u.alive) return; var d=dist(u,t), bt=brg(u,t);
       /* solo reacciona a lo que percibe: el aviso radar (RWR) de un misil guiado por radar, o un misil de infrarrojos que ve venir (no por la cola); y tarda su tiempo de reacción */
       S.P.forEach(function(p){ if(p.tgt!==u||p.life<=0||p.pt!=null) return; var dm=dist(p,u), offN=Math.abs(ang(brg(u,p)-u.hd));
         if((p.kind==='bvr'&&u.rwr)||(dm<6000&&offN<2.0)||(dm<1300&&offN<2.6)){ p.pt=S.T; p.rt=S.T+u.rt; } }); /* sin RWR (aviones antiguos) un misil radar solo se ve a ojo */
       var inc=S.P.filter(function(p){return p.tgt===u&&p.life>0&&p.pt!=null&&S.T>=p.rt&&!p.dec&&!p.lost;}).sort(function(p,q){return dist(p,u)-dist(q,u);})[0];
       u.cd-=dt; u.gcd-=dt; u.ab=false; u.str=0;
       if(u.fuel<=0.22&&!u.bingo){ u.bingo=true; log(u.sn+' llega a su reserva de combustible (bingo) y rompe el combate',u.sn+' reaches bingo fuel and disengages',u.i?'r':'b'); }
-      if(inc&&dist(inc,u)<(inc.kind==='bvr'?22000:4000)){ /* defensa: notch y chaff contra radar; giro brusco y bengalas contra IR */
+      if(inc&&dist(inc,u)<(inc.kind==='bvr'?warnR(inc,u):4000)){ /* defensa: notch y chaff contra radar; giro brusco y bengalas contra IR */
         var bm=brg(u,inc), opt1=bm+Math.PI/2, opt2=bm-Math.PI/2; var sgn=Math.abs(ang(opt1-u.hd))<Math.abs(ang(opt2-u.hd))?1:-1, want=(sgn>0?opt1:opt2)+u.nerr*sgn;
         if(inc.kind!=='bvr'||!u.rwr) want=bm+sgn*Math.PI*0.62;
         steer(u,want,dt,1.15); u.ab=true; if(!u.def){ u.def=inc; var nt_=inc.kind==='bvr'&&u.rwr; log(u.sn+(nt_?' gira 90° para ponerse de costado al misil (notch)':' rompe con un giro cerrado'),u.sn+(nt_?' turns 90° to beam the missile (notch)':' breaks into a hard turn'),u.i?'r':'b'); }
@@ -504,24 +517,37 @@ function AIRsim(A,B,WA,WB,seed){
           var mine=S.P.some(function(p){return p.own===u&&p.kind==='bvr'&&p.life>0;});
           if(mine){ steer(u,bt+(u.i?-1:1)*0.8,dt); } /* crank: mantiene al rival en el radar sin ir de cara */
           else steer(u,bt+(S.passKind==='beam'?(u.i?0.12:-0.12):0),dt);
-          var B_=u.K.bvr; if(B_&&B_.left>0&&u.cd<=0&&!mine&&d<=B_.km*1000*u.lf&&Math.abs(ang(bt-u.hd))<0.9) launch(u,t,B_,'bvr');
+          var B_=u.K.bvr; if(B_&&B_.left>0&&u.cd<=0&&!mine&&d<=B_.km*1000*u.lf*(stealthy(t.a)&&!stealthy(u.a)?0.35:1)&&Math.abs(ang(bt-u.hd))<0.9) launch(u,t,B_,'bvr');
           u.phase='bvr';
         } else { /* combate cerrado: pasada y giros */
           if(u.phase==='bvr'){ u.phase='merge'; if(u.i===0) log('Combate cerrado: '+fmtD(d)+' entre los dos','Within visual range: '+fmtD(d)+' apart',''); }
           var off=Math.abs(ang(bt-u.hd)), asp=aspect(u,t);
           var tf_=aspect(u,t), tG_=t.K.gun&&t.K.gun.rounds>0&&!(t.K.ir&&t.K.ir.left>0); /* solo esquiva el cara a cara con un rival que solo tiene cañón: darle la cola a uno con misiles de infrarrojos es peor */ /* tf_ pequeño = estoy en el morro del rival */
-          if(u.en&&!u.ext&&((tG_&&tf_<0.6&&d<2600)||(aspect(t,u)>2.0&&tf_<0.8&&d<3500))){ u.ext=true; log(u.sn+' no entra en el giro: acelera y se aleja, el '+t.sn+' no puede seguirle (velocidad máxima '+nf(u.vmax)+' frente a '+nf(t.vmax)+' km/h)',u.sn+' refuses the turning fight: it accelerates away and the '+t.sn+' cannot follow (top speed '+Math.round(u.vmax).toLocaleString('en-GB')+' vs '+Math.round(t.vmax).toLocaleString('en-GB')+' km/h)',u.i?'r':'b'); }
-          if(u.ext&&d>6500) u.ext=false;
+          var inNose_=tG_&&tf_<0.6&&d<2600, onSix_=aspect(t,u)>2.0&&tf_<0.8&&d<3500;
+          /* el más rápido decide una sola vez cómo ataca (Jose, 10 nov 2026: nada de dar la vuelta varias veces antes de atacar). Giro según turnRate() de su época (estimación de M.A.T):
+             - si además gira igual o mejor: va directo a por él; si el rival le da la cola, gira por el lateral y se le pone a las seis; si le da la cara, le ataca de pasada en picado desde arriba, donde el lento no puede levantar el morro para devolverle el fuego, y vuelve a subir
+             - si gira peor: pasa, se aleja una sola vez y vuelve a por él; después ya no se aleja más
+             - con misiles de todo aspecto o radar: los usa de frente o de costado, sin darse la vuelta */
+          if(u.en&&u.tb==null){ u.tb=u.om>=t.om; u.nExt=0; }
+          var mAll_=(u.K.bvr&&u.K.bvr.left>0)||(u.K.ir&&u.K.ir.left>0&&u.K.ir.all), six_=u.en&&!mAll_, behind_=aspect(u,t)>2.2;
+          u.slash=false;
+          if(u.en&&!u.ext&&!u.tb&&u.nExt<1&&(inNose_||onSix_)){ u.ext=true; u.nExt++; S.st[u.i].ext=(S.st[u.i].ext||0)+1; log(u.sn+' no puede girar tan cerrado como el '+t.sn+': pasa, se aleja y vuelve una sola vez (velocidad máxima '+nf(u.vmax)+' frente a '+nf(t.vmax)+' km/h)',u.sn+' cannot turn as tight as the '+t.sn+': it passes, pulls away and comes back just once (top speed '+Math.round(u.vmax).toLocaleString('en-GB')+' vs '+Math.round(t.vmax).toLocaleString('en-GB')+' km/h)',u.i?'r':'b'); }
+          if(u.ext&&d>6500){ u.ext=false; if(!u.bklog){ u.bklog=1; log(u.sn+' vuelve a por el '+t.sn+', gana posición y ataca desde atrás',u.sn+' comes back for the '+t.sn+', gains position and attacks from behind',u.i?'r':'b'); } }
           if(u.ext){ var fo_=Math.abs(ang(bt-u.hd))<Math.PI/2, o1=bt+Math.PI*0.6, o2=bt-Math.PI*0.6; steer(u,fo_?(Math.abs(ang(o1-u.hd))<Math.abs(ang(o2-u.hd))?o1:o2):brg(t,u),dt,1); } /* se aparta del morro del rival y se aleja: el lento no le alcanza */
-          else if(S.T-u.passT<2.5) { /* sigue recto unos segundos tras la pasada */ }
-          else { var G0=u.K.gun; if(G0&&G0.rounds>0&&d<=G0.km*1300) steer(u,gunLead(u,t),dt,1); else { var lead=Math.min(1.2,d/600)*0.25; steer(u,bt+ang(t.hd-bt)*lead*0.3,dt,1); } u.ab=!u.en; }
+          else if(six_&&d<2200&&Math.abs(ang(bt-u.hd))>Math.PI/2){ /* se le ha pasado: sigue recto con su velocidad (vuelve a subir) hasta tener sitio para girar */ }
+          else if(six_&&!behind_&&d>3200){ var sx_=t.x-Math.cos(t.hd)*1800, sy_=t.y-Math.sin(t.hd)*1800; steer(u,Math.atan2(sy_-u.y,sx_-u.x),dt,1); } /* curva amplia por el lateral hacia las seis del rival (estimación de M.A.T: 1,8 km por detrás) */
+          else if(S.T-u.passT<2.5&&!u.en) { /* sigue recto unos segundos tras la pasada */ }
+          else if(u.en&&!six_&&inNose_){ var s1_=bt+0.9, s2_=bt-0.9; steer(u,Math.abs(ang(s1_-u.hd))<Math.abs(ang(s2_-u.hd))?s1_:s2_,dt,1); } /* con misiles: sale del morro del cañón del rival por el lateral, sin darse la vuelta */
+          else { var G0=u.K.gun; if(G0&&G0.rounds>0&&d<=G0.km*1300) steer(u,gunLead(u,t)+(six_&&d<2600&&u.plos!=null?ang(bt-u.plos)/dt/3:0),dt,six_&&d<2600?2:1); /* en la pasada del rápido: tirón breve por encima del giro sostenido y adelanta el giro de la línea de mira para meter el morro en la solución de tiro (estimación de M.A.T) */ else { var lead=Math.min(1.2,d/600)*0.25; steer(u,bt+ang(t.hd-bt)*lead*0.3,dt,1); } u.ab=!u.en;
+            if(six_&&!behind_&&d<3200){ u.slash=true; if(!u.sllog){ u.sllog=1; log(u.sn+' gana posición por encima y ataca de pasada en picado, a toda velocidad: el '+t.sn+' no puede levantar el morro para devolverle el fuego',u.sn+' gains position above and makes a high-speed diving pass: the '+t.sn+' cannot raise its nose to fire back',u.i?'r':'b'); } }
+            else if(six_&&behind_&&d<3200&&off<0.5&&!u.sxlog){ u.sxlog=1; log(u.sn+' gana posición y ataca desde atrás: gira por el lateral y se le pone a las seis al '+t.sn,u.sn+' gains position and attacks from behind: it swings round the side onto the '+t.sn+'’s six',u.i?'r':'b'); } }
           var BM_=u.K.bvr; if(u.en&&BM_&&BM_.left>0&&u.cd<=0&&!u.ext&&d>=2000&&d<=Math.min(12000,BM_.km*1000)&&off<0.5&&!S.P.some(function(p){return p.own===u&&p.life>0;})) launch(u,t,BM_,'bvr'); /* el más rápido elige la distancia: misil radar dentro del alcance visual */
-          var I_=u.K.ir; if(I_&&I_.left>0&&u.cd<=0&&d>=900&&d<=Math.min(I_.km,asp>2.1?8:4.5)*1000&&off<0.5&&(I_.all||asp>2.1)) launch(u,t,I_,'ir');
-          var G_=u.K.gun; if(G_&&G_.rounds>0&&u.gcd<=0&&d<=G_.km*1000&&d>=150&&off<0.25&&!(u.en&&tG_&&tf_<0.8)&&gunOK(u,t)) gunBurst(u,t);
+          var I_=u.K.ir; if(I_&&I_.left>0&&u.cd<=0&&d>=900&&d<=Math.min(I_.km,(asp>2.1||(I_.all&&avG(u.a)-avG(t.a)>=0.5))?8:4.5)*1000&&off<0.5&&(I_.all||asp>2.1)){ /* el de generación más moderna (mira en el casco, sensor infrarrojo propio) dispara de frente desde tan lejos como por la cola: estimación de M.A.T */ if(u.irT==null) u.irT=S.T; if(S.T-u.irT>=u.rt){ u.irT=null; launch(u,t,I_,'ir'); } } else u.irT=null; /* el piloto tarda su tiempo de reacción en oír el tono del misil y disparar: en un cruce de frente entre iguales dispara antes el más rápido de reflejos, no siempre el mismo (estimación de M.A.T) */
+          var G_=u.K.gun; if(G_&&G_.rounds>0&&u.gcd<=0&&d<=G_.km*1000&&d>=150&&off<0.25&&!(u.en&&tG_&&tf_<0.8&&!u.slash)&&!t.slash&&gunOK(u,t)) gunBurst(u,t); /* en la pasada en picado del rápido, el lento no puede devolver el fuego */
           if(asp>2.3&&d<3000) S.st[u.i].tail+=dt;
         }
       }
-      if(!u.str) relax(u,dt); u.plos=bt;
+      if(!u.str) relax(u,dt); u.plos=bt; if(u.hp0!=null) S.st[u.i].turn=(S.st[u.i].turn||0)+Math.abs(ang(u.hd-u.hp0)); u.hp0=u.hd; /* giro total acumulado (para medir las vueltas que da cada uno) */
       u.v+=((u.phase==='merge'&&!u.en?u.vT:u.vB)-u.v)*Math.min(1,dt*0.4);
       u.x+=Math.cos(u.hd)*u.v*dt; u.y+=Math.sin(u.hd)*u.v*dt;
       u.fuel-=dt*(u.ab?0.0042:0.0011);
@@ -535,13 +561,13 @@ function AIRsim(A,B,WA,WB,seed){
         else log('Pasada '+S.pass+': se cruzan por el lateral a '+fmtD(dd)+'; los dos dan la vuelta','Pass '+S.pass+': they cross side by side '+fmtD(dd)+' apart; both turn around','');
         S.FX.push({k:'pass',x:(a_.x+b_.x)/2,y:(a_.y+b_.y)/2,t:0,life:2.5,n:S.pass}); } }
     /* misiles */
-    S.P.forEach(function(p){ if(p.life<=0) return; var t=p.tgt; p.life-=dt; var bt=brg(p,t), d0=dist(p,t);
+    S.P.forEach(function(p){ if(p.life<=0) return; if(!p.own.alive&&p.kind==='bvr'&&!p.mod){ p.life=0; p.mlog=1; return; } /* guía semiactiva: sin el radar del avión que lo lanzó, el misil se pierde */ var t=p.tgt; p.life-=dt; var bt=brg(p,t), d0=dist(p,t);
       /* sin dados: el misil falla solo por lo que pasa en el aire */
       if(p.kind==='bvr'&&!p.lost&&t.alive){ var vr=Math.abs(Math.cos(t.hd-bt))*t.v, kN=p.mod?22:45; /* notch: el blanco vuela de costado y su velocidad radial cae dentro del filtro del radar */
         if(d0<15000&&vr<kN&&Math.abs(Math.cos(t.hd-bt))<0.35) p.nt+=dt; /* notch = volar de costado al misil; ir lento de frente no esconde a nadie */ else p.nt=Math.max(0,p.nt-dt*2);
-        var chf=p.cm>0&&S.T-(p.cmT||-99)<3; if(p.nt>=(chf?0.5:1.4)){ p.lost=chf?'chaff':'notch'; p.lx=t.x; p.ly=t.y; } }
+        var gg_=avG(p.own.a)-avG(t.a)>=0.5, chf=!gg_&&p.cm>0&&S.T-(p.cmT||-99)<3; if(p.nt>=(chf?0.5:gg_?3.5:1.4)){ /* contra un radar y un misil de una generación más moderna que el blanco (mejor filtro Doppler y contra-contramedidas) el chaff no lo engaña y el notch tiene que aguantar más: estimación de M.A.T */ p.lost=chf?'chaff':'notch'; p.lx=t.x; p.ly=t.y; } }
       if(p.kind!=='bvr'&&p.cm>0&&!p.dec&&p.cmG){ var G=p.cmG; /* bengalas: engañan a un buscador antiguo (solo por la cola) siempre; a uno de todos los aspectos solo si el blanco gira fuerte y cruza */
-        if(G.d>=600&&G.d<=2600&&(!p.m.all||(G.turn&&G.asp>0.78&&G.asp<2.36)&&!(p.mod&&!G.turn))){ p.dec=1; } p.cmG=null; }
+        if(G.d>=600&&G.d<=2600&&(!p.m.all||(G.turn&&G.asp>0.78&&G.asp<2.36)&&!(p.mod&&!G.turn))&&!(p.m.all&&avG(p.own.a)-avG(p.tgt.a)>=0.5)){ p.dec=1; } p.cmG=null; } /* el misil de todos los aspectos de un avión de generación más moderna que el blanco no se deja engañar por sus bengalas: estimación de M.A.T */
       var om=p.kind==='bvr'?0.55:0.9, lam=bt, ld=ang(lam-p.lam)/dt; p.lam=lam;
       if(p.lost||p.dec){ /* sin blanco: sigue recto hacia el señuelo */ }
       else { var dw=4*ld+ang(bt-p.hd)*0.35; p.hd+=Math.max(-om*dt,Math.min(om*dt,dw*dt)); }
@@ -561,9 +587,10 @@ function AIRsim(A,B,WA,WB,seed){
     });
     S.P=S.P.filter(function(p){return p.life>0||p.trail.length&&(p.fade=(p.fade||0)+dt)<1.5;});
     S.FX.forEach(function(f){f.t+=dt;}); S.FX=S.FX.filter(function(f){return f.t<f.life;});
+    if(S.pend&&!S.over&&!S.P.some(function(p){return p.own.i!==S.pend.w&&p.life>0&&!p.lost&&!p.dec;})){ S.over={w:S.pend.w,how:'ko'}; log(S.U[1-S.pend.w].sn+': su último misil falla; gana el '+S.U[S.pend.w].sn,'The '+S.U[1-S.pend.w].sn+'’s last missile misses; the '+S.U[S.pend.w].sn+' wins','end'); }
     var anyM=S.P.some(function(p){return p.life>0;});
     if(!S.over&&!anyM){ var nothing=S.U.every(function(u){ var K=u.K; return u.bingo||(!(K.bvr&&K.bvr.left>0)&&!(K.ir&&K.ir.left>0)&&!(K.gun&&K.gun.rounds>0)); });
-      if(nothing||S.T>420){ var sc=S.U.map(function(u){return u.hp*10+S.st[u.i].tail*0.05+S.st[u.i].hit*2+u.fuel;}); var w=sc[0]>=sc[1]?0:1; S.over={w:w,how:'pts'}; log('Fin del combate sin derribo: '+(S.T>420?'se acaba el tiempo':'los dos rompen el combate'),'Fight ends with no kill: '+(S.T>420?'time is up':'both disengage'),'end'); } }
+      if(nothing||S.T>420){ var sc=S.U.map(function(u){return u.hp*10+S.st[u.i].tail*0.05+S.st[u.i].hit*2+u.fuel;}); var w=sc[0]>sc[1]?0:sc[1]>sc[0]?1:(rnd()<0.5?0:1); /* empate exacto: lo decide la semilla, no el color */ S.over={w:w,how:'pts'}; log('Fin del combate sin derribo: '+(S.T>420?'se acaba el tiempo':'los dos rompen el combate'),'Fight ends with no kill: '+(S.T>420?'time is up':'both disengage'),'end'); } }
     if(S.over&&!S.reasons.length) S.reasons=airReasons(S);
   };
   S.post=function(dt){ S.FX.forEach(function(f){f.t+=dt;}); S.FX=S.FX.filter(function(f){return f.t<f.life;}); S.P.forEach(function(p){ p.life=0; p.fade=(p.fade||0)+dt; }); S.P=S.P.filter(function(p){return p.fade<1.5;}); };
@@ -580,7 +607,7 @@ function airReasons(S){ var U=S.U, w=S.over.w, W_=U[w], L_=U[1-w], R_=[];
     if(s.sh) P(u.sn+': '+s.sh+' misil'+(s.sh>1?'es':'')+', '+s.hit+' impacto'+(s.hit===1?'':'s')+(s.dodge?' ('+whyTxt(s.why,0)+')':''),u.sn+': '+s.sh+' missile'+(s.sh>1?'s':'')+', '+s.hit+' hit'+(s.hit===1?'':'s')+(s.dodge?' ('+whyTxt(s.why,1)+')':''));
     if(s.gunsh) P(u.sn+': '+s.gunsh+' ráfaga'+(s.gunsh>1?'s':'')+' de cañón, '+s.gunhit+' con impacto',u.sn+': '+s.gunsh+' gun burst'+(s.gunsh>1?'s':'')+', '+s.gunhit+' on target'); });
   var ta=U[0].om, tb=U[1].om; if(S.pass&&Math.abs(ta-tb)>0.01&&Math.max(S.st[0].tail,S.st[1].tail)>=3){ var bt=ta>tb?U[0]:U[1], wt=bt===U[0]?U[1]:U[0]; P('Tras la pasada, el '+bt.sn+' gira más ('+Math.round(bt.om*57.3)+' °/s frente a '+Math.round(wt.om*57.3)+' °/s, estimación) y se le pone a la cola '+Math.round(S.st[bt.i].tail)+' s','After the pass, the '+bt.sn+' turns tighter ('+Math.round(bt.om*57.3)+' °/s vs '+Math.round(wt.om*57.3)+' °/s, estimate) and sits on its tail for '+Math.round(S.st[bt.i].tail)+' s'); }
-  if(S.kill){ var k=S.kill; P('Derribo con '+(k.how==='gun'?'el cañón a '+fmtD(k.d):k.how==='ir'?'un misil de infrarrojos lanzado a '+fmtD(k.d):'un misil guiado por radar lanzado a '+fmtD(k.d)),'Kill with '+(k.how==='gun'?'the gun at '+fmtD(k.d):k.how==='ir'?'an infrared missile fired at '+fmtD(k.d):'a radar-guided missile fired at '+fmtD(k.d))); }
+  if(S.kill){ var k=S.kill; P('Derribo con '+(k.how==='gun'?'el cañón a '+fmtD(k.d):k.how==='ir'?'un misil de infrarrojos lanzado a '+fmtD(k.d):'un misil guiado por radar lanzado a '+fmtD(k.d)),'Kill with '+(k.how==='gun'?'the gun at '+fmtD(k.d):k.how==='ir'?'an infrared missile fired at '+fmtD(k.d):'a radar-guided missile fired at '+fmtD(k.d))); } if(S.mutual) P('Derribo mutuo: el misil que el '+U[S.mutual.by].sn+' ya había lanzado sigue volando después de que le derriben y alcanza también al '+U[1-S.mutual.by].sn+'. En un cruce de frente con misiles de infrarrojos pueden caer los dos','Mutual kill: the missile the '+U[S.mutual.by].sn+' had already fired keeps flying after it is shot down and also hits the '+U[1-S.mutual.by].sn+'. In a head-on pass with infrared missiles both can go down');
   else { var wA=U[S.over?S.over.w:0], lA=U[1-wA.i], tl=function(u){return Math.round(S.st[u.i].tail);}, fu=function(u){return Math.round(u.fuel*100);}; P('Sin derribo. Gana a los puntos el '+wA.sn+': integridad '+Math.max(0,Math.round(wA.hp*100))+' % frente al '+Math.max(0,Math.round(lA.hp*100))+' % del '+lA.sn+'; a la cola del rival '+tl(wA)+' s frente a '+tl(lA)+' s; combustible '+fu(wA)+' % frente a '+fu(lA)+' %','No kill. The '+wA.sn+' wins on points: integrity '+Math.max(0,Math.round(wA.hp*100))+' % vs '+Math.max(0,Math.round(lA.hp*100))+' % for the '+lA.sn+'; on the rival’s tail '+tl(wA)+' s vs '+tl(lA)+' s; fuel '+fu(wA)+' % vs '+fu(lA)+' %'); }
   if(W_.en&&(era(W_.a)-era(L_.a))>=15) P('Diferencia de época: el '+L_.sn+' ('+era(L_.a)+', '+nf(L_.vmax)+' km/h) no tenía forma de alcanzar al '+W_.sn+' ('+era(W_.a)+', '+nf(W_.vmax)+' km/h)'+(W_.K.bvr||W_.K.ir?', que además lleva misiles':''),'Era gap: the '+L_.sn+' ('+era(L_.a)+', '+Math.round(L_.vmax).toLocaleString('en-GB')+' km/h) had no way to catch the '+W_.sn+' ('+era(W_.a)+', '+Math.round(W_.vmax).toLocaleString('en-GB')+' km/h)'+(W_.K.bvr||W_.K.ir?', which also carries missiles':''));
   U.forEach(function(u){ if(u.bingo) P(u.sn+' rompió el combate al llegar a la reserva de combustible ('+Math.round(u.fuel*100)+' %)',u.sn+' broke off at bingo fuel ('+Math.round(u.fuel*100)+' %)'); });
@@ -683,7 +710,7 @@ function gndKit(a,W){ var main=null,atgm=null,ac=null, F=a.F||{};
   var pm=main?(main.penmm||pen(main,ac_)):0, pmsrc=main&&main.penmm?'ficha':'est';
   var pa=atgm?(atgm.penmm||pen(atgm,a)):0, pasrc=atgm&&atgm.penmm?'ficha':'est';
   return loGnd({main:main,heat:heat,atgm:atgm,ac:ac,auto:auto,rl:auto?7.5:(tank?7:4),rlsrc:auto?'auto':'est',ammo:ammo,ammosrc:ammosrc,atg:atgm?4:0,smoke:2,cal:cal,
-    therm:therm,thsrc:thF?'ficha':'est',fcs:fcs,fcssrc:fcsF?'ficha':'est',v:vmax*0.45/3.6,vmax:vmax,ke:af.ke,ce:af.ce,armsrc:af.src,ceest:af.ceest,armq:af.q,arm:af.ke,
+    therm:therm,thsrc:thF?'ficha':'est',fcs:fcs,fcssrc:fcsF?'ficha':'est',v:vmax*0.45/3.6,vmax:vmax,ke:af.ke,ce:af.ce,armsrc:af.src,armcomp:!!af.comp,ceest:af.ceest,armq:af.q,arm:af.ke,
     pm:Math.round(pm),pmsrc:pmsrc,pa:Math.round(pa),pasrc:pasrc,rng:(main&&main.k==='ke'&&fcs)?3000:2200},W); }
 function GNDsim(A,B,WA,WB,seed,night){
   var rnd=mkRng(seed); R=rnd; var MW=3000, MH=1900;
@@ -702,11 +729,11 @@ function GNDsim(A,B,WA,WB,seed,night){
   function inWood(x,y){ return woods.some(function(q){return Math.hypot(x-q.x,y-q.y)<q.r;}); }
   function los(a,b){ var ea=elev(a.x,a.y)+2.8, eb=elev(b.x,b.y)+(b.hd_?2.4:2.2), n=60; for(var i=1;i<n;i++){ var f=i/n, x=a.x+(b.x-a.x)*f, y=a.y+(b.y-a.y)*f; if(elev(x,y)>ea+(eb-ea)*f+0.3) return false; if(inHouse(x,y)) return false; if(f>0.04&&f<0.96&&inWood(x,y)) return false; if(S.smk.some(function(s){return Math.hypot(x-s.x,y-s.y)<s.r;})) return false; } return true; }
   S.elev=elev; S.los=los;
-  var prs=mkRng(((seed*7919)+29)>>>0);
+  var prs=mkRng(((seed*7919)+29)>>>0), prsU=mkRng(((seed*7919)+31)>>>0);
   function mk(i,a,W,x,y){ var K=gndKit(a,W); return {i:i,a:a,K:K,sn:shortN(a),x:x,y:y,hd:0,tur:0,hp:1,alive:true,rl:2+rnd()*2,state:'move',spot:null,hd_:false,seen:false,lastSeen:-99,shots:0,ammo:K.ammo,atg:K.atg,smoke:K.smoke,mob:1,trail:[],agg:rnd(),mix:K.mix?Object.assign({},K.mix):null,rd:{},
       v:0,w:0,ufT:null,ufDone:true,acqT:0,cr:0,lsx:null,lsy:null,
-      /* tripulación: el azul (tu elección) es nominal; el rojo (la máquina) cambia en cada partida: tarda más o menos en reaccionar y apunta mejor o peor */
-      rk:i?0.3+prs()*0.8:0.7, sk:i?0.8+prs()*0.45:1, rlF:i?0.94+prs()*0.14:1, rkU:i?0.4+prs()*0.4:0.6}; }
+      /* tripulación (estimación de M.A.T): las dos salen del mismo reparto y cambian en cada partida: tardan más o menos en reaccionar y apuntan mejor o peor; de la serie de la semilla uno detrás de otro (duelo simétrico, el enlace con semilla lo repite) */
+      rk:0.3+prsU()*0.8, sk:0.8+prsU()*0.45, rlF:0.94+prsU()*0.14, rkU:0.4+prsU()*0.4}; }
   function spawn(side){ for(var k=0;k<80;k++){ var x=side?MW-200-rnd()*500:200+rnd()*500, y=side?150+rnd()*600:MH-150-rnd()*600; if(!inHouse(x,y,12)&&!inWood(x,y)) return [x,y]; } return side?[MW-300,300]:[300,MH-300]; }
   var pa=spawn(0), pb=spawn(1); var a=mk(0,A,WA,pa[0],pa[1]), b=mk(1,B,WB,pb[0],pb[1]); S.U=[a,b];
   a.hd=a.tur=Math.atan2(b.y-a.y,b.x-a.x); b.hd=b.tur=Math.atan2(a.y-b.y,a.x-b.x);
@@ -769,8 +796,8 @@ function GNDsim(A,B,WA,WB,seed,night){
       if(!minor){ if(t.state==='hold') log('El '+t.sn+' aguanta el impacto sin daño y sigue combatiendo de frente','The '+t.sn+' shrugs off the hit and keeps fighting head-on',t.i?'r':'b'); }
       else if(!t.hd_&&t.smoke>0){ t.smoke--; S.smk.push({x:t.x+Math.cos(brg(t,u))*30,y:t.y+Math.sin(brg(t,u))*30,r:55,t:0,life:28}); log('El '+t.sn+' lanza humo y cambia de posición','The '+t.sn+' fires smoke and relocates',t.i?'r':'b'); t.state='move'; t.spot=pick(t,u,false)||t.spot; }
       else if(t.hd_){ var sp3=pick(t,u,false); if(sp3){ t.spot=sp3; t.state='move'; log('El '+t.sn+' recibe un impacto en la torre y se retira de la cresta a otra posición','The '+t.sn+' takes a hit on the turret and backs off the crest to another position',t.i?'r':'b'); } } } }
-  S.step=function(dt){ if(S.over) return; S.T+=dt;
-    S.U.forEach(function(u){ var t=S.U[1-u.i]; if(!u.alive||!t.alive) return; var d=dist(u,t);
+  S.step=function(dt){ if(S.over) return; S.T+=dt; S.k=(S.k||0)+1;
+    (S.k%2?[S.U[0],S.U[1]]:[S.U[1],S.U[0]]).forEach(function(u){ var t=S.U[1-u.i]; if(!u.alive||!t.alive) return; var d=dist(u,t); /* orden de turno alterno en cada paso (ninguno actúa siempre primero) */
       var det=S.night?(u.K.therm?3000:700):3500, see=d<=det&&los(u,t)&&los(t,u);
       if(see&&!u.seen){ if(S.st[u.i].seen==null) S.st[u.i].seen={d:d,t:S.T}; log('El '+u.sn+' localiza al '+t.sn+' a '+fmtD(d)+(S.night?(u.K.therm?' con la cámara térmica':' sin térmica, ya muy cerca'):''),u.sn+' spots the '+t.sn+' at '+fmtD(d)+(S.night?(u.K.therm?' with its thermal sight':' without thermals, already very close'):''),u.i?'r':'b'); }
       if(see&&!u.seen){ u.react=S.T+(u.K.fcs?1.2:2.4)+u.rk; u.acqT=S.T; u.cr=0; } u.seen=see; if(see){ u.lastSeen=S.T; u.bel={x:t.x,y:t.y}; }
@@ -804,7 +831,7 @@ function GNDsim(A,B,WA,WB,seed,night){
     S.P.forEach(function(P){ if(P.done) return; P.t+=dt; var tt=P.tgt; var tof=P.d/P.v; var f=Math.min(1,P.t/tof); P.x=P.own.x+(tt.x-P.own.x)*f; P.y=P.own.y+(tt.y-P.own.y)*f; if(P.kind==='atgm'){ P.trail.push([P.x,P.y]); if(P.trail.length>30) P.trail.shift(); } if(f>=1){ P.done=true; P.fade=0; impact(P); } });
     S.P.forEach(function(P){ if(P.done) P.fade+=dt; }); S.P=S.P.filter(function(P){return !P.done||P.fade<0.5;});
     S.FX.forEach(function(f){f.t+=dt;}); S.FX=S.FX.filter(function(f){return f.t<f.life;}); S.smk.forEach(function(s){s.t+=dt;}); S.smk=S.smk.filter(function(s){return s.t<s.life;});
-    if(!S.over&&(S.T>480||S.U.every(function(u){return u.ammo<=0&&u.atg<=0;}))){ var w=S.U[0].hp>=S.U[1].hp?0:1; if(S.U[0].hp===S.U[1].hp) w=S.st[0].hit>=S.st[1].hit?0:1;
+    if(!S.over&&(S.T>480||S.U.every(function(u){return u.ammo<=0&&u.atg<=0;}))){ var w=S.U[0].hp>S.U[1].hp?0:1; if(S.U[0].hp===S.U[1].hp) w=S.st[0].hit>S.st[1].hit?0:S.st[1].hit>S.st[0].hit?1:(rnd()<0.5?0:1); /* empate exacto: lo decide la semilla, no el color */
       /* sin derribo: gana el que puede perforar el frontal del otro (fichas) si el otro no puede perforar el suyo; unos rasguños no le dan la victoria al que nunca podría destruir al rival (regla del juego) */
       var cap=S.U.map(function(u,i){ var o=S.U[1-i]; return ((u.K.pm||0)>=(o.K.ke||0))||((u.K.pa||0)>0&&u.atg>0&&(u.K.pa||0)>=(o.K.ce||0)); }); if(cap[0]!==cap[1]){ w=cap[0]?0:1; S.capW=true; }
       S.over={w:w,how:'pts'}; log('Fin sin carro destruido: se acaba el tiempo'+(S.capW?'. Gana el '+S.U[w].sn+': su cañón perfora el frontal del '+S.U[1-w].sn+' y el del '+S.U[1-w].sn+' no perfora el suyo':''),'No tank knocked out: time is up'+(S.capW?'. The '+S.U[w].sn+' wins: its gun penetrates the '+S.U[1-w].sn+'’s front and the '+S.U[1-w].sn+'’s does not penetrate its own':''),'end'); }
@@ -901,6 +928,7 @@ function GNDview(cv,S){ var g=cv.getContext('2d'), W=0,H=0,dpr=1,rot=false,sc=1,
 var SAM2=/\b(?:RIM-\d+|Standard|SM-[1-6]|ESSM|Sea Sparrow|Aster|Barak|Sea Wolf|Sea Dart|Sea Ceptor|CAMM|S-300F?M?|Fort-?M?\b|Shtil|Kinzhal|Kortik|OSA-?MA?|Tor-?M?\d?\b|Klinok|HHQ-?\d+|HQ-\d+|Aspide|Albatros|Crotale|Mistral|Sadral|Redut|Poliment|Sea ?Cat|Terrier|Tartar|Talos|Volna|Shtorm|Uragan|Umkhonto|superficie-aire|antiaére\w*)/i;
 var HEAVY=/Granit|P-700|P-500|Bazalt|P-1000|Vulkan|P-6\b/i;
 function cntIn(s,re){ var m,best=0,g=new RegExp(re.source,'gi'); while((m=g.exec(String(s||'')))){ var v=parseInt(m[1],10); if(v>best&&v<=128) best=v; if(g.lastIndex===m.index) g.lastIndex++; } return best; }
+var MFR=/\b(?:Aegis|AEGIS|SPY-[167]\w*|SAMPSON|APAR|EMPAR|Herakles|Type 346\w*|MF-STAR|Kronos|SEA FIRE|Sea Fire|CEAFAR|Poliment)\b|multifunci[oó]n|multifunction|AESA/;
 function marKit(a,I){ if(a._mk) return a._mk; var L=linesOf(a), F=a.F||{}, K={};
   function lw(r,not){ for(var i=0;i<L.length;i++){ if(r.test(L[i])&&!(not&&not.test(L[i]))) return L[i]; } return null; }
   var as=lw(/Harpoon|Exocet|NSM|Naval Strike|Kalibr|Klub|Oniks|Yakhont|BrahMos|Granit|Moskit|\bUran\b|Kh-35|P-15|P-500|P-700|P-800|P-270|Termit|Styx|SS-N-|YJ-|C-80\d|Otomat|Teseo|RBS[- ]?15|Gabriel|Hsiung|Type 90 SSM|SSM-|Penguin|Zircon|Tsirkon|Bazalt|Sea Skua/i)||lw(ASHM_GEN);
@@ -910,7 +938,10 @@ function marKit(a,I){ if(a._mk) return a._mk; var L=linesOf(a), F=a.F||{}, K={};
   var SAMN=/\b(?:RIM-\d+\w*|Standard|SM-[1-6]\w*|ESSM|Sea Sparrow|Aster ?\d*|Barak ?\w*|Sea Wolf|Sea Dart|Sea Ceptor|CAMM|S-300F?M?|Shtil-?\d?|Kinzhal|Kortik|OSA-?MA?|Tor-?M?\d?|Klinok|HHQ-?\d+\w*|HQ-\d+\w*|Aspide|Albatros|Crotale|Mistral|Sadral|Redut|Poliment|Sea ?Cat|Terrier|Tartar|Talos|Volna|Shtorm|Uragan|Umkhonto)(?![A-Za-zñ])/i;
   var sl=null; for(var si=0;si<L.length;si++){ if(L[si]!==as&&(SAMN.test(L[si])||(SAM2.test(L[si])&&/misil|missile/i.test(L[si])))&&!/^\W*\d*\W*(?:tubos?|torpedo)/i.test(L[si])){ if(SAMN.test(L[si])){ sl=L[si]; break; } if(!sl) sl=L[si]; } }
   if(sl){ var st=null,sa=null,mm,gs=new RegExp(SAMN.source,'gi'); while((mm=gs.exec(sl))){ if(/RIM-161|SM-3|RIM-174|SM-6/i.test(mm[0])) continue; var tk_=/SM-[12]\s?MR|RIM-66/i.test(mm[0])?'RIM-66':/SM-[12]\s?ER|RIM-67/i.test(mm[0])?'RIM-67':/^ESSM$/i.test(mm[0])?'RIM-162':(/^Standard$/i.test(mm[0])&&/SM-[12]\s?MR|RIM-66/i.test(sl))?'RIM-66':mm[0]; var lk_=wlink(tk_,I,'sam'); if(!st){ st=mm[0]; sa=lk_; } if(lk_&&lk_.walc&&(!(sa&&sa.walc)||(/\d/.test(mm[0])&&!/\d/.test(st)))){ st=mm[0]; sa=lk_; if(/\d/.test(st)) break; } } if(!st) st=LL2('antiaéreos','SAM'); var sn=cntIn(sl,/(\d{1,3})\s*(?:×\s*)?(?:misiles|missiles)/)||cntIn(sl,/(\d{1,3})\s*celdas/);
-    var mod=era(a)>=1980; K.sam={n:st, arm:sa, km:(sa&&sa.walc)?Math.min(sa.walc,400):40, src:(sa&&sa.walc)?'ficha':'est', N:Math.max(4,Math.min(96,sn||16)), Nsrc:sn?'ficha':'est', pk:mod?0.6:0.45, ch:mod?4:2}; }
+    var mod=era(a)>=1980;
+    /* radar multifunción de antenas planas (Aegis/SPY-1, SAMPSON, APAR, EMPAR, MF-STAR, Poliment…) nombrado en la ficha: guía muchos misiles antiaéreos a la vez y reacciona antes. Antes contaba igual que un buque de 1980 con radares de dirección de tiro separados. Valores: estimación de M.A.T */
+    var mfr=mod&&MFR.test(String(F.sensores||'')+' '+L.join(' '));
+    K.sam={n:st, arm:sa, km:(sa&&sa.walc)?Math.min(sa.walc,400):40, src:(sa&&sa.walc)?'ficha':'est', N:Math.max(4,Math.min(96,sn||16)), Nsrc:sn?'ficha':'est', pk:mfr?0.7:mod?0.6:0.45, ch:mfr?8:mod?4:2, mfr:mfr, sup:mfr?0.85:0.7}; }
   var cl=lw(CIWS); if(cl) K.ciws={n:rx(cl,/Phalanx|Goalkeeper|Meroka|AK-630|Kashtan|Pantsir|SeaRAM|Kortik|Type 730|Type 1130|Millennium|RAM\b/i)||''};
   var best=0,brl=1,gl=null; L.forEach(function(l){ if(/torpedo|misil|missile|CIWS|Phalanx|Goalkeeper|Meroka|AK-630|Kashtan|Kortik|ametralladora|machine gun|cohete|rocket|mina|carga de profundidad|antisubmarin|blindaje|cinturón/i.test(l)) return; var c=0,m,g=/(\d{2,3}(?:[.,]\d)?)\s*mm/g; var t=esN(l); while((m=g.exec(t))){ var v=parseFloat(m[1].replace(',','.')); if(v>=57&&v<=460&&v>c) c=v; } var gc=/(\d{1,2}(?:[.,]\d)?)\s*cm\b/g; while((m=gc.exec(t))){ var v2=parseFloat(m[1].replace(',','.'))*10; if(v2>=57&&v2<=460&&v2>c) c=v2; } var mi=t.match(/(\d{1,2}(?:[.,]\d+)?)\s*(?:pulgadas|in\b|")/i); if(!c&&mi){ var vi=parseFloat(mi[1].replace(',','.'))*25.4; if(vi>=57&&vi<=460) c=vi; } if(c>best){ best=c; gl=l; var nb=t.match(/^(\d{1,2})\s*×/); brl=nb?Math.min(12,parseInt(nb[1],10)):1; } });
   if(best){ var c2=best; var prj=cntIn(esN(gl),/(\d{2,4})\s*(?:proyectiles|disparos estibados|rounds)/); K.gun={cal:Math.round(c2), brl:brl, rdsrc:prj?'ficha':'est', km:c2<=80?16:c2<=135?23:c2<=160?25:c2<=210?28:c2<=310?35:38, rpm:c2<=80?60:c2<=135?20:c2<=160?8:c2<=210?4:2, rd:prj&&prj>=50&&prj<=3000?prj:(c2<=135?400:150*brl), line:gl}; }
@@ -931,8 +962,8 @@ function MARsim(A,B,WA,WB,seed,night){
   var nA=mShort(A), nB=mShort(B); if(nA===nB){ nA+=LL2(' (azul)',' (blue)'); nB+=LL2(' (rojo)',' (red)'); }
   [A,B].forEach(function(a,i){ var K=loMar(marKit(a,I),i?WB:WA); S.U.push({i:i,a:a,sn:i?nB:nA,K:K,x:0,y:0,hd:0,hp:1,alive:true,ash:K.ash?K.ash.N:0,sam:K.sam?K.sam.N:0,chaff:K.chaff,grd:K.gun?K.gun.rd:0,gcd:0,scd:0,ccd:0,salvo:0,q:[],trk:false,trail:[]}); });
   var U=S.U, a0=U[0], b0=U[1]; var prs=mkRng(((seed*7919)+41)>>>0);
-  /* puente: el azul (tu elección) reacciona con tiempos nominales; el rojo (la máquina) cambia en cada partida */
-  U.forEach(function(u){ u.rk=u.i?5+prs()*8:8; u.fcq=u.i?0.85+prs()*0.4:1; u.w=0; u.gk=0; u.gn=0; u.ghd=null; u.cB=0; });
+  /* puente (estimación de M.A.T): los dos reaccionan y corrigen el tiro con valores del mismo reparto, distintos en cada partida (de la serie de la semilla, uno detrás de otro) */
+  U.forEach(function(u){ u.rk=5+prs()*8; u.fcq=0.85+prs()*0.4; u.w=0; u.gk=0; u.gn=0; u.ghd=null; u.cB=0; });
   function eff(u,t){ var d=marDet(u.K,t.K,S.night); return Math.max(u.K.ash?Math.min(u.K.ash.km*1000,d):0, u.K.gun?u.K.gun.km*1000:0, d*0.6); }
   var D0=Math.max(60000,Math.min(230000,Math.max(eff(a0,b0),eff(b0,a0))+40000+rnd()*20000));
   var off=(rnd()-0.5)*0.6; a0.x=0; a0.y=0; b0.x=D0*Math.cos(off); b0.y=D0*Math.sin(off);
@@ -952,8 +983,8 @@ function MARsim(A,B,WA,WB,seed,night){
   function hit(P){ var t=P.tgt; P.done=true; P.fade=0; S.st[P.own.i].mh++; var dmg=0.33*(P.wh/220)*Math.pow(9800/t.K.d,0.55); t.hp-=dmg; fx({k:'hit',x:t.x,y:t.y,life:8});
     log('¡Impacto! Un '+P.own.K.ash.n+' alcanza al '+t.sn+' (integridad '+Math.max(0,Math.round(t.hp*100))+' %)','Hit! A '+P.own.K.ash.n+' strikes the '+t.sn+' (integrity '+Math.max(0,Math.round(t.hp*100))+' %)',P.own.i?'r':'b');
     if(t.hp<=0&&t.alive){ t.alive=false; S.kill={by:P.own.i,w:'ashm',t:S.T}; S.over={w:P.own.i,how:'ko'}; log('El '+t.sn+' queda fuera de combate','The '+t.sn+' is put out of action','end'); fx({k:'boom',x:t.x,y:t.y,life:14}); } }
-  S.step=function(dt0){ if(S.over) return; var dt=dt0*4; S.T+=dt;
-    U.forEach(function(u){ var t=U[1-u.i]; if(!u.alive) return; var d=dist(u,t);
+  S.step=function(dt0){ if(S.over) return; var dt=dt0*4; S.T+=dt; S.k=(S.k||0)+1;
+    (S.k%2?[U[0],U[1]]:[U[1],U[0]]).forEach(function(u){ var t=U[1-u.i]; if(!u.alive) return; var d=dist(u,t); /* orden de turno alterno en cada paso */
       if(!u.trk&&t.alive&&d<=marDet(u.K,t.K,S.night)){ u.trk=true; S.st[u.i].det={d:d,t:S.T,how:(u.K.helo&&d>hzn(u.K.mast,t.K.mast))?'helo':(u.K.radar?'radar':'vis')};
         var h=S.st[u.i].det.how; log('El '+u.sn+' detecta al '+t.sn+' a '+km(d)+(h==='helo'?' con su helicóptero':h==='radar'?' con su radar':' a simple vista'),u.sn+' detects the '+t.sn+' at '+km(d)+(h==='helo'?' with its helicopter':h==='radar'?' with its radar':' by eye'),u.i?'r':'b'); }
       /* rumbo */
@@ -987,7 +1018,7 @@ function MARsim(A,B,WA,WB,seed,night){
       inc.forEach(function(P){ var d=dist(P,t); if(!P.seen&&d<=Dm){ P.seen=true; P.seenT=S.T; if(!t.mlog||S.T-t.mlog>60){ t.mlog=S.T; log('El '+t.sn+' detecta misiles en vuelo rasante a '+km(d),'The '+t.sn+' detects sea-skimming missiles at '+km(d),t.i?'r':'b'); } } });
       t.scd-=dt; if(t.K.sam&&t.sam>0&&t.scd<=0){ var live=S.P.filter(function(q){return q.k==='sam'&&!q.done&&q.own===t;}).length;
         var cand=inc.filter(function(P){ return P.seen&&P.eng<2&&dist(P,t)<=t.K.sam.km*1000&&dist(P,t)>2500; }).sort(function(p,q){return dist(p,t)-dist(q,t);});
-        if(cand.length&&live<t.K.sam.ch*2){ var P=cand[0]; P.eng++; t.sam--; t.scd=t.K.mod?2:5; S.P.push({k:'sam',own:t,tgt:P,x:t.x,y:t.y,v:900,trail:[[t.x,t.y]],done:false,life:0});
+        if(cand.length&&live<t.K.sam.ch*2){ var P=cand[0]; P.eng++; t.sam--; t.scd=t.K.sam.mfr?1.5:t.K.mod?2:5; S.P.push({k:'sam',own:t,tgt:P,x:t.x,y:t.y,v:900,trail:[[t.x,t.y]],done:false,life:0});
           if(!t.slog||S.T-t.slog>40){ t.slog=S.T; log('El '+t.sn+' lanza misiles '+t.K.sam.n+' contra los misiles que llegan','The '+t.sn+' launches '+t.K.sam.n+' missiles at the incoming missiles',t.i?'r':'b'); } } }
       t.ccd-=dt; var close=inc.filter(function(P){return dist(P,t)<12000;});
       if(t.chaff>0&&t.ccd<=0&&close.length){ t.chaff--; t.ccd=40; var cx=t.x+Math.cos(t.hd+2.2)*900, cy=t.y+Math.sin(t.hd+2.2)*900; fx({k:'chaff',x:cx,y:cy,life:90});
@@ -1006,7 +1037,7 @@ function MARsim(A,B,WA,WB,seed,night){
         else if(!P.aim&&t.alive&&dg<st+60) hit(P);
         else if(!t.alive){ P.done=true; P.fade=0; } else if(P.trav>P.max){ kill(P,'fuel'); } }
       else if(P.k==='sam'){ var M=P.tgt; P.life+=dt; if(M.done){ P.done=true; P.fade=0; return; } var w2=Math.atan2(M.y-P.y,M.x-P.x); var s2=P.v*dt; var dm=Math.hypot(M.x-P.x,M.y-P.y);
-        if(dm<=s2+150){ P.done=true; P.fade=0; var o=P.own; /* sin dados: la eficacia del sistema (estimación) se cumple de forma fija; con pk 0,7, 7 de cada 10 interceptan, en orden, y los demás pasan cerca */ o.sacc=(o.sacc||0)+o.K.sam.pk*(M.sup?0.7:1); if(o.sacc>=1){ o.sacc-=1; kill(M,'sam'); } else fx({k:'puff',x:M.x,y:M.y,life:3}); return; }
+        if(dm<=s2+150){ P.done=true; P.fade=0; var o=P.own; /* sin dados: la eficacia del sistema (estimación) se cumple de forma fija; con pk 0,7, 7 de cada 10 interceptan, en orden, y los demás pasan cerca */ o.sacc=(o.sacc||0)+o.K.sam.pk*(M.sup?(o.K.sam.sup||0.7):1); if(o.sacc>=1){ o.sacc-=1; kill(M,'sam'); } else fx({k:'puff',x:M.x,y:M.y,life:3}); return; }
         P.x+=Math.cos(w2)*s2; P.y+=Math.sin(w2)*s2; P.trail.push([P.x,P.y]); if(P.trail.length>12) P.trail.shift(); if(P.life>120){ P.done=true; P.fade=0; } }
       else if(P.k==='shell'){ P.t+=dt; var f=Math.min(1,P.t/P.tof); var t3=P.tgt; var ex=P.tx, ey=P.ty; P.x=P.sx+(ex-P.sx)*f; P.y=P.sy+(ey-P.sy)*f;
         if(f>=1){ P.done=true; P.fade=0; var Lh=(+t3.a.eslora||120)/2, Bh=(+t3.a.manga||14)/2, ddx=ex-t3.x, ddy=ey-t3.y, al=ddx*Math.cos(t3.hd)+ddy*Math.sin(t3.hd), ac=-ddx*Math.sin(t3.hd)+ddy*Math.cos(t3.hd); P.hit=(al*al)/(Lh*Lh)+(ac*ac)/(Bh*Bh)<=1; if(Math.hypot(ddx,ddy)<400) t3.snT=S.T;
@@ -1016,7 +1047,7 @@ function MARsim(A,B,WA,WB,seed,night){
     S.P.forEach(function(P){ if(P.done) P.fade=(P.fade||0)+dt; }); S.P=S.P.filter(function(P){return !P.done||P.fade<1;});
     S.FX.forEach(function(f){f.t+=dt;}); S.FX=S.FX.filter(function(f){return f.t<f.life;});
     var fly=S.P.some(function(P){return !P.done;})||U.some(function(u){return u.q.length;});
-    if(!S.over&&!fly&&(S.T>10800||(!offense(a0)&&!offense(b0)))){ var w=a0.hp>=b0.hp?0:1; if(a0.hp===b0.hp) w=(S.st[0].mh+S.st[0].gh)>=(S.st[1].mh+S.st[1].gh)?0:1; S.over={w:w,how:'pts'}; log('Fin: ningún buque queda fuera de combate','Over: no ship is put out of action','end'); }
+    if(!S.over&&!fly&&(S.T>10800||(!offense(a0)&&!offense(b0)))){ var w=a0.hp>b0.hp?0:1; if(a0.hp===b0.hp){ var h0=S.st[0].mh+S.st[0].gh, h1=S.st[1].mh+S.st[1].gh; w=h0>h1?0:h1>h0?1:(rnd()<0.5?0:1); } /* empate exacto: lo decide la semilla, no el color */ S.over={w:w,how:'pts'}; log('Fin: ningún buque queda fuera de combate','Over: no ship is put out of action','end'); }
     if(S.over&&!S.reasons.length) S.reasons=marReasons(S);
   };
   S.post=function(dt){ S.FX.forEach(function(f){f.t+=dt*10;}); S.FX=S.FX.filter(function(f){return f.t<f.life;}); };
@@ -1111,7 +1142,7 @@ function loOpts(a,mode,W){ var key='_lo_'+mode+(LGE()?'en':'es'); if(a[key]) ret
   if(mode==='cielo'){
     var K0=airKit(a,(W||[]).filter(function(w){return true;}));
     var cv=function(t){ return LO_SYN[t]||t; };
-    var mkT=function(x,k){ var arm=wlink(x.tok,I,k), km=arm&&arm.walc?arm.walc:RANGE_DEF[k], sp=spdOf(x.tok), mx=loCnt(L,[x.tok].concat(Object.keys(LO_SYN).filter(function(s){return LO_SYN[s]===x.tok;}))); return {tok:x.tok,n:arm?arm.n:x.tok,arm:arm,km:km,src:arm&&arm.walc?'ficha':'est',mach:sp||3,msrc:sp?'wiki':'est',max:mx,maxsrc:mx?'ficha':'est',all:k==='wvr'?(ALLASP.test(x.tok)||era(a)>=1978):false,line:x.line}; };
+    var mkT=function(x,k){ var arm=wlink(x.tok,I,k), km=arm&&arm.walc?arm.walc:RANGE_DEF[k], sp=spdOf(x.tok), mx=loCnt(L,[x.tok].concat(Object.keys(LO_SYN).filter(function(s){return LO_SYN[s]===x.tok;}))); return {tok:x.tok,n:arm?arm.n:x.tok,arm:arm,km:km,src:arm&&arm.walc?'ficha':'est',mach:sp||3,msrc:sp?'wiki':'est',max:mx,maxsrc:mx?'ficha':'est',all:k==='wvr'?allAsp(x.tok,a):false,line:x.line}; };
     var B=loTok(L,AAM_BVR,cv).map(function(x){return mkT(x,'bvr');}), Ir=loTok(L,AAM_WVR,cv).filter(function(x){return !/Stinger|Mistral|Igla|Strela/i.test(x.tok)||a.cat!=='aviones';}).map(function(x){return mkT(x,'wvr');});
     var dA_=function(L_){ var s={}; return L_.filter(function(x){ var k=x.arm?x.arm.id:x.tok.toUpperCase(); if(s[k]) return false; s[k]=1; return true; }); }; B=dA_(B); Ir=dA_(Ir);
     if(!B.length&&K0.bvr) B=[mkT({tok:K0.bvr.n,line:''},'bvr')]; if(!Ir.length&&K0.ir) Ir=[{tok:K0.ir.n,n:K0.ir.n,arm:K0.ir.arm,km:K0.ir.km,src:K0.ir.src,mach:K0.ir.mach,msrc:K0.ir.msrc,max:null,maxsrc:'est',all:K0.ir.all,gen:1}];
@@ -1205,7 +1236,7 @@ function loGnd(K,W){ var O=W&&W.loO, LO=W.lo; if(!O||!LO) return K; var mix={}, 
   K.mix=mix; K.R=R2; K.ammo=tot; if(rmax) K.rng=rmax; return K; }
 function loMar(K,W){ var O=W&&W.loO, LO=W&&W.lo; if(!O||!LO) return K; K=Object.assign({},K);
   O.G.forEach(function(g){ var T_=loT(O,g,LO), n=LO.c[g.k]||0; if(g.k==='ash'){ K.ash=n?{n:T_.n,tok:T_.tok,arm:T_.arm,km:T_.km,src:T_.src,N:n,Nsrc:'lo',sup:T_.sup,v:T_.v,wh:T_.wh}:null; }
-    if(g.k==='sam'){ var mod=K.mod; K.sam=n?{n:T_.n,arm:T_.arm,km:T_.km,src:T_.src,N:n,Nsrc:'lo',pk:mod?0.6:0.45,ch:mod?4:2}:null; } });
+    if(g.k==='sam'){ var mod=K.mod, mfr=!!(K.sam&&K.sam.mfr); K.sam=n?{n:T_.n,arm:T_.arm,km:T_.km,src:T_.src,N:n,Nsrc:'lo',pk:mfr?0.7:mod?0.6:0.45,ch:mfr?8:mod?4:2,mfr:mfr,sup:mfr?0.85:0.7}:null; } });
   return K; }
 /* ¿pueden enfrentarse? (que los dos puedan disparar y hacerse daño en este modo) */
 function loW(a,mode){ var W=weaponsOf(a,mode).filter(function(w){return w.k!=='bomb_air';}); W.forEach(function(w){ if(w.tok&&!w.arm) w.arm=wlink(w.tok,loI(),w.k); }); return W; }
@@ -1295,7 +1326,7 @@ window.MAT_DUELO=function(app,X){
     li.push('<li><b>'+LL2('Detección','Detection')+':</b> '+(K.radar?LL2('radar, limitado por el horizonte: ≈','radar, limited by the horizon: ≈')+fmtD(hzn(K.mast,K.mast))+LL2(' contra un buque parecido y ≈',' against a similar ship and ≈')+fmtD(hzn(K.mast,5))+LL2(' contra misiles rasantes',' against sea-skimming missiles')+' '+E:LL2('a simple vista: unos 20 km de día y 8 km de noche','by eye: about 20 km by day and 8 km at night')+' '+E)+(K.helo?' · '+LL2('helicóptero embarcado: ≈180 km','embarked helicopter: ≈180 km')+' '+E:'')+'</li>');
     if(K.ash) li.push('<li><b>'+LL2('Antibuque','Anti-ship')+':</b> '+X.esc(K.ash.n)+' ×'+K.ash.N+(K.ash.Nsrc==='ficha'?FS:' '+E)+' · '+nf(K.ash.km)+' km'+(K.ash.src==='ficha'?lk(K.ash):' '+E)+' · '+(K.ash.sup?LL2('supersónico','supersonic'):LL2('subsónico, vuelo rasante','subsonic, sea-skimming'))+' '+E+'</li>');
     else li.push('<li><b>'+LL2('Antibuque','Anti-ship')+':</b> '+LL2('sin misiles antibuque en la ficha','no anti-ship missiles in the data sheet')+'</li>');
-    li.push('<li><b>'+LL2('Defensa','Defence')+':</b> '+(K.sam?X.esc(K.sam.n)+' ×'+K.sam.N+(K.sam.Nsrc==='ficha'?FS:' '+E)+', '+nf(K.sam.km)+' km'+(K.sam.src==='ficha'?lk(K.sam):' '+E):LL2('sin misiles antiaéreos','no SAMs'))+' · '+(K.ciws?'CIWS '+X.esc(K.ciws.n)+FS:LL2('sin CIWS','no CIWS'))+' · '+(K.chaff?K.chaff+' '+LL2('cargas de chaff','chaff loads')+' '+E:LL2('sin chaff','no chaff'))+'</li>');
+    li.push('<li><b>'+LL2('Defensa','Defence')+':</b> '+(K.sam?X.esc(K.sam.n)+' ×'+K.sam.N+(K.sam.Nsrc==='ficha'?FS:' '+E)+', '+nf(K.sam.km)+' km'+(K.sam.src==='ficha'?lk(K.sam):' '+E):LL2('sin misiles antiaéreos','no SAMs'))+(K.sam&&K.sam.mfr?' · '+LL2('radar multifunción','multifunction radar')+FS+': '+LL2('guía muchos misiles a la vez','guides many missiles at once')+' '+E:'')+' · '+(K.ciws?'CIWS '+X.esc(K.ciws.n)+FS:LL2('sin CIWS','no CIWS'))+' · '+(K.chaff?K.chaff+' '+LL2('cargas de chaff','chaff loads')+' '+E:LL2('sin chaff','no chaff'))+'</li>');
     if(K.gun) li.push('<li><b>'+LL2('Cañón','Gun')+':</b> '+K.gun.cal+' mm'+(K.gun.brl>1?' ×'+K.gun.brl:'')+FS+' · '+LL2('alcance ≈','range ≈')+K.gun.km+' km, '+K.gun.rpm+LL2(' disparos/min',' rounds/min')+' '+E+'</li>');
     return '<div class="d2-side"><h3>'+col+' '+X.esc(a.n)+'</h3><ul>'+li.join('')+'</ul></div>'; }
   function side(a,W,col){ if(!a) return '<div></div>'; if(MODE==='cielo') return sideAir(a,W,col); if(MODE==='mar') return sideMar(a,col,W); var c=cruise(a,MODE), li=[];
@@ -1304,7 +1335,7 @@ window.MAT_DUELO=function(app,X){
     if(MODE==='suelo'){ var K=gndKit(a,W), FS=' ('+LL2('ficha','data sheet')+')', Fm=(a.F||{}).municion;
       li.unshift('<li><b>'+LL2('Año','Year')+':</b> '+(a.anio?a.anio+FS:'— '+E)+' · <b>'+LL2('Peso','Weight')+':</b> '+(a.peso?String(a.peso).replace('.',LL2(',','.'))+' t'+FS:'—')+'</li>');
       if(Fm) li.push('<li><b>'+LL2('Munición','Ammunition')+':</b> '+X.esc(short(Fm,150))+FS+'</li>');
-      li.push('<li><b>'+LL2('Blindaje frontal','Frontal armour')+':</b> '+nf(K.ke)+' mm '+LL2('frente a perforantes (APFSDS)','vs kinetic rounds (APFSDS)')+' · '+nf(K.ce)+' mm '+LL2('frente a carga hueca (HEAT y misiles)','vs shaped charges (HEAT and missiles)')+(K.armsrc==='ficha'?FS+(K.ceest?' · HEAT '+E:''):' '+E)+(K.armq?'<br><small class="d2-q">«'+X.esc(short(K.armq,140))+'»</small>':'')+'</li>');
+      li.push('<li><b>'+LL2('Blindaje frontal','Frontal armour')+':</b> '+nf(K.ke)+' mm '+LL2('frente a perforantes (APFSDS)','vs kinetic rounds (APFSDS)')+' · '+nf(K.ce)+' mm '+LL2('frente a carga hueca (HEAT y misiles)','vs shaped charges (HEAT and missiles)')+(K.armsrc==='ficha'?FS+(K.ceest?' · HEAT '+E:''):' '+E+(K.armcomp?' <small>'+LL2('(la ficha dice «blindaje compuesto» sin cifra: mediana de las 9 fichas de carros con blindaje compuesto que sí la dan)','(the data sheet says «composite armour» with no figure: median of the 9 tank data sheets with composite armour that do give one)')+'</small>':''))+(K.armq?'<br><small class="d2-q">«'+X.esc(short(K.armq,140))+'»</small>':'')+'</li>');
       li.push('<li><b>'+LL2('Lateral y trasera','Side and rear')+':</b> ≈40 % '+LL2('y','and')+' ≈20 % '+LL2('del frontal','of the front')+' '+E+'</li>');
       if(K.main) li.push('<li><b>'+LL2('Cañón','Main gun')+':</b> '+(K.cal?String(K.cal).replace('.',LL2(',','.'))+' mm':'')+(K.pm>0?(K.cal?' · ':'')+LL2('penetración','penetration')+' ≈'+nf(K.pm)+' mm '+(K.pmsrc==='ficha'?FS:E):'')+' · '+nf(K.ammo)+' '+LL2('disparos','rounds')+(K.ammosrc==='ficha'?FS:' '+E)+' · '+LL2('recarga','reload')+' '+String(K.rl).replace('.',',')+' s '+(K.auto?LL2('(cargador automático) ','(autoloader) '):'')+E+'</li>');
       if(K.atgm) li.push('<li><b>'+LL2('Misil por el cañón','Gun-launched missile')+':</b> '+X.esc(K.atgm.n.replace(/^Misil /,''))+' · ≈'+nf(K.pa)+' mm '+(K.pasrc==='ficha'?FS:E)+'</li>');
@@ -1317,7 +1348,7 @@ window.MAT_DUELO=function(app,X){
   if(MODE!=='cielo') h+='<div class="d2-chips" id="dtime" data-noi18n>'+[['dia',LL2('Día','Day')],['noche',LL2('Noche','Night')]].map(function(q){return '<button class="d2-chip" data-t="'+q[0]+'" aria-pressed="'+((q[0]==='noche')===NIGHT)+'">'+q[1]+'</button>';}).join('')+'</div><p class="note" style="margin:0 0 8px">'+(MODE==='mar'?(NIGHT?LL2('De noche el radar ve igual que de día; los buques sin radar solo ven a unos 8 km. Estimación.','At night radar sees as well as by day; ships without radar only see about 8 km. Estimate.'):LL2('De día los buques con radar detectan hasta el horizonte de radar; uno con helicóptero embarcado ve mucho más lejos. Estimación.','By day ships with radar detect out to the radar horizon; one with an embarked helicopter sees much further. Estimate.')):NIGHT?LL2('De noche solo ven lejos los carros con cámara térmica (si la ficha no lo dice, de 1980 en adelante): unos 3 km; sin ella, unos 700 m. Estimación.','At night only tanks with a thermal sight see far (if the data sheet does not say, from 1980 onwards): about 3 km; without one, about 700 m. Estimate.'):LL2('De día se detectan a unos 3,5 km si nada tapa la línea de visión (colinas, casas, bosques o humo). Estimación.','By day they spot each other at about 3.5 km if nothing blocks the line of sight (hills, houses, woods or smoke). Estimate.'))+'</p>';
   if(!DUELO_LIVE[MODE]){ h+='<div class="d2-card" data-noi18n><p style="margin:0 0 6px"><b>'+LL2(MN2[MODE][0],MN2[MODE][1])+': '+LL2('próximamente','coming soon')+'</b></p><p class="note" style="margin:0 0 10px">'+LL2('Primero sale el duelo aéreo; tierra (carros de combate) y mar llegan en las próximas versiones.','The air duel comes first; ground (main battle tanks) and sea arrive in the next versions.')+'</p><a class="d2-btn" href="#/duelo?m=cielo">'+LL2('Ir al duelo aéreo','Go to the air duel')+'</a></div>'; X.set(h,LL2('Duelo','Duel')); Array.prototype.forEach.call(document.querySelectorAll('#dmode .d2-chip[data-m]'),function(b){b.addEventListener('click',function(){location.hash='#/duelo?m='+b.getAttribute('data-m');});}); return; }
   h+='<div class="cmp">'+X.pickBtn('a',A,LL2('🔵 Elegir modelo azul','🔵 Pick the blue model'))+X.pickBtn('b',B,LL2('🔴 Elegir modelo rojo','🔴 Pick the red model'))+'</div>';
-  if(A||B) h+='<div class="d2-card" data-noi18n id="dsides"><div class="d2-two">'+side(A,WA,'<i class="d2-dot b"></i>')+side(B,WB,'<i class="d2-dot r"></i>'+(B?LL2('(máquina)','(computer)'):''))+'</div><p class="note" style="margin:8px 0 0">'+LL2('Munición, cadencia, puntería y daño: reglas del juego de M.A.T (estimación). Sin dados: cada impacto o fallo sale de la distancia, el movimiento, lo que asoma del blanco, las contramedidas y la reacción de cada tripulación; tu modelo (azul) lleva siempre tripulación nominal y la máquina (rojo) reacciona y apunta algo distinto en cada partida. Los alcances con enlace salen de la ficha de Armamento del arma.','Ammunition, rate of fire, aiming and damage: M.A.T game rules (estimate). No dice: every hit or miss follows from range, movement, how much of the target shows, countermeasures and each crew’s reaction; your model (blue) always has a nominal crew and the computer (red) reacts and aims a little differently each game. Ranges with a link come from the weapon’s Armament data sheet.')+'</p></div>';
+  if(A||B) h+='<div class="d2-card" data-noi18n id="dsides"><div class="d2-two">'+side(A,WA,'<i class="d2-dot b"></i>')+side(B,WB,'<i class="d2-dot r"></i>'+(B?LL2('(máquina)','(computer)'):''))+'</div><p class="note" style="margin:8px 0 0">'+LL2('Munición, cadencia, puntería y daño: reglas del juego de M.A.T (estimación). Sin dados: cada impacto o fallo sale de la distancia, el movimiento, lo que asoma del blanco, las contramedidas y la reacción de cada tripulación; las dos tripulaciones (azul y rojo) salen del mismo reparto: reaccionan y apuntan algo distinto en cada partida, con las mismas probabilidades para los dos. Los alcances con enlace salen de la ficha de Armamento del arma.','Ammunition, rate of fire, aiming and damage: M.A.T game rules (estimate). No dice: every hit or miss follows from range, movement, how much of the target shows, countermeasures and each crew’s reaction; both crews (blue and red) come from the same spread: they react and aim a little differently each game, with the same odds for both. Ranges with a link come from the weapon’s Armament data sheet.')+'</p></div>';
   var SUG=null; if(A&&B&&!PAIR.ok){ SUG=sugg(); h+='<div class="d2-card d2-warnc" data-noi18n role="alert"><p style="margin:0 0 6px"><b>'+LL2('Estos dos no pueden enfrentarse en este modo','These two cannot fight each other in this mode')+'</b></p><p class="note" style="margin:0 0 8px">'+X.esc(PAIR.why)+'</p>'+(SUG?'<a class="d2-btn" href="#/duelo?m='+MODE+'&a='+A.id+'&b='+SUG.id+'">'+LL2('Probar contra: ','Try against: ')+X.esc(SUG.n)+'</a>':'')+'</div>'; }
   h+='<div id="dlowrap">'+loHTML()+'</div>';
   h+='<div class="btns" data-noi18n><button class="btn pri" id="dgo"'+(A&&B&&loFires()?'':' disabled')+'>'+LL2('⚔️ Combatir','⚔️ Fight')+'</button>'+(A?'<button class="btn" id="drr">'+LL2('Rival aleatorio','Random rival')+'</button>':'')+'<button class="btn" id="drand">'+LL2('Los dos al azar','Both at random')+'</button></div>';
@@ -1373,7 +1404,7 @@ window.MAT_DUELO=function(app,X){
       }
       LOS.slice().reverse().forEach(function(s){ R_.unshift(LL2('Carga · ','Load · ')+s); });
       if(MODE==='suelo') U.forEach(function(u){ var ks=Object.keys(u.rd||{}); if(ks.length) R_.push(u.a.n+': '+LL2('disparos por tipo','rounds fired by type')+' — '+ks.map(function(k){ return (u.K.R&&u.K.R[k]?wN(u.K.R[k].n).replace(/\s*\(.*$/,''):k)+' ×'+u.rd[k]; }).join(', ')); });
-      var wn=S.mode==='mar'?win.sn:win.a.n; var hd=S.over.how==='ko'?LL2('🏆 Gana el '+wn,'🏆 The '+wn+' wins'):LL2('🏆 Gana a los puntos el '+wn,'🏆 The '+wn+' wins on points');
+      var wn=S.mode==='mar'?win.sn:win.a.n; var hd=S.over.how==='mutuo'?LL2('🤝 Derribo mutuo: caen los dos (el '+wn+' acierta primero)','🤝 Mutual kill: both go down (the '+wn+' hits first)'):S.over.how==='ko'?LL2('🏆 Gana el '+wn,'🏆 The '+wn+' wins'):LL2('🏆 Gana a los puntos el '+wn,'🏆 The '+wn+' wins on points');
       var el=document.getElementById('dres'); el.innerHTML='<div class="d2-card" data-noi18n><h2 style="margin:0 0 4px">'+X.esc(hd)+'</h2><p class="note">'+X.esc(LL2(MN2[MODE][0],MN2[MODE][1]))+' · '+tF(S.T)+' · '+LL2('semilla ','seed ')+seed+'</p><h3 style="font-size:14px;margin:8px 0 4px">'+LL2('Por qué','Why')+'</h3><ol style="padding-left:20px;margin:0">'+R_.map(function(r){return '<li style="margin:4px 0">'+X.esc(r)+'</li>';}).join('')+'</ol>'+
         '<div style="margin-top:10px"><button class="d2-btn" id="drev">'+LL2('🔁 Revancha','🔁 Rematch')+'</button><button class="d2-btn sec" id="drep">'+LL2('Repetir (misma semilla)','Replay (same seed)')+'</button><button class="d2-btn sec" id="dsw">'+LL2('Cambiar de lado','Swap sides')+'</button><button class="d2-btn sec" id="dsh">'+LL2('🔗 Compartir','🔗 Share')+'</button></div><p class="note" id="dshm" hidden></p></div>';
       document.getElementById('drev').onclick=function(){fight(1+Math.floor(Math.random()*99999));}; document.getElementById('drep').onclick=function(){fight(seed);};
