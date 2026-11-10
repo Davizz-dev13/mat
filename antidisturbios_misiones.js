@@ -59,7 +59,7 @@ function width(x,y){ let best=1e9; for(let a=0;a<180;a+=15){ const r=a*Math.PI/1
 /* ---------------- tabla espacial ---------------- */
 function hashAll(){ const H=G.H||(G.H=new Map()); H.clear(); const add=(o,k)=>{ const key=(Math.floor(o.x/4)<<12)|Math.floor(o.y/4); let a=H.get(key); if(!a){ a=[]; H.set(key,a); } a.push([o,k]); };
   G.P.forEach(p=>{ if(p.on) add(p,0); }); G.U.forEach(u=>u.m.forEach(m=>add(m,u.k==='cab'?2:1))); }
-function near(x,y,r,fn){ const R=Math.ceil(r/4), gx=Math.floor(x/4), gy=Math.floor(y/4); for(let dy=-R;dy<=R;dy++) for(let dx=-R;dx<=R;dx++){ const a=G.H.get(((gx+dx)<<12)|(gy+dy)); if(!a) continue; for(const e of a){ const d=Math.hypot(e[0].x-x,e[0].y-y); if(d<=r) fn(e[0],e[1],d); } } }
+function near(x,y,r,fn){ const R=Math.ceil(r/4), gx=Math.floor(x/4), gy=Math.floor(y/4); for(let dy=-R;dy<=R;dy++) for(let dx=-R;dx<=R;dx++){ const a=G.H.get(((gx+dx)<<12)|(gy+dy)); if(!a) continue; for(const e of a){ const ex=e[0].x-x, ey=e[0].y-y; if(ex*ex+ey*ey>r*r*1.000001+1e-9) continue; const d=Math.hypot(ex,ey); if(d<=r) fn(e[0],e[1],d); } } }
 /* ---------------- ruta del autobús ---------------- */
 function routeInit(R){ const pts=R.map(p=>[p[0],p[1]]); const cum=[0]; for(let i=1;i<pts.length;i++) cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1])); return {pts,cum,len:cum[cum.length-1]}; }
 function rAt(s){ const R=G.route; s=Math.max(0,Math.min(R.len,s)); let i=1; while(i<R.cum.length-1&&R.cum[i]<s) i++; const a=R.pts[i-1], b=R.pts[i], f=(s-R.cum[i-1])/((R.cum[i]-R.cum[i-1])||1); const hd=Math.atan2(b[1]-a[1],b[0]-a[0]); return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,hd]; }
@@ -343,7 +343,7 @@ function layer(){ const M=G.M, k=2; const c=document.createElement('canvas'); c.
   g.fillStyle='rgba(255,255,255,.62)'; g.font='600 6px system-ui,sans-serif'; g.textAlign='center'; g.textBaseline='middle'; (M.l||[]).forEach(l=>{ g.save(); g.translate(l[1],l[2]); g.rotate(l[3]||0); g.fillText(l[0],0,0); g.restore(); });
   return c; }
 function fit(){ const wrap=CV.parentNode; const cw=wrap.clientWidth; const chMax=Math.max(280,Math.min(window.innerHeight*0.6,700)); const ch=Math.round(Math.min(chMax,cw*(G.mi==='bus'?1.15:0.95))); const s0=Math.max(cw/G.M.w,ch/G.M.h);
-  const dpr=Math.min(2,window.devicePixelRatio||1); CV.style.width=cw+'px'; CV.style.height=ch+'px'; CV.width=Math.round(cw*dpr); CV.height=Math.round(ch*dpr);
+  const dpr=Math.min((Math.min(window.innerWidth||999,window.innerHeight||999)<600?1.5:2),window.devicePixelRatio||1); CV.style.width=cw+'px'; CV.style.height=ch+'px'; CV.width=Math.round(cw*dpr); CV.height=Math.round(ch*dpr);
   const z=(G.cam&&G.cam.z)||(G.mi==='bus'?3.2:3.0); G.cam={s0,z,s:s0*z,ox:(G.cam&&G.cam.ox)||0,oy:(G.cam&&G.cam.oy)||0,cw,ch,dpr}; if(!G.camSet){ G.camSet=1; center(G.mi==='bus'?G.bus.x:447,G.mi==='bus'?G.bus.y-30:306); } clampCam(); }
 function clampCam(){ const c=G.cam; c.s=c.s0*c.z; const mw=G.M.w*c.s, mh=G.M.h*c.s; c.ox=mw<=c.cw?(c.cw-mw)/2:Math.min(0,Math.max(c.cw-mw,c.ox)); c.oy=mh<=c.ch?(c.ch-mh)/2:Math.min(0,Math.max(c.ch-mh,c.oy)); }
 function center(x,y){ const c=G.cam; c.ox=c.cw/2-x*c.s; c.oy=c.ch/2-y*c.s; clampCam(); }
