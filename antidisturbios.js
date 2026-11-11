@@ -499,7 +499,7 @@ function verdict(){ const s=G.st, I=k=>G.inc[k]||0, P=G.press; const pac=G.group
   if(marchaOK) ok.push(L('La manifestación pacífica pudo ejercer su derecho sin cargas','The peaceful demonstration exercised its right without charges'));
   if(riv&&s.fightS<15) ok.push(L('Mantuviste separados a los dos grupos rivales','You kept the two rival groups apart'));
   if(!I('sinSalida')&&(I('abre')||G.exits.some(e=>e.open))) ok.push(L('Dejaste vías de salida abiertas para dispersar','You left exit routes open for dispersal'));
-  if(G.groups.some(g=>g.rioted)&&!I('pasividad')&&s.dmg<6) ok.push(L('Respondiste rápido cuando empezó la violencia','You responded quickly when the violence started'));
+  if(G.groups.some(g=>g.rioted)&&!I('pasividad')&&s.dmg<10) ok.push(L('Respondiste rápido cuando empezó la violencia','You responded quickly when the violence started'));
   if(I('cargaPac')) ko.push(L('Cargaste '+I('cargaPac')+' vez/veces contra gente que no era violenta','You charged '+I('cargaPac')+' time(s) at people who were not violent'));
   if(I('humoPac')) ko.push(L('Usaste humo contra gente que no era violenta','You used smoke on people who were not violent'));
   if(I('sinAviso')) ko.push(L('Usaste la fuerza sin aviso previo','You used force with no prior warning'));
@@ -507,7 +507,7 @@ function verdict(){ const s=G.st, I=k=>G.inc[k]||0, P=G.press; const pac=G.group
   if(I('sinSalida')) ko.push(L('La gente que huía se encontró sin salida (avalancha)','People running away had no way out (crush)'));
   if(I('pasividad')) ko.push(L('Tardaste demasiado en responder a la violencia','You took too long to respond to the violence'));
   if(riv&&s.fightS>=15) ko.push(L('Los grupos rivales llegaron a pelearse ('+s.fightS+' s de enfrentamiento)','The rival groups fought ('+s.fightS+' s of clashes)'));
-  if(s.dmg>=6) ko.push(L('Daños importantes en el mobiliario y los comercios','Heavy damage to street furniture and shops'));
+  if(s.dmg>=10) ko.push(L('Daños importantes en el mobiliario y los comercios','Heavy damage to street furniture and shops')); else if(s.dmg>=6) ko.push(L('Daños moderados en el mobiliario urbano ('+s.dmg+' incidentes)','Moderate damage to street furniture ('+s.dmg+' incidents)')); /* 11-11-2026: el texto va con la cantidad: 6-9 moderados, 10 o más importantes */
   if(s.pol>=10) ko.push(L('Demasiados agentes heridos: faltó apoyo o distancia','Too many officers injured: not enough support or distance'));
   if(G.early) ko.push(L('Terminaste la partida antes de que la situación se resolviera','You ended the game before the situation was resolved'));
   if(rg) ok.push(L('Decisiones acertadas por radio: '+rg+' de '+RD.length,'Good radio decisions: '+rg+' of '+RD.length)); Object.keys(INCL).forEach(k=>{ if(I(k)) (INCL[k][0]?ok:ko).push(L(INCL[k][1],INCL[k][2])); }); RD.filter(d=>d.v<0).slice(0,3).forEach(d=>ko.push(L('Radio: ante «'+d.txt+'» elegiste «'+RO[d.c][0]+'»','Radio: to “'+d.txt+'” you chose “'+RO[d.c][1]+'”')));
@@ -861,7 +861,7 @@ function dacc(k,p){ G.ac=G.ac||{}; const v=(G.ac[k]==null?0.5:G.ac[k])+p; if(v>=
 /* ---------------- bucle ---------------- */
 function loop(ts){ RAF=0; if(!G||!/^#\/antidisturbios/.test(location.hash)||!document.getElementById('ad-cv')){ return; }
   const dt=Math.min(0.1,(ts-(LAST||ts))/1000); LAST=ts;
-  if(G.phase==='live'&&!G.pause&&!G.pend&&!G.radio&&!G.tut){ G.acc=(G.acc||0)+dt*6*G.spd; let n=0; while(G.acc>=0.5&&n<30&&G.phase==='live'){ G.acc-=0.5; n++; step(0.5); } if(n>=30) G.acc=0; }
+  if(G.phase==='live'&&!G.pause&&!G.pend&&!G.radio&&!G.tut){ G.acc=(G.acc||0)+dt*6*G.spd; let n=0; while(G.acc>=0.5&&n<30&&G.phase==='live'&&!G.radio&&!G.pend&&!G.pause&&!G.tut){ G.acc-=0.5; n++; step(0.5); } /* 11-11-2026: se para en el mismo paso en que se abre la radio: así el resultado no depende de los fotogramas ni de la velocidad */ if(n>=30) G.acc=0; }
   draw(); if(ts-(G.hudT||0)>350&&G.phase==='live'){ G.hudT=ts; const h=document.getElementById('ad-hud'); if(h){ const hs=hudHTML(); if(h.__s!==hs){ h.__s=hs; h.innerHTML=hs; } } const lgE=document.getElementById('ad-log'); if(lgE&&G.logN!==G.log.length+':'+(G.log[0]&&G.log[0].t)){ G.logN=G.log.length+':'+(G.log[0]&&G.log[0].t); lgE.innerHTML=G.log.slice(0,40).map(e=>'<li class="'+e.c+'"><time>'+clock(e.t)+'</time>'+esc(e.txt)+'</li>').join(''); } const dbe=document.querySelector('.ad-dlg'); if(dbe){ const cd=Math.max(0,Math.ceil((G.dlgT||0)-G.t)); const ht=L('Diálogo','Dialogue')+(cd?' <small>'+cd+' s</small>':''); if(dbe.innerHTML!==ht) dbe.innerHTML=ht; } const ut=document.querySelector('.ad-unit .t'); if(ut&&G.sel){ ut.innerHTML='<b>'+G.sel.nm+'</b> · '+(G.sel.van?L('Furgón UIP','UIP van'):(G.sel.n-G.sel.inj)+L(' agentes',' officers')+(G.sel.inj?' · '+G.sel.inj+L(' heridos',' injured'):''))+' · '+ustate(G.sel); } }
   RAF=requestAnimationFrame(loop); }
 function step(dt){ snap(); G.t+=dt; if(G.dirty) computeFields(); while(G.events.length&&G.events[0].t<=G.t) doEvent(G.events.shift().k); moveUnits(dt); formUnits(dt); moveAgents(dt); projectiles(); if(Math.floor(G.t)!==Math.floor(G.t-dt)) tick1(); }
