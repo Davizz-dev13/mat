@@ -85,7 +85,7 @@ export function route(app,ctx,p){ css(); ctxG=ctx; stop3d();
   ctx.set('<p class="sub" style="padding:30px 0">'+L('Cargando…','Loading…')+'</p>',L('Crea tu soldado','Build your soldier'));
   data().then(()=>{ if(!/^#\/soldado/.test(location.hash)) return; page(app,ctx); }).catch(()=>{ ctx.set(ctx.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Crea tu soldado','Build your soldier')]])+'<p class="sub">'+L('No se pudo cargar. Comprueba la conexión.','Could not load. Check your connection.')+'</p>'); });
 }
-function stop3d(){ if(ACTIVE3D){ try{ ACTIVE3D.destroy(); }catch(e){} ACTIVE3D=null; } }
+let EQN=0, EQBUSY=false; function stop3d(){ EQN++; EQBUSY=false; if(ACTIVE3D){ try{ ACTIVE3D.destroy(); }catch(e){} ACTIVE3D=null; } }
 function page(app,ctx){
   const D=DATA; const st=loadSt();
   const sv=new URLSearchParams((location.hash.split('?')[1]||''));
@@ -111,7 +111,7 @@ function page(app,ctx){
   function shareData(){ const r=RL(st.role), T=totals(st), bw=+st.kg||0, pct=bw?T.tot/bw*100:null, b=pct!=null?band(pct):null, wi=T.wi;
     const lvn=[L('Carga de combate','Fighting load'),L('Marcha de aproximación','Approach march'),L('Marcha de emergencia','Emergency march')];
     const items=T.rows.slice().sort((p,q)=>q[2]-p[2]).map(([id,q,g])=>[LL(D.items[id].n)+(q>1?' ×'+q:''),g/1000]);
-    const mob=[]; const lb=T.tot/LBKG; if(lb>40){ const over=(lb-40)/10; mob.push([L('Distancia en 6 h','Distance in 6 h'),'−'+nf(2*over,1)+' km'],[L('Pista de asalto','Assault course'),'+'+nf(15*over,0)+' %']); } else mob.push([L('Penalización FM 21-18','FM 21-18 penalty'),L('ninguna','none')]);
+    const mob=[]; const lb=T.tot/LBKG; if(lb>40){ const over=(lb-40)/10; mob.push([L('Distancia en 6 h','Distance in 6 h'),nf(2*over,1)+L(' km menos',' km less')],[L('Pista de asalto','Assault course'),'+'+nf(15*over,0)+' %']); } else mob.push([L('Penalización FM 21-18','FM 21-18 penalty'),L('ninguna','none')]);
     if(bw>0){ const V=(+st.v||0)/3.6, eta=D.pandolf.eta[st.terr]?D.pandolf.eta[st.terr][2]:1, G=+st.g||0, M=pandolf(bw,T.tot,V,G,eta), M0=pandolf(bw,0,V,G,eta); mob.push([L('Gasto a ','Cost at ')+nf(+st.v||0,1)+' km/h','≈ '+nf(M,0)+' W'],[L('Aumento por la carga','Increase from load'),'+'+nf((M/M0-1)*100,0)+' %']); }
     return {role:r?LL(r.n):L('Libre','Custom'), lvl:r?lvn[st.lvl]||'':L('Equipo a tu medida','Your own kit'), gh:st.role==='tirador'?st.gh:null, wName:wi?wi.w.n+(wi.w.V.length>1&&wi.v.lab?' · '+LL(wi.v.lab):''):'', wKg:wi?wi.kg:null, wImg:wi?'m3d/armero/'+(wi.w.img||wi.w.id)+'.jpg?v='+VER:null,
       tot:T.tot, pct, band:b?{n:LL(b.n),c:b.c}:null, bands:D.bands, items, mob, hw:SHHW&&bw?{h:+st.h||0,kg:bw}:null, fig:figOpts()}; }
@@ -177,7 +177,7 @@ function page(app,ctx){
     let h='<h2>'+L('Movilidad','Mobility')+'</h2><span class="sd-est">'+L('Estimación basada en publicaciones del Ejército de EE. UU. y en Pandolf et al. (1977)','Estimate based on US Army publications and Pandolf et al. (1977)')+'</span>';
     const lb=Lk/LBKG;
     h+='<h3>'+L('Reglas prácticas del FM 21-18 (figura 5-2)','FM 21-18 rules of thumb (Figure 5-2)')+'</h3>';
-    if(lb>40){ const over=(lb-40)/10; h+='<div class="sd-row"><span>'+L('Distancia recorrida en 6 h','Distance marched in 6 h')+'</span><b>−'+nf(2*over,1)+' km</b></div><div class="sd-row"><span>'+L('Tiempo en pista de asalto','Assault course time')+'</span><b>+'+nf(15*over,0)+' %</b></div><div class="sd-src">'+L('Respecto a llevar 40 lb (18,1 kg). Regla del FM 21-18: la distancia recorrida en 6 horas baja 2 km por cada 10 lb por encima de 40 lb, y el tiempo en la pista de asalto sube un 15 % por cada 10 lb por encima de 40 lb. Con pendientes medias del 10 % la distancia se reduce a la mitad.','Compared with carrying 40 lb (18.1 kg). FM 21-18 rule: distance marched in 6 hours drops 2 km for every 10 lb over 40 lb, and assault-course time rises 15 % for every 10 lb over 40 lb. On average gradients of 10 % distance is halved.')+'</div>'; }
+    if(lb>40){ const over=(lb-40)/10; h+='<div class="sd-row"><span>'+L('Distancia recorrida en 6 h','Distance marched in 6 h')+'</span><b>'+nf(2*over,1)+L(' km menos',' km less')+'</b></div><div class="sd-row"><span>'+L('Tiempo en pista de asalto','Assault course time')+'</span><b>+'+nf(15*over,0)+' %</b></div><div class="sd-src">'+L('Respecto a llevar 40 lb (18,1 kg). Regla del FM 21-18: la distancia recorrida en 6 horas baja 2 km por cada 10 lb por encima de 40 lb, y el tiempo en la pista de asalto sube un 15 % por cada 10 lb por encima de 40 lb. Con pendientes medias del 10 % la distancia se reduce a la mitad.','Compared with carrying 40 lb (18.1 kg). FM 21-18 rule: distance marched in 6 hours drops 2 km for every 10 lb over 40 lb, and assault-course time rises 15 % for every 10 lb over 40 lb. On average gradients of 10 % distance is halved.')+'</div>'; }
     else h+='<p class="sd-warn">'+L('Por debajo de 40 lb (18,1 kg) el FM 21-18 no da penalización.','Below 40 lb (18.1 kg) FM 21-18 gives no penalty.')+'</p>';
     h+='<div class="sd-src">'+L('Ritmos de marcha del FM 21-18 (apéndice A): carretera 4,0 km/h de día y 3,2 de noche; campo a través 2,4 de día y 1,6 de noche.','FM 21-18 march rates (Appendix A): road 4.0 km/h by day and 3.2 by night; cross-country 2.4 by day and 1.6 by night.')+' <a href="'+esc(D.fm_src[1])+'" target="_blank" rel="noopener">FM 21-18</a></div>';
     h+='<h3>'+L('Gasto energético al marchar (ecuación de Pandolf)','Energy cost of marching (Pandolf equation)')+'</h3><div class="sd-in"><label>'+L('Velocidad (km/h)','Speed (km/h)')+'<input id="sdv" type="number" inputmode="decimal" min="0" max="7" step="0.1" value="'+st.v+'"></label><label>'+L('Pendiente (%)','Grade (%)')+'<input id="sdg" type="number" inputmode="decimal" min="0" max="25" step="1" value="'+st.g+'"></label><label style="flex-basis:100%">'+L('Terreno (coeficiente η)','Terrain (coefficient η)')+'<select id="sdt">'+D.pandolf.eta.map((e,i)=>'<option value="'+i+'"'+(i===+st.terr?' selected':'')+'>'+esc(EN()?e[1]:e[0])+' — η '+nf(e[2],1)+'</option>').join('')+'</select></label></div>';
@@ -229,11 +229,11 @@ function page(app,ctx){
     if(b.id==='sdeq'){ equip(); return; }
     if(b.id==='sdxgo'){ const r=$('sdres'); if(r) r.scrollIntoView({behavior:'smooth',block:'start'}); return; } });
   $('sdgear').addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.classList||!d.classList.contains('sdx-cat')) return; const c=d.dataset.c; if(d.open) SDX_OPEN.add(c); else SDX_OPEN.delete(c); sdxSave(); },true);
-  function equip(){ const box=$('sd3d'); if(ACTIVE3D){ box.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  function equip(){ const box=$('sd3d'); if(ACTIVE3D||EQBUSY){ box.scrollIntoView({behavior:'smooth',block:'center'}); return; } EQBUSY=true; const my=++EQN; /* un solo visor 3D aunque se pulse dos veces mientras carga */
     box.innerHTML='<div class="sd-stage" id="sdst"><div class="sd-load">'+L('Cargando soldado 3D…','Loading 3D soldier…')+'</div></div><div id="sdcam"></div><div class="sd-src" id="sdcred"></div>';
     box.scrollIntoView({behavior:'smooth',block:'start'});
-    Promise.all([arm(),import('./soldado3d.js?v='+VER)]).then(([M,S])=>S.mount($('sdst'),st,D,M,{cam:$('sdcam'),cred:$('sdcred'),save:()=>saveSt(st)})).then(v=>{ if(!document.getElementById('sdst')){ v&&v.destroy(); return; } ACTIVE3D=v; })
-      .catch(e=>{ console.warn(e); const s=$('sdst'); if(s) s.innerHTML='<div class="sd-load">'+L('No se pudo cargar el visor 3D en este dispositivo.','The 3D viewer could not load on this device.')+'</div>'; }); }
+    Promise.all([arm(),import('./soldado3d.js?v='+VER)]).then(([M,S])=>S.mount($('sdst'),st,D,M,{cam:$('sdcam'),cred:$('sdcred'),save:()=>saveSt(st)})).then(v=>{ if(my===EQN) EQBUSY=false; if(my!==EQN||!document.getElementById('sdst')){ v&&v.destroy(); return; } ACTIVE3D=v; })
+      .catch(e=>{ if(my===EQN) EQBUSY=false; console.warn(e); const s=$('sdst'); if(s) s.innerHTML='<div class="sd-load">'+L('No se pudo cargar el visor 3D en este dispositivo.','The 3D viewer could not load on this device.')+'</div>'; }); }
   if(sv.get('ver')==='3d') setTimeout(equip,50);
 }
 window.addEventListener('hashchange',()=>{ if(!/^#\/soldado/.test(location.hash)) stop3d(); });
