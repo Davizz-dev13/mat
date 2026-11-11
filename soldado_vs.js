@@ -2,6 +2,11 @@
    El código lleva sus propios datos (no hay servidor), así que no se puede verificar: es un juego. */
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let RUN=0;
+const VER=(document.querySelector('script[data-v]')||{getAttribute(){return '1';}}).getAttribute('data-v');
+/* duelo 1 vs 1 (soldado_duelo.js, solo se carga al abrirlo) */
+function duel(code,F,X,o){ import('./soldado_duelo.js?v='+VER).then(m=>m.open(X,Object.assign({code,F},o||{}))).catch(e=>console.warn('duelo',e)); }
+function duelBtn(){ return '<button type="button" class="pri" data-vsduel>⚔️ '+(window.MAT_LANG==='en'?'Fight 1 vs 1':'Luchar 1 vs 1')+'</button>'; }
+function bindDuel(box,code,F,X){ const b=box.querySelector('[data-vsduel]'); if(b) b.onclick=()=>duel(code,F,X,{}); }
 function css(){ if(document.getElementById('sdvscss')) return; const s=document.createElement('style'); s.id='sdvscss'; s.textContent=
  '.sdvs{margin:6px 0 18px;padding:16px;background:linear-gradient(165deg,#1d2018 0%,#14160f 60%,#0f110c 100%);clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,0 100%)}'+
  '.sdvs .k{display:block;font:600 10.5px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--lime,#c8f03c);margin-bottom:7px}.sdvs h2{margin:0 0 4px;font-size:22px}.sdvs>p{margin:2px 0 12px;color:var(--mu,#a3a796);font-size:13.5px;line-height:1.4}'+
@@ -22,8 +27,9 @@ export async function show(code,X){ const L=X.L, my=++RUN; css();
   if(!code||!window.MAT_SDP){ box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+L('Compárate con un amigo','Compare with a friend')+'</h2><p>'+L('Pega el código de soldado de tu amigo (empieza por SOL- y sale en su carta).','Paste your friend\'s soldier code (it starts with SOL- and is on their card).')+'</p>'+form; bind(); box.scrollIntoView({block:'start'}); return; }
   const F=window.MAT_SDP.decode(X,code);
   if(F.err){ box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+L('Ese código no es válido','That code is not valid')+'</h2><p>'+(F.err==='sum'?L('Parece que hay una letra mal copiada. Revísalo o pídeselo otra vez a tu amigo.','A character seems to be mistyped. Check it or ask your friend again.'):L('No es un código de soldado de M.A.T.','It is not an M.A.T soldier code.'))+'</p>'+form; bind(); box.scrollIntoView({block:'start'}); return; }
-  box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+L('Tu soldado contra el de ','Your soldier vs ')+esc(F.nick||L('tu amigo','your friend'))+'</h2><p>'+L('Preparando las dos cartas…','Preparing both cards…')+'</p>';
+  box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+L('Tu soldado contra el de ','Your soldier vs ')+esc(F.nick||L('tu amigo','your friend'))+'</h2><p>'+L('Preparando las dos cartas…','Preparing both cards…')+'</p><div class="b">'+duelBtn()+'</div>'; bindDuel(box,code,F,X);
   box.scrollIntoView({block:'start'});
+  { const qp=new URLSearchParams(location.hash.split('?')[1]||''); if(qp.get('duelo')) duel(code,F,X,{map:qp.get('duelo'),a:qp.get('a')||'',r:+qp.get('r')||1}); }
   const [CARD]=await Promise.all([X.card(),X.arm().catch(()=>null)]); if(my!==RUN) return;
   /* amigo */ const fd=X.dataFor(F.st); fd.nick=F.nick; fd.med=window.MAT_MED&&MAT_MED.cardOf?MAT_MED.cardOf(F.rank,F.top,F.count):null; fd.code=window.MAT_SDP.encode({D:X.D,RL:X.RL,st:()=>F.st},fd);
   fd.snap=await X.snapFor(F.st); if(my!==RUN) return; const fu=await blobURL(await CARD.renderCard(fd)); if(my!==RUN) return;
@@ -40,7 +46,7 @@ export async function show(code,X){ const L=X.L, my=++RUN; css();
     (rows.length?'<table><thead><tr><th></th><th>'+meName+'</th><th>'+frName+'</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>':'')+
     '<div class="cs"><figure><figcaption>'+meName+'</figcaption>'+(mu?'<img src="'+mu+'" alt="'+L('Tu carta','Your card')+'" width="1080" height="1350">':'<div class="ph">'+L('Todavía no tienes soldado','You have no soldier yet')+'<a class="sd-btn" href="#/soldado" data-vsmk>'+L('Crear mi soldado','Create my soldier')+'</a></div>')+'</figure>'+
     '<figure><figcaption>'+frName+'</figcaption><img src="'+fu+'" alt="'+L('Carta de tu amigo','Your friend\'s card')+'" width="1080" height="1350"></figure></div>'+
-    '<div class="b">'+(md&&md.code?'<a class="pri" href="https://wa.me/?text='+encodeURIComponent(L('Te reto: compara tu soldado con el mío en M.A.T: ','I challenge you: compare your soldier with mine on M.A.T: ')+location.origin+location.pathname+'#/soldado?vs='+md.code)+'" target="_blank" rel="noopener">'+L('Enviar mi código','Send my code')+'</a>':'')+'<a href="#/soldado">'+L('Cerrar comparación','Close comparison')+'</a></div>'+
+    '<div class="b">'+duelBtn()+(md&&md.code?'<a class="pri" href="https://wa.me/?text='+encodeURIComponent(L('Te reto: compara tu soldado con el mío en M.A.T: ','I challenge you: compare your soldier with mine on M.A.T: ')+location.origin+location.pathname+'#/soldado?vs='+md.code)+'" target="_blank" rel="noopener">'+L('Enviar mi código','Send my code')+'</a>':'')+'<a href="#/soldado">'+L('Cerrar comparación','Close comparison')+'</a></div>'+
     (md&&md.code&&window.MAT_SDP?'':'')+'<p class="n">'+L('El código lleva sus propios datos y no se comprueba en ningún servidor: es un juego. La foto de tu amigo sale de pie.','The code carries its own data and is not checked on any server: it is a game. Your friend\'s photo is shown standing.')+'</p>'+(md&&md.code&&window.MAT_SDP?MAT_SDP.codeRow(md.code):form);
-  bind(); const mk=box.querySelector('[data-vsmk]'); if(mk) mk.onclick=e=>{ e.preventDefault(); const t=document.getElementById('sdrole')||document.querySelector('.sd-card'); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); };
+  bind(); bindDuel(box,code,F,X); const mk=box.querySelector('[data-vsmk]'); if(mk) mk.onclick=e=>{ e.preventDefault(); const t=document.getElementById('sdrole')||document.querySelector('.sd-card'); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); };
 }
