@@ -1,41 +1,14 @@
 {
- "fecha": "2026-11-10",
- "actualizado": "2026-11-10T08:07+01:00",
+ "fecha": "2026-11-11",
+ "actualizado": "2026-11-11T08:10+01:00",
  "items": [
   {
-   "t_es": "Trump da la guerra con Irán por «prácticamente terminada» en lo militar tras reunirse con el primer ministro de Catar",
-   "t_en": "Trump says the Iran war is 'effectively over' militarily after meeting Qatar's prime minister",
-   "res_es": "Tras reunirse el lunes en la Casa Blanca con el primer ministro catarí, el jeque Mohammed bin Abdulrahman Al Thani, Donald Trump dijo que la guerra con Irán «militarmente está prácticamente terminada» y que por ahora no ve «muy necesaria» una nueva acción militar, aunque Estados Unidos sigue «listo para actuar» y mantiene el bloqueo naval sobre el petróleo iraní. Según la AP, Catar presentó la semana pasada propuestas sobre el programa nuclear iraní. Desde Teherán, el secretario del Consejo Supremo de Seguridad Nacional, Mohsen Rezaei, acusó a Washington de hablar de «negociaciones imaginarias» y le instó a aceptar las siete condiciones de Irán.",
-   "res_en": "After meeting Qatar's Prime Minister Sheikh Mohammed bin Abdulrahman Al Thani at the White House on Monday, Donald Trump said the war with Iran 'militarily is effectively over' and that new military action does not seem 'a very necessary thing' for now, although the US remains 'locked and loaded' and is keeping its naval blockade on Iranian oil. According to AP, Qatar presented proposals on Iran's nuclear programme last week. In Tehran, Supreme National Security Council secretary Mohsen Rezaei accused Washington of reporting 'imaginary talks' and urged it to accept Iran's seven conditions.",
-   "por_que_es": "Es la señal más clara hasta ahora de que Washington aparca nuevos bombardeos tras perder las elecciones de mitad de mandato, pero sin acuerdo con Teherán.",
-   "por_que_en": "It is the clearest signal yet that Washington is shelving new strikes after its midterm defeat, but there is still no deal with Tehran.",
-   "reg_es": "Oriente Medio",
-   "reg_en": "Middle East",
-   "paises": [
-    "us",
-    "iran",
-    "catar"
-   ],
-   "fuentes": [
-    {
-     "n": "AP",
-     "url": "https://kstp.com/ap-top-news/ap-top-news-international/trump-after-meeting-with-qatari-pm-says-he-believes-war-with-iran-is-militarily-effectively-over/",
-     "d": "2026-11-09"
-    },
-    {
-     "n": "The National",
-     "url": "https://www.thenationalnews.com/news/gulf/2026/11/10/trump-says-iran-war-to-end-fairly-soon/",
-     "d": "2026-11-10"
-    }
-   ]
-  },
-  {
-   "t_es": "Rusia, Ucrania y EE. UU. retoman en Abu Dabi las negociaciones de paz, las primeras desde febrero; Europa pide un sitio en la mesa",
-   "t_en": "Russia, Ukraine and the US resume peace talks in Abu Dhabi, the first since February; Europe asks for a seat at the table",
-   "res_es": "Las delegaciones de Rusia, Ucrania y Estados Unidos se reúnen este martes y miércoles en Abu Dabi en una ronda centrada en las garantías de seguridad. Por EE. UU. negocian los enviados Steve Witkoff y Jared Kushner; Moscú vuelve a enviar a Vladímir Medinski junto al viceministro de Exteriores Serguéi Riabkov, y Kiev a Rustem Umérov con Kirilo Budánov y Davyd Arajamia. Las posiciones siguen lejos: Moscú exige la retirada ucraniana de cuatro regiones y la renuncia a la OTAN, y Kiev pide primero un alto el fuego. En París, el G7 debatió la ayuda a Ucrania; el ministro alemán Johann Wadephul insistió en que «Europa pertenece a esta mesa», y Marco Rubio dijo que aún no es el momento. En vísperas de la cita, Rusia volvió a atacar la red eléctrica ucraniana y un ataque con drones incendió la refinería rusa de Kirishi.",
-   "res_en": "Delegations from Russia, Ukraine and the United States meet on Tuesday and Wednesday in Abu Dhabi in a round focused on security guarantees. US envoys Steve Witkoff and Jared Kushner lead for Washington; Moscow again sends Vladimir Medinsky alongside Deputy Foreign Minister Sergei Ryabkov, and Kyiv sends Rustem Umerov with Kyrylo Budanov and Davyd Arakhamia. The positions remain far apart: Moscow demands that Ukraine withdraw from four regions and give up on NATO, while Kyiv wants a ceasefire first. In Paris, the G7 discussed support for Ukraine; German Foreign Minister Johann Wadephul insisted that 'Europe belongs at this table', while Marco Rubio said it was not yet time. On the eve of the talks, Russia struck Ukraine's power grid again and a drone attack set Russia's Kirishi refinery on fire.",
-   "por_que_es": "Es el primer intento directo de los tres en nueve meses de poner fin a una guerra que se acerca a su quinto año.",
-   "por_que_en": "It is the three sides' first direct attempt in nine months to end a war that is nearing its fifth year.",
+   "t_es": "Primera ronda en Abu Dabi: Rusia y Ucrania hablan de un gran canje de prisioneros; Zelenski dice que EE. UU. le preguntó si cambiaría el Donbás por seguridad",
+   "t_en": "First round in Abu Dhabi: Russia and Ukraine discuss a large prisoner swap; Zelensky says the US asked whether Kyiv would trade Donbas for security",
+   "res_es": "Rusia y Ucrania celebraron el martes en Abu Dabi unas cuatro horas de conversaciones con mediación de EE. UU., las primeras en nueve meses; el miércoles hay una segunda sesión. Por Washington estuvieron Jared Kushner y Steve Witkoff. Marco Rubio las calificó de «muy productivas», aunque pidió paciencia, y Volodímir Zelenski de «constructivas y bastante sustanciosas». Según Zelenski, se habló sobre todo de asuntos humanitarios: canje de prisioneros, civiles en cautiverio y niños llevados a Rusia, y también de garantías de seguridad. Un alto cargo ucraniano citado por la AP dijo que se trató un canje de prisioneros a gran escala. Zelenski contó que EE. UU. le preguntó si Kiev aceptaría «cambiar el Donbás por seguridad», sin entrada en la OTAN sino «algo parecido»; respondió que «nadie cree que Putin se detendrá si cedemos el Donbás». El ministro ruso Serguéi Lavrov rechazó las peticiones europeas de alto el fuego.",
+   "res_en": "Russia and Ukraine held about four hours of US-mediated talks in Abu Dhabi on Tuesday, the first in nine months; a second session follows on Wednesday. Jared Kushner and Steve Witkoff represented Washington. Marco Rubio called them 'very productive' while urging patience, and Volodymyr Zelensky called them 'constructive and quite substantive'. According to Zelensky, the talks focused mainly on humanitarian issues, including prisoner exchanges, civilians in captivity and children taken to Russia, as well as security guarantees. A senior Ukrainian official quoted by AP said a large-scale prisoner swap was discussed. Zelensky said the US had asked whether Kyiv would 'trade the Donbas for security', with no NATO membership but 'something similar'; he replied that 'no one believes that Putin will stop if we give up the Donbas'. Russian Foreign Minister Sergei Lavrov rejected European calls for a ceasefire.",
+   "por_que_es": "Es la primera negociación directa a tres bandas desde febrero, y por primera vez se habla abiertamente de cambiar territorio por garantías de seguridad.",
+   "por_que_en": "It is the first three-way negotiation since February, and trading territory for security guarantees is now being discussed openly.",
    "reg_es": "Europa",
    "reg_en": "Europe",
    "paises": [
@@ -46,112 +19,294 @@
    ],
    "fuentes": [
     {
-     "n": "AP",
-     "url": "https://www.local10.com/news/world/2026/11/10/us-brokered-talks-are-set-to-start-in-abu-dhabi-to-discuss-ukraine-russia-peace-deal/",
+     "n": "AP (NPR)",
+     "url": "https://www.npr.org/2026/11/10/g-s1-152773/russia-ukraine-war-talks",
      "d": "2026-11-10"
     },
     {
-     "n": "AP",
-     "url": "https://www.wsls.com/news/politics/2026/11/10/g7-attention-in-paris-turns-to-ukraine-while-us-mediated-talks-get-underway-in-abu-dhabi/",
-     "d": "2026-11-10"
-    },
-    {
-     "n": "Euronews",
-     "url": "https://www.euronews.com/2026/11/10/whos-who-from-ukraine-and-russia-at-the-abu-dhabi-peace-talks",
-     "d": "2026-11-10"
-    },
-    {
-     "n": "ABC News (Australia)",
-     "url": "https://www.abc.net.au/news/2026-11-09/ukrainian-drone-attack-at-russia-kirishi-refinery-woman-dies/107365888",
-     "d": "2026-11-09"
-    }
-   ]
-  },
-  {
-   "t_es": "Taiwán denuncia maniobras chinas de «negación de área» con el portaaviones Liaoning en el Pacífico occidental",
-   "t_en": "Taiwan says China is holding 'area denial' drills with the Liaoning carrier in the western Pacific",
-   "res_es": "El ministro de Defensa taiwanés, Wellington Koo, afirmó el martes que China realiza ejercicios de «negación de área» en el Pacífico occidental con el grupo del portaaviones Liaoning y otras formaciones navales, tras informar Taipéi la semana pasada de más de 100 buques de la Armada y la Guardia Costera chinas cerca de la isla y en el mar de China Meridional. Pekín, que no ha anunciado maniobras, describió el mes pasado las operaciones del Liaoning como entrenamiento anual no dirigido contra ningún país. Reunidos en París, los ministros de Exteriores del G7 reiteraron su «fuerte oposición» a cualquier intento de cambiar el statu quo por la fuerza o la coacción, también en el estrecho de Taiwán.",
-   "res_en": "Taiwan's Defence Minister Wellington Koo said on Tuesday that China is conducting 'area denial' exercises in the western Pacific with the Liaoning carrier group and other naval formations, after Taipei reported last week more than 100 Chinese navy and coast guard vessels near the island and in the South China Sea. Beijing, which has not announced any drills, described the Liaoning's operations last month as annual training not aimed at any country. Meeting in Paris, G7 foreign ministers reiterated their 'strong opposition' to any attempt to change the status quo by force or coercion, including across the Taiwan Strait.",
-   "por_que_es": "Ocurre días antes de la cumbre de la APEC en Shenzhen, donde se espera un encuentro entre Trump y Xi Jinping.",
-   "por_que_en": "It comes days before the APEC summit in Shenzhen, where Trump is expected to meet Xi Jinping.",
-   "reg_es": "Asia-Pacífico",
-   "reg_en": "Asia-Pacific",
-   "paises": [
-    "taiwan",
-    "china"
-   ],
-   "fuentes": [
-    {
-     "n": "The Japan Times",
-     "url": "https://www.japantimes.co.jp/news/2026/11/10/japan/politics/japan-g7-china-taiwan-military/",
-     "d": "2026-11-10"
-    },
-    {
-     "n": "The Times of India",
-     "url": "https://timesofindia.indiatimes.com/world/rest-of-world/taiwan-monitors-chinas-area-denial-exercises-as-naval-activity-intensifies/articleshow/135697794.cms",
+     "n": "CBS News",
+     "url": "https://www.cbsnews.com/news/us-russia-ukraine-war-talks-peace-abu-dhabi-deal/",
      "d": "2026-11-10"
     }
    ]
   },
   {
-   "t_es": "Siria envía asesores militares a Arabia Saudí y prepara unos 600 efectivos de fuerzas especiales ante los ataques hutíes",
-   "t_en": "Syria sends military advisers to Saudi Arabia and prepares some 600 special forces troops amid Houthi attacks",
-   "res_es": "Según fuentes sirias y regionales citadas por la AP, Damasco ya ha desplegado asesores militares en Arabia Saudí y prevé enviar en los próximos días un primer contingente de unos 600 miembros de fuerzas especiales, que se situarían a lo largo de la frontera saudí con Yemen; de momento no hay combatientes sirios en Yemen. Un funcionario citado por la agencia oficial SANA negó que haya tropas rumbo a Yemen y dijo que se trata de formación, intercambio de experiencia y consultas militares. El acuerdo llega tras la visita del presidente sirio, Ahmed al Sharaa, a Riad, que prometió a Siria 403 millones de dólares en préstamos.",
-   "res_en": "According to Syrian and regional officials quoted by AP, Damascus has already deployed military advisers to Saudi Arabia and plans to send an initial contingent of about 600 special forces troops in the coming days, to be stationed along the Saudi border with Yemen; so far no Syrian fighters are in Yemen. An official quoted by the state news agency SANA denied that troops were headed to Yemen and said the cooperation covers training, exchange of expertise and military consultations. The deal follows Syrian President Ahmed al-Sharaa's visit to Riyadh, which pledged Syria $403m in loans.",
-   "por_que_es": "Siria, que hasta ahora se había mantenido al margen, entraría en el frente saudí-hutí, uno de los abiertos con la guerra contra Irán.",
-   "por_que_en": "Syria, which had so far stayed on the sidelines, would enter the Saudi-Houthi front, one of those opened by the war on Iran.",
+   "t_es": "Rubio dice que ya no hacen falta «grandes operaciones de combate» contra Irán; la Cámara de EE. UU. frena el intento de destituir a Hegseth",
+   "t_en": "Rubio says 'major combat operations' against Iran are no longer needed; the US House halts the bid to impeach Hegseth",
+   "res_es": "Tras dos días de reuniones del G7 en París, el secretario de Estado Marco Rubio afirmó que las sanciones y el bloqueo naval de EE. UU. dañan tanto la economía iraní que «ya no hay necesidad de grandes operaciones de combate», aunque Washington podría responder si Irán «cruza ciertas líneas rojas». Negó que eso sea aceptar el statu quo: «la presión económica va a empeorar». También pidió a otros países que ayuden a proteger el tráfico marítimo en el estrecho de Ormuz y reconoció que no obtuvo respuesta. Ese mismo martes, la Cámara de Representantes votó por 211 a 204 enviar a comisión la acusación contra el secretario de Defensa, Pete Hegseth, presentada por el republicano Thomas Massie por la guerra con Irán sin autorización del Congreso, lo que en la práctica frena el proceso. Hegseth llamó «farsa» al intento.",
+   "res_en": "After two days of G7 meetings in Paris, Secretary of State Marco Rubio said US sanctions and the naval blockade are hurting Iran's economy so badly that 'there's really no need for major combat operations any longer', although Washington could still respond if Iran 'crosses certain red lines'. He denied this meant accepting the status quo: 'the economic pressure is going to get even worse'. He also urged other countries to help protect shipping in the Strait of Hormuz and acknowledged he got no response. The same Tuesday, the House of Representatives voted 211 to 204 to refer to committee the impeachment articles against Defense Secretary Pete Hegseth, filed by Republican Thomas Massie over the Iran war without congressional authorisation, effectively halting the effort. Hegseth called the bid a 'farce'.",
+   "por_que_es": "Confirma de forma oficial que Washington cambia los bombardeos por la presión económica tras perder las elecciones de mitad de mandato.",
+   "por_que_en": "It officially confirms that Washington is swapping strikes for economic pressure after losing the midterm elections.",
    "reg_es": "Oriente Medio",
    "reg_en": "Middle East",
    "paises": [
-    "siria",
+    "us",
+    "iran"
+   ],
+   "fuentes": [
+    {
+     "n": "The Philadelphia Inquirer (NYT)",
+     "url": "https://www.inquirer.com/news/nation-world/rubio-g7-strait-hormuz-security-iran-ukraine-20261110.html",
+     "d": "2026-11-10"
+    },
+    {
+     "n": "Asharq Al-Awsat (Reuters)",
+     "url": "https://english.aawsat.com/world/5339816-rubio-says-no-need-major-combat-operations-against-iran-given-us-economic-campaign",
+     "d": "2026-11-10"
+    },
+    {
+     "n": "BBC",
+     "url": "https://www.bbc.com/news/articles/cxly4y5jzl0qo",
+     "d": "2026-11-11"
+    },
+    {
+     "n": "NPR",
+     "url": "https://www.npr.org/2026/11/10/nx-s1-6036813/house-votes-to-effectively-end-the-impeachment-effort-against-pete-hegseth",
+     "d": "2026-11-10"
+    }
+   ]
+  },
+  {
+   "t_es": "El G7 pide evitar un «vacío de seguridad» en Líbano cuando se vaya la FINUL, y una patrulla de la ONU es tiroteada en el sur",
+   "t_en": "The G7 calls for avoiding a 'security void' in Lebanon when UNIFIL leaves, and a UN patrol comes under fire in the south",
+   "res_es": "Los ministros de Exteriores del G7 acordaron en París «la necesidad de evitar un vacío de seguridad» en Líbano cuando expire, el 31 de diciembre de 2026, el mandato de la FINUL, la fuerza de la ONU desplegada desde 1978 con unos 7.500 efectivos de casi 50 países. El ministro francés Jean-Noël Barrot admitió que no hubo acuerdo sobre qué la sustituirá. Rubio sugirió que podría ser una misión civil de verificación, y los europeos proponen una coalición internacional que apoye al ejército libanés en el desarme de Hezbolá. Israel mantiene una «zona de seguridad» de unos 10 km dentro de Líbano. El mismo martes, la FINUL informó de que «una docena de disparos» alcanzaron a una de sus patrullas cerca de Wadi Jilu (distrito de Tiro), sin decir quién disparó; la patrulla respondió, no hubo heridos y pidió una investigación.",
+   "res_en": "G7 foreign ministers agreed in Paris on 'the need to avoid a security void' in Lebanon when the mandate of UNIFIL, the UN force deployed since 1978 with some 7,500 personnel from nearly 50 countries, expires on 31 December 2026. French Foreign Minister Jean-Noël Barrot acknowledged there was no agreement on what will replace it. Rubio suggested it could be a civilian verification mission, and the Europeans are proposing an international coalition to support the Lebanese army in disarming Hezbollah. Israel keeps a 'security zone' about 10 km deep inside Lebanon. On the same Tuesday, UNIFIL said 'about a dozen rounds' were fired at one of its patrols near Wadi Jilu (Tyre district), without naming the shooter; the patrol returned fire, nobody was hurt and it called for an investigation.",
+   "por_que_es": "Quedan siete semanas para que se retire la fuerza que separa a Israel y Líbano, y aún no hay nada acordado para sustituirla.",
+   "por_que_en": "Seven weeks remain before the force separating Israel and Lebanon withdraws, and nothing has been agreed to replace it.",
+   "reg_es": "Oriente Medio",
+   "reg_en": "Middle East",
+   "paises": [
+    "libano",
+    "israel",
+    "francia",
+    "us"
+   ],
+   "fuentes": [
+    {
+     "n": "AFP (Al-Monitor)",
+     "url": "https://www.al-monitor.com/originals/2026/11/g7-agrees-need-avoid-security-void-lebanon-after-un-force-mandate-ends-paris",
+     "d": "2026-11-10"
+    },
+    {
+     "n": "Al Jazeera",
+     "url": "https://www.aljazeera.com/news/2026/11/10/unifil-patrol-comes-under-fire-in-southern-lebanon",
+     "d": "2026-11-10"
+    }
+   ]
+  },
+  {
+   "t_es": "Arabia Saudí intercepta misiles hutíes lanzados contra Riad mientras la coalición bombardea Saná y sigue la ofensiva en Yemen",
+   "t_en": "Saudi Arabia intercepts Houthi missiles fired at Riyadh as the coalition strikes Sanaa and the Yemen offensive goes on",
+   "res_es": "La coalición liderada por Arabia Saudí informó el martes de que interceptó un misil balístico y uno de crucero lanzados por los hutíes contra Riad, y otro balístico contra el sur del país; en Riad sonaron explosiones y la defensa civil envió alertas para refugiarse. Antes, la coalición dijo haber destruido una instalación hutí de fabricación de componentes de misiles balísticos. La agencia hutí Saba denunció bombardeos de la coalición en Saná, contra una planta de gas y un edificio de la petrolera estatal. El lunes volvió a ser atacado el oleoducto Este-Oeste saudí, con un «incendio limitado». Las fuerzas del gobierno yemení, en su contraofensiva «Amanecer de Yemen», aseguran haber matado o herido a unos 190 combatientes hutíes; Al Jazeera no pudo verificarlo. Según la OMS, desde agosto han muerto al menos 1.771 personas en Yemen.",
+   "res_en": "The Saudi-led coalition said on Tuesday it intercepted a ballistic missile and a cruise missile fired by the Houthis at Riyadh, and another ballistic missile aimed at the south of the country; explosions were heard in Riyadh and civil defence sent shelter alerts. Earlier, the coalition said it had destroyed a Houthi facility producing ballistic missile components. The Houthi-run Saba agency reported coalition strikes on Sanaa, hitting a gas facility and a state oil company building. On Monday the Saudi East-West pipeline was attacked again, causing a 'limited fire'. Yemeni government forces, in their 'Dawn of Yemen' counteroffensive, claim to have killed or wounded about 190 Houthi fighters; Al Jazeera could not verify this. According to the WHO, at least 1,771 people have been killed in Yemen since August.",
+   "por_que_es": "El oleoducto Este-Oeste es la principal salida del petróleo saudí mientras Ormuz sigue restringido, y los ataques contra Riad son casi diarios.",
+   "por_que_en": "The East-West pipeline is Saudi Arabia's main oil outlet while Hormuz remains restricted, and attacks on Riyadh are now almost daily.",
+   "reg_es": "Oriente Medio",
+   "reg_en": "Middle East",
+   "paises": [
     "arabia_saudi",
     "yemen"
    ],
    "fuentes": [
     {
-     "n": "AP",
-     "url": "https://www.audacy.com/kywnewsradio/news/world/syria-saudi-yemen-houthis-fighters-d436bdc81a8e6b28bb99c417aaeaf8b6",
-     "d": "2026-11-08"
+     "n": "Al Jazeera",
+     "url": "https://www.aljazeera.com/news/2026/11/10/saudi-arabia-downs-missiles-fired-at-riyadh-after-houthi-attack-on-pipeline",
+     "d": "2026-11-10"
     },
     {
-     "n": "Al Jazeera",
-     "url": "https://www.aljazeera.com/features/2026/11/9/syria-confirms-sending-troops-to-saudi-arabia-amid-battle-against-houthis",
-     "d": "2026-11-09"
-    }
-   ]
-  },
-  {
-   "t_es": "Un temporal inunda decenas de miles de tiendas en Gaza y un desprendimiento de arena mata a tres niños y una mujer",
-   "t_en": "A storm floods tens of thousands of tents in Gaza and a sand collapse kills three children and a woman",
-   "res_es": "Las lluvias torrenciales del fin de semana inundaron decenas de miles de tiendas de desplazados en la Franja; la Oficina de Medios del Gobierno de Gaza cifra en unas 70.000 las afectadas en 12 horas. El domingo por la noche, un talud de arena se derrumbó sobre un campamento al sur de Deir al Balah y mató a tres niños y una mujer, según el Ministerio de Sanidad dependiente de Hamás. La Defensa Civil recibió más de 2.100 llamadas de auxilio y solo pudo atender un 10 %. Organizaciones como Save the Children acusan a Israel de bloquear la entrada de tiendas y material de refugio, y la OCHA de la ONU señala que Israel comunicó el 1 de noviembre la suspensión de los envíos desde Egipto.",
-   "res_en": "Torrential rain over the weekend flooded tens of thousands of displaced people's tents across the Strip; Gaza's Government Media Office puts the number at about 70,000 within 12 hours. On Sunday night, a sand embankment collapsed onto a camp south of Deir al-Balah, killing three children and a woman, according to the Hamas-run health ministry. The Civil Defence received more than 2,100 distress calls and could respond to only 10%. Groups such as Save the Children accuse Israel of blocking the entry of tents and shelter supplies, and the UN's OCHA says Israel notified it on 1 November that it would suspend shipments from Egypt.",
-   "por_que_es": "Más de un año después del alto el fuego, el primer gran temporal del invierno deja al descubierto la falta de refugio y la ayuda bloqueada.",
-   "por_que_en": "More than a year after the ceasefire, the first big storm of winter exposes the lack of shelter and the blocked aid.",
-   "reg_es": "Gaza (Palestina) · Oriente Próximo",
-   "reg_en": "Gaza (Palestine) · Middle East",
-   "paises": [
-    "israel"
-   ],
-   "fuentes": [
-    {
-     "n": "BBC News",
-     "url": "https://www.bbc.com/news/articles/cqd090ee8px5o",
-     "d": "2026-11-09"
-    },
-    {
-     "n": "Al Jazeera",
-     "url": "https://www.aljazeera.com/news/2026/11/10/palestine-weekly-west-bank-on-fire-and-gazas-tents-under",
+     "n": "Saudi Gazette",
+     "url": "https://saudigazette.com.sa/article/666135/saudi-arabia/air-defenses-intercept-houthi-cruise-and-ballistic-missiles-targeting-riyadh",
      "d": "2026-11-10"
     },
     {
      "n": "Al Jazeera",
-     "url": "https://www.aljazeera.com/news/2026/11/8/floods-in-gaza-leave-tens-of-thousands-without-shelter",
-     "d": "2026-11-08"
+     "url": "https://www.aljazeera.com/news/2026/11/11/yemeni-forces-houthis-exchange-attacks-claim-to-inflict-heavy-losses",
+     "d": "2026-11-11"
+    }
+   ]
+  },
+  {
+   "t_es": "Tropas de El Salvador atacan en Haití el cuartel de la banda 400 Mawozo, su primera acción militar en el país",
+   "t_en": "Salvadoran troops strike the headquarters of Haiti's 400 Mawozo gang, their first military action in the country",
+   "res_es": "El presidente salvadoreño, Nayib Bukele, anunció que sus militares destruyeron la casa del líder Wilson «Lanmò San Jou» Joseph y el cuartel de la banda 400 Mawozo en Croix-des-Bouquets, a las afueras de Puerto Príncipe, en un ataque por tierra y aire con helicópteros. Según Al Jazeera, la operación la hizo el domingo la policía haitiana con apoyo salvadoreño y hubo unos 20 muertos; la BBC dice que esa cifra no está confirmada oficialmente. Es la primera acción militar de los más de 2.000 soldados que El Salvador envió a Haití en octubre, tras el secuestro de cuatro técnicos de su fuerza aérea. El primer ministro haitiano, Alix Didier Fils-Aimé, agradeció el apoyo. Amnistía Internacional pidió que ambos gobiernos hagan público el acuerdo y respeten los derechos humanos.",
+   "res_en": "Salvadoran President Nayib Bukele announced that his troops destroyed the house of gang leader Wilson 'Lanmò San Jou' Joseph and the 400 Mawozo gang's headquarters in Croix-des-Bouquets, outside Port-au-Prince, in a ground and air attack with helicopters. According to Al Jazeera, Haitian police carried out the operation on Sunday with Salvadoran support and about 20 people were killed; the BBC says that figure has not been officially confirmed. It is the first military action by the more than 2,000 soldiers El Salvador sent to Haiti in October after four of its air force technicians were abducted. Haitian Prime Minister Alix Didier Fils-Aimé thanked them for the support. Amnesty International urged both governments to publish their agreement and respect human rights.",
+   "por_que_es": "Es la primera vez que un ejército latinoamericano actúa por su cuenta contra las bandas en Haití, fuera de la fuerza respaldada por la ONU.",
+   "por_que_en": "It is the first time a Latin American army has acted on its own against Haiti's gangs, outside the UN-backed force.",
+   "reg_es": "América",
+   "reg_en": "Americas",
+   "paises": [
+    "el_salvador",
+    "haiti"
+   ],
+   "fuentes": [
+    {
+     "n": "BBC",
+     "url": "https://www.bbc.com/news/articles/cmvg2xdwnwezo",
+     "d": "2026-11-11"
+    },
+    {
+     "n": "Al Jazeera",
+     "url": "https://www.aljazeera.com/news/2026/11/10/salvadoran-troops-target-haitian-gang-leaving-20-dead",
+     "d": "2026-11-10"
     }
    ]
   }
  ],
  "archivo": [
+  {
+   "fecha": "2026-11-10",
+   "actualizado": "2026-11-10T08:07+01:00",
+   "items": [
+    {
+     "t_es": "Trump da la guerra con Irán por «prácticamente terminada» en lo militar tras reunirse con el primer ministro de Catar",
+     "t_en": "Trump says the Iran war is 'effectively over' militarily after meeting Qatar's prime minister",
+     "res_es": "Tras reunirse el lunes en la Casa Blanca con el primer ministro catarí, el jeque Mohammed bin Abdulrahman Al Thani, Donald Trump dijo que la guerra con Irán «militarmente está prácticamente terminada» y que por ahora no ve «muy necesaria» una nueva acción militar, aunque Estados Unidos sigue «listo para actuar» y mantiene el bloqueo naval sobre el petróleo iraní. Según la AP, Catar presentó la semana pasada propuestas sobre el programa nuclear iraní. Desde Teherán, el secretario del Consejo Supremo de Seguridad Nacional, Mohsen Rezaei, acusó a Washington de hablar de «negociaciones imaginarias» y le instó a aceptar las siete condiciones de Irán.",
+     "res_en": "After meeting Qatar's Prime Minister Sheikh Mohammed bin Abdulrahman Al Thani at the White House on Monday, Donald Trump said the war with Iran 'militarily is effectively over' and that new military action does not seem 'a very necessary thing' for now, although the US remains 'locked and loaded' and is keeping its naval blockade on Iranian oil. According to AP, Qatar presented proposals on Iran's nuclear programme last week. In Tehran, Supreme National Security Council secretary Mohsen Rezaei accused Washington of reporting 'imaginary talks' and urged it to accept Iran's seven conditions.",
+     "por_que_es": "Es la señal más clara hasta ahora de que Washington aparca nuevos bombardeos tras perder las elecciones de mitad de mandato, pero sin acuerdo con Teherán.",
+     "por_que_en": "It is the clearest signal yet that Washington is shelving new strikes after its midterm defeat, but there is still no deal with Tehran.",
+     "reg_es": "Oriente Medio",
+     "reg_en": "Middle East",
+     "paises": [
+      "us",
+      "iran",
+      "catar"
+     ],
+     "fuentes": [
+      {
+       "n": "AP",
+       "url": "https://kstp.com/ap-top-news/ap-top-news-international/trump-after-meeting-with-qatari-pm-says-he-believes-war-with-iran-is-militarily-effectively-over/",
+       "d": "2026-11-09"
+      },
+      {
+       "n": "The National",
+       "url": "https://www.thenationalnews.com/news/gulf/2026/11/10/trump-says-iran-war-to-end-fairly-soon/",
+       "d": "2026-11-10"
+      }
+     ]
+    },
+    {
+     "t_es": "Rusia, Ucrania y EE. UU. retoman en Abu Dabi las negociaciones de paz, las primeras desde febrero; Europa pide un sitio en la mesa",
+     "t_en": "Russia, Ukraine and the US resume peace talks in Abu Dhabi, the first since February; Europe asks for a seat at the table",
+     "res_es": "Las delegaciones de Rusia, Ucrania y Estados Unidos se reúnen este martes y miércoles en Abu Dabi en una ronda centrada en las garantías de seguridad. Por EE. UU. negocian los enviados Steve Witkoff y Jared Kushner; Moscú vuelve a enviar a Vladímir Medinski junto al viceministro de Exteriores Serguéi Riabkov, y Kiev a Rustem Umérov con Kirilo Budánov y Davyd Arajamia. Las posiciones siguen lejos: Moscú exige la retirada ucraniana de cuatro regiones y la renuncia a la OTAN, y Kiev pide primero un alto el fuego. En París, el G7 debatió la ayuda a Ucrania; el ministro alemán Johann Wadephul insistió en que «Europa pertenece a esta mesa», y Marco Rubio dijo que aún no es el momento. En vísperas de la cita, Rusia volvió a atacar la red eléctrica ucraniana y un ataque con drones incendió la refinería rusa de Kirishi.",
+     "res_en": "Delegations from Russia, Ukraine and the United States meet on Tuesday and Wednesday in Abu Dhabi in a round focused on security guarantees. US envoys Steve Witkoff and Jared Kushner lead for Washington; Moscow again sends Vladimir Medinsky alongside Deputy Foreign Minister Sergei Ryabkov, and Kyiv sends Rustem Umerov with Kyrylo Budanov and Davyd Arakhamia. The positions remain far apart: Moscow demands that Ukraine withdraw from four regions and give up on NATO, while Kyiv wants a ceasefire first. In Paris, the G7 discussed support for Ukraine; German Foreign Minister Johann Wadephul insisted that 'Europe belongs at this table', while Marco Rubio said it was not yet time. On the eve of the talks, Russia struck Ukraine's power grid again and a drone attack set Russia's Kirishi refinery on fire.",
+     "por_que_es": "Es el primer intento directo de los tres en nueve meses de poner fin a una guerra que se acerca a su quinto año.",
+     "por_que_en": "It is the three sides' first direct attempt in nine months to end a war that is nearing its fifth year.",
+     "reg_es": "Europa",
+     "reg_en": "Europe",
+     "paises": [
+      "ucrania",
+      "rusia",
+      "us",
+      "emiratos"
+     ],
+     "fuentes": [
+      {
+       "n": "AP",
+       "url": "https://www.local10.com/news/world/2026/11/10/us-brokered-talks-are-set-to-start-in-abu-dhabi-to-discuss-ukraine-russia-peace-deal/",
+       "d": "2026-11-10"
+      },
+      {
+       "n": "AP",
+       "url": "https://www.wsls.com/news/politics/2026/11/10/g7-attention-in-paris-turns-to-ukraine-while-us-mediated-talks-get-underway-in-abu-dhabi/",
+       "d": "2026-11-10"
+      },
+      {
+       "n": "Euronews",
+       "url": "https://www.euronews.com/2026/11/10/whos-who-from-ukraine-and-russia-at-the-abu-dhabi-peace-talks",
+       "d": "2026-11-10"
+      },
+      {
+       "n": "ABC News (Australia)",
+       "url": "https://www.abc.net.au/news/2026-11-09/ukrainian-drone-attack-at-russia-kirishi-refinery-woman-dies/107365888",
+       "d": "2026-11-09"
+      }
+     ]
+    },
+    {
+     "t_es": "Taiwán denuncia maniobras chinas de «negación de área» con el portaaviones Liaoning en el Pacífico occidental",
+     "t_en": "Taiwan says China is holding 'area denial' drills with the Liaoning carrier in the western Pacific",
+     "res_es": "El ministro de Defensa taiwanés, Wellington Koo, afirmó el martes que China realiza ejercicios de «negación de área» en el Pacífico occidental con el grupo del portaaviones Liaoning y otras formaciones navales, tras informar Taipéi la semana pasada de más de 100 buques de la Armada y la Guardia Costera chinas cerca de la isla y en el mar de China Meridional. Pekín, que no ha anunciado maniobras, describió el mes pasado las operaciones del Liaoning como entrenamiento anual no dirigido contra ningún país. Reunidos en París, los ministros de Exteriores del G7 reiteraron su «fuerte oposición» a cualquier intento de cambiar el statu quo por la fuerza o la coacción, también en el estrecho de Taiwán.",
+     "res_en": "Taiwan's Defence Minister Wellington Koo said on Tuesday that China is conducting 'area denial' exercises in the western Pacific with the Liaoning carrier group and other naval formations, after Taipei reported last week more than 100 Chinese navy and coast guard vessels near the island and in the South China Sea. Beijing, which has not announced any drills, described the Liaoning's operations last month as annual training not aimed at any country. Meeting in Paris, G7 foreign ministers reiterated their 'strong opposition' to any attempt to change the status quo by force or coercion, including across the Taiwan Strait.",
+     "por_que_es": "Ocurre días antes de la cumbre de la APEC en Shenzhen, donde se espera un encuentro entre Trump y Xi Jinping.",
+     "por_que_en": "It comes days before the APEC summit in Shenzhen, where Trump is expected to meet Xi Jinping.",
+     "reg_es": "Asia-Pacífico",
+     "reg_en": "Asia-Pacific",
+     "paises": [
+      "taiwan",
+      "china"
+     ],
+     "fuentes": [
+      {
+       "n": "The Japan Times",
+       "url": "https://www.japantimes.co.jp/news/2026/11/10/japan/politics/japan-g7-china-taiwan-military/",
+       "d": "2026-11-10"
+      },
+      {
+       "n": "The Times of India",
+       "url": "https://timesofindia.indiatimes.com/world/rest-of-world/taiwan-monitors-chinas-area-denial-exercises-as-naval-activity-intensifies/articleshow/135697794.cms",
+       "d": "2026-11-10"
+      }
+     ]
+    },
+    {
+     "t_es": "Siria envía asesores militares a Arabia Saudí y prepara unos 600 efectivos de fuerzas especiales ante los ataques hutíes",
+     "t_en": "Syria sends military advisers to Saudi Arabia and prepares some 600 special forces troops amid Houthi attacks",
+     "res_es": "Según fuentes sirias y regionales citadas por la AP, Damasco ya ha desplegado asesores militares en Arabia Saudí y prevé enviar en los próximos días un primer contingente de unos 600 miembros de fuerzas especiales, que se situarían a lo largo de la frontera saudí con Yemen; de momento no hay combatientes sirios en Yemen. Un funcionario citado por la agencia oficial SANA negó que haya tropas rumbo a Yemen y dijo que se trata de formación, intercambio de experiencia y consultas militares. El acuerdo llega tras la visita del presidente sirio, Ahmed al Sharaa, a Riad, que prometió a Siria 403 millones de dólares en préstamos.",
+     "res_en": "According to Syrian and regional officials quoted by AP, Damascus has already deployed military advisers to Saudi Arabia and plans to send an initial contingent of about 600 special forces troops in the coming days, to be stationed along the Saudi border with Yemen; so far no Syrian fighters are in Yemen. An official quoted by the state news agency SANA denied that troops were headed to Yemen and said the cooperation covers training, exchange of expertise and military consultations. The deal follows Syrian President Ahmed al-Sharaa's visit to Riyadh, which pledged Syria $403m in loans.",
+     "por_que_es": "Siria, que hasta ahora se había mantenido al margen, entraría en el frente saudí-hutí, uno de los abiertos con la guerra contra Irán.",
+     "por_que_en": "Syria, which had so far stayed on the sidelines, would enter the Saudi-Houthi front, one of those opened by the war on Iran.",
+     "reg_es": "Oriente Medio",
+     "reg_en": "Middle East",
+     "paises": [
+      "siria",
+      "arabia_saudi",
+      "yemen"
+     ],
+     "fuentes": [
+      {
+       "n": "AP",
+       "url": "https://www.audacy.com/kywnewsradio/news/world/syria-saudi-yemen-houthis-fighters-d436bdc81a8e6b28bb99c417aaeaf8b6",
+       "d": "2026-11-08"
+      },
+      {
+       "n": "Al Jazeera",
+       "url": "https://www.aljazeera.com/features/2026/11/9/syria-confirms-sending-troops-to-saudi-arabia-amid-battle-against-houthis",
+       "d": "2026-11-09"
+      }
+     ]
+    },
+    {
+     "t_es": "Un temporal inunda decenas de miles de tiendas en Gaza y un desprendimiento de arena mata a tres niños y una mujer",
+     "t_en": "A storm floods tens of thousands of tents in Gaza and a sand collapse kills three children and a woman",
+     "res_es": "Las lluvias torrenciales del fin de semana inundaron decenas de miles de tiendas de desplazados en la Franja; la Oficina de Medios del Gobierno de Gaza cifra en unas 70.000 las afectadas en 12 horas. El domingo por la noche, un talud de arena se derrumbó sobre un campamento al sur de Deir al Balah y mató a tres niños y una mujer, según el Ministerio de Sanidad dependiente de Hamás. La Defensa Civil recibió más de 2.100 llamadas de auxilio y solo pudo atender un 10 %. Organizaciones como Save the Children acusan a Israel de bloquear la entrada de tiendas y material de refugio, y la OCHA de la ONU señala que Israel comunicó el 1 de noviembre la suspensión de los envíos desde Egipto.",
+     "res_en": "Torrential rain over the weekend flooded tens of thousands of displaced people's tents across the Strip; Gaza's Government Media Office puts the number at about 70,000 within 12 hours. On Sunday night, a sand embankment collapsed onto a camp south of Deir al-Balah, killing three children and a woman, according to the Hamas-run health ministry. The Civil Defence received more than 2,100 distress calls and could respond to only 10%. Groups such as Save the Children accuse Israel of blocking the entry of tents and shelter supplies, and the UN's OCHA says Israel notified it on 1 November that it would suspend shipments from Egypt.",
+     "por_que_es": "Más de un año después del alto el fuego, el primer gran temporal del invierno deja al descubierto la falta de refugio y la ayuda bloqueada.",
+     "por_que_en": "More than a year after the ceasefire, the first big storm of winter exposes the lack of shelter and the blocked aid.",
+     "reg_es": "Gaza (Palestina) · Oriente Próximo",
+     "reg_en": "Gaza (Palestine) · Middle East",
+     "paises": [
+      "israel"
+     ],
+     "fuentes": [
+      {
+       "n": "BBC News",
+       "url": "https://www.bbc.com/news/articles/cqd090ee8px5o",
+       "d": "2026-11-09"
+      },
+      {
+       "n": "Al Jazeera",
+       "url": "https://www.aljazeera.com/news/2026/11/10/palestine-weekly-west-bank-on-fire-and-gazas-tents-under",
+       "d": "2026-11-10"
+      },
+      {
+       "n": "Al Jazeera",
+       "url": "https://www.aljazeera.com/news/2026/11/8/floods-in-gaza-leave-tens-of-thousands-without-shelter",
+       "d": "2026-11-08"
+      }
+     ]
+    }
+   ]
+  },
   {
    "fecha": "2026-11-09",
    "actualizado": "2026-11-09T08:05+01:00",
@@ -2242,174 +2397,6 @@
       {
        "n": "BBC News",
        "url": "https://www.bbc.com/news/articles/cm4g17qq8wz4o",
-       "d": "2026-10-26"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "fecha": "2026-10-27",
-   "actualizado": "2026-10-27T08:04+01:00",
-   "items": [
-    {
-     "t_es": "Israel vota en unas elecciones decisivas, las primeras desde el 7 de octubre, con Netanyahu y Eisenkot igualados",
-     "t_en": "Israel votes in a pivotal election, the first since 7 October, with Netanyahu and Eisenkot neck and neck",
-     "res_es": "Los colegios abrieron a las 07.00 (06.00 en la España peninsular) y cierran a las 22.00, cuando las televisiones publicarán los sondeos a pie de urna; unos 7,3 millones de israelíes pueden votar. Los últimos sondeos sitúan al bloque de Netanyahu casi empatado con la oposición que encabeza el exjefe del Estado Mayor Gadi Eisenkot (partido Yashar), y ninguno alcanzaría los 61 escaños de la mayoría, por lo que los partidos árabes podrían ser decisivos. En la recta final, el Canal 12 informó de un choque entre Netanyahu y el jefe del Estado Mayor, Eyal Zamir, por una orden que podría haber provocado un enfrentamiento con Irán; Netanyahu lo niega.",
-     "res_en": "Polls opened at 07:00 (06:00 CET) and close at 22:00, when broadcasters will publish exit polls; some 7.3 million Israelis are eligible to vote. The latest polls put Netanyahu's bloc almost level with the opposition led by former military chief Gadi Eisenkot (Yashar party), and neither is projected to reach the 61 seats needed for a majority, so Arab parties could be decisive. In the final stretch, Channel 12 reported a clash between Netanyahu and military chief Eyal Zamir over a directive that could have triggered a confrontation with Iran; Netanyahu denies it.",
-     "por_que_es": "El resultado marcará la política de Israel hacia Irán, Gaza y Cisjordania y puede abrir semanas de negociaciones para formar gobierno.",
-     "por_que_en": "The result will shape Israel's policy on Iran, Gaza and the West Bank and may open weeks of coalition talks.",
-     "reg_es": "Oriente Próximo",
-     "reg_en": "Middle East",
-     "paises": [
-      "israel"
-     ],
-     "fuentes": [
-      {
-       "n": "BBC News",
-       "url": "https://www.bbc.com/news/articles/c3j47l4kdez4o",
-       "d": "2026-10-27"
-      },
-      {
-       "n": "El País",
-       "url": "https://elpais.com/internacional/2026-10-27/netanyahu-se-juega-su-futuro-en-unas-elecciones-decisivas-para-todo-oriente-proximo.html",
-       "d": "2026-10-27"
-      },
-      {
-       "n": "DW",
-       "url": "https://www.dw.com/en/israel-election-israelis-vote-for-1st-time-since-october-7-terror-attack/live-79713839",
-       "d": "2026-10-27"
-      },
-      {
-       "n": "The Guardian",
-       "url": "https://www.theguardian.com/world/2026/oct/26/netanyahu-reportedly-pressured-israel-military-attack-iran-runup-to-election",
-       "d": "2026-10-26"
-      }
-     ]
-    },
-    {
-     "t_es": "Arabia Saudí, Pakistán y Turquía envían a Teherán una delegación de alto nivel para intentar evitar una nueva guerra entre EE. UU. e Irán",
-     "t_en": "Saudi Arabia, Pakistan and Turkey send a high-level delegation to Tehran to try to avert a new US-Iran war",
-     "res_es": "El ministro de Defensa saudí, Jaled bin Salmán; el jefe del ejército paquistaní, Asim Munir, y el jefe de la inteligencia turca, Ibrahim Kalin —los tres países del pacto de defensa de La Meca— se reunieron el lunes con el presidente iraní, Masud Pezeshkian, y con responsables de seguridad para impulsar un acuerdo entre Teherán y Washington. También trataron la guerra de Yemen y los ataques de los hutíes contra Arabia Saudí, según fuentes regionales citadas por AP. El mismo día, el portavoz de Exteriores iraní, Esmaeil Baqaei, afirmó que EE. UU. «no se toma en serio» las negociaciones.",
-     "res_en": "Saudi Defence Minister Khalid bin Salman, Pakistani army chief Asim Munir and Turkish intelligence chief Ibrahim Kalin — the three Mecca defence pact countries — met Iranian President Masoud Pezeshkian and security officials on Monday to push for a deal between Tehran and Washington. They also discussed the war in Yemen and Houthi attacks on Saudi Arabia, according to regional officials cited by AP. The same day, Iranian Foreign Ministry spokesman Esmaeil Baqaei said the US is \"not serious\" about negotiations.",
-     "por_que_es": "Es uno de los diálogos de más alto nivel celebrados en Teherán en los últimos meses, mientras EE. UU. e Israel endurecen sus amenazas contra Irán.",
-     "por_que_en": "It is one of the highest-profile dialogues held in Tehran in recent months, as the US and Israel sharpen their threats against Iran.",
-     "reg_es": "Oriente Próximo",
-     "reg_en": "Middle East",
-     "paises": [
-      "iran",
-      "arabia_saudi",
-      "pakistan",
-      "turquia",
-      "us"
-     ],
-     "fuentes": [
-      {
-       "n": "Al Jazeera",
-       "url": "https://www.aljazeera.com/news/2026/10/26/mecca-defence-alliance-members-in-tehran-to-defuse-iran-us-yemen-tensions",
-       "d": "2026-10-26"
-      },
-      {
-       "n": "AP (PBS NewsHour)",
-       "url": "https://www.pbs.org/newshour/world/delegations-meet-in-iran-with-the-middle-east-on-edge-over-potential-for-renewed-fighting",
-       "d": "2026-10-26"
-      },
-      {
-       "n": "Anadolu Agency",
-       "url": "https://www.aa.com.tr/en/middle-east/iran-says-us-not-serious-about-talks-rejects-claims-over-nuclear-program/4100953",
-       "d": "2026-10-26"
-      }
-     ]
-    },
-    {
-     "t_es": "Entra en vigor en Oleshky (Ucrania) la tregua humanitaria mediada por Melania Trump",
-     "t_en": "Melania Trump-brokered humanitarian truce takes effect in Oleshky, Ukraine",
-     "res_es": "Rusia y Ucrania confirmaron el inicio del alto el fuego local a las 01.00 GMT del martes en Oleshky, ciudad ocupada por Rusia en la orilla sur del Dniéper, frente a Jersón. El Ministerio de Defensa ruso dijo que dejó de disparar hacia Jersón para preparar la operación humanitaria, y el comisionado ucraniano de derechos humanos, Dmitró Lubinets, aseguró que Kiev cumple sus compromisos. La tregua debe permitir la entrada de ayuda y la evacuación de civiles; quedan entre unas 2.000 personas (estimaciones ucranianas y estadounidenses citadas por DW) y 6.000 (estimación ucraniana citada por la BBC), con graves carencias de comida y medicinas.",
-     "res_en": "Russia and Ukraine confirmed the start of the local ceasefire at 01:00 GMT on Tuesday in Oleshky, a Russian-occupied town on the south bank of the Dnipro, opposite Kherson. Russia's Defence Ministry said it stopped firing towards Kherson to prepare for the humanitarian operation, and Ukraine's human rights commissioner Dmytro Lubinets said Kyiv was honouring its commitments. The truce is meant to allow aid in and civilians out; between about 2,000 people (Ukrainian and US estimates cited by DW) and 6,000 (a Ukrainian estimate cited by the BBC) remain, facing severe shortages of food and medicine.",
-     "por_que_es": "Pondrá a prueba si la mediación de EE. UU. logra acuerdos concretos entre Moscú y Kiev.",
-     "por_que_en": "It will test whether US mediation can deliver concrete agreements between Moscow and Kyiv.",
-     "reg_es": "Europa del Este",
-     "reg_en": "Eastern Europe",
-     "paises": [
-      "ucrania",
-      "rusia",
-      "us"
-     ],
-     "fuentes": [
-      {
-       "n": "BBC News",
-       "url": "https://www.bbc.com/news/articles/ck20wjnv3w0jo",
-       "d": "2026-10-27"
-      },
-      {
-       "n": "DW",
-       "url": "https://www.dw.com/en/ukraine-war-russia-melania-trump-usa/a-79771473",
-       "d": "2026-10-27"
-      },
-      {
-       "n": "Al Jazeera",
-       "url": "https://www.aljazeera.com/news/2026/10/27/russia-halts-strikes-on-ukraines-kherson-as-oleshky-ceasefire-takes-effect",
-       "d": "2026-10-27"
-      }
-     ]
-    },
-    {
-     "t_es": "Una comisión de la ONU acusa a Israel de crímenes de lesa humanidad en Cisjordania; Israel lo llama «propaganda»",
-     "t_en": "UN commission accuses Israel of crimes against humanity in the West Bank; Israel calls it \"propaganda\"",
-     "res_es": "La Comisión Internacional Independiente de Investigación de la ONU sobre el Territorio Palestino Ocupado concluye en un informe publicado el lunes que Israel ha cometido en Cisjordania crímenes de lesa humanidad como exterminio, tortura y violación, y que sigue cometiendo un genocidio en Gaza pese al alto el fuego. Según el informe, entre el 7 de octubre de 2023 y el 30 de septiembre de 2026 murieron 1.080 palestinos a manos de fuerzas israelíes en Cisjordania. El Ministerio de Exteriores israelí lo rechazó como un «documento de propaganda», mientras Guterres y Volker Türk criticaron la operación militar en Hebrón.",
-     "res_en": "The UN Independent International Commission of Inquiry on the Occupied Palestinian Territory concludes in a report published on Monday that Israel has committed crimes against humanity in the West Bank, including extermination, torture and rape, and continues to commit genocide in Gaza despite the ceasefire. According to the report, 1,080 Palestinians were killed by Israeli forces in the West Bank between 7 October 2023 and 30 September 2026. Israel's Foreign Ministry rejected it as a \"propaganda document\", while Guterres and Volker Türk criticised the military operation in Hebron.",
-     "por_que_es": "Aumenta la presión internacional sobre Israel justo el día antes de sus elecciones.",
-     "por_que_en": "It adds international pressure on Israel on the eve of its election.",
-     "reg_es": "Cisjordania (Palestina) · Oriente Próximo",
-     "reg_en": "West Bank (Palestine) · Middle East",
-     "paises": [
-      "israel"
-     ],
-     "fuentes": [
-      {
-       "n": "Al Jazeera",
-       "url": "https://www.aljazeera.com/news/2026/10/26/israel-committing-crimes-against-humanity-in-occupied-west-bank-un",
-       "d": "2026-10-26"
-      },
-      {
-       "n": "El País",
-       "url": "https://elpais.com/internacional/2026-10-26/una-comision-de-la-onu-acusa-a-israel-de-crimenes-de-guerra-en-cisjordania.html",
-       "d": "2026-10-26"
-      },
-      {
-       "n": "DW",
-       "url": "https://www.dw.com/en/un-sounds-the-alarm-over-israels-west-bank-military-operation/a-79770228",
-       "d": "2026-10-26"
-      }
-     ]
-    },
-    {
-     "t_es": "Jordania bombardea el sur de Siria en represalia por el ataque a una iglesia; Damasco cierra la frontera",
-     "t_en": "Jordan strikes southern Syria in retaliation for a church attack; Damascus closes the border",
-     "res_es": "Jordania atacó el lunes lo que su ejército describió como escondites de grupos armados en el sur de Siria, en respuesta al tiroteo del viernes en un funeral en una iglesia ortodoxa de Karak que mató a nueve personas. Las autoridades sirias cifran los muertos en al menos cinco (Sanidad, según la BBC) o siete (Defensa Civil, según Al Jazeera), entre ellos niños, en las provincias de Deraa y Sueida. Amán dijo que actuó en coordinación con Damasco; Siria lo niega y cerró el paso de Nasib, el único cruce de pasajeros y mercancías entre ambos países.",
-     "res_en": "Jordan on Monday struck what its military described as hideouts of armed groups in southern Syria, in response to Friday's shooting at a funeral in a Greek Orthodox church in Karak that killed nine people. Syrian authorities put the death toll at at least five (health officials, per the BBC) or seven (Civil Defence, per Al Jazeera), including children, in Deraa and Suweyda provinces. Amman said it acted in coordination with Damascus; Syria denies this and closed the Nassib crossing, the only passenger and goods crossing between the two countries.",
-     "por_que_es": "Abre una crisis entre dos vecinos clave para la estabilidad del sur de Siria y de Jordania.",
-     "por_que_en": "It opens a crisis between two neighbours key to the stability of southern Syria and Jordan.",
-     "reg_es": "Oriente Próximo",
-     "reg_en": "Middle East",
-     "paises": [
-      "jordania",
-      "siria"
-     ],
-     "fuentes": [
-      {
-       "n": "BBC News",
-       "url": "https://www.bbc.com/news/articles/cq8ezg6dy6xlo",
-       "d": "2026-10-27"
-      },
-      {
-       "n": "Al Jazeera",
-       "url": "https://www.aljazeera.com/news/2026/10/26/jordan-launches-air-strikes-in-syria-in-response-to-a-fatal-church-shooting",
-       "d": "2026-10-26"
-      },
-      {
-       "n": "DW",
-       "url": "https://www.dw.com/en/jordan-says-its-military-struck-militant-hideouts-in-syria-after-deadly-church-attack/a-79760441",
        "d": "2026-10-26"
       }
      ]
