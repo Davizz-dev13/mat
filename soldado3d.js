@@ -828,5 +828,31 @@ export async function mount(stage,st,D,M,opt){
   const WARM=[]; if(opt.cam&&V.R&&V.cam){ const warm=()=>{ try{ const G=new THREE.Group(); [gearG,gearC].forEach(src=>src.traverse(o=>{ if(o.isMesh&&o.material&&!Array.isArray(o.material)){ const m=o.material.clone(); m.transparent=true; m.opacity=0.999; WARM.push(m); const q=new THREE.Mesh(o.geometry,m); G.add(q); } }));
       G.position.set(0,-1000,0); V.scene.add(G); if(V.R.compileAsync) V.R.compileAsync(G,V.cam,V.scene).catch(()=>{}).finally(()=>V.scene.remove(G)); else { V.R.compile(G,V.cam,V.scene); V.scene.remove(G); } }catch(e){} };
     (window.requestIdleCallback||((f)=>setTimeout(f,1200)))(warm,{timeout:3000}); }
-  return { death:{keys:deathKeys,blend:deathBlend,end:deathEnd,ground:deathGround}, update(s){ const xh=V.xhold?V.xhold():null; /* fundido del equipo anterior al nuevo (también el arma, que llega después) */ stopAnim(); scale(); rebuildGear(); camUI(); camos(); ghil(); const pw=setWeapon(); if(xh) Promise.resolve(pw).then(()=>xh(0.4),()=>xh(0.4)); }, destroy(){ WARM.forEach(m=>{ try{ m.dispose(); }catch(e){} }); try{ if(CS) CS.dispose(); }catch(e){} try{ if(FK){ FK.dispose(); FK=null; } stopAnim(); if(bc) bc.dispose(); body.remove(gearG); body.remove(gearH); body.remove(gearC); pr.remove(); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
+  /* ── foto 3D para la tarjeta «Compartir»: un render fuera de pantalla del soldado tal como está (rol, equipo, ghillie, postura), encuadrado de 3/4, fondo transparente ── */
+  function snapshot(w,h,o){ o=o||{}; const R=V.R; body.updateMatrixWorld(true);
+    const bb=new THREE.Box3(), tb=new THREE.Box3();
+    body.traverse(m=>{ if(!m.visible||!(m.isMesh||m.isSkinnedMesh)||m.material&&m.material.depthWrite===false&&m.material.transparent) return; let p=m.parent, vis=true; while(p&&p!==holder){ if(!p.visible){ vis=false; break; } p=p.parent; } if(!vis) return;
+      if(m.isSkinnedMesh){ m.boundingBox=null; m.computeBoundingBox(); tb.copy(m.boundingBox).applyMatrix4(m.matrixWorld); } else { if(!m.geometry) return; if(!m.geometry.boundingBox) m.geometry.computeBoundingBox(); tb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); }
+      if(isFinite(tb.min.x)&&isFinite(tb.max.x)) bb.union(tb); });
+    if(bb.isEmpty()) return null;
+    const fov=o.fov||24, yaw=o.yaw!=null?o.yaw:0.42, pit=o.pitch!=null?o.pitch:(PO==='tumbado'?0.32:0.1), mg=o.margin||1.06;
+    const cam=new THREE.PerspectiveCamera(fov,w/h,0.02,60); const dir=new THREE.Vector3(Math.sin(yaw)*Math.cos(pit),Math.sin(pit),Math.cos(yaw)*Math.cos(pit));
+    const q=new THREE.Quaternion(); V.holder.getWorldQuaternion(q); dir.applyQuaternion(q).normalize();
+    const up0=new THREE.Vector3(0,1,0), rt=new THREE.Vector3().crossVectors(up0,dir).normalize(), up=new THREE.Vector3().crossVectors(dir,rt).normalize();
+    const C=[]; for(let i=0;i<8;i++) C.push(new THREE.Vector3(i&1?bb.max.x:bb.min.x,i&2?bb.max.y:bb.min.y,i&4?bb.max.z:bb.min.z));
+    let c=bb.getCenter(new THREE.Vector3()); const tV=Math.tan(fov*Math.PI/360), tH=tV*w/h; let d=1;
+    for(let it=0;it<3;it++){ d=0; let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+      C.forEach(p=>{ const v=p.clone().sub(c), x=v.dot(rt), y=v.dot(up), z=v.dot(dir); d=Math.max(d,z+Math.abs(x)/tH,z+Math.abs(y)/tV); });
+      C.forEach(p=>{ const v=p.clone().sub(c), z=v.dot(dir), k=d/(d-z); const x=v.dot(rt)*k, y=v.dot(up)*k; x0=Math.min(x0,x); x1=Math.max(x1,x); y0=Math.min(y0,y); y1=Math.max(y1,y); });
+      c.addScaledVector(rt,(x0+x1)/2).addScaledVector(up,(y0+y1)/2); }
+    d*=mg; cam.position.copy(c).addScaledVector(dir,d); cam.up.copy(up0); cam.lookAt(c); V.scene.add(cam); cam.updateMatrixWorld(true);
+    const old=new THREE.Vector2(); R.getSize(old); const pr=R.getPixelRatio(), cc=new THREE.Color(); R.getClearColor(cc); const ca=R.getClearAlpha(), bg=V.scene.background;
+    const out=document.createElement('canvas'); out.width=w; out.height=h;
+    /* fuera de la foto: suelo, sombra de contacto y todo lo que no es el soldado (la tarjeta pinta su propio suelo) */ const hid=[]; V.scene.traverse(m=>{ if((m.isMesh||m.isSprite||m.isPoints)&&m.visible){ let p=m, inH=false; while(p){ if(p===holder){ inH=true; break; } p=p.parent; } if(!inH){ m.visible=false; hid.push(m); } } });
+    try{ R.setPixelRatio(1); R.setSize(w,h,false); R.setClearColor(0x000000,0); V.scene.background=null; R.shadowMap.needsUpdate=true; R.render(V.scene,cam); out.getContext('2d').drawImage(R.domElement,0,0,w,h); }
+    finally{ hid.forEach(m=>{ m.visible=true; }); V.scene.background=bg; R.setClearColor(cc,ca); R.setPixelRatio(pr); R.setSize(old.x,old.y,false); V.scene.remove(cam); V.redraw&&V.redraw(); }
+    /* recorte justo al soldado (por la transparencia) */ try{ const dt=out.getContext('2d').getImageData(0,0,w,h).data; let x0=w,x1=-1,y0=h,y1=-1; for(let yy=0;yy<h;yy+=2){ const ro=yy*w*4; for(let xx=0;xx<w;xx+=2){ if(dt[ro+xx*4+3]>12){ if(xx<x0)x0=xx; if(xx>x1)x1=xx; if(yy<y0)y0=yy; if(yy>y1)y1=yy; } } }
+      if(x1>x0&&y1>y0){ x0=Math.max(0,x0-3); y0=Math.max(0,y0-3); x1=Math.min(w-1,x1+3); y1=Math.min(h-1,y1+3); const cw=x1-x0+1, ch=y1-y0+1; const o2=document.createElement('canvas'); o2.width=cw; o2.height=ch; o2.getContext('2d').drawImage(out,x0,y0,cw,ch,0,0,cw,ch); return o2; } }catch(e){}
+    return out; }
+  return { snapshot, death:{keys:deathKeys,blend:deathBlend,end:deathEnd,ground:deathGround}, update(s){ const xh=V.xhold?V.xhold():null; /* fundido del equipo anterior al nuevo (también el arma, que llega después) */ stopAnim(); scale(); rebuildGear(); camUI(); camos(); ghil(); const pw=setWeapon(); if(xh) Promise.resolve(pw).then(()=>xh(0.4),()=>xh(0.4)); }, destroy(){ WARM.forEach(m=>{ try{ m.dispose(); }catch(e){} }); try{ if(CS) CS.dispose(); }catch(e){} try{ if(FK){ FK.dispose(); FK=null; } stopAnim(); if(bc) bc.dispose(); body.remove(gearG); body.remove(gearH); body.remove(gearC); pr.remove(); if(wpn) body.remove(wpn); if(pvs) body.remove(pvs); holder.remove(body); V.holder.remove(holder); }catch(e){} V.destroy(); } };
 }
