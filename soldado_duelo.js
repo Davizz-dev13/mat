@@ -289,9 +289,9 @@ export async function open(X,o){ css(); const my=++RUN; cancelAnimationFrame(ANI
     cand.forEach(c=>{ try{ const d=X.dataFor(c.st)||{}; d.nick=c.nick; const cc=MAT_SDP.encode(c.act?X:{D:X.D,RL:X.RL,st:()=>c.st},d); own.codes.add(codeN(cc)); const sg=sigOf(MAT_SDP.decode(X,cc)); if(sg) own.sigs.add(sg); }catch(e){} }); }catch(e){}
   const match=(code,dec)=>own.codes.has(codeN(code))?2:own.sigs.has(sigOf(dec))?1:0;
   const Fa=o.a&&window.MAT_SDP?MAT_SDP.decode(X,o.a):null;
-  const vsSide={st:o.F.st,nick:o.F.nick||'',code:codeN(o.code)};
+  const vsSide={st:o.F.st,nick:o.F.nick||'',code:codeN(o.code),ico:o.F.ico,r:o.F.rank};
   let A=null, B=vsSide, who='me';
-  if(Fa&&!Fa.err){ const aSide={st:Fa.st,nick:Fa.nick||'',code:codeN(o.a)}; const ma=match(o.a,Fa), mv=match(o.code,o.F);
+  if(Fa&&!Fa.err){ const aSide={st:Fa.st,nick:Fa.nick||'',code:codeN(o.a),ico:Fa.ico,r:Fa.rank}; const ma=match(o.a,Fa), mv=match(o.code,o.F);
     if(ma>0&&ma>=mv){ A=aSide; B=vsSide; } else if(mv>0){ A=vsSide; B=aSide; } else { A=vsSide; B=aSide; who='none'; } }
   if(!A){ const cs=X.st(); if(hasS(cs)){ let mc='', nk=X.nickGet?X.nickGet():''; try{ const md=X.dataFor(cs); md.nick=nk; mc=codeN(MAT_SDP.encode(X,md)); }catch(e){ mc='YO'; } A={st:cs,nick:nk,code:mc}; } }
   if(!A){ el.innerHTML='<span class="k">⚔️ '+L('Duelo 1 vs 1','1 vs 1 duel')+'</span><h2>'+L('Crea tu soldado','Create your soldier')+'</h2><p>'+L('Para luchar contra el soldado de ','To fight ')+esc(o.F.nick||L('tu amigo','your friend'))+L(' necesitas el tuyo: elige rol y arma aquí abajo y vuelve a pulsar «Luchar 1 vs 1».','\'s soldier you need your own: pick a role and weapon below, then press “Fight 1 vs 1” again.')+'</p><div class="b"><a class="pri" href="#/soldado" data-sdmk>'+L('Crea tu soldado','Create your soldier')+'</a></div>';
@@ -299,6 +299,7 @@ export async function open(X,o){ css(); const my=++RUN; cancelAnimationFrame(ANI
   const fbA=who==='me'?L('Tu soldado','Your soldier'):L('Soldado A','Soldier A'), fbB=who==='me'?L('Tu amigo','Your friend'):L('Soldado B','Soldier B');
   const G={X,ARM,who,uv:codeN(o.code),aCode:Fa&&!Fa.err?codeN(o.a):'',me:{code:A.code,nk:A.nick,P:profile(A.st,X.dataFor(A.st),ARM,A.nick||fbA)},fr:{code:B.code,nk:B.nick,P:profile(B.st,X.dataFor(B.st),ARM,B.nick||fbB)}};
   if(G.me.P.nick===G.fr.P.nick) G.fr.P.nick+=' (2)';
+  /* iconos de perfil (perfil.js), solo en la cabecera: no cambian el combate */ try{ const I=window.MAT_SDP&&MAT_SDP.ico; if(I){ const ic=(s,mine)=>({id:mine?I.get():(s.ico||'soldado'),r:s.r!=null?s.r|0:I.rank()}); G.me.ic=ic(A,who==='me'); G.fr.ic=ic(B,false); } }catch(e){}
   picker(G,el,o.map&&MAPS[o.map]?o.map:null,o.r|0||1,!!(o.map&&MAPS[o.map]));
 }
 /* nombres según quién mira: «Gana tu soldado (apodo)» / «Gana tu amigo»; con un mirón neutro, «Gana <apodo o Soldado A>» */
@@ -306,7 +307,8 @@ function winTxt(G,wn){ const s=wn===G.me.P?G.me:G.fr; if(G.who!=='me') return L(
   return (mine?L('Gana tu soldado','Winner: your soldier'):L('Gana tu amigo','Winner: your friend'))+(s.nk?' ('+s.nk+')':''); }
 /* en el texto que se comparte habla quien lo envía: «mi soldado» / «tu soldado» si no tienen apodo */
 function shareName(G,s){ if(s.nk) return s.nk; if(G.who!=='me') return s.P.nick; return s===G.me?L('mi soldado','my soldier'):L('tu soldado','your soldier'); }
-function head(G){ return '<span class="k">⚔️ '+L('Duelo 1 vs 1 · sin explosivos','1 vs 1 duel · no explosives')+'</span><h2>'+esc(G.me.P.nick)+' vs '+esc(G.fr.P.nick)+'</h2><div class="pr">'+chip(G.me.P,COL[0])+chip(G.fr.P,COL[1])+'</div>'; }
+function icH(s,m){ try{ return s.ic&&window.MAT_SDP&&MAT_SDP.ico?'<span style="display:inline-flex;vertical-align:middle;margin:'+(m||'0 0 3px 8px')+'">'+MAT_SDP.ico.html(s.ic.id,s.ic.r,32)+'</span>':''; }catch(e){ return ''; } }
+function head(G){ return '<span class="k">⚔️ '+L('Duelo 1 vs 1 · sin explosivos','1 vs 1 duel · no explosives')+'</span><h2>'+icH(G.me,'0 8px 3px 0')+esc(G.me.P.nick)+' vs '+esc(G.fr.P.nick)+icH(G.fr)+'</h2><div class="pr">'+chip(G.me.P,COL[0])+chip(G.fr.P,COL[1])+'</div>'; }
 function picker(G,el,mk,r,go){ let sel=mk||'pueblo';
   el.innerHTML=head(G)+'<p class="sub2">'+L('Elige el mapa. Cada uno sale en un extremo, sin ayuda. Luchan solos: cada soldado decide según su arma, su equipo y su peso.','Pick the map. Each starts at one end, with no help. They fight on their own: each soldier decides from its weapon, kit and weight.')+'</p><div class="mp">'+ORDER.map(k=>'<button type="button" data-m="'+k+'"'+(k===sel?' class="on"':'')+'><span data-t></span><b>'+esc(LL(MAPS[k].n))+'</b><small>'+esc(LL(MAPS[k].b))+'</small></button>').join('')+'</div><div class="b"><button type="button" class="pri" data-go>⚔️ '+L('Luchar','Fight')+'</button></div><p class="n">'+L('Mismo tiempo de reacción para los dos. El empleo y las medallas no dan ventaja. Mismo duelo y mismo mapa = mismo resultado.','Same reaction time for both. Rank and medals give no edge. Same duel and same map = same result.')+'</p>';
   el.querySelectorAll('[data-m]').forEach(b=>{ b.querySelector('[data-t]').appendChild(thumb(b.dataset.m)); b.onclick=()=>{ sel=b.dataset.m; el.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b)); }; });
