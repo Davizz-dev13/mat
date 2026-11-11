@@ -139,6 +139,7 @@ export async function renderCard(c){ const W=1080, H=1350; const cv=document.cre
   if(logo){ x.save(); rr(x,52,34,84,84,18); x.clip(); x.drawImage(logo,52,34,84,84); x.restore(); }
   x.fillStyle='#f1f3ee'; x.font='800 58px '+F; x.textBaseline='alphabetic'; x.fillText('M.A.T',logo?156:56,94); x.fillStyle='#b9c4a8'; x.font='600 27px '+F; x.fillText(L('CREA TU SOLDADO','BUILD YOUR SOLDIER'),logo?158:58,124);
   x.textAlign='right'; x.fillStyle='#e6eadf'; x.font='700 34px '+F; x.fillText('matmilitar.es',W-52,94); x.textAlign='left';
+  /* código de soldado (para comparar con un amigo en matmilitar.es/#/soldado?vs=…) */ if(c.code){ x.textAlign='right'; x.fillStyle='#c8f03c'; const cf='ui-monospace,Menlo,Consolas,monospace'; let cs=22; x.font='700 '+cs+'px '+cf; while(cs>14&&x.measureText(c.code).width>W-160){ cs--; x.font='700 '+cs+'px '+cf; } x.fillText(c.code,W-52,151); x.textAlign='left'; }
   /* panel de la figura: foto del soldado 3D sobre un paisaje del terreno; dibujo 2D solo si no hay 3D (WebGL) */ const fx=40, fy=160, fw=470, fh=680; const sn=c.snap||null;
   x.save(); rr(x,fx,fy,fw,fh,28); x.clip(); const foot=scenery(x,fx,fy,fw,fh,g?g[0]:'none');
   if(sn&&sn.width){ const pad=22, aw=fw-pad*2, ah=(foot-fy)*0.86, k=Math.min(aw/sn.width,ah/sn.height), dw=sn.width*k, dh=sn.height*k, dx=fx+(fw-dw)/2, dy=foot-dh;
