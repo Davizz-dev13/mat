@@ -134,7 +134,7 @@ export function simulate(PA,PB,mk,seed,opt){ opt=opt||{}; const M=prep(MAPS[mk])
     med:P.med.uses,side:false,sw:0,supp:-9,firedT:-99,hitT:-99,seenT:-99,mv:false,cov:0,stats:{sh:0,hit:0,dmg:0,heal:0,dist:0},lg:{},mode:'hold',flank:0});
   const S=[mkS(PA,M.A,M.B,0),mkS(PB,M.B,M.A,1)]; const ev=[], fr=[], LOG=[];
   const log=(t,k,txt,key)=>{ if(key){ if(LOG.some(l=>l.key===key)) return; } LOG.push({t,k,txt,key}); };
-  const nm=s=>s.P.nick; const f0=v=>Math.round(v); 
+  const nm=s=>s.P.nick; /* en mitad de la frase, «tu soldado» / «tu amigo» van en minúscula (los apodos y «Soldado A/B» no cambian) */ const nmi=s=>{ const n=s.P.nick; return /^(Tu soldado|Tu amigo|Your soldier|Your friend)$/.test(n)?n.charAt(0).toLowerCase()+n.slice(1):n; }; const f0=v=>Math.round(v); 
   const C0=s=>CL[s.P.cls];
   /* frases de arranque: la doctrina sale del arma y el peso */
   S.forEach(s=>{ const P=s.P, c=C0(s), d=c.doc, w=P.wn;
@@ -143,7 +143,7 @@ export function simulate(PA,PB,mk,seed,opt){ opt=opt||{}; const M=prep(MAPS[mk])
       d==='push'?L(nm(s)+' ('+w+') quiere acercarse: rodea por donde no le vean.',nm(s)+' ('+w+') wants to close in: flanks out of sight.'):
       L(nm(s)+' ('+w+') avanza de cubierta en cubierta: vale de cerca y de lejos.',nm(s)+' ('+w+') moves cover to cover: works up close and far.');
     log(0,s.k,t,'doc'+s.k); });
-  { const a=S[0],b=S[1], fa=a.P.spd, fb=b.P.spd; if(Math.abs(fa-fb)/Math.max(fa,fb)>.08){ const sl=fa<fb?a:b, fa2=fa<fb?b:a; log(0,sl.k,L('Con '+String(Math.round(sl.P.tot*10)/10).replace('.',',')+' kg ('+f0(sl.P.pct)+' % de su peso) '+nm(sl)+' se mueve un '+f0((1-sl.P.spd/fa2.P.spd)*100)+' % más lento que '+nm(fa2)+'.','Carrying '+Math.round(sl.P.tot*10)/10+' kg ('+f0(sl.P.pct)+'% of body weight) '+nm(sl)+' moves '+f0((1-sl.P.spd/fa2.P.spd)*100)+'% slower than '+nm(fa2)+'.'),'spd'); } }
+  { const a=S[0],b=S[1], fa=a.P.spd, fb=b.P.spd; if(Math.abs(fa-fb)/Math.max(fa,fb)>.08){ const sl=fa<fb?a:b, fa2=fa<fb?b:a; log(0,sl.k,L('Con '+String(Math.round(sl.P.tot*10)/10).replace('.',',')+' kg ('+f0(sl.P.pct)+' % de su peso) '+nmi(sl)+' se mueve un '+f0((1-sl.P.spd/fa2.P.spd)*100)+' % más lento que '+nmi(fa2)+'.','Carrying '+Math.round(sl.P.tot*10)/10+' kg ('+f0(sl.P.pct)+'% of body weight) '+nmi(sl)+' moves '+f0((1-sl.P.spd/fa2.P.spd)*100)+'% slower than '+nmi(fa2)+'.'),'spd'); } }
   if((S[0].P.gl||S[0].P.expl)&&(S[1].P.gl||S[1].P.expl)) log(0,-1,L('Los dos llevan granadas o lanzagranadas, pero aquí no se usan: solo cuentan por lo que pesan.','Both carry grenades or launchers, but they are not used here: only their weight counts.'),'exb');
   else S.forEach(s=>{ if(s.P.gl||s.P.expl) log(0,s.k,L(nm(s)+' lleva '+(s.P.gl?'lanzagranadas':'granadas o explosivos')+', pero aquí no se usan: solo pesan.',nm(s)+' carries '+(s.P.gl?'a grenade launcher':'grenades or explosives')+', but they are not used here: only their weight counts.'),'ex'+s.k); });
   function plan(s,e,t){ const K=s.K, P=s.P, c=C0(s), doc=s.side?'push':c.doc, spd=P.spd;
@@ -195,7 +195,7 @@ export function simulate(PA,PB,mk,seed,opt){ opt=opt||{}; const M=prep(MAPS[mk])
   for(let it=0;t<=TMAX;it++,t+=DT){ const ord=it%2?[1,0]:[0,1];
     for(const i of ord){ const s=S[i], e=S[1-i]; if(s.hp<=0) continue; const d=Math.hypot(s.x-e.x,s.y-e.y), l=los(M,s.x,s.y,e.x,e.y);
       if(l&&d<=spotR(M,mk,s,e,t)){ s.visT+=DT; } else if(!l||d>spotR(M,mk,s,e,t)*1.3){ s.visT=0; }
-      const was=s.vis; s.vis=s.visT>=.4; if(s.vis){ s.K={x:e.x,y:e.y,t,src:'eye'}; s.seenT=t; if(!was&&!first){ first=s.k; const why=e.mv?L(' se mueve al descubierto',' is moving in the open'):e.vg?L(' está entre la vegetación',' is in the vegetation'):''; log(t,s.k,L(nm(s)+' ve primero a '+nm(e)+' a '+f0(d)+' m'+(s.P.opt.m>=3&&!s.side?' con su visor de '+String(s.P.opt.m).replace('.',',')+' aumentos':'')+(why?': '+nm(e)+why:'')+'.',nm(s)+' spots '+nm(e)+' first at '+f0(d)+' m'+(s.P.opt.m>=3&&!s.side?' with a '+s.P.opt.m+'× scope':'')+(why?': '+nm(e)+why:'')+'.'),'first'); } }
+      const was=s.vis; s.vis=s.visT>=.4; if(s.vis){ s.K={x:e.x,y:e.y,t,src:'eye'}; s.seenT=t; if(!was&&!first){ first=s.k; const why=e.mv?L(' se mueve al descubierto',' is moving in the open'):e.vg?L(' está entre la vegetación',' is in the vegetation'):''; log(t,s.k,L(nm(s)+' ve primero a '+nmi(e)+' a '+f0(d)+' m'+(s.P.opt.m>=3&&!s.side?' con su visor de '+String(s.P.opt.m).replace('.',',')+' aumentos':'')+(why?': '+nmi(e)+why:'')+'.',nm(s)+' spots '+nmi(e)+' first at '+f0(d)+' m'+(s.P.opt.m>=3&&!s.side?' with a '+s.P.opt.m+'× scope':'')+(why?': '+nmi(e)+why:'')+'.'),'first'); } }
       /* ruido de pasos: el que carga mucho suena antes */ if(!s.vis&&e.mv&&d<(e.P.pct>45?30:18)) s.K={x:e.x,y:e.y,t,src:'ear'};
     }
     if(it%2===0) for(const i of (it%4?[1,0]:[0,1])){ const s=S[i]; if(s.hp>0) decide(s,S[1-i],t); }
@@ -210,10 +210,10 @@ export function simulate(PA,PB,mk,seed,opt){ opt=opt||{}; const M=prep(MAPS[mk])
       if(s.vis&&s.cd<=0&&s.sw<=0&&e.hp>0&&(!s.mv||canMoveFire)&&d<C.R*2.5&&accAt(s,d,s.mv)*(1-(e.mv?0:e.cov))>=(s.mv?.08:.03)){ s.cd+=1/(C.rate*(s.side?1:(s.P.rr||1))*(cls==='tirador'&&s.P.heavy50?1.4:1)); if(s.cd<0) s.cd=0;
         let p=accAt(s,d,s.mv)*(1-(e.mv?0:e.cov))*(e.mv?(d>60?(cls==='tirador'&&d>TU.mvD?TU.mvS:.65):.85)*(!s.side&&s.P.opt.m>=5&&d<150?.75:1):1)*(t<s.supp?.75:1)*(e.mv&&d>100&&!s.side?clamp(1+.3*((s.P.vel||850)-850)/850*Math.min(1,(d-100)/300),.85,1.08):1); s.stats.sh++; s.firedT=t; const hit=R()<p;
         ev.push({t,k:'shot',s:s.k,hit,x:e.x,y:e.y,p:Math.round(p*100)});
-        e.supp=t+(cls==='mg'?2:1); if(!(s.P.supp&&!s.side)||d<60){ e.K={x:s.x,y:s.y,t,src:'shot'}; } else if(!e.vis){ const er=d*.25; e.K={x:clamp(s.x+(R()-.5)*er,0,M.W),y:clamp(s.y+(R()-.5)*er,0,M.H),t,src:'shot?'}; if(!e.lg.sup){ e.lg.sup=1; log(t,s.k,L('El silenciador de '+nm(s)+' hace que '+nm(e)+' no sepa bien de dónde le disparan.',nm(s)+'\'s suppressor means '+nm(e)+' cannot tell where the shots come from.'),'sup'+s.k); } }
+        e.supp=t+(cls==='mg'?2:1); if(!(s.P.supp&&!s.side)||d<60){ e.K={x:s.x,y:s.y,t,src:'shot'}; } else if(!e.vis){ const er=d*.25; e.K={x:clamp(s.x+(R()-.5)*er,0,M.W),y:clamp(s.y+(R()-.5)*er,0,M.H),t,src:'shot?'}; if(!e.lg.sup){ e.lg.sup=1; log(t,s.k,L('El silenciador de '+nmi(s)+' hace que '+nmi(e)+' no sepa bien de dónde le disparan.',nm(s)+'\'s suppressor means '+nmi(e)+' cannot tell where the shots come from.'),'sup'+s.k); } }
         if(hit){ const lr=R(), loc=lr<TU.head?2:lr<TU.head+TU.limb?1:0, g=Math.min(e.hp,dmgOf(s,e,d,loc)); e.hp=Math.max(0,e.hp-g); e.hitT=t; s.stats.hit++; s.stats.dmg+=g;
-          if(loc===2&&!s.lg.hd){ s.lg.hd=1; log(t,s.k,L('¡Golpe de suerte! '+nm(s)+' le da a '+nm(e)+' en la cabeza a '+f0(d)+' m: −'+g+' de vida'+(e.P.helmet?' (el casco frena parte)':' (no lleva casco)')+'.','Lucky shot! '+nm(s)+' hits '+nm(e)+' in the head at '+f0(d)+' m: −'+g+' HP'+(e.P.helmet?' (the helmet stops some)':' (no helmet)')+'.'),'hd'+s.k); s.lg.h1=1; }
-          if(e.mv&&d>150&&!s.side&&s.P.velReal&&!s.lg.vl&&s.P.vel>=(e.P.vel||0)*1.1&&s.P.vel>=850){ s.lg.vl=1; log(t,s.k,L('La bala de '+nm(s)+' llega antes ('+f0(s.P.vel)+' m/s): a '+f0(d)+' m cuesta menos acertar a quien se mueve.',nm(s)+'\'s bullet gets there sooner ('+f0(s.P.vel)+' m/s): at '+f0(d)+' m a moving target is easier to hit.'),'vl'+s.k); }
+          if(loc===2&&!s.lg.hd){ s.lg.hd=1; log(t,s.k,L('¡Golpe de suerte! '+nm(s)+' le da a '+nmi(e)+' en la cabeza a '+f0(d)+' m: −'+g+' de vida'+(e.P.helmet?' (el casco frena parte)':' (no lleva casco)')+'.','Lucky shot! '+nm(s)+' hits '+nmi(e)+' in the head at '+f0(d)+' m: −'+g+' HP'+(e.P.helmet?' (the helmet stops some)':' (no helmet)')+'.'),'hd'+s.k); s.lg.h1=1; }
+          if(e.mv&&d>150&&!s.side&&s.P.velReal&&!s.lg.vl&&s.P.vel>=(e.P.vel||0)*1.1&&s.P.vel>=850){ s.lg.vl=1; log(t,s.k,L('La bala de '+nmi(s)+' llega antes ('+f0(s.P.vel)+' m/s): a '+f0(d)+' m cuesta menos acertar a quien se mueve.',nm(s)+'\'s bullet gets there sooner ('+f0(s.P.vel)+' m/s): at '+f0(d)+' m a moving target is easier to hit.'),'vl'+s.k); }
           if(!s.lg.h1){ s.lg.h1=1; const ar=loc===1?L(' en un brazo o una pierna, donde no hay placa',' in an arm or leg, where there is no plate'):e.P.armor>0?L(' (las placas paran parte)',' (the plates stop some)'):L(' (no lleva placas: entra entero)',' (no plates: full damage)'); const cv=e.cov>.4?L(', aunque estaba a cubierto',', even though in cover'):e.mv?L(': le pilla moviéndose al descubierto',': caught moving in the open'):''; log(t,s.k,L(nm(s)+' acierta a '+f0(d)+' m: −'+g+' de vida'+ar+cv+'.',nm(s)+' hits at '+f0(d)+' m: −'+g+' HP'+ar+cv+'.'),'h1'+s.k); }
           if(e.hp<=0){ end={w:s.k,t,d,how:'ko'}; } } }
     }
@@ -221,8 +221,8 @@ export function simulate(PA,PB,mk,seed,opt){ opt=opt||{}; const M=prep(MAPS[mk])
     if(end) break; }
   if(!end){ const a=S[0].hp, b=S[1].hp; end=a===b?{w:-1,t:TMAX,how:'time'}:{w:a>b?0:1,t:TMAX,how:'time'}; }
   const W_=end.w>=0?S[end.w]:null, Ls=end.w>=0?S[1-end.w]:null;
-  if(end.how==='ko') log(end.t,end.w,L(nm(Ls)+' queda fuera de combate a '+f0(end.d)+' m. Gana '+nm(W_)+' con '+W_.hp+' de vida.',nm(Ls)+' is out of action at '+f0(end.d)+' m. '+nm(W_)+' wins with '+W_.hp+' HP.'),'end');
-  else if(W_) log(end.t,end.w,L('Se acaba el tiempo sin que nadie caiga: gana '+nm(W_)+' por tener más vida ('+W_.hp+' contra '+Ls.hp+').','Time runs out with nobody down: '+nm(W_)+' wins on HP ('+W_.hp+' vs '+Ls.hp+').'),'end');
+  if(end.how==='ko') log(end.t,end.w,L(nm(Ls)+' queda fuera de combate a '+f0(end.d)+' m. Gana '+nmi(W_)+' con '+W_.hp+' de vida.',nm(Ls)+' is out of action at '+f0(end.d)+' m. '+nm(W_)+' wins with '+W_.hp+' HP.'),'end');
+  else if(W_) log(end.t,end.w,L('Se acaba el tiempo sin que nadie caiga: gana '+nmi(W_)+' por tener más vida ('+W_.hp+' contra '+Ls.hp+').','Time runs out with nobody down: '+nmi(W_)+' wins on HP ('+W_.hp+' vs '+Ls.hp+').'),'end');
   else log(end.t,-1,L('Se acaba el tiempo y los dos siguen igual: empate.','Time runs out with both level: draw.'),'end');
   return {w:end.w,how:end.how,t:end.t,fr,ev,log:LOG,S:S.map(s=>({hp:s.hp,stats:s.stats,P:s.P,med:s.med})),dt:DT*2,map:mk};
 }

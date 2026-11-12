@@ -28,7 +28,11 @@ export async function show(code,X){ const L=X.L, my=++RUN; css();
   if(!code||!window.MAT_SDP){ box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+L('Compárate con un amigo','Compare with a friend')+'</h2><p>'+L('Pega el código de soldado de tu amigo (empieza por SOL- y sale en su carta).','Paste your friend\'s soldier code (it starts with SOL- and is on their card).')+'</p>'+form; bind(); box.scrollIntoView({block:'start'}); return; }
   const F=window.MAT_SDP.decode(X,code);
   if(F.err){ box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+L('Ese código no es válido','That code is not valid')+'</h2><p>'+(F.err==='sum'?L('Parece que hay una letra mal copiada. Revísalo o pídeselo otra vez a tu amigo.','A character seems to be mistyped. Check it or ask your friend again.'):L('No es un código de soldado de M.A.T.','It is not an M.A.T soldier code.'))+'</p>'+form; bind(); box.scrollIntoView({block:'start'}); return; }
-  box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+L('Tu soldado contra el de ','Your soldier vs ')+esc(F.nick||L('tu amigo','your friend'))+'</h2><p>'+L('Preparando las dos cartas…','Preparing both cards…')+'</p><div class="b">'+duelBtn()+'</div>'; bindDuel(box,code,F,X);
+  /* sin soldado propio y con un enlace de duelo (vs= y a=) que no es de «Mis soldados»: nombres neutros como en el duelo, el apodo o «Soldado A» (vs=) / «Soldado B» (a=) */
+  const NT=(()=>{ try{ const qa=new URLSearchParams(location.hash.split('?')[1]||'').get('a'); if(!qa) return null; const Fa=MAT_SDP.decode(X,qa); if(!Fa||Fa.err) return null;
+    const ms=X.st(); if(ms&&(ms.role||ms.arma||Object.keys(ms.q||{}).some(k=>ms.q[k]>0))) return null; const nz=c=>MAT_SDP.norm?MAT_SDP.norm(c):String(c||'').toUpperCase(), mc=[nz(code),nz(qa)];
+    if((MAT_SDP.slots?MAT_SDP.slots():[]).some(x=>x&&x.code&&mc.indexOf(nz(x.code))>=0)) return null; return {a:F.nick||L('Soldado A','Soldier A'),b:Fa.nick||L('Soldado B','Soldier B')}; }catch(e){ return null; } })();
+  box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+(NT?esc(NT.a)+' vs '+esc(NT.b):L('Tu soldado contra el de ','Your soldier vs ')+esc(F.nick||L('tu amigo','your friend')))+'</h2><p>'+L('Preparando las dos cartas…','Preparing both cards…')+'</p><div class="b">'+duelBtn()+'</div>'; bindDuel(box,code,F,X);
   box.scrollIntoView({block:'start'});
   { const qp=new URLSearchParams(location.hash.split('?')[1]||''); if(qp.get('duelo')) duel(code,F,X,{map:qp.get('duelo'),a:qp.get('a')||'',r:+qp.get('r')||1}); }
   const [CARD]=await Promise.all([X.card(),X.arm().catch(()=>null)]); if(my!==RUN) return;
@@ -42,12 +46,12 @@ export async function show(code,X){ const L=X.L, my=++RUN; css();
     row(L('Medallas','Medals'),md.med?md.med.count:0,fd.med?fd.med.count:0,nf(md.med?md.med.count:0),nf(fd.med?fd.med.count:0),true);
     const ld=md.tot>0&&fd.tot>0; row(L('Carga total','Total load'),ld?Math.round(md.tot*10):null,ld?Math.round(fd.tot*10):null,nf(md.tot,1)+' kg',nf(fd.tot,1)+' kg',false);
     if(md.pct!=null&&fd.pct!=null) row(L('% de su peso','% of body weight'),ld?Math.round(md.pct):null,ld?Math.round(fd.pct):null,nf(md.pct,0)+' %',nf(fd.pct,0)+' %',false); }
-  const meName=md&&md.nick?esc(md.nick):L('Tú','You'), frName=esc(F.nick||L('Tu amigo','Your friend'));
+  const meName=md&&md.nick?esc(md.nick):L('Tú','You'), frName=NT?esc(NT.a):esc(F.nick||L('Tu amigo','Your friend'));
   /* iconos de perfil (perfil.js): el tuyo y el del código de tu amigo (un código antiguo, sin icono, sale con el soldado) */
   const IC=window.MAT_SDP&&MAT_SDP.ico, mr=md&&md.med?md.med.rank:(IC?IC.rank():0), ic=(id,r,z,ins)=>IC?IC.html(id,r,z,ins):'';
   const icM=sz=>ic(IC?IC.get():'soldado',mr,sz,sz>=56), icF=sz=>ic(F.ico||'soldado',F.rank|0,sz,sz>=56);
   const vh=IC?'<div class="vh"><div>'+icM(64)+'<b>'+meName+'</b><small>'+esc(rn(md)||'')+'</small></div><em>VS</em><div>'+icF(64)+'<b>'+frName+'</b><small>'+esc(rn(fd))+'</small></div></div>':'';
-  box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+meName+' vs '+frName+'</h2><p>'+(md?L('Gana quien tenga más empleo y medallas; en la carga, menos peso es más movilidad.','Higher rank and more medals win; for load, less weight means more mobility.'):L('Tu amigo ya tiene su soldado. Crea el tuyo aquí abajo y compárate.','Your friend already has a soldier. Create yours below and compare.'))+'</p>'+vh+
+  box.innerHTML='<span class="k">'+L('Comparar','Compare')+'</span><h2>'+(NT?esc(NT.a)+' vs '+esc(NT.b):meName+' vs '+frName)+'</h2><p>'+(md?L('Gana quien tenga más empleo y medallas; en la carga, menos peso es más movilidad.','Higher rank and more medals win; for load, less weight means more mobility.'):L('Tu amigo ya tiene su soldado. Crea el tuyo aquí abajo y compárate.','Your friend already has a soldier. Create yours below and compare.'))+'</p>'+vh+
     (rows.length?'<table><thead><tr><th></th><th>'+meName+'</th><th>'+frName+'</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>':'')+
     '<div class="cs"><figure><figcaption>'+icM(26)+meName+'</figcaption>'+(mu?'<img src="'+mu+'" alt="'+L('Tu carta','Your card')+'" width="1080" height="1350">':'<div class="ph">'+L('Todavía no tienes soldado','You have no soldier yet')+'<a class="sd-btn" href="#/soldado" data-vsmk>'+L('Crear mi soldado','Create my soldier')+'</a></div>')+'</figure>'+
     '<figure><figcaption>'+icF(26)+frName+'</figcaption><img src="'+fu+'" alt="'+L('Carta de tu amigo','Your friend\'s card')+'" width="1080" height="1350"></figure></div>'+
