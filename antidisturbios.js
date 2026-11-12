@@ -958,7 +958,7 @@ function act(a){ if(a==='plan'){ startPlan(); }
   else if(a==='dial') dialogo();
   else if(a==='more'){ G.more=!G.more; render(); }
   else if(a==='end'&&G.sf){ if(G.phase==='live'){ G.sf.why='fin'; end(); } }
-  else if(a==='end'){ if(G.phase==='live'&&G.t<DUR*0.6&&(G.cfg.dia||G.groups.some(g=>g.n&&g.state!=='leave'))) G.early=Math.max(G.t,0.01); end(); }
+  else if(a==='end'){ if(G.phase==='live'&&G.t<DUR*0.6&&(G.cfg.dia||G.groups.some(g=>(g.n==null||g.n>0)&&g.state!=='leave'))) G.early=Math.max(G.t,0.01); end(); }
   else if(a==='rematch'){ startPlan((Math.random()*4294967296)>>>0); }
   else if(a==='replay'){ const keep={u:G.units.map(u=>[u.home[0],u.home[1]]),v:G.vans.map(v=>[v.x,v.y]),f:G.fences.map(f=>[f.x,f.y])}; startPlan(CFG.s,true); keep.u.forEach(p=>addUnit(p[0],p[1])); keep.v.forEach(p=>addVan(p[0],p[1])); keep.f.forEach(p=>addFence(p[0],p[1])); planUpdate(); render(); }
   else if(a==='share'){ const url=shareURL(); const v=G&&G.v; const txt=L('Antidisturbios en M.A.T: '+(v?v.sc+'/100 en '+G.md.n[0]+'. ':'')+'¿Lo haces mejor?','Riot control on M.A.T: '+(v?v.sc+'/100 in '+G.md.n[1]+'. ':'')+'Can you do better?');
