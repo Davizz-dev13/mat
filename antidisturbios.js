@@ -219,7 +219,7 @@ function arrive(u){ if(u.st==='charge'&&u.ret){ const r=u.ret; u.ret=null; moveT
 function chargeHit(u){ const n=u.n-u.inj; if(!u.stT||G.t-u.stT>=1){ u.stT=G.t; stim(u.x,u.y,28,'carga'); } eachNear(u.x,u.y,6,(a,j)=>{ if(a.hit===u.cid) return; a.hit=u.cid; const g=G.groups[a.g]; a.fl=G.t+40+a.r*20; const vio=agit(a); if(vio) G.st.hitV=(G.st.hitV||0)+1; else G.st.hitP=(G.st.hitP||0)+1;
     /* sin dados: cargar contra gente pacífica hiere (cada ~33 personas alcanzadas, un herido); contra los violentos, detenciones y heridos salen de la cuenta, no del azar */
     if(!vio&&dacc('cc',0.03)){ G.st.civ++; G.st.civPol++; }
-    if(g.violent&&a.arm){ if(dacc('ci'+u.nm,0.05)){ u.inj++; G.st.pol++; u.lastHit=[a.x,a.y]; } if(n>4&&dacc('cd'+u.nm,0.12)){ a.on=0; G.st.det++; G.st.detV++; } } }); }
+    if(g.violent&&a.arm){ if(dacc('ci'+u.nm,0.05*pf())){ u.inj++; G.st.pol++; u.lastHit=[a.x,a.y]; } if(n>4&&dacc('cd'+u.nm,0.12)){ a.on=0; G.st.det++; G.st.detV++; } } }); }
 /* ---------------- percepción: cada persona reacciona solo a lo que ve u oye (Estimación de M.A.T) ---------------- */
 function stim(x,y,r,k){ (G.stim=G.stim||[]).push({x,y,r,k,t:G.t}); }
 function los(x0,y0,x1,y1){ const d=Math.hypot(x1-x0,y1-y0), n=Math.ceil(d/2); for(let k=1;k<n;k++){ const f=k/n, i=ci(x0+(x1-x0)*f,y0+(y1-y0)*f); if(i<0||G.bld[i]) return false; } return true; }
@@ -276,7 +276,7 @@ function tick1(){ const R=G.R; hash();
     let tg=null,td=1e9; const rng_=a.arm===2?18:24;
     if(!isRiv||g.T>65){ G.units.forEach(u=>{ const d=Math.hypot(u.x-a.x,u.y-a.y); if(d<td){td=d;tg={u,x:u.x,y:u.y};} }); G.vans.forEach(v=>{ if(!v.on) return; const d=Math.hypot(v.x-a.x,v.y-a.y); if(d<td){td=d;tg={v,x:v.x,y:v.y};} }); }
     if(isRiv&&g.foe&&g.foe.n){ eachNear(a.x,a.y,16,(b,j,d)=>{ if(b.g===g.foe.id&&d<td){ td=d; tg={b,x:b.x,y:b.y}; } }); }
-    if(tg&&td<=rng_){ if(tg.u&&td<3&&a.arm===1){ if(dacc('ml'+tg.u.nm,0.03*(1-0.4*(tg.u.brc||0)))){ tg.u.inj++; G.st.pol++; tg.u.lastHit=[a.x,a.y]; } if(dacc('mc',0.03)){ G.st.civ++; G.st.civPol++; } a.cd=G.t+4; return; }
+    if(tg&&td<=rng_){ if(tg.u&&td<3&&a.arm===1){ if(dacc('ml'+tg.u.nm,0.03*(1-0.4*(tg.u.brc||0))*pf())){ tg.u.inj++; G.st.pol++; tg.u.lastHit=[a.x,a.y]; } if(dacc('mc',0.03)){ G.st.civ++; G.st.civPol++; } a.cd=G.t+4; return; }
       { const ap=aimPt(a,tg.x,tg.y); G.proj.push({x0:a.x,y0:a.y,x1:ap[0],y1:ap[1],t0:G.t,d:1.2,k:a.arm,tg}); } if(a.arm===2){ a.mol=(a.mol==null?1+Math.floor(R()*2):a.mol)-1; if(a.mol<=0) a.arm=3; } a.cd=G.t+(a.arm===2?30:10)+R()*15; return; }
     if(!isRiv&&(!tg||td>40)&&G.t-(g.dmT||0)>45&&dacc('dm'+g.id,0.012)){ const c=ci(a.x,a.y); const gw=G.gw; if(G.bld[c-2]||G.bld[c+2]||G.bld[c-2*gw]||G.bld[c+2*gw]){ g.dmT=G.t; G.st.dmg++; G.fires.push({x:a.x,y:a.y,t0:G.t,d:30}); lg(R()<0.5?L('Queman un contenedor ','A rubbish container is set on fire ')+nearName(a.x,a.y):L('Rompen un escaparate ','A shop window is smashed ')+nearName(a.x,a.y),'bad'); a.cd=G.t+60; } } });
   G.groups.forEach(g=>{ if(!g.violent||!g.n||g.k==='A'||g.k==='B') return; if(G.t-(g.bt||g.vt)>75&&G.barr.length<6){ const c=across(g.cx+(R()-.5)*12,g.cy+(R()-.5)*12,9); if(free0(c.x,c.y)){ g.bt=G.t; G.barr.push({x:c.x,y:c.y,ang:c.ang,len:c.len}); G.st.dmg++; G.dirty=true; lg(gName(g)+L(' levanta una barricada con contenedores ',' builds a barricade of rubbish containers ')+nearName(c.x,c.y),'bad'); radio('barricada',c.x,c.y,g); } } });
@@ -304,11 +304,11 @@ function projectiles(){ G.imp=(G.imp||[]).filter(p=>G.t-p.t<4); G.proj=G.proj.fi
     if(p.k===2) G.fires.push({x:p.x1,y:p.y1,t0:G.t,d:14});
     if(p.k!==9){ G.imp.push({x:p.x1,y:p.y1,t:G.t,k:p.k}); stim(p.x1,p.y1,10,'imp'); }
     /* impacto: sin dados. Acierta si cae encima de alguien; las heridas se acumulan (piedra/botella 0,03 por impacto, molotov 0,12; menos si el grupo ya se cubre con los escudos) */
-    if(p.tg.u){ const u=p.tg.u; let hd=1e9; (u.D||dotsOf(u)).forEach(q=>{ const d=Math.hypot(q[0]-p.x1,q[1]-p.y1); if(d<hd) hd=d; }); if(hd<(p.k===2?1.8:1.2)){ u.lastHit=[p.x1,p.y1]; if(dacc('pi'+u.nm,(p.k===2?0.12:0.03)*(u.big?0.6:1)*(1-0.4*(u.brc||0)))){ u.inj++; G.st.pol++; if(p.k===2){ lg(L('Un cóctel molotov alcanza a ','A Molotov cocktail hits ')+u.nm+L(': un agente herido',': one officer injured'),'bad'); radio('molotov',u.x,u.y); } } } }
+    if(p.tg.u){ const u=p.tg.u; let hd=1e9; (u.D||dotsOf(u)).forEach(q=>{ const d=Math.hypot(q[0]-p.x1,q[1]-p.y1); if(d<hd) hd=d; }); if(hd<(p.k===2?1.8:1.2)){ u.lastHit=[p.x1,p.y1]; if(dacc('pi'+u.nm,(p.k===2?0.12:0.03)*(u.big?0.6:1)*(1-0.4*(u.brc||0))*pf())){ u.inj++; G.st.pol++; if(p.k===2){ lg(L('Un cóctel molotov alcanza a ','A Molotov cocktail hits ')+u.nm+L(': un agente herido',': one officer injured'),'bad'); radio('molotov',u.x,u.y); } } } }
     else if(p.tg.v){ const v=p.tg.v; if(p.k===2&&!v.burn&&Math.hypot(v.x-p.x1,v.y-p.y1)<3.2){ v.burn=1; G.st.dmg+=2; lg(L('Arde un furgón policial ','A police van is on fire ')+nearName(v.x,v.y),'bad'); } }
     else if(p.tg.b){ const b=p.tg.b; if(b.on&&Math.hypot(b.x-p.x1,b.y-p.y1)<1.4&&dacc('pb',0.05)){ G.st.civ++; } }
     p.tl=G.t; (G.pland=G.pland||[]).push(p); return false; }); G.pland=(G.pland||[]).filter(p=>G.t-p.tl<0.6); }
-function end(){ if(G.phase!=='live') return; G.phase='result'; if(G.sf) sfEnd(); render(); try{ window.MAT_MED&&window.MAT_MED.event('ad.fin',{sc:G.v?G.v.sc:0,d:G.cfg.d,m:G.cfg.m}); }catch(_){} }
+function end(){ if(G.phase!=='live') return; G.phase='result'; if(G.sf) sfEnd(); if(G.cfg.dia) diaEnd(); render(); try{ window.MAT_MED&&window.MAT_MED.event('ad.fin',{sc:G.v?G.v.sc:0,d:G.cfg.d,m:G.cfg.m}); }catch(_){} }
 /* ---------------- órdenes ---------------- */
 function nearestCrowd(u,maxD,pred){ let b=null,bd=maxD; G.ag.forEach((a,i)=>{ if(!a.on) return; if(pred&&!pred(a)) return; const d=Math.hypot(a.x-u.x,a.y-u.y); if(d<bd){bd=d;b=a;} }); return b; }
 function groupsNear(x,y,r,min){ const c={}; G.ag.forEach(a=>{ if(a.on&&Math.hypot(a.x-x,a.y-y)<r) c[a.g]=(c[a.g]||0)+1; }); return Object.keys(c).filter(k=>c[k]>=(min||1)).map(i=>G.groups[i]); }
@@ -656,6 +656,40 @@ function adHidCheck(){ setTimeout(()=>{ try{ const m=document.getElementById('ui
 function page(inner,hd){ X.set('<div class="ad'+(hd?' adm-mn':'')+'" data-noi18n>'+X.crumbs([[L('Inicio','Home'),'#/'],[L('Juegos','Games'),'#/juegos'],[L('Antidisturbios','Riot control')]])+(hd||('<h1>'+L('Antidisturbios','Riot control')+'</h1><p class="sub">'+L('Simulador de gestión del orden público: diriges a la UIP de la Policía Nacional en calles reales de Madrid. Cada decisión tiene consecuencias.','Public-order management simulator: you command the National Police UIP on real Madrid streets. Every decision has consequences.')+'</p>'))+'<div id="uip-main">'+inner+'</div>'+datosHTML()+'</div>',L('Antidisturbios','Riot control')); adHidCheck(); }
 /* pantalla de inicio compacta (pestañas, como el Francotirador): cabecera pequeña, pestañas que se abren en el sitio, resumen y EMPEZAR fijo abajo */
 let UIT=null, UIMI=''; try{ const u=JSON.parse(localStorage.getItem('mat_ad_ui')||'{}'); if(u&&(u.mi==='bus'||u.mi==='vis'||u.mi==='sf')) UIMI=u.mi; }catch(e){}
+/* 📅 Misión del día (12-11-2026, Jose: «algo que incentive a la gente a meterse cada día»): una partida en Fácil, la MISMA para todo el mundo cada día,
+   sacada solo de la fecha de Madrid (mapa, situación, hora y semilla). No cambia ninguna regla ni puntuación del juego: es una partida normal con la configuración del día.
+   Se guarda en este dispositivo tu mejor nota de cada día y la racha de días seguidos («mat_ad_dia»). */
+const DIAK='mat_ad_dia';
+function diaKey(off){ const d=new Date(Date.now()+(off||0)*864e5); try{ return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); }catch(e){ return d.toISOString().slice(0,10); } }
+function diaCfg(k){ let h=2166136261>>>0; const s='MAT-dia-'+k; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } const R=rng(h); const ms=Object.keys(MD).sort();
+  const m=ms[Math.floor(R()*ms.length)]; const r=R(); const e=r<0.3?'pac':r<0.7?'tensa':'rival'; const hh=R()<0.4?'noche':'dia'; return {m,e,h:hh,g:4,d:'f',s:(Math.floor(R()*4294967296))>>>0,dia:k}; }
+function diaAll(){ try{ const o=JSON.parse(localStorage.getItem(DIAK)||'{}'); return o&&typeof o==='object'?o:{}; }catch(e){ return {}; } }
+function diaRacha(){ const A=diaAll(); let n=0, i=A[diaKey()]?0:-1; while(A[diaKey(i)]){ n++; i--; } return n; }
+function diaFecha(k){ const p=k.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function diaLbl(c){ const en=EN()?1:0; const ES={pac:L('Pacífica','Peaceful'),tensa:L('Puede torcerse','May turn violent'),rival:L('Grupos rivales','Rival groups')}; return MD[c.m].n[en]+' · '+(ES[c.e]||'')+' · '+(c.h==='noche'?L('Noche','Night'):L('Día','Day')); }
+function diaCard(){ const k=diaKey(), c=diaCfg(k), A=diaAll(), me=A[k], ra=diaRacha();
+  return '<button type="button" class="adm-opt on" data-a="dia" style="width:100%;margin:0 0 10px;text-align:left"><b>📅 '+L('Misión del día','Daily mission')+' · '+diaFecha(k)+' <small class="uip-new">'+L('nuevo','new')+'</small></b><span>'+esc(diaLbl(c))+'<br>'+L('La misma para todos. Cambia cada día a las 00:00.','The same for everyone. Changes every day at 00:00 (Madrid).')+(me?'<br>✅ '+L('Tu mejor nota hoy: ','Your best today: ')+me.sc+'/100':'')+(ra>0?' · 🔥 '+L('Racha: ','Streak: ')+ra+(ra===1?L(' día',' day'):L(' días',' days')):'')+'</span></button>'; }
+function startDia(noAuto){ const c=diaCfg(diaKey()); newGame(Object.assign({},CFG,c)); gameShell(); planUpdate(); if(FAC()&&!noAuto){ autoDeploy(); G.tool='van'; } render(); kick(); }
+function diaEnd(){ const k=G.cfg.dia; if(!k) return; let sc=0; try{ sc=verdict().sc; }catch(e){ return; } const A=diaAll(); const o=A[k]||{sc:0,n:0}; G.diaPrev=A[k]?o.sc:null; o.n=(o.n||0)+1; if(sc>o.sc) o.sc=sc; A[k]=o;
+  const ks=Object.keys(A).sort(); while(ks.length>120) delete A[ks.shift()]; try{ localStorage.setItem(DIAK,JSON.stringify(A)); }catch(e){} }
+function diaTxt(){ const k=G.cfg.dia, sc=G.v?G.v.sc:0, f=Math.round(sc/20), ra=diaRacha();
+  return L('M.A.T · Misión del día · ','M.A.T · Daily mission · ')+diaFecha(k)+'\n🚓 '+diaLbl(G.cfg)+'\n🎯 '+sc+'/100 '+'🟩'.repeat(f)+'⬜'.repeat(5-f)+(ra>0?'\n🔥 '+L('Racha: ','Streak: ')+ra+(ra===1?L(' día',' day'):L(' días',' days')):'')+'\n'+L('¿Lo haces mejor?','Can you beat it?'); }
+function diaURL(){ return location.origin+location.pathname+'#/antidisturbios?dia=1'; }
+function diaTop(){ const k=G.cfg.dia, A=diaAll(), me=A[k]; const ra=diaRacha();
+  return '<div class="uip-press">📅 <b>'+L('Misión del día','Daily mission')+' · '+diaFecha(k)+'</b><br>'+(me?L('Tu mejor nota hoy: ','Your best today: ')+me.sc+'/100'+(me.n>1?' ('+me.n+L(' intentos)',' tries)'):''):'')+(ra>0?' · 🔥 '+L('Racha: ','Streak: ')+ra+(ra===1?L(' día',' day'):L(' días',' days')):'')+'<br><small>'+L('Mañana hay otra. Comparte tu nota y reta a tus amigos.','There is a new one tomorrow. Share your score and challenge your friends.')+'</small></div>'; }
+function diaBtns(){ return '<div class="uip-ctl"><button type="button" class="uip-btn pri" data-a="dia-share">'+L('Compartir mi nota','Share my score')+'</button><button type="button" class="uip-btn" data-a="dia-replay">'+L('Repetir la misión del día','Replay the daily mission')+'</button><button type="button" class="uip-btn" data-a="setup">'+L('Menú','Menu')+'</button></div>'; }
+function diaShare(){ const txt=diaTxt(), url=diaURL(); if(navigator.share){ navigator.share({title:'M.A.T',text:txt,url}).catch(()=>{}); } else if(navigator.clipboard){ navigator.clipboard.writeText(txt+'\n'+url).then(()=>{ const b=document.querySelector('[data-a="dia-share"]'); if(b) b.textContent=L('Copiado: pégalo donde quieras','Copied: paste it anywhere'); }).catch(()=>prompt(L('Copia el texto','Copy the text'),txt+'\n'+url)); } else prompt(L('Copia el texto','Copy the text'),txt+'\n'+url); }
+/* 🛡 Niveles de protección (12-11-2026, Jose): el 1 es el equipo de siempre (sin ningún cambio). El 2 y el 3 se desbloquean con el empleo de «Medallas»
+   (Cabo y Sargento) y bajan la probabilidad de herida de tus agentes en piedras/botellas/molotov, cuerpo a cuerpo y detenciones (×0,8 y ×0,65; Estimación de M.A.T).
+   No se aplican en la Misión del día (igual para todos), en el cooperativo ni en las misiones especiales; los enlaces compartidos abren en nivel 1. */
+const PROT=[[1,1,0],[2,0.8,2],[3,0.65,5]];
+function myRank(){ try{ return window.MAT_MED&&window.MAT_MED.state?(window.MAT_MED.state().rank|0):0; }catch(e){ return 0; } }
+function protOK(n){ const p=PROT[n-1]; return !!p&&myRank()>=p[2]; }
+function protN(c){ c=c||(G&&G.cfg); if(!c||c.dia||CO) return 1; const n=+c.pr||1; return protOK(n)?n:1; }
+function pf(){ return PROT[protN()-1][1]; }
+function rkName(r){ try{ const n=window.MAT_MED.rankName(r); return n[EN()?1:0]; }catch(e){ return ''; } }
+function protHTML(opt){ const cur=protN(CFG), r=myRank(); const D=[[L('Casco y escudo reglamentarios (lo de siempre)','Standard helmet and shield (as always)')],[L('Casco con visor reforzado y escudo largo: −20 % de agentes heridos','Reinforced visor helmet and long shield: −20 % injured officers')],[L('Protección completa: −35 % de agentes heridos','Full protection: −35 % injured officers')]];
+  return '<div class="adm-sec">'+L('Nivel de protección','Protection level')+' <small class="uip-new">'+L('nuevo','new')+'</small></div><div class="adm-grid">'+PROT.map((p,i)=>{ const ok=r>=p[2]; return ok?opt(cur===p[0],'data-set="pr" data-v="'+p[0]+'"',L('Nivel ','Level ')+p[0],D[i][0]):'<button type="button" class="adm-opt" disabled style="opacity:.55"><b>🔒 '+L('Nivel ','Level ')+p[0]+'</b><span>'+L('Se desbloquea en ','Unlocks at ')+esc(rkName(p[2]))+' · '+L('tú: ','you: ')+esc(rkName(r))+'</span></button>'; }).join('')+'</div><p class="adm-pn">'+L('Subes de empleo jugando y ganando medallas (🎖). No cuenta en la Misión del día ni en el cooperativo. Porcentajes: Estimación de M.A.T.','You rank up by playing and earning medals (🎖). Not used in the Daily mission or co-op. Percentages: M.A.T estimate.')+'</p>'; }
 function admSave(){ try{ localStorage.setItem('mat_ad_cfg',JSON.stringify(CFG)); localStorage.setItem('mat_ad_ui',JSON.stringify({mi:UIMI})); }catch(e){} }
 function admStats(){ const o={med:null,ops:0}; try{ const M=window.MAT_MED; if(M&&M.cat){ const ids=M.cat().MED.filter(x=>x.sec==='ad').map(x=>x.id); const st=JSON.parse(localStorage.getItem('mat_med')||'null')||{}; o.med=[ids.filter(id=>st.m&&st.m[id]).length,ids.length]; o.ops=+((st.c||{}).ad_ops)||0; } }catch(e){} return o; }
 function setupPage(){ const S=admStats(), ch=[];
@@ -681,11 +715,12 @@ function setupHTML(){ const sf=UIMI==='sf', g=CFG.g, b=budgetFor(g,CFG.d), fac=C
   const TABS=[['modo',L('Modo','Mode'),sf?'♾️ '+L('Sin fin','Endless'):mi?L('Misión','Mission')+': '+MI[mi][0]:(fac?L('Fácil','Easy'):L('Realista','Realistic')+' · '+g+' '+(g===1?L('grupo','group'):L('grupos','groups')))],
    ['mapa',L('Mapa','Map'),mi?MI[mi][3]+lock:md.n[en]],['esc',L('Escenario','Scenario'),sf?L('Oleadas','Waves')+lock:mi?L('De la misión','Mission’s own')+lock:ESs(CFG.e)],['hora',L('Hora','Time'),mi?'—'+lock:(CFG.h==='noche'?L('Noche','Night'):L('Día','Day'))]];
   if(UIT&&!TABS.some(t=>t[0]===UIT)) UIT=null;
-  let h='<div class="adm-tabs" role="tablist">'+TABS.map(t=>'<button type="button" role="tab" class="adm-tab'+(UIT===t[0]?' on':'')+'" data-admt="'+t[0]+'" aria-selected="'+(UIT===t[0])+'" aria-expanded="'+(UIT===t[0])+'"><small>'+t[1]+' '+(UIT===t[0]?'▴':'▾')+'</small><b>'+esc(t[2])+'</b></button>').join('')+'</div>';
+  let h=(CO?'':diaCard())+'<div class="adm-tabs" role="tablist">'+TABS.map(t=>'<button type="button" role="tab" class="adm-tab'+(UIT===t[0]?' on':'')+'" data-admt="'+t[0]+'" aria-selected="'+(UIT===t[0])+'" aria-expanded="'+(UIT===t[0])+'"><small>'+t[1]+' '+(UIT===t[0]?'▴':'▾')+'</small><b>'+esc(t[2])+'</b></button>').join('')+'</div>';
   let p='', fixN='<p class="adm-pn">'+L('En las misiones especiales el mapa, la situación y la hora van fijos. Para elegirlos, vuelve a la manifestación en «Modo».','In the special missions the map, situation and time are fixed. To choose them, go back to the demonstration in “Mode”.')+'</p>';
   if(UIT==='modo'){
    p+='<div class="adm-sec">'+L('Manifestación','Demonstration')+'</div><div class="adm-grid">'+opt(!mi&&!sf&&fac,'data-set="d" data-v="f"',L('Fácil','Easy'),L('4 grupos que se defienden solos','4 groups that defend themselves'))+opt(!mi&&!sf&&!fac,'data-set="d" data-v="r"',L('Realista','Realistic'),L('Subgrupos, furgones y vallas','Sub-groups, vans and barriers'))+'</div>';
    if(!mi&&!sf&&!fac) p+='<div class="adm-sec">'+L('Efectivos de la UIP','UIP strength')+'</div><div class="adm-grid c4">'+GR.map(o=>opt(g===o[0],'data-set="g" data-v="'+o[0]+'"',o[1].replace(/ \(.*/,''),o[1].replace(/^[^(]*\(|\)$/g,''))).join('')+'</div>';
+   if(!mi) p+=protHTML(opt);
    p+='<div class="adm-sec">'+L('Misiones especiales','Special missions')+'</div><div class="adm-grid">'+['bus','vis'].map(k=>opt(mi===k,'data-admmi="'+k+'"',MI[k][0]+NEW,MI[k][1])).join('')+'</div>';
    { const rc=sfRec(); p+='<div class="adm-sec">'+L('Partida larga','Long game')+'</div><div class="adm-grid">'+opt(sf,'data-admmi="sf"','♾️ '+L('Sin fin','Endless')+NEW,L('Oleadas cada vez más duras hasta que se te va de las manos','Ever harder waves until it gets out of hand')+(rc?' · '+L('Récord: oleada ','Best: wave ')+rc.w:''))+'</div>'; }
   } else if(UIT==='mapa'){
@@ -699,7 +734,7 @@ function setupHTML(){ const sf=UIMI==='sf', g=CFG.g, b=budgetFor(g,CFG.d), fac=C
   /* resumen de lo elegido */
   h+='<div class="adm-sel">'+(sf?'<b>♾️ '+L('Sin fin','Endless')+' · '+esc(md.n[en])+'</b> · '+HR[CFG.h==='noche'?'noche':'dia']+'<br>'+sfRules(true):mi?'<b>'+L('Misión especial','Special mission')+': '+MI[mi][0]+'</b> · '+MI[mi][2]:'<b>'+esc(md.n[en])+' · '+esc(ESn(CFG.e))+'</b> · '+HR[CFG.h==='noche'?'noche':'dia']+'<br>'+modeTxt+' '+budTxt)+'</div>';
   h+='<details class="adm-det"><summary>'+L('Sobre el juego','About the game')+'</summary><p>'+L('Simulador de gestión del orden público: diriges a la UIP de la Policía Nacional en calles reales de Madrid. Cada decisión tiene consecuencias.','Public-order management simulator: you command the National Police UIP on real Madrid streets. Every decision has consequences.')+'</p><p>'+(mi?L('Al pulsar EMPEZAR se abre la misión.','Press START to open the mission.'):L('Al pulsar EMPEZAR primero planificas el despliegue (furgones, vallas y agentes) y luego empieza la manifestación.','Press START to plan the deployment first (vans, barriers and officers); then the demonstration begins.'))+'</p></details>';
-  const line=sf?'♾️ '+L('Sin fin','Endless')+' · '+md.n[en]+' · '+(CFG.h==='noche'?L('Noche','Night'):L('Día','Day')):mi?L('Misión','Mission')+' · '+MI[mi][0]:(fac?L('Fácil','Easy'):L('Realista','Realistic'))+' · '+md.n[en]+' · '+ESs(CFG.e)+' · '+(CFG.h==='noche'?L('Noche','Night'):L('Día','Day'));
+  const pN=protN(CFG), line=(pN>1&&!mi?'🛡'+pN+' · ':'')+(sf?'♾️ '+L('Sin fin','Endless')+' · '+md.n[en]+' · '+(CFG.h==='noche'?L('Noche','Night'):L('Día','Day')):mi?L('Misión','Mission')+' · '+MI[mi][0]:(fac?L('Fácil','Easy'):L('Realista','Realistic'))+' · '+md.n[en]+' · '+ESs(CFG.e)+' · '+(CFG.h==='noche'?L('Noche','Night'):L('Día','Day')));
   h+='<div class="adm-gob"><div class="adm-gl"><span>'+esc(line)+'</span><small>'+(mi?L('Abre la misión','Opens the mission'):L('Primero: planificar el despliegue','First: plan the deployment'))+'</small></div><button type="button" class="uip-btn pri adm-go" id="adm-go" data-a="'+(sf?'sf':mi?'mi-'+mi:'plan')+'">'+L('EMPEZAR','START')+' ▸</button></div>';
   h+='<div class="adm-grid" style="margin-top:10px">'+opt(false,'data-a="coop"','👥 '+L('Cooperativo (2 jugadores)','Co-op (2 players)')+NEW,L('Con un amigo, cada uno en su móvil: os repartís los 4 grupos UIP','With a friend, each on their own phone: you split the 4 UIP groups'))+'</div>';
   return '<div class="adm-set">'+h+'</div>'; }
@@ -752,11 +787,11 @@ function render(){ if(!G||!document.getElementById('uip-ctl')) return; const ctl
     else h+='<p class="uip-note">'+L('Toca un subgrupo o un furgón en el mapa (o en la lista) para seleccionarlo; luego toca dónde quieres llevarlo.','Tap a sub-group or a van on the map (or in the list) to select it, then tap where you want it to go.')+'</p>';
     ctl.innerHTML=h+'</div>'; }
   if(G.phase==='result'&&G.sf){ G.v=verdict(); ctl.innerHTML=sfResHTML(); } else if(G.phase==='result'){ const v=verdict(), s=G.st; G.v=v;
-    ctl.innerHTML='<div class="uip-res" id="uip-res" style="width:100%"><div class="uip-sc"><span class="n">'+v.sc+'</span><span class="g">'+v.gr+'</span><span class="uip-note">'+L('de 100','out of 100')+'</span></div><div class="uip-press">'+L('La prensa: ','The press: ')+v.head+'</div>'+
+    ctl.innerHTML='<div class="uip-res" id="uip-res" style="width:100%">'+(G.cfg.dia?diaTop():'')+'<div class="uip-sc"><span class="n">'+v.sc+'</span><span class="g">'+v.gr+'</span><span class="uip-note">'+L('de 100','out of 100')+'</span></div><div class="uip-press">'+L('La prensa: ','The press: ')+v.head+'</div>'+
       '<div class="uip-kv"><div><span>'+L('Heridos civiles','Injured civilians')+'</span><b>'+s.civ+'</b></div><div><span>'+L('Policías heridos','Injured officers')+'</span><b>'+s.pol+'</b></div><div><span>'+L('Detenidos','Arrests')+'</span><b>'+s.det+'</b></div><div><span>'+L('… de ellos violentos','… of them violent')+'</span><b>'+s.detV+'</b></div><div><span>'+L('Daños (incidentes)','Damage (incidents)')+'</span><b>'+s.dmg+'</b></div><div><span>'+L('Denuncias por la actuación','Complaints about the police')+'</span><b>'+v.den+'</b></div><div><span>'+L('Proporcionalidad','Proportionality')+'</span><b>'+((G.inc.cargaPac||0)+(G.inc.humoPac||0)+(G.inc.detArb||0)?L('fallos','failures'):L('correcta','correct'))+'</b></div><div><span>'+L('Reacción de la prensa','Press reaction')+'</span><b>'+(v.pr>0?'+':'')+v.pr+'</b></div><div><span>'+L('Decisiones por radio','Radio decisions')+'</span><b>'+v.rg+'/'+v.rn+'</b></div></div>'+
       '<h3>'+L('Cómo fue la tensión','How tension went')+'</h3>'+tlSVG()+docHTML()+(v.ok.length?'<h3>'+L('Lo que hiciste bien','What you did right')+'</h3><ul class="uip-ok">'+v.ok.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+(v.ko.length?'<h3>'+L('Lo que hiciste mal','What you did wrong')+'</h3><ul class="uip-ko">'+v.ko.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
       '<p class="uip-note" style="margin-top:8px">'+L('Puntuación y consecuencias: Estimación de M.A.T según los principios de la ley (proporcionalidad y aviso previo).','Score and consequences: M.A.T estimate based on the legal principles (proportionality and prior warning).')+'</p>'+
-      '<div class="uip-ctl"><button type="button" class="uip-btn pri" data-a="rematch">'+L('Revancha','Rematch')+'</button><button type="button" class="uip-btn" data-a="replay">'+L('Repetir (misma semilla)','Replay (same seed)')+'</button><button type="button" class="uip-btn" data-a="share">'+L('Compartir','Share')+'</button><button type="button" class="uip-btn" data-a="setup">'+L('Ajustes','Settings')+'</button></div></div>'; }
+      (G.cfg.dia?diaBtns():'<div class="uip-ctl"><button type="button" class="uip-btn pri" data-a="rematch">'+L('Revancha','Rematch')+'</button><button type="button" class="uip-btn" data-a="replay">'+L('Repetir (misma semilla)','Replay (same seed)')+'</button><button type="button" class="uip-btn" data-a="share">'+L('Compartir','Share')+'</button><button type="button" class="uip-btn" data-a="setup">'+L('Ajustes','Settings')+'</button></div></div>')+'</div>'; }
   document.getElementById('uip-log').innerHTML=G.log.slice(0,40).map(e=>'<li class="'+e.c+'"><time>'+clock(e.t)+'</time>'+esc(e.txt)+'</li>').join(''); draw(); }
 
 /* ---------------- planificación ---------------- */
@@ -900,6 +935,9 @@ function dialogo(){ if(!G||G.phase!=='live') return; if(G.t<(G.dlgT||0)){ toast(
   g.T=Math.max(0,g.T-12); let n=0; const rad=G.groups.find(q=>q.k==='rad'&&q.host===g&&q.n&&!q.violent); if(rad){ rad.T=Math.max(0,rad.T-3); G.ag.forEach(a=>{ if(a.on&&a.g===rad.id&&!a.arm&&a.nv<0.2){ a.g=g.id; n++; } }); }
   lg(L('Diálogo con los organizadores de ','Dialogue with the organisers of ')+gArt(g)+L(': sus propios voluntarios piden calma y respetar el recorrido',': their own stewards call for calm and to keep to the route')+(n?L(' ('+n*10+' personas del bloque radical vuelven con la marcha)',' ('+n*10+' people from the radical bloc rejoin the march)'):''),'good'); render(); }
 function act(a){ if(a==='plan'){ startPlan(); }
+  else if(a==='dia'){ UIT=null; startDia(); window.scrollTo&&window.scrollTo(0,0); }
+  else if(a==='dia-share'){ diaShare(); }
+  else if(a==='dia-replay'){ const keep={u:G.units.map(u=>[u.home[0],u.home[1]]),v:G.vans.map(v=>[v.x,v.y]),f:G.fences.map(f=>[f.x,f.y])}; startDia(true); keep.u.forEach(p=>addUnit(p[0],p[1])); keep.v.forEach(p=>addVan(p[0],p[1])); keep.f.forEach(p=>addFence(p[0],p[1])); planUpdate(); render(); }
   else if(a==='coop'){ openCoop(); }
   else if(a==='sf'||a==='sf-again'||a==='sf-replay'||a==='sf-next'||a==='sf-share'||a==='sf-menu'){ sfAct(a); }
   else if(a==='mi-bus'||a==='mi-vis'){ UIT=null; openMission(a.slice(3)); }
@@ -914,7 +952,7 @@ function act(a){ if(a==='plan'){ startPlan(); }
   else if(a==='dial') dialogo();
   else if(a==='more'){ G.more=!G.more; render(); }
   else if(a==='end'&&G.sf){ if(G.phase==='live'){ G.sf.why='fin'; end(); } }
-  else if(a==='end'){ if(G.phase==='live'&&G.t<DUR*0.6&&G.groups.some(g=>g.n&&g.state!=='leave')) G.early=G.t; end(); }
+  else if(a==='end'){ if(G.phase==='live'&&G.t<DUR*0.6&&(G.cfg.dia||G.groups.some(g=>g.n&&g.state!=='leave'))) G.early=Math.max(G.t,0.01); end(); }
   else if(a==='rematch'){ startPlan((Math.random()*4294967296)>>>0); }
   else if(a==='replay'){ const keep={u:G.units.map(u=>[u.home[0],u.home[1]]),v:G.vans.map(v=>[v.x,v.y]),f:G.fences.map(f=>[f.x,f.y])}; startPlan(CFG.s,true); keep.u.forEach(p=>addUnit(p[0],p[1])); keep.v.forEach(p=>addVan(p[0],p[1])); keep.f.forEach(p=>addFence(p[0],p[1])); planUpdate(); render(); }
   else if(a==='share'){ const url=shareURL(); const v=G&&G.v; const txt=L('Antidisturbios en M.A.T: '+(v?v.sc+'/100 en '+G.md.n[0]+'. ':'')+'¿Lo haces mejor?','Riot control on M.A.T: '+(v?v.sc+'/100 in '+G.md.n[1]+'. ':'')+'Can you do better?');
@@ -924,7 +962,7 @@ function onClick(e){ const t=e.target.closest('[data-a],[data-set],[data-tool],[
   if(t.dataset.admt){ const k=t.dataset.admt; UIT=UIT===k?null:k; setupPage(); return; }
   if(t.dataset.admmi){ UIMI=t.dataset.admmi; UIT=null; admSave(); setupPage(); return; }
   if(t.dataset.adm==='med'){ try{ window.MAT_MED.open(); }catch(_){} return; }
-  if(t.dataset.set){ const k=t.dataset.set; CFG[k]=k==='g'?+t.dataset.v:t.dataset.v; if(k==='d') UIMI=''; UIT=null; admSave(); setupPage(); return; }
+  if(t.dataset.set){ const k=t.dataset.set; CFG[k]=k==='g'||k==='pr'?+t.dataset.v:t.dataset.v; if(k==='d') UIMI=''; UIT=null; admSave(); setupPage(); return; }
   if(t.dataset.tool){ G.tool=t.dataset.tool; render(); return; }
   if(t.dataset.r){ if(G&&G.radio){ if(CO){ CO.cmd(['rd',t.dataset.r,G.radio.k,G.radio.t]); return; } radioChoose(t.dataset.r); } return; }
   if(t.dataset.o){ if(G&&G.sel&&G.phase==='live'){ const o=t.dataset.o; if(CO&&o!=='desel'&&CO.order(G.sel,o)) return; if(o==='desel'){ G.sel=null; G.pend=null; render(); } else if(G.sel.van) vorder(G.sel,o); else if(FAC()&&(o==='charge'||o==='smoke')) order(G.sel,o,true); else order(G.sel,o); } return; }
@@ -998,13 +1036,13 @@ function openMission(mi,seed){ G=null; if(RAF){ cancelAnimationFrame(RAF); RAF=0
 export function route(app,x){ try{ return route0(app,x); }catch(e){ APP=app; X=x; adFail('route',e); } }
 function route0(app,x){ APP=app; X=x; const q=(location.hash.split('?')[1]||''); const P={}; q.split('&').forEach(kv=>{ const [k,v]=kv.split('='); if(k) P[k]=decodeURIComponent(v||''); });
   let saved={}; try{ saved=JSON.parse(localStorage.getItem('mat_ad_cfg')||'{}'); }catch(e){}
-  CFG={m:MD[P.m]?P.m:(MD[saved.m]?saved.m:'sol'),e:ESC[P.e]?P.e:(ESC[saved.e]?saved.e:'tensa'),h:P.h==='noche'||P.h==='dia'?P.h:(saved.h||'dia'),g:[1,2,4,6].indexOf(+P.g)>=0?+P.g:([1,2,4,6].indexOf(+saved.g)>=0?+saved.g:4),s:P.s?(+P.s>>>0):((Math.random()*4294967296)>>>0),d:P.d==='r'||P.d==='f'?P.d:(saved.d==='r'?'r':'f')};
+  CFG={m:MD[P.m]?P.m:(MD[saved.m]?saved.m:'sol'),e:ESC[P.e]?P.e:(ESC[saved.e]?saved.e:'tensa'),h:P.h==='noche'||P.h==='dia'?P.h:(saved.h||'dia'),g:[1,2,4,6].indexOf(+P.g)>=0?+P.g:([1,2,4,6].indexOf(+saved.g)>=0?+saved.g:4),s:P.s?(+P.s>>>0):((Math.random()*4294967296)>>>0),d:P.d==='r'||P.d==='f'?P.d:(saved.d==='r'?'r':'f'),pr:P.s?1:([1,2,3].indexOf(+saved.pr)>=0?+saved.pr:1)};
   if(!document.getElementById('adcss')){ const s=document.createElement('style'); s.id='adcss'; s.textContent=CSS; document.head.appendChild(s); }
   if(!BOUND){ BOUND=true; document.addEventListener('click',onClick); window.addEventListener('resize',()=>{ if(G&&CV&&document.getElementById('uip-cv')){ fit(); draw(); } }); }
   G=null; if(RAF){ cancelAnimationFrame(RAF); RAF=0; }
   if(P.sf==='1') UIMI='sf';
   if(CO&&CO.leave) CO.leave(true);
-  const go=()=>{ if(!/^#\/antidisturbios/.test(location.hash)) return; try{ if(P.coop!=null){ openCoop(P.coop); return; } if(P.mi==='bus'||P.mi==='vis') openMission(P.mi,P.s?(+P.s>>>0):null); else if(P.sf==='1'&&P.s) startSF(); else if(P.sf==='1') setupPage(); else if(P.s) startPlan(); else setupPage(); }catch(e){ adFail('setup',e); } };
+  const go=()=>{ if(!/^#\/antidisturbios/.test(location.hash)) return; try{ if(P.coop!=null){ openCoop(P.coop); return; } if(P.mi==='bus'||P.mi==='vis') openMission(P.mi,P.s?(+P.s>>>0):null); else if(P.sf==='1'&&P.s) startSF(); else if(P.dia==='1') startDia(); else if(P.sf==='1') setupPage(); else if(P.s) startPlan(); else setupPage(); }catch(e){ adFail('setup',e); } };
   if(MAPS) return go();
   page('<p class="sub">'+L('Cargando calles de Madrid…','Loading Madrid streets…')+'</p>');
   const v=(document.querySelector('script[data-v]')||{getAttribute:()=>'1'}).getAttribute('data-v');

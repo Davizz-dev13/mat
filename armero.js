@@ -123,8 +123,24 @@ const CAMO=[
  ['arido',['Árido (multiterreno)','Arid (multi-terrain)'],{m:2,c:[0x9a8763,0xc0ae86,0x6a6a43,0x584430],s:10,t:[0.54,0.57,0.62]}],
  ['selva',['Selva (woodland)','Jungle (woodland)'],{m:2,c:[0x46552f,0x5a4129,0x8b8659,0x1b1c18],s:8,t:[0.52,0.6,0.63]}],
  ['nieve',['Nieve','Snow'],{m:2,c:[0xe3e6e9,0xb9bfc5,0x868d94,0x4b5056],s:9,t:[0.55,0.63,0.68]}],
- ['urbano',['Urbano','Urban'],{m:2,c:[0x85888b,0x5a5d60,0xb1b4b7,0x2b2d2f],s:11,t:[0.53,0.58,0.62]}]
+ ['urbano',['Urbano','Urban'],{m:2,c:[0x85888b,0x5a5d60,0xb1b4b7,0x2b2d2f],s:11,t:[0.53,0.58,0.62]}],
+ /* 🔓 desbloqueables (12-11-2026, Jose: «que a la gente le incentive el jugar»): se ganan con el empleo (r) o el número de medallas (n) de «Medallas».
+    Añadidos AL FINAL: los de arriba no cambian y siguen libres para todos. Patrones genéricos de M.A.T (no son diseños registrados). */
+ ['digital',['Digital urbano','Urban digital'],{m:3,c:[0x7d8186,0x55595e,0xa9adb1,0x2f3236],s:9,t:[0.5,0.57,0.62]},{r:2}],
+ ['arena',['Arena (3 colores)','Sand (3-colour)'],{m:2,c:[0xc8b48a,0xa48a5e,0x7b6446,0xc8b48a],s:7,t:[0.5,0.58,0.99]},{n:5}],
+ ['digdes',['Digital desierto','Desert digital'],{m:3,c:[0xb9a47c,0x8f7b58,0xd6c7a3,0x5f5140],s:9,t:[0.5,0.57,0.63]},{r:3}],
+ ['otono',['Otoño','Autumn'],{m:2,c:[0x6b4a2b,0x8e6a3a,0x3f3a24,0xa8844e],s:8,t:[0.5,0.58,0.64]},{n:10}],
+ ['noche',['Nocturno','Night'],{m:2,c:[0x2c3340,0x3d4656,0x1b1f27,0x515c6e],s:9,t:[0.52,0.58,0.63]},{r:5}],
+ ['digver',['Digital boscoso','Woodland digital'],{m:3,c:[0x4f5b3a,0x6e6a45,0x2d3324,0x8a8458],s:9,t:[0.5,0.57,0.63]},{n:20}],
+ ['dorado',['Dorado (de oficial)','Gold (officer)'],{m:1,c:[0xb08d3c]},{r:10}]
 ];
+/* bloqueo de los desbloqueables: null = libre; si no, el requisito. Lee el progreso de «Medallas» (window.MAT_MED); sin él, bloqueado. Un enlace compartido con uno bloqueado se ve igual. */
+function camoLockList(){ return CAMO.filter(c=>c[3]&&camoLock(c[0])).map(c=>(window.MAT_LANG==='en'?c[1][1]:c[1][0])+': '+camoLock(c[0]).replace(/^(Se desbloquea|Unlocks) /,'')); }
+function camoReq(id){ const c=CAMO.find(x=>x[0]===id); return c&&c[3]?c[3]:null; }
+function camoLock(id){ const q=camoReq(id); if(!q) return null; let s=null; try{ s=window.MAT_MED&&window.MAT_MED.state?window.MAT_MED.state():null; }catch(e){}
+  const r=s?s.rank|0:0, n=s?s.medals|0:0; if(q.r!=null&&r>=q.r) return null; if(q.n!=null&&n>=q.n) return null;
+  let rn=''; try{ rn=window.MAT_MED.rankName(q.r)[window.MAT_LANG==='en'?1:0]; }catch(e){}
+  return q.r!=null?(window.MAT_LANG==='en'?'Unlocks at '+(rn||'rank '+q.r):'Se desbloquea en '+(rn||'empleo '+q.r)):(window.MAT_LANG==='en'?'Unlocks with '+q.n+' medals (you have '+n+')':'Se desbloquea con '+q.n+' medallas (tienes '+n+')'); }
 const hex=n=>'#'+n.toString(16).padStart(6,'0');
 function sw(c){ if(!c) return 'linear-gradient(135deg,#2a2b2d 50%,#8f7a55 50%)'; if(c.m===1) return hex(c.c[0]); return 'conic-gradient('+c.c.map((x,i)=>hex(x)+' '+(i*25)+'% '+((i+1)*25)+'%').join(',')+')'; }
 function mkU(){ return {uMode:{value:0},uC0:{value:new THREE.Color()},uC1:{value:new THREE.Color()},uC2:{value:new THREE.Color()},uC3:{value:new THREE.Color()},uS:{value:9},uT:{value:new THREE.Vector3(.55,.6,.65)},uInv:{value:new THREE.Matrix4()}}; }
@@ -136,7 +152,7 @@ float vn(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.0-2.0*f);
 float fbm(vec3 p){ return 0.55*vn(p)+0.3*vn(p*2.03+7.1)+0.15*vn(p*4.1+3.7); }
 `;
 const GCOL=`
-if(uMode==1){ diffuseColor.rgb=uC0; } else if(uMode==2){ vec3 cp=vCP*uS; vec3 cc=uC0; if(fbm(cp)>uT.x) cc=uC1; if(fbm(cp*1.6+vec3(11.3,4.1,8.7))>uT.y) cc=uC2; if(fbm(cp*2.2+vec3(3.1,17.2,5.9))>uT.z) cc=uC3; diffuseColor.rgb=cc; }`;
+if(uMode==1){ diffuseColor.rgb=uC0; } else if(uMode==3){ vec3 cp=floor(vCP*uS*4.0)/4.0; vec3 cc=uC0; if(fbm(cp)>uT.x) cc=uC1; if(fbm(cp*1.6+vec3(11.3,4.1,8.7))>uT.y) cc=uC2; if(fbm(cp*2.2+vec3(3.1,17.2,5.9))>uT.z) cc=uC3; diffuseColor.rgb=cc; } else if(uMode==2){ vec3 cp=vCP*uS; vec3 cc=uC0; if(fbm(cp)>uT.x) cc=uC1; if(fbm(cp*1.6+vec3(11.3,4.1,8.7))>uT.y) cc=uC2; if(fbm(cp*2.2+vec3(3.1,17.2,5.9))>uT.z) cc=uC3; diffuseColor.rgb=cc; }`;
 const FINR="\n/* acabado: micro-grano y desgaste suave (rugosidad y color) para que el pol\u00edmero y el anodizado no se vean de pl\u00e1stico liso */\nfloat fg=vn(vCP*900.0), fm=vn(vCP*45.0+vec3(5.3,1.7,9.1)); roughnessFactor=clamp(roughnessFactor+(fg-0.5)*0.16+(fm-0.5)*0.14,0.05,1.0);";
 const FINC='\ndiffuseColor.rgb*=0.95+0.1*vn(vCP*60.0+vec3(2.1,7.7,3.3));';
 const FINS='\nfloat fb=vn(vec3(vCP.x*1400.0,vCP.y*1400.0,vCP.z*40.0)); roughnessFactor=clamp(roughnessFactor+(fb-0.5)*0.2,0.05,1.0);';
@@ -672,7 +688,7 @@ function fireKit(o){ const fx=new THREE.Group(); fx.name='mat_fire'; fx.matrixAu
   return { fire(n,interval){ if(!raf) capture(); if(!queue) fired=0; iv=interval||0.12; queue+=n; go(); },
     stop(min){ queue=Math.max(0,(min||0)-fired); }, settle(){ queue=0; restore(); rec=0; sl=0; base=null; sbase=null; }, busy:()=>!!raf,
     dispose(){ cancelAnimationFrame(raf); raf=0; restore(); PAR.remove(fx); cg.dispose(); pg.dispose(); brass.dispose(); fm.dispose(); fs.dispose(); } }; }
-export {viewer,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,GHEAD,GCOL,LASER,visBox,fireKit,fireModes,fireSnd,audioOn,shotBuf};
+export {viewer,camoLock,camoLockList,CAMO,mkU,setU,camoPatch,prep,getGLB,mt,MT,accs,SLOTS,envData,sw,GHEAD,GCOL,LASER,visBox,fireKit,fireModes,fireSnd,audioOn,shotBuf};
 function page(app,ctx,w){
   const st={v:0,on:{},camo:'orig',ca:false};
   const sv=new URLSearchParams((location.hash.split('?')[1]||''));
@@ -708,8 +724,8 @@ function page(app,ctx,w){
       opts.map(a=>chip(sk,a)).join('')+'</div></div>'}); });
     const cm=CAMO.find(c=>c[0]===st.camo)||CAMO[0];
     E.push({k:'_c',lab:L('Camuflaje','Camouflage'),val:LL(cm[1]),has:st.camo!=='orig',
-      body:'<div class="arm-slot"><div class="sl">'+L('Camuflaje','Camouflage')+'</div><div class="arm-chips">'+CAMO.map(c=>'<button type="button" class="arm-chip arm-cm'+(st.camo===c[0]?' on':'')+'" data-c="'+c[0]+'"><span class="arm-sw" style="background:'+sw(c[2])+'"></span>'+esc(LL(c[1]))+'</button>').join('')+'</div>'+
-       '<label class="arm-tg"><input type="checkbox" id="armca"'+(st.ca?' checked':'')+'> '+L('Aplicar también a los accesorios','Apply to the accessories too')+'</label>'+
+      body:'<div class="arm-slot"><div class="sl">'+L('Camuflaje','Camouflage')+'</div><div class="arm-chips">'+CAMO.map(c=>{ const lk=c[0]!==st.camo&&camoLock(c[0]); return '<button type="button" class="arm-chip arm-cm'+(st.camo===c[0]?' on':'')+'" data-c="'+c[0]+'"'+(lk?' disabled title="'+esc(lk)+'" style="opacity:.5"':'')+'><span class="arm-sw" style="background:'+sw(c[2])+'"></span>'+(lk?'🔒 ':'')+esc(LL(c[1]))+'</button>'; }).join('')+'</div>'+
+       (camoLockList().length?'<p class="arm-note" style="margin:4px 0 6px">🔒 '+esc(camoLockList().join(' · '))+'. '+L('Sube de empleo y gana medallas (🎖) en los juegos.','Rank up and earn medals (🎖) in the games.')+'</p>':'')+'<label class="arm-tg"><input type="checkbox" id="armca"'+(st.ca?' checked':'')+'> '+L('Aplicar también a los accesorios','Apply to the accessories too')+'</label>'+
        '<p class="arm-note" style="margin:6px 0 0">'+L('Patrones genéricos generados por M.A.T (no son diseños registrados); se aplican a las piezas de polímero y anodizadas, no al acero ni a las lentes.','Generic patterns generated by M.A.T (not trademarked designs); applied to polymer and anodised parts, not to steel or lenses.')+'</p></div>'});
     if(amxO&&!E.some(e=>e.k===amxO)) amxO=null;
     let h='<div class="amx-sg" id="amxsg">'+E.map(e=>'<button type="button" class="amx-st'+(e.has?' has':'')+(e.k===amxO?' on':'')+'" data-amx="'+e.k+'" aria-expanded="'+(e.k===amxO)+'"><small>'+esc(e.lab)+'</small><b>'+esc(e.val)+'</b></button>'+
