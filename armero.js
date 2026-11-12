@@ -332,7 +332,7 @@ const CSS=`
 .amx-sg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-flow:row dense;gap:6px;margin:10px 0 0}
 @media(min-width:600px){.amx-sg{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .amx-st{position:relative;min-width:0;min-height:50px;text-align:left;border:1px solid var(--line,#2c3136);border-radius:9px;background:#15181b;color:#e3e6e8;padding:6px 8px;font:inherit;cursor:pointer;touch-action:manipulation}
-.amx-st small{display:block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim,#9aa0a6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amx-st small{display:block;font-size:10px;line-height:1.2;letter-spacing:.04em;text-transform:uppercase;color:var(--dim,#9aa0a6);white-space:normal;overflow-wrap:anywhere;hyphens:auto}
 .amx-st b{display:block;font-size:12.5px;line-height:1.25;margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:600;color:#c9cdd1}
 .amx-st.has b{color:#d6b25e;font-weight:700}.amx-st.has small::before{content:'● ';color:#d6b25e}
 .amx-st.on{border-color:#d6b25e;box-shadow:0 0 0 1px #d6b25e inset;background:#1d1c15}

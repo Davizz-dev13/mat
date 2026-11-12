@@ -347,7 +347,7 @@ function play(G,el,mk,r,res,my){ const M=MAPS[mk], cv=el.querySelector('canvas')
   el.querySelector('[data-x]').onclick=e=>{ sp=sp===1?3:1; e.target.textContent=sp===1?'×3':'×1'; };
   el.querySelector('[data-sk]').onclick=()=>{ simT=T; };
   ANIM=requestAnimationFrame(frame); }
-function result(G,el,mk,r,res,me){ const end=res.log.find(l=>l.key==='end'), Sm=res.S[me], Sf=res.S[1-me], M=MAPS[mk];
+function result(G,el,mk,r,res,me){ { const ct_=el.querySelector('.ct'); if(ct_) ct_.style.display='none'; } const end=res.log.find(l=>l.key==='end'), Sm=res.S[me], Sf=res.S[1-me], M=MAPS[mk];
   const wn=res.w<0?null:res.w===me?G.me.P:G.fr.P;
   const row=(n,a,b)=>'<tr><td>'+n+'</td><td>'+a+'</td><td>'+b+'</td></tr>';
   const pr=x=>x.stats.sh?PC(x.stats.hit/x.stats.sh*100):'—';
