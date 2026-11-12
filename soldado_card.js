@@ -133,9 +133,22 @@ function svgImg(s){ if(!s) return Promise.resolve(null); s=String(s).replace(/<s
 export async function renderCard(c){ const W=1080, H=1350; const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d'); const F='system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
   const [wim,logo]=await Promise.all([img(c.wImg),img('favicon-192.png')]);
   const g=c.gh?ghById(c.gh):null;
-  /* fondo */ let bg=x.createLinearGradient(0,0,W,H); bg.addColorStop(0,'#14181b'); bg.addColorStop(1,'#1d2418'); x.fillStyle=bg; x.fillRect(0,0,W,H);
-  x.save(); x.globalAlpha=0.06; x.strokeStyle='#cfd8c0'; x.lineWidth=2; for(let k=-H;k<W;k+=46){ x.beginPath(); x.moveTo(k,0); x.lineTo(k+H,H); x.stroke(); } x.restore();
-  /* cabecera */ x.fillStyle='#4f6a36'; x.fillRect(0,0,W,10);
+  /* fondo */ /* fondo según el empleo de «Medallas» (12-11-2026, Jose): Soldado/Soldado de primera = el de siempre; Cabo→bronce; suboficiales→plata; oficiales→oro; generales→negro carbono con oro. Marco metálico, brillo e insignia de fondo */
+  const TQ=(()=>{ const r=c.med&&c.med.rank!=null?c.med.rank|0:0; return r>=16?4:r>=10?3:r>=5?2:r>=2?1:0; })();
+  const MTL=[null,{m:['#4a2a12','#9a5e2e','#f3c08a','#c98a52','#5a3418'],gl:'rgba(196,115,58,.30)',tx:'#f3c08a',n:['CARTA BRONCE','BRONZE CARD']},{m:['#4b5157','#9aa2a9','#ffffff','#c9cfd4','#5d646b'],gl:'rgba(184,196,208,.26)',tx:'#eef2f5',n:['CARTA PLATA','SILVER CARD']},{m:['#6a4c0e','#c4932a','#fff2b0','#e2b84a','#7a5a12'],gl:'rgba(230,184,74,.30)',tx:'#ffe08a',n:['CARTA ORO','GOLD CARD']},{m:['#6a4c0e','#c4932a','#fff2b0','#e2b84a','#7a5a12'],gl:'rgba(212,169,42,.16)',tx:'#ffd75e',n:['CARTA GENERAL','GENERAL CARD']}][TQ];
+  const metal=(x0,y0,x1,y1)=>{ const g=x.createLinearGradient(x0,y0,x1,y1); MTL.m.forEach((s,i)=>g.addColorStop(i/(MTL.m.length-1),s)); return g; };
+  const insBG=MTL&&c.med&&c.med.insignia?await svgImg(c.med.insignia).catch(()=>null):null;
+  let bg=x.createLinearGradient(0,0,W,H); bg.addColorStop(0,MTL?(TQ===4?'#050505':'#0e1012'):'#14181b'); bg.addColorStop(1,MTL?(TQ===4?'#0d0d0d':'#17191c'):'#1d2418'); x.fillStyle=bg; x.fillRect(0,0,W,H);
+  if(MTL){ let rg=x.createRadialGradient(W*0.28,H*0.36,20,W*0.28,H*0.36,W*0.75); rg.addColorStop(0,MTL.gl); rg.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=rg; x.fillRect(0,0,W,H);
+    if(TQ===4){ x.save(); for(let yy=0;yy<H;yy+=10) for(let xx=0;xx<W;xx+=10){ x.fillStyle=((xx+yy)/10)%2?'rgba(255,255,255,.035)':'rgba(0,0,0,.25)'; x.fillRect(xx,yy,10,10); } x.restore(); }
+    else { x.save(); x.globalAlpha=0.035; x.fillStyle='#ffffff'; for(let yy=0;yy<H;yy+=3){ if((yy*7919)%5<2) x.fillRect(0,yy,W,1); } x.restore(); }
+    if(insBG){ x.save(); x.globalAlpha=TQ===4?0.10:0.08; const s=460; x.drawImage(insBG,W-52-s+30,300,s,s); x.restore(); }
+    let sh=x.createLinearGradient(0,0,W,H); sh.addColorStop(0.30,'rgba(255,255,255,0)'); sh.addColorStop(0.42,'rgba(255,255,255,.06)'); sh.addColorStop(0.50,'rgba(255,255,255,0)'); x.fillStyle=sh; x.fillRect(0,0,W,H); }
+  if(!MTL){ x.save(); x.globalAlpha=0.06; x.strokeStyle='#cfd8c0'; x.lineWidth=2; for(let k=-H;k<W;k+=46){ x.beginPath(); x.moveTo(k,0); x.lineTo(k+H,H); x.stroke(); } x.restore(); }
+  else { x.save(); x.lineWidth=16; x.strokeStyle=metal(0,0,W,H); rr(x,8,8,W-16,H-16,30); x.stroke(); x.lineWidth=2; x.strokeStyle='rgba(0,0,0,.6)'; rr(x,17,17,W-34,H-34,22); x.stroke(); x.lineWidth=1.5; x.strokeStyle=MTL.m[2]; x.globalAlpha=0.55; rr(x,20,20,W-40,H-40,20); x.stroke(); x.globalAlpha=1;
+    if(TQ>=3){ x.fillStyle=metal(0,0,60,60); [[24,24,1,1],[W-24,24,-1,1],[24,H-24,1,-1],[W-24,H-24,-1,-1]].forEach(([px,py,sx,sy])=>{ x.beginPath(); x.moveTo(px,py); x.lineTo(px+sx*70,py); x.lineTo(px+sx*70,py+sy*8); x.lineTo(px+sx*8,py+sy*8); x.lineTo(px+sx*8,py+sy*70); x.lineTo(px,py+sy*70); x.closePath(); x.fill(); }); }
+    x.font='800 21px '+F; const tl='★ '+(EN()?MTL.n[1]:MTL.n[0]), tw=x.measureText(tl).width+36, pcx=612, py0=48; x.fillStyle=metal(pcx-tw/2,py0,pcx+tw/2,py0+36); rr(x,pcx-tw/2,py0,tw,36,18); x.fill(); x.fillStyle=TQ===2?'#22262a':'#2a1c05'; if(TQ===1) x.fillStyle='#2b1608'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(tl,pcx,py0+19); x.textAlign='left'; x.textBaseline='alphabetic'; x.restore(); }
+  /* cabecera */ x.fillStyle=MTL?metal(0,0,W,10):'#4f6a36'; x.fillRect(0,0,W,10);
   if(logo){ x.save(); rr(x,52,34,84,84,18); x.clip(); x.drawImage(logo,52,34,84,84); x.restore(); }
   x.fillStyle='#f1f3ee'; x.font='800 58px '+F; x.textBaseline='alphabetic'; x.fillText('M.A.T',logo?156:56,94); x.fillStyle='#b9c4a8'; x.font='600 27px '+F; x.fillText(L('CREA TU SOLDADO','BUILD YOUR SOLDIER'),logo?158:58,124);
   x.textAlign='right'; x.fillStyle='#e6eadf'; x.font='700 34px '+F; x.fillText('matmilitar.es',W-52,94); x.textAlign='left';

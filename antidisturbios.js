@@ -684,7 +684,7 @@ function diaShare(){ const txt=diaTxt(), url=diaURL(); if(navigator.share){ navi
    No se aplican en la Misión del día (igual para todos), en el cooperativo ni en las misiones especiales; los enlaces compartidos abren en nivel 1. */
 const PROT=[[1,1,0],[2,0.8,2],[3,0.65,5]];
 function myRank(){ try{ return window.MAT_MED&&window.MAT_MED.state?(window.MAT_MED.state().rank|0):0; }catch(e){ return 0; } }
-function protOK(n){ const p=PROT[n-1]; return !!p&&myRank()>=p[2]; }
+function protOK(n){ const p=PROT[n-1]; return !!p&&(window.MAT_CREADOR||myRank()>=p[2]); }
 function protN(c){ c=c||(G&&G.cfg); if(!c||c.dia||CO) return 1; const n=+c.pr||1; return protOK(n)?n:1; }
 function pf(){ return PROT[protN()-1][1]; }
 function rkName(r){ try{ const n=window.MAT_MED.rankName(r); return n[EN()?1:0]; }catch(e){ return ''; } }

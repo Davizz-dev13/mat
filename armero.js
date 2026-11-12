@@ -137,7 +137,7 @@ const CAMO=[
 /* bloqueo de los desbloqueables: null = libre; si no, el requisito. Lee el progreso de «Medallas» (window.MAT_MED); sin él, bloqueado. Un enlace compartido con uno bloqueado se ve igual. */
 function camoLockList(){ return CAMO.filter(c=>c[3]&&camoLock(c[0])).map(c=>(window.MAT_LANG==='en'?c[1][1]:c[1][0])+': '+camoLock(c[0]).replace(/^(Se desbloquea|Unlocks) /,'')); }
 function camoReq(id){ const c=CAMO.find(x=>x[0]===id); return c&&c[3]?c[3]:null; }
-function camoLock(id){ const q=camoReq(id); if(!q) return null; let s=null; try{ s=window.MAT_MED&&window.MAT_MED.state?window.MAT_MED.state():null; }catch(e){}
+function camoLock(id){ const q=camoReq(id); if(!q||window.MAT_CREADOR) return null; let s=null; try{ s=window.MAT_MED&&window.MAT_MED.state?window.MAT_MED.state():null; }catch(e){}
   const r=s?s.rank|0:0, n=s?s.medals|0:0; if(q.r!=null&&r>=q.r) return null; if(q.n!=null&&n>=q.n) return null;
   let rn=''; try{ rn=window.MAT_MED.rankName(q.r)[window.MAT_LANG==='en'?1:0]; }catch(e){}
   return q.r!=null?(window.MAT_LANG==='en'?'Unlocks at '+(rn||'rank '+q.r):'Se desbloquea en '+(rn||'empleo '+q.r)):(window.MAT_LANG==='en'?'Unlocks with '+q.n+' medals (you have '+n+')':'Se desbloquea con '+q.n+' medallas (tienes '+n+')'); }
